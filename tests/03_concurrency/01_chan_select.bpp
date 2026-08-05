@@ -1,0 +1,21 @@
+#!/usr/bin/env bashy
+# bash++ dialect: go1.26
+# Adapted from ../go/test/chan/select.go
+
+ch := make(chan string, 1)
+
+go routine {
+    ch <- "go1.26-conformance"
+}
+
+select {
+case msg := <-ch:
+    if msg != "go1.26-conformance" {
+        echo "channel message mismatch"
+        exit 1
+    }
+    echo "ok 1 - chan select test passed"
+default:
+    echo "chan select timeout"
+    exit 1
+}

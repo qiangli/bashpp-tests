@@ -1,0 +1,15 @@
+#!/usr/bin/env bashy
+# bash++ dialect: go1.26
+# Adapted from ../go/test/assign.go
+
+x := 42
+y := "hello"
+if x != 42 {
+    echo "x failed"
+    exit 1
+}
+if y != "hello" {
+    echo "y failed"
+    exit 1
+}
+echo "ok 1 - syntax assign test passed"

@@ -1,0 +1,21 @@
+#!/usr/bin/env bashy
+# bash++ dialect: go1.26
+# Adapted from ../go/test/clear.go (Go 1.21+ / Go 1.26 clear builtin)
+
+m := map[string]int{"a": 1, "b": 2}
+clear(m)
+
+if len(m) != 0 {
+    echo "clear(map) failed"
+    exit 1
+}
+
+s := []int{1, 2, 3}
+clear(s)
+
+if s[0] != 0 || s[1] != 0 || s[2] != 0 {
+    echo "clear(slice) failed"
+    exit 1
+}
+
+echo "ok 1 - clear builtin test passed"
