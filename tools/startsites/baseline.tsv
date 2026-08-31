@@ -133,4 +133,12 @@ generic-wa-call-slice	G127	generics	R	reject	reject	yes	Max[[]int](xs)	Max[[]int
 generic-wa-short-call	G127	generics	R	reject	reject	yes	f := Max[[]int](xs)	f := Max[[]int](xs)
 generic-wa-typed-decl	G127	generics	R	reject	reject	yes	var f func([]int) int = Max[[]int]	var f func([]int) int = Max[[]int]
 generic-wa-var-bare	G127	generics	E	accept	accept	yes	var f = Max[[]int]	var f = Max[[]int]
-# 131 shapes: 47 class R, 84 class E, 5 engine disagreement(s)
+assign-eq-scalar	P1	=	E	accept	accept	yes	x = 1	x = 1
+assign-eq-call	P1	=	R	reject	reject	yes	x = f()	x = f()
+assign-eq-selector	P1	=	E	accept	accept	yes	x.y = 1	x.y = 1
+return-bare	P3	return	E	accept	accept	yes	return	return
+return-status	P3	return	E	accept	accept	yes	return $?	return $?
+return-one	P3	return	E	accept	accept	yes	return 1	return 1
+return-single	P3	return	E	accept	accept	yes	return x	return x
+return-call	P3	return	R	reject	reject	yes	return f()	return f()
+# 139 shapes: 49 class R, 90 class E, 5 engine disagreement(s)

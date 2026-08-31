@@ -158,3 +158,16 @@ generic-wa-call-slice	G127	generics	Max[[]int](xs)
 generic-wa-short-call	G127	generics	f := Max[[]int](xs)
 generic-wa-typed-decl	G127	generics	var f func([]int) int = Max[[]int]
 generic-wa-var-bare	G127	generics	var f = Max[[]int]
+# Plain `=` assignment. The scoping rule says re-assignment to an existing
+# binding uses `=`, so the site needs rows. It splits exactly like `:=` does.
+assign-eq-scalar	P1	=	x = 1
+assign-eq-call	P1	=	x = f()
+assign-eq-selector	P1	=	x.y = 1
+# `return`. EVERY shell form of return is class E, so committing on the KEYWORD
+# would hijack `return 1` and `return $?`. The commit signal has to be a token
+# the shell form cannot contain — the comma, or the call parens.
+return-bare	P3	return	return
+return-status	P3	return	return $?
+return-one	P3	return	return 1
+return-single	P3	return	return x
+return-call	P3	return	return f()
