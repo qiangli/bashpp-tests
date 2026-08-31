@@ -94,6 +94,37 @@ find "${TEST_DIR}/tests" -name "*.bpp" ! -path "*/00_superset_posix2016/*" | whi
   run_go_dual_test "${file}"
 done
 
+# ---------------------------------------------------------------------------
+# CERTIFICATION SAFETY GATE — runs on every invocation, deliberately.
+#
+# The certification profile invokes the shell with --posix and NO Bash++
+# selector, and extended grammar must be inert there. This proves it per shape
+# rather than assuming it. It is wired into the entry point, not left as a
+# command someone remembers to run, because the failure it catches is one that
+# would otherwise surface as a broken certification arm traced back through a
+# language feature nobody suspected.
+#
+# It is authoritative: a leak fails the whole run. Known cert-owned divergences
+# are allowlisted BY NAME in tools/startsites/posix-known-divergent.tsv and are
+# printed, not hidden.
+# ---------------------------------------------------------------------------
+POSIX_GATE_RC=0
+if [ -x "${TEST_DIR}/tools/startsites/classify.sh" ]; then
+  echo
+  echo "--------------------------------------------------------------------------"
+  echo " Certification-safety gate: is Bash++ inert under --posix?"
+  echo "--------------------------------------------------------------------------"
+  BASHY="${BASHY_BIN}" "${TEST_DIR}/tools/startsites/classify.sh" --posix-gate || POSIX_GATE_RC=$?
+else
+  echo "WARNING: tools/startsites/classify.sh missing — certification-safety gate NOT run" >&2
+  POSIX_GATE_RC=1
+fi
+
 echo "--------------------------------------------------------------------------"
 echo " Summary: ${PASSED}/${TOTAL} registered tests executed"
 echo "--------------------------------------------------------------------------"
+
+if [ "${POSIX_GATE_RC}" -ne 0 ]; then
+  echo "FAIL: certification-safety gate did not pass — see above." >&2
+  exit 1
+fi

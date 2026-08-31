@@ -169,7 +169,12 @@ posixgate)
 	gate_known=0
 	known_ids=""
 	if [ -f "$known" ]; then
-		known_ids="$(grep -v '^#' "$known" | awk -F'\t' 'NF{print $1}')"
+		# `|| true` on both stages: an allowlist that is empty or all-comments
+		# makes grep exit 1, and under `set -e` that killed this script — which
+		# exited nonzero and so LOOKED like a working gate while producing no
+		# diagnostics at all. A gate that fails for the wrong reason is worse
+		# than no gate, because the exit code still reads as evidence.
+		known_ids="$( { grep -v '^#' "$known" || true; } | awk -F'\t' 'NF{print $1}' || true )"
 	fi
 	is_known() { printf '%s\n' "$known_ids" | grep -qxF "$1"; }
 	seen_known=""
