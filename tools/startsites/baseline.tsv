@@ -125,4 +125,8 @@ prefix-import-group	P2	prefix	R	reject	reject	yes	import (	import (
 prefix-if-nobrace	P1	prefix	E	accept	accept	yes	if err != nil	if err != nil\nthen echo b\nfi
 prefix-for-nobrace	P1	prefix	R	reject	reject	yes	for i := range 10	for i := range 10\ndo echo y\ndone
 prefix-type-enum	BASHSHARP	prefix	E	accept	accept	yes	type Color enum {	type Color enum {
-# 123 shapes: 44 class R, 79 class E, 5 engine disagreement(s)
+short-multi-literal	P1	:=	E	accept	accept	yes	x, y := 1, 2	x, y := 1, 2
+short-multi-idents	P1	:=	E	accept	accept	yes	x, y := a, b	x, y := a, b
+short-multi-eq	P1	:=	E	accept	accept	yes	x, y = 1, 2	x, y = 1, 2
+short-multi-three	P1	:=	E	accept	accept	yes	x, y, z := 1, 2, 3	x, y, z := 1, 2, 3
+# 127 shapes: 44 class R, 83 class E, 5 engine disagreement(s)
