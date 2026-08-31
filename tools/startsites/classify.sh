@@ -25,6 +25,7 @@ set -euo pipefail
 here="$(cd "$(dirname "$0")" && pwd)"
 shapes="${SHAPES:-${here}/shapes.tsv}"
 baseline="${BASELINE:-${here}/baseline.tsv}"
+known="${KNOWN:-${here}/posix-known-divergent.tsv}"
 
 # Reference oracles. Both are REQUIRED: a classification produced by only one
 # of them would silently become an assertion again.
@@ -35,6 +36,7 @@ mode="tsv"
 case "${1:-}" in
 	--markdown) mode="markdown" ;;
 	--check)    mode="check" ;;
+	--posix-gate) mode="posixgate" ;;
 	--tsv|"")   mode="tsv" ;;
 	-h|--help)
 		sed -n '2,26p' "$0" | sed 's/^# \{0,1\}//'
@@ -43,6 +45,7 @@ case "${1:-}" in
 		echo "  --tsv       classification table, tab-separated (default)"
 		echo "  --markdown  the Committed Start Sites table for the design doc"
 		echo "  --check     ratchet: fail if any shape changed class since baseline.tsv"
+		echo "  --posix-gate  CERT SAFETY: prove Bash++ syntax is inert under --posix"
 		echo
 		echo "env: BASH53, BASHY, SHAPES, BASELINE"
 		exit 0 ;;
@@ -142,6 +145,76 @@ check)
 	printf '\nA shape moving R->E means Bash++ would now change the meaning of an\n' >&2
 	printf 'existing bash script. A shape moving E->R means an escape row is stale.\n' >&2
 	printf 'Either way the design of record needs updating before this lands.\n' >&2
+	exit 1
+	;;
+posixgate)
+	# CERT SAFETY GATE.
+	#
+	# The certification profile invokes the shell with --posix and WITHOUT any
+	# Bash++ selector. Bash++ is specified to be inert there. "Specified" is not
+	# "true", and the cost of it becoming untrue is a broken certification run
+	# traced back through a language feature nobody suspected — so this proves
+	# it per shape instead of asserting it once.
+	#
+	# The invariant: under --posix, the engine's parse verdict must equal real
+	# bash 5.3's parse verdict, for EVERY shape in the corpus including the ones
+	# Bash++ intends to claim. A divergence means extended grammar reached the
+	# certification profile.
+	#
+	# Today nothing is implemented, so this is green by construction. That is
+	# the point: it is committed BEFORE the grammar lands, so the first leak is
+	# caught by a gate that already exists rather than by a certification arm.
+	gate_fail=0
+	gate_n=0
+	gate_known=0
+	known_ids=""
+	if [ -f "$known" ]; then
+		known_ids="$(grep -v '^#' "$known" | awk -F'\t' 'NF{print $1}')"
+	fi
+	is_known() { printf '%s\n' "$known_ids" | grep -qxF "$1"; }
+	seen_known=""
+	while IFS=$'\t' read -r id phase feature shape probe; do
+		case "$id" in ''|\#*) continue ;; esac
+		[ -n "${probe:-}" ] || probe="$shape"
+		if printf '%b\n' "$probe" | "$BASH53" --posix -n 2>/dev/null; then p53=accept; else p53=reject; fi
+		if printf '%b\n' "$probe" | "$BASHY"  --posix -n 2>/dev/null; then ppy=accept; else ppy=reject; fi
+		gate_n=$((gate_n + 1))
+		if [ "$p53" != "$ppy" ]; then
+			if is_known "$id"; then
+				gate_known=$((gate_known + 1))
+				seen_known="${seen_known}${id}
+"
+				printf 'known %-28s bash5.3 --posix=%s  engine --posix=%s   %s\n' \
+					"$id" "$p53" "$ppy" "$shape"
+			else
+				gate_fail=$((gate_fail + 1))
+				printf 'LEAK  %-28s bash5.3 --posix=%s  engine --posix=%s   %s\n' \
+					"$id" "$p53" "$ppy" "$shape" >&2
+			fi
+		fi
+	done < "$shapes"
+	[ "$gate_n" -gt 0 ] || die "posix gate classified 0 shapes"
+	# A listed divergence that stopped diverging means the defect was fixed.
+	# Fail so the allowlist tightens; a stale entry is a hole a real leak hides in.
+	stale=0
+	for kid in $known_ids; do
+		printf '%s\n' "$seen_known" | grep -qxF "$kid" || {
+			printf 'STALE %-28s no longer diverges — remove it from %s\n' \
+				"$kid" "$(basename "$known")" >&2
+			stale=$((stale + 1))
+		}
+	done
+	if [ "$gate_fail" -eq 0 ] && [ "$stale" -eq 0 ]; then
+		printf 'startsites: POSIX GATE OK — %d shapes, no Bash++ grammar reaches --posix\n' "$gate_n"
+		[ "$gate_known" -gt 0 ] && printf 'startsites: %d known cert-owned divergence(s) above, not Bash++ leaks\n' "$gate_known"
+		exit 0
+	fi
+	[ "$stale" -gt 0 ] && { printf '\nstartsites: %d allowlist entr(y/ies) are STALE.\n' "$stale" >&2; exit 1; }
+	printf '\nstartsites: POSIX GATE FAILED — %d of %d shapes diverge under --posix.\n' \
+		"$gate_fail" "$gate_n" >&2
+	printf 'Extended grammar has reached the CERTIFICATION PROFILE. The cert arm\n' >&2
+	printf 'invokes --posix with no Bash++ selector and must see stock bash 5.3\n' >&2
+	printf 'behaviour exactly. Fix the dialect gate before anything else.\n' >&2
 	exit 1
 	;;
 esac

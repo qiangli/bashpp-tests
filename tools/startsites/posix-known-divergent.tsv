@@ -1,0 +1,18 @@
+# Known --posix divergences that are NOT Bash++ leaks.
+#
+# Every id here is a PRE-EXISTING bash-5.3 fidelity defect in the engine,
+# present before any extended grammar existed and owned by the certification
+# workstream, not by Bash++. They are listed so the cert-safety gate can stay
+# green for its actual purpose — catching extended grammar reaching the
+# certification profile — instead of being red from birth and therefore ignored.
+#
+# This is an allowlist, NOT a silence: --posix-gate still prints every one on
+# each run, and it FAILS if a listed id stops diverging, so a fix tightens the
+# gate instead of leaving a stale excuse behind for a real leak to hide in.
+#
+# id	owner	defect
+generic-inst-bare-slice	cert	command-position NAME[...] read as arithmetic; bash 5.3 sees a glob word
+generic-inst-bare-map	cert	same
+generic-inst-bare-ptr	cert	same
+subscript-empty-inner	cert	same
+subscript-nested	cert	same

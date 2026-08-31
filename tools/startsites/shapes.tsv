@@ -171,3 +171,57 @@ return-status	P3	return	return $?
 return-one	P3	return	return 1
 return-single	P3	return	return x
 return-call	P3	return	return f()
+# COMPLETING THE GRAMMAR SURFACE. Settling syntax is the expensive-to-
+# reverse decision: once scripts exist a late Class E claim breaks them, and
+# a grammar change in sh/syntax during a cert campaign risks the baseline.
+# Classifying costs one bash -n; being wrong after ship costs a break. So the
+# whole surface is enumerated NOW, across every phase, not just Day-1.
+func-noargs	P3	func	func f() { echo hi }
+func-named-returns	P3	func	func f() (n int, err error) { return 0, nil }
+func-variadic	P3	func	func f(a ...int) { echo hi }
+func-literal-assign	P3	closure	f := func() { echo hi }
+func-literal-call	P3	closure	func() { echo hi }()
+defer-closure	P3	defer	defer func() { echo bye }()
+defer-method	P3	defer	defer mu.Unlock()
+method-value	P3	method	f := obj.Method
+go-closure	P4	go	go func() { echo hi }()
+go-closure-args	P4	go	go func(x int) { echo $x }(1)
+go-method	P4	go	go obj.Run()
+chan-make-unbuffered	P4	chan	ch := make(chan int)
+chan-close	P4	chan	close(ch)
+chan-recv-expr	P4	chan	<-ch
+chan-range	P4	chan	for v := range ch { echo $v }
+chan-dir-send	P4	chan	func f(ch chan<- int) { echo hi }
+chan-dir-recv	P4	chan	func f(ch <-chan int) { echo hi }
+select-empty	P4	select	select {}
+select-recv-only	P4	select	select {\ncase <-ch:\n\techo a\n}
+waitgroup-add	P4	sync	wg.Add(1)
+p5-capture-assign	P5	capture	out := $(ls)
+p5-capture-backtick	P5	capture	out := `ls`
+p5-capture-call	P5	capture	out, err := capture(ls)
+p5-decode-json	P5	decode	v, err := json.Decode(out)
+p5-pipe-into-go	P5	capture	ls | consume(v)
+p5-typed-arg	P5	encode	grep $obj
+embed-heredoc-body	P6	embed	embed python as py <<'PY'\ndef f(): pass\nPY
+embed-call	P6	embed	result, err := py.add(40, 2)
+embed-cmd-adapter	P6	embed	py.add 40 2
+embed-ts	P6	embed	embed typescript as ts <<'TS'\nexport const x = 1\nTS
+field-read	P1	selector	echo $x.Field
+field-assign	P1	selector	x.Field = 1
+index-slice	P1	index	v := s[1]
+index-map	P1	index	v := m[\"k\"]
+slice-expr	P1	index	v := s[1:2]
+conversion-int	P1	convert	v := int(x)
+conversion-bytes	P1	convert	v := []byte(s)
+const-iota	P1	const	const ( A = iota\nB\n)
+struct-embed	P1	type	type T struct { Base }
+for-infinite	P1	for	for { echo hi }
+for-three-clause	P1	for	for i := 0; i < 10; i++ { echo $i }
+for-range-map	P1	for	for k, v := range m { echo $k }
+for-range-func	P1	for	for v := range seq { echo $v }
+break-label	P1	label	break LOOP
+continue-label	P1	label	continue LOOP
+switch-type	P1	switch	switch v := x.(type) { case int: echo a }
+switch-tagless	P1	switch	switch { case x > 1: echo a }
+if-else	P1	if	if x { echo a } else { echo b }
+if-else-if	P1	if	if x { echo a } else if y { echo b }
