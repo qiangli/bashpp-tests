@@ -1,0 +1,118 @@
+# Bash++ candidate start-site corpus.
+#
+# One row per SHAPE the contextual parser might have to commit on. Columns are
+# tab-separated: id, phase, feature, shape.
+#
+# The shape is written exactly as it would appear at the start of a line. Use
+# \n for a newline inside a multi-line shape. Nothing here is ever EXECUTED —
+# classify.sh only parses it with `bash -n`.
+#
+# id	phase	feature	shape
+decl-var-assign	P1	var	var x = 1
+decl-var-typed	P1	var	var x int = 1
+decl-var-bare	P1	var	var x int
+decl-const	P1	const	const K = 2
+decl-const-typed	P1	const	const K int = 2
+decl-type-struct-1line	P1	type	type T struct { A int }
+decl-type-struct-multiline	P1	type	type T struct {\n\tA int\n}
+decl-type-alias	P1	type	type ID = string
+short-scalar-int	P1	:=	x := 42
+short-scalar-string	P1	:=	x := "hello"
+short-call	P1	:=	x := f()
+short-call-args	P1	:=	x := f(1, 2)
+short-multi-call	P1	:=	x, y := f()
+short-multi-err	P1	:=	config, err := readConfig("config.json")
+short-composite-map	P1	:=	m := map[string]int{"a": 1}
+short-composite-slice	P1	:=	s := []int{1, 2, 3}
+short-composite-struct	P1	:=	g := Gopher{Name: "x"}
+short-index-generic	P1	:=	f := Max[int]
+call-bare	P1	call	f(1, 2)
+call-selector	P1	call	x.y.z()
+call-builtin-clear	P1	call	clear(m)
+call-builtin-len	P1	call	n := len(s)
+if-brace	P1	if	if x != 42 { echo hi }
+if-brace-nil	P1	if	if err != nil { return 1 }
+if-brace-init	P1	if	if v, err := f(); err != nil { return 1 }
+for-brace-range	P1	for	for i := range 10 { echo $i }
+for-brace-cond	P1	for	for i < 10 { echo $i }
+switch-brace	P1	switch	switch x { case 1: echo a }
+composite-bare	P1	literal	Gopher{Name: "x", Burrow: "y"}
+escape-command-var	P1	escape	command var x=1
+escape-quoted-var	P1	escape	"var" x=1
+escape-command-type	P1	escape	command type T struct { A int }
+import-single	P2	import	import "fmt"
+import-aliased	P2	import	import neturl "net/url"
+import-grouped	P2	import	import (\n\t"fmt"\n)
+escape-command-import	P2	escape	command import "fmt"
+func-decl	P3	func	func f(x int) int { return x }
+func-decl-multi	P3	func	func f() (int, error) { return 0, nil }
+func-decl-noargs	P3	func	func f() { echo hi }
+return-multi	P3	return	return x, nil
+defer-call	P3	defer	defer cleanup(x)
+defer-bare	P3	defer	defer cleanup
+go-call	P4	go	go worker(a, b)
+go-call-one	P4	go	go worker(ch)
+go-toolchain	P4	escape	go build ./...
+go-toolchain-test	P4	escape	go test ./...
+chan-make	P4	chan	results := make(chan string, 16)
+chan-send	P4	chan	ch <- v
+chan-recv	P4	chan	value <- ch
+chan-recv-multi	P4	chan	value, ok := <-results
+select-brace	P4	select	select {\ncase v = <-ch:\n\techo a\ndefault:\n\techo b\n}
+embed-heredoc	P6	embed	embed python as py
+generic-func-decl	G127	generics	func f[T any](x T) T { return x }
+generic-method-decl	G127	generic-method	func (r *Rand) N[Int intType](n Int) Int { return n }
+generic-method-call	G127	generic-method	r.N[int](5)
+generic-call-simple	G127	generics	f[int](x)
+generic-call-slice	G127	generics	f[[]int](x)
+generic-call-map	G127	generics	f[map[string]int](x)
+generic-call-ptr	G127	generics	f[*T](x)
+generic-inst-simple	G127	generics	f := Max[int]
+generic-inst-slice	G127	generics	f := Max[[]int]
+generic-inst-map	G127	generics	f := Max[map[string]int]
+generic-inst-ptr	G127	generics	f := Max[*T]
+struct-key-selector	G127	selector-key	g := Gopher{Name: "x", Burrow.Depth: 3}
+struct-key-selector-bare	G127	selector-key	Gopher{Burrow.Depth: 3}
+sharp-kwargs	BASHSHARP	kwargs	f(name: "x")
+sharp-kwargs-multi	BASHSHARP	kwargs	f(name: "x", retries: 3)
+sharp-default-param	BASHSHARP	defaults	func f(a int, b int = 3) {}
+sharp-readonly	BASHSHARP	immutability	readonly obj
+sharp-enum	BASHSHARP	enum	type Color enum { Red; Green }
+sharp-enum-multiline	BASHSHARP	enum	type Color enum {\n\tRed\n\tGreen\n}
+sharp-comprehension	BASHSHARP	comprehension	[x*2 for x in xs]
+sharp-comprehension-filter	BASHSHARP	comprehension	[x for x in xs if x > 0]
+sharp-ternary	BASHSHARP	ternary	a ? b : c
+sharp-optional-chain	BASHSHARP	optional-chain	x?.y
+sharp-nullish	BASHSHARP	nullish	x ?? y
+sharp-match	BASHSHARP	match	match x { case 1: echo a }
+sharp-try-catch	BASHSHARP	exceptions	try { echo a } catch (e) { echo b }
+sharp-decorator-bare	BASHSHARP	decorator	@decorator
+sharp-decorator-call	BASHSHARP	decorator	@decorator(x)
+sharp-arrow	BASHSHARP	arrow	x -> y
+sharp-fat-arrow	BASHSHARP	arrow	x => y
+shell-assign	SHELL	control	x=1
+shell-array-assign	SHELL	control	a[0]=1
+shell-func	SHELL	control	f() { echo hi; }
+shell-if	SHELL	control	if [ -n "$x" ]; then echo hi; fi
+shell-for	SHELL	control	for i in 1 2 3; do echo $i; done
+shell-case	SHELL	control	case $x in a) echo a;; esac
+shell-pipeline	SHELL	control	grep foo bar | sort -u
+shell-subshell	SHELL	control	( cd /tmp && ls )
+shell-heredoc-dash	SHELL	control	cat <<-EOF\n\thi\nEOF
+shell-cmdsub	SHELL	control	x=$(echo hi)
+shell-arith	SHELL	control	echo $((1 + 2))
+# Bare generic instantiation used as a value (no call parens). These are the
+# shapes that exposed the command-position NAME[...] fidelity divergence: the
+# engine parses the subscript as ARITHMETIC, so a non-arithmetic one is a hard
+# parse error where real bash 5.3 sees an ordinary glob word. Kept as a
+# regression net for that defect, which is certification-owned, not Bash++'s.
+generic-inst-bare-simple	G127	generics	f[int]
+generic-inst-bare-slice	G127	generics	f[[]int]
+generic-inst-bare-map	G127	generics	f[map[string]int]
+generic-inst-bare-ptr	G127	generics	f[*T]
+subscript-empty-inner	SHELL	subscript	f[[]]
+subscript-nested	SHELL	subscript	f[[x]]
+subscript-glob-star	SHELL	subscript	f[*]
+subscript-dash	SHELL	subscript	f[-x]
+subscript-empty	SHELL	subscript	f[]
+subscript-arg-position	SHELL	subscript	echo f[[]x]
