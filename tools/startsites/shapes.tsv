@@ -129,3 +129,19 @@ unsup-pointer-addr	UNSUPPORTED	pointer	p := &x
 unsup-type-assert	UNSUPPORTED	assert	v := x.(T)
 unsup-dot-import	UNSUPPORTED	import	import . "fmt"
 unsup-blank-import	UNSUPPORTED	import	import _ "fmt"
+# COMMIT-POINT PREFIXES. A parser commits at the opening line, not after seeing
+# the whole construct, so a multi-line construct must be classified at its
+# PREFIX. These rows are the decision points, and they do not always agree with
+# the complete form: `type T struct {` alone is an ordinary bash command (E)
+# while the complete multi-line struct is a parse error (R). Classifying only
+# the complete form would have recorded that site as free when it is not.
+prefix-type-struct	P1	prefix	type T struct {
+prefix-switch	P1	prefix	switch x {
+prefix-if-brace	P1	prefix	if err != nil {	if err != nil {\nthen echo b\nfi
+prefix-for-brace	P1	prefix	for i := range 10 {	for i := range 10 {\ndo echo y\ndone
+prefix-func-brace	P3	prefix	func f(x int) int {
+prefix-select	P4	prefix	select {	select {\necho hi\n}
+prefix-import-group	P2	prefix	import (
+prefix-if-nobrace	P1	prefix	if err != nil	if err != nil\nthen echo b\nfi
+prefix-for-nobrace	P1	prefix	for i := range 10	for i := range 10\ndo echo y\ndone
+prefix-type-enum	BASHSHARP	prefix	type Color enum {

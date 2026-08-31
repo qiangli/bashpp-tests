@@ -35,6 +35,32 @@ Two consequences worth stating on their own:
   `x, y := f()` are Class R. One start site, two rows, opposite risk — invisible
   without running the oracle.
 
+## Measure the commit point, not the construct
+
+A parser decides at the **opening line**; it never gets to see the closing
+brace first. So a multi-line construct is classified at its prefix, and the two
+do not always agree: the complete `type T struct { … }` is a parse error, while
+`type T struct {` — the line the parser actually commits on — is an ordinary
+bash command. Measuring only complete forms records such a site as free when it
+is not.
+
+A prefix that **opens a bash compound** cannot be judged bare at all. `bash -n`
+on `if err != nil {` reports the missing `then`; that is *incompleteness*, not
+unavailability, and reading it as a rejection produces a false Class R. Those
+rows carry an optional fifth column, a minimal **completing context**, and that
+is what the oracles parse. It changes the answer:
+
+```text
+if err != nil {
+then echo b
+fi
+```
+
+parses in bash 5.3 — the `{` is just the last word of the condition — so
+`if <expr> {` is Class E and needs bounded lookahead, while `for i := range
+10 {` stays Class R because no completing context makes it parse. Both results
+are measured; neither is reasoned from the other.
+
 ## Usage
 
 ```sh
@@ -71,8 +97,9 @@ Reported to the certification sprint; deliberately not fixed here.
 
 ## Adding a shape
 
-Append a tab-separated row to `shapes.tsv` — `id`, `phase`, `feature`, `shape`
-— then regenerate the baseline:
+Append a tab-separated row to `shapes.tsv` — `id`, `phase`, `feature`,
+`shape`, and an optional `probe` (the completing context, when the shape opens
+a bash compound) — then regenerate the baseline:
 
 ```sh
 ./classify.sh --tsv > baseline.tsv
