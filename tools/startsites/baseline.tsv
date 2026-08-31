@@ -129,4 +129,8 @@ short-multi-literal	P1	:=	E	accept	accept	yes	x, y := 1, 2	x, y := 1, 2
 short-multi-idents	P1	:=	E	accept	accept	yes	x, y := a, b	x, y := a, b
 short-multi-eq	P1	:=	E	accept	accept	yes	x, y = 1, 2	x, y = 1, 2
 short-multi-three	P1	:=	E	accept	accept	yes	x, y, z := 1, 2, 3	x, y, z := 1, 2, 3
-# 127 shapes: 44 class R, 83 class E, 5 engine disagreement(s)
+generic-wa-call-slice	G127	generics	R	reject	reject	yes	Max[[]int](xs)	Max[[]int](xs)
+generic-wa-short-call	G127	generics	R	reject	reject	yes	f := Max[[]int](xs)	f := Max[[]int](xs)
+generic-wa-typed-decl	G127	generics	R	reject	reject	yes	var f func([]int) int = Max[[]int]	var f func([]int) int = Max[[]int]
+generic-wa-var-bare	G127	generics	E	accept	accept	yes	var f = Max[[]int]	var f = Max[[]int]
+# 131 shapes: 47 class R, 84 class E, 5 engine disagreement(s)

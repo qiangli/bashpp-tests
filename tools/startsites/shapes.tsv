@@ -151,3 +151,10 @@ short-multi-literal	P1	:=	x, y := 1, 2
 short-multi-idents	P1	:=	x, y := a, b
 short-multi-eq	P1	:=	x, y = 1, 2
 short-multi-three	P1	:=	x, y, z := 1, 2, 3
+# Go 1.27 generics workarounds. The bare instantiation f[[]int] hits the
+# arithmetic-subscript path; these are the forms that do NOT, and they are
+# pinned so the advice in the design doc cannot rot silently.
+generic-wa-call-slice	G127	generics	Max[[]int](xs)
+generic-wa-short-call	G127	generics	f := Max[[]int](xs)
+generic-wa-typed-decl	G127	generics	var f func([]int) int = Max[[]int]
+generic-wa-var-bare	G127	generics	var f = Max[[]int]
