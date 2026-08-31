@@ -1,0 +1,23 @@
+# bash++ fixture manifest.
+#
+# id<TAB>status<TAB>feature<TAB>phase<TAB>origin
+#
+# status is DECLARED, never inferred from the outcome:
+#   supported  the feature is built; a failure here FAILS the run
+#   planned    the feature is not built; an expected failure, reported as
+#              PLANNED and not counted against the run
+#   n/a        Go semantics bash++ explicitly does not claim
+#
+# Declaring status is what lets a TDD suite be honest. Inferring it from the
+# result would mean a regression in a shipped feature could quietly re-label
+# itself as "not built yet" — the suite would go green by forgetting.
+#
+# id	status	feature	phase	origin
+# The script itself passes under plain --posix; it fails only because the
+# --bashpp SELECTOR does not exist yet (P0 activation, story B1). So the
+# unbuilt feature is activation, not this fixture, and every fixture in the
+# suite is blocked behind the same flag. That is worth seeing in the report.
+tests/00_superset_posix2016/01_posix_baseline.sh	planned	posix-baseline	P0	independently authored
+tests/01_syntax/01_decl_assign.bpp	planned	declarations	P1	topic: ../go/test/assign.go
+tests/03_concurrency/01_chan_select.bpp	planned	concurrency	P4	topic: ../go/test/chan/select.go
+tests/06_go126_features/01_clear_builtin.bpp	planned	builtins	G127	topic: ../go/test/clear.go

@@ -1,16 +1,30 @@
 #!/usr/bin/env bashy
-# bash++ dialect: go1.26
-# Adapted from ../go/test/chan/select.go
+// run
+# bash++ profile: go1.27-profile-v1 · phase P4 · status: planned
+#
+# Adapted in spirit from ../go/test/chan/select.go (not a 1:1 port).
+#
+# EXACT GO SPELLING. An earlier revision wrote `go routine { ... }`; that form
+# was abolished by the L4 addendum in
+# ../../../docs/bashpp-posix-superset-syntax.md. The collision it was invented
+# to avoid — `go` shadowing the Go toolchain — is resolved by the parens:
+# `go build ./...` parses in bash 5.3 while `go worker(ch)` is already a syntax
+# error, so the call form is free and needs no alternate vocabulary.
+#
+# status `planned`: P4 is gated behind the data-race and goroutine-leak gate
+# (sh todo 7b2d441dd7c8) and is not built. The harness reports PLANNED and does
+# not fail the run on it.
+
+func worker(ch chan string) {
+    ch <- "go1.27-conformance"
+}
 
 ch := make(chan string, 1)
-
-go routine {
-    ch <- "go1.26-conformance"
-}
+go worker(ch)
 
 select {
 case msg := <-ch:
-    if msg != "go1.26-conformance" {
+    if msg != "go1.27-conformance" {
         echo "channel message mismatch"
         exit 1
     }

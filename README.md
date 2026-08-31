@@ -2,7 +2,17 @@
 
 This suite implements **Test-Driven Development (TDD)** for **`bash++`** in `bashy`, maintaining **1:1 parity/fidelity** with official **Go 1.26** tests (`../go/test/`), **POSIX 1003.1-2016 (IEEE Std 1003.1-2016 / VSC-PCTS2016)**, and **GNU Bash 5.3**.
 
-> **Headline Goal:** Certify `bashy` as **Go 1.26 compliant/conformant** for its `bash++` Go extensions, alongside its 100% GNU Bash 5.3 pass rate and POSIX 1003.1-2016 Shell baseline.
+> **Headline goal:** validate `bashy`'s `bash++` extensions against the
+> **enumerated `go1.27-profile-v1`** — the Go-1.27-shaped constructs the design
+> of record actually claims — alongside the GNU Bash 5.3 gate and the POSIX
+> 1003.1-2016 baseline.
+>
+> **Not** "Go 1.26 compliant/conformant", which this file used to say. Go 1.27
+> is an upstream *language coordinate*, not a promise to accept arbitrary Go
+> source: `package`, `goto` and labels are permanent shell fallback, and every
+> other construct is delivered by a named phase. The claim is the profile, and
+> the profile is enumerated in
+> `../docs/bashpp-posix-superset-syntax.md` §Committed Start Sites.
 
 ---
 
@@ -12,7 +22,7 @@ To maximize language fidelity while avoiding irrelevant host runtime internals, 
 
 | Tier | Source Directory | Included Scope | Purpose & Rationale |
 |---|---|---|---|
-| **Tier 1 (Mandatory)** | **`../go/test/`** | **100% Language Spec Suite** (3,404 `.go` files) | Validates 1:1 language compliance: `for`, `if`, `switch`, `range`, `defer`, `struct`, `map`, `slice`, `interface`, generics, `go f(x)`, `chan`, `select`, `clear()`, and `:=` assignments. |
+| **Tier 1 (Mandatory)** | **`../go/test/`** | Language-spec corpus — see the denominator note below | `for`, `if`, `switch`, `range`, `defer`, `struct`, `map`, `slice`, `interface`, generics, `go f(x)`, `chan`, `select`, `clear()`, `:=`. Scope is the enumerated `go1.27-profile-v1`, not the whole language. |
 | **Tier 2 (Selective)** | **`../go/src/`** | **Exposed Utility Packages** (~150 `*_test.go` files) | Validates standard library utility packages exposed to `bash++` scripts via builtins & the Go bridge: `encoding/json`, `strings`, `bytes`, `sync`, `math`, `time`. |
 | **Excluded** | **`../go/src/`** | Internal compiler & host OS runtime (`runtime`, `syscall`, `cmd/compile`, assembly) | Internal Go host implementation details not surfaceable to shell scripts. |
 
@@ -84,3 +94,22 @@ The reason is now measured rather than argued: `go build ./...` **parses** in
 bash 5.3 while `go worker(a, b)` is **already a syntax error**, so the collision
 the two-word form was invented to avoid is resolved by the parens. See
 `tools/startsites/` for the derivation.
+
+
+## The Tier-1 denominator is currently unverifiable
+
+This suite has claimed a Tier-1 corpus of **3,404 `.go` files** under
+`../go/test/`. **That tree is not mounted here** — it is absent from disk and
+from `.gitmodules` — so the denominator cannot be checked, and the handful of
+adapted fixtures were transcribed by hand rather than derived from it.
+
+Recorded rather than quietly dropped, because a denominator nobody can check is
+the exact shape of a number that drifts into being quoted as fact. Two honest
+resolutions, either acceptable:
+
+- **mount it** as a pinned sibling and let the runner derive the denominator; or
+- **restate the scope** as the fixtures actually present, and describe
+  `../go/test/` as the upstream *source* the corpus is adapted from rather than
+  a suite this repo runs.
+
+Until one of those happens, treat "3,404" as provenance, not coverage.

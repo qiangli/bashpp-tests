@@ -6,7 +6,7 @@
 - **GNU Bash Version:** GNU Bash 5.3 (86/86 fixture suite)
 
 **Headline Claim Target:**  
-`bashy` — a pure-Go Bash 5.3 drop-in + **Go 1.26 compliant/conformant** `bash++` extensions, validated against **POSIX 1003.1-2016**.
+`bashy` — a pure-Go Bash 5.3 drop-in + `bash++` extensions validated against the enumerated **`go1.27-profile-v1`**, validated against **POSIX 1003.1-2016**.
 
 ---
 
@@ -84,7 +84,7 @@ graph TD
 |---|---|---|---|
 | **POSIX 1003.1-2016 Baseline** | VSC-PCTS2016 / `posix` scenario | POSIX shell non-regression | `bashy --posix --bashpp` |
 | **GNU Bash 5.3 Baseline** | `bashy` 86-fixture suite | Bash 5.3 non-regression | `bashy --bashpp` |
-| **Tier 1: Go Language Spec** | `../go/test/` (3,404 files) | `for`, `if`, `chan`, `select`, `defer`, `clear()` | `bashy --bashpp` & `transpile` |
+| **Tier 1: Go language spec** | `../go/test/` (denominator unverified — see README) | `for`, `if`, `chan`, `select`, `defer`, `clear()` | `bashy --bashpp` (interpreted only; no transpile lane) |
 | **Tier 2: Stdlib Integration** | `../go/src/` (`encoding/json`, `strings`, `sync`) | Go bridge & Auto-JSON OS boundary | `bashy --bashpp` |
 | **Diagnostics** | `../go/test/cannotassign.go`, `assign.go` | Parsing/compile error diagnostics | `bashy --bashpp` |
 
@@ -126,10 +126,10 @@ run_dual_test() {
 Once `bashpp-tests` validation passes across Tier 1 and Tier 2, update `bashy/README.md`:
 
 ```markdown
-# bashy — a pure-Go Bash 5.3 drop-in & Go 1.26 compliant shell
+# bashy — a pure-Go Bash 5.3 drop-in with the go1.27-profile-v1 bash++ extensions
 
 `bashy` is a single static binary that runs Bash scripts and interactive sessions.
 It is a **drop-in replacement for GNU Bash 5.3** (100% test suite pass rate: 86/86),
-conforms to **POSIX 1003.1-2016** (IEEE Std 1003.1-2016), and provides **Go 1.26 compliant/conformant**
+conforms to **POSIX 1003.1-2016** (IEEE Std 1003.1-2016), and provides the enumerated **`go1.27-profile-v1`**
 `bash++` extensions.
 ```
