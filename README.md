@@ -12,7 +12,7 @@ To maximize language fidelity while avoiding irrelevant host runtime internals, 
 
 | Tier | Source Directory | Included Scope | Purpose & Rationale |
 |---|---|---|---|
-| **Tier 1 (Mandatory)** | **`../go/test/`** | **100% Language Spec Suite** (3,404 `.go` files) | Validates 1:1 language compliance: `for`, `if`, `switch`, `range`, `defer`, `struct`, `map`, `slice`, `interface`, generics, `go routine`, `chan`, `select`, `clear()`, and `:=` assignments. |
+| **Tier 1 (Mandatory)** | **`../go/test/`** | **100% Language Spec Suite** (3,404 `.go` files) | Validates 1:1 language compliance: `for`, `if`, `switch`, `range`, `defer`, `struct`, `map`, `slice`, `interface`, generics, `go f(x)`, `chan`, `select`, `clear()`, and `:=` assignments. |
 | **Tier 2 (Selective)** | **`../go/src/`** | **Exposed Utility Packages** (~150 `*_test.go` files) | Validates standard library utility packages exposed to `bash++` scripts via builtins & the Go bridge: `encoding/json`, `strings`, `bytes`, `sync`, `math`, `time`. |
 | **Excluded** | **`../go/src/`** | Internal compiler & host OS runtime (`runtime`, `syscall`, `cmd/compile`, assembly) | Internal Go host implementation details not surfaceable to shell scripts. |
 
@@ -71,3 +71,16 @@ To maximize language fidelity while avoiding irrelevant host runtime internals, 
 - [**`TDD_PLAN.md`**](TDD_PLAN.md): Detailed TDD methodology, 1:1 test parity plan, and tiering matrix.
 - [**`PLAN.md`**](PLAN.md): Conformance architecture and dual-mode runner specification.
 - [**`harness/run.sh`**](harness/run.sh): Master test runner script.
+
+## Spelling: exact Go, no substitutes
+
+Constructs are written in **exact Go**. `go f(x)`, not `go routine { … }`;
+`defer f(x)`; `x, err := f()`; `make(chan T, n)`; `select { … }`. The two-word
+and builtin-style forms an earlier draft of this suite used —
+`go routine`, `gather`, `call` — were **abolished** by the L4 addendum in
+`../docs/bashpp-posix-superset-syntax.md`, which is the design of record.
+
+The reason is now measured rather than argued: `go build ./...` **parses** in
+bash 5.3 while `go worker(a, b)` is **already a syntax error**, so the collision
+the two-word form was invented to avoid is resolved by the parens. See
+`tools/startsites/` for the derivation.

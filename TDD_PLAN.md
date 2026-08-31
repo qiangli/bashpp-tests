@@ -9,7 +9,7 @@
 ## 1. Scope Strategy: Tier 1 (Language Spec) vs Tier 2 (Exposed Stdlib)
 
 - **Tier 1 (Mandatory - 1:1 Language Spec):** 100% of `../go/test/` (3,404 `.go` files).
-  - Validates `for`, `if`, `switch`, `range`, `defer`, `struct`, `map`, `slice`, `interface`, generics, `go routine`, `chan`, `select`, `clear()`, and `:=` short assignments.
+  - Validates `for`, `if`, `switch`, `range`, `defer`, `struct`, `map`, `slice`, `interface`, generics, `go f(x)`, `chan`, `select`, `clear()`, and `:=` short assignments.
 - **Tier 2 (Selective - Exposed Stdlib Packages):** Selective `*_test.go` files from `../go/src/` (`encoding/json`, `strings`, `bytes`, `sync`, `math`, `time`).
 - **Excluded:** Internal compiler and host OS runtime packages (`runtime`, `syscall`, `cmd/compile`).
 

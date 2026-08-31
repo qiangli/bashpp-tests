@@ -27,7 +27,7 @@ graph TD
 
 ### Tier 1 (Mandatory - Language Spec Suite):
 - **Source:** `../go/test/` (3,404 `.go` test files).
-- **Scope:** 100% inclusion. Tests language syntax, AST evaluation, control flow (`for`, `if`, `switch`, `range`, `defer`), data structures (`struct`, `map`, `slice`, `interface`), concurrency (`go routine`, `chan`, `select`), `clear()`, and diagnostic error checks (`// errorcheck`).
+- **Scope:** 100% inclusion. Tests language syntax, AST evaluation, control flow (`for`, `if`, `switch`, `range`, `defer`), data structures (`struct`, `map`, `slice`, `interface`), concurrency (`go f(x)`, `chan`, `select`), `clear()`, and diagnostic error checks (`// errorcheck`).
 - **Goal:** Proves 1:1 language specification fidelity.
 
 ### Tier 2 (Selective - Exposed Standard Library Packages):
