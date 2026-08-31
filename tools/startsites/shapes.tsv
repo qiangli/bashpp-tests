@@ -116,3 +116,16 @@ subscript-glob-star	SHELL	subscript	f[*]
 subscript-dash	SHELL	subscript	f[-x]
 subscript-empty	SHELL	subscript	f[]
 subscript-arg-position	SHELL	subscript	echo f[[]x]
+# Recognized-but-UNSUPPORTED Go forms. Their class decides whether Bash++ may
+# diagnose them or must fall back to shell: diagnosing a Class E form would
+# break a working script, while diagnosing a Class R form costs nothing.
+unsup-package	UNSUPPORTED	package	package main
+unsup-goto	UNSUPPORTED	goto	goto Done
+unsup-label	UNSUPPORTED	label	Done:
+unsup-interface	UNSUPPORTED	interface	type R interface { Read() int }
+unsup-method	UNSUPPORTED	method	func (r *R) Read() int { return 0 }
+unsup-pointer-deref	UNSUPPORTED	pointer	x := *p
+unsup-pointer-addr	UNSUPPORTED	pointer	p := &x
+unsup-type-assert	UNSUPPORTED	assert	v := x.(T)
+unsup-dot-import	UNSUPPORTED	import	import . "fmt"
+unsup-blank-import	UNSUPPORTED	import	import _ "fmt"

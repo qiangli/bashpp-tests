@@ -105,4 +105,14 @@ subscript-glob-star	SHELL	subscript	E	accept	accept	yes	f[*]
 subscript-dash	SHELL	subscript	E	accept	accept	yes	f[-x]
 subscript-empty	SHELL	subscript	E	accept	accept	yes	f[]
 subscript-arg-position	SHELL	subscript	E	accept	accept	yes	echo f[[]x]
-# 103 shapes: 36 class R, 67 class E, 5 engine disagreement(s)
+unsup-package	UNSUPPORTED	package	E	accept	accept	yes	package main
+unsup-goto	UNSUPPORTED	goto	E	accept	accept	yes	goto Done
+unsup-label	UNSUPPORTED	label	E	accept	accept	yes	Done:
+unsup-interface	UNSUPPORTED	interface	R	reject	reject	yes	type R interface { Read() int }
+unsup-method	UNSUPPORTED	method	R	reject	reject	yes	func (r *R) Read() int { return 0 }
+unsup-pointer-deref	UNSUPPORTED	pointer	E	accept	accept	yes	x := *p
+unsup-pointer-addr	UNSUPPORTED	pointer	E	accept	accept	yes	p := &x
+unsup-type-assert	UNSUPPORTED	assert	R	reject	reject	yes	v := x.(T)
+unsup-dot-import	UNSUPPORTED	import	E	accept	accept	yes	import . "fmt"
+unsup-blank-import	UNSUPPORTED	import	E	accept	accept	yes	import _ "fmt"
+# 113 shapes: 39 class R, 74 class E, 5 engine disagreement(s)
