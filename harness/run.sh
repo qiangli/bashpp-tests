@@ -170,6 +170,24 @@ else
   POSIX_GATE_RC=1
 fi
 
+# The Go Day-1 table copies its classes from the corpus, so it can go stale
+# without either suite turning red. Advisory here rather than fatal: it needs a
+# sibling sh checkout, and a missing sibling is a layout fact, not a defect.
+# Its own exit code is non-zero on a real disagreement, so CI can gate on it
+# directly when sh is guaranteed present.
+if [ -x "${TEST_DIR}/tools/startsites/verify-day1-table.sh" ] \
+   && [ -f "${SH_DIR:-${TEST_DIR}/../sh}/syntax/bashpp_startsites_test.go" ]; then
+  echo
+  echo "--------------------------------------------------------------------------"
+  echo " Day-1 table: does sh/syntax agree with the measured corpus?"
+  echo "--------------------------------------------------------------------------"
+  if ! "${TEST_DIR}/tools/startsites/verify-day1-table.sh"; then
+    echo "ADVISORY: the Go Day-1 table disagrees with the corpus (see above)." >&2
+    echo "          Not fatal here because this check needs a sibling sh checkout," >&2
+    echo "          but it IS fatal when run directly, which is how CI should gate it." >&2
+  fi
+fi
+
 echo
 echo "--------------------------------------------------------------------------"
 echo " Per-feature breakdown"
