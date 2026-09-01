@@ -1,18 +1,19 @@
 # Known --posix divergences that are NOT Bash++ leaks.
 #
-# Every id here is a PRE-EXISTING bash-5.3 fidelity defect in the engine,
-# present before any extended grammar existed and owned by the certification
-# workstream, not by Bash++. They are listed so the cert-safety gate can stay
-# green for its actual purpose — catching extended grammar reaching the
-# certification profile — instead of being red from birth and therefore ignored.
+# EMPTY, and that is the point: there are currently no known cert-owned
+# divergences. Every shape in the corpus parses identically under --posix in
+# the engine and in real bash 5.3.
 #
-# This is an allowlist, NOT a silence: --posix-gate still prints every one on
-# each run, and it FAILS if a listed id stops diverging, so a fix tightens the
-# gate instead of leaving a stale excuse behind for a real leak to hide in.
+# It held five entries — the command-position NAME[...] defect, where a word
+# like f[[]int] or f[*T] was rejected by the engine and accepted by bash 5.3
+# because the subscript was parsed as arithmetic. Fixed in sh f091034a
+# ("syntax: recover naked bracket words at assignment boundary"), and the gate
+# then FAILED with five STALE lines demanding these rows be removed. That is
+# the ratchet working: an allowlist that only ever loosens is a hole, so a fix
+# is required to tighten it.
+#
+# Add a row here ONLY for a divergence owned by another workstream, with its
+# owner named. The gate prints every entry on every run — an allowlist, never a
+# silence — and fails when a listed id stops diverging.
 #
 # id	owner	defect
-generic-inst-bare-slice	cert	command-position NAME[...] read as arithmetic; bash 5.3 sees a glob word
-generic-inst-bare-map	cert	same
-generic-inst-bare-ptr	cert	same
-subscript-empty-inner	cert	same
-subscript-nested	cert	same
