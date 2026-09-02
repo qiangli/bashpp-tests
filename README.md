@@ -1,6 +1,6 @@
-# bashpp-tests — Go 1.26 & POSIX 1003.1-2016 Conformance Test Suite for bash++
+# bashpp-tests — Go 1.27 profile & POSIX 1003.1-2016 conformance suite for Bash++
 
-This suite implements **Test-Driven Development (TDD)** for **`bash++`** in `bashy`, maintaining **1:1 parity/fidelity** with official **Go 1.26** tests (`../go/test/`), **POSIX 1003.1-2016 (IEEE Std 1003.1-2016 / VSC-PCTS2016)**, and **GNU Bash 5.3**.
+This suite implements **Test-Driven Development (TDD)** for **Bash++** in `bashy`, maintaining the enumerated **Go 1.27 profile** against official Go tests (`../go/test/`), **POSIX 1003.1-2016 (IEEE Std 1003.1-2016 / VSC-PCTS2016)**, and **GNU Bash 5.3**.
 
 > **Headline goal:** validate `bashy`'s `bash++` extensions against the
 > **enumerated `go1.27-profile-v1`** — the Go-1.27-shaped constructs the design
@@ -59,7 +59,7 @@ To maximize language fidelity while avoiding irrelevant host runtime internals, 
 └───────────────────────────────────┬────────────────────────────────────┘
                                     │
 ┌───────────────────────────────────▼────────────────────────────────────┐
-│               Layer 3: Go 1.26 Feature Conformance                     │
+│               Layer 3: Go 1.27 Profile Conformance                     │
 │   1:1 Parity with ../go/test/ (for, chan, select, defer, clear, etc.) │
 └───────────────────────────────────┬────────────────────────────────────┘
                                     │
