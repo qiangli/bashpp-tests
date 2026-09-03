@@ -143,11 +143,43 @@ else
   exit 2
 fi
 
+# Bash# is an executable acceptance denominator, not a collection of optional
+# fixtures. Validate both its closed file set and its tamper resistance before
+# any target-binary check; a missing binary must not hide corpus corruption.
+if [ -x "${TEST_DIR}/tools/bashsharp/validate.sh" ]; then
+  if ! "${TEST_DIR}/tools/bashsharp/validate.sh"; then
+    echo "FATAL: Bash# acceptance matrix validation failed" >&2
+    exit 2
+  fi
+else
+  echo "FATAL: tools/bashsharp/validate.sh missing — Bash# matrix not checked" >&2
+  exit 2
+fi
+if [ -x "${TEST_DIR}/tools/bashsharp/tamper-tests.sh" ]; then
+  if ! "${TEST_DIR}/tools/bashsharp/tamper-tests.sh"; then
+    echo "FATAL: Bash# denominator/tamper tests failed" >&2
+    exit 2
+  fi
+else
+  echo "FATAL: tools/bashsharp/tamper-tests.sh missing — Bash# tamper checks not run" >&2
+  exit 2
+fi
+
 if [ ! -x "${BASHY_BIN}" ]; then
   echo "FATAL: ${BASHY_BIN} is not executable." >&2
   echo "Build it first (cd ../bashy && make build-bash), or set BASHY_BIN." >&2
   echo "This is fatal rather than a skip: a run that measured nothing must not" >&2
   echo "be reportable as a run." >&2
+  exit 2
+fi
+
+if [ -x "${TEST_DIR}/tools/bashsharp/acceptance.sh" ]; then
+  if ! "${TEST_DIR}/tools/bashsharp/acceptance.sh"; then
+    echo "FATAL: Bash# executable acceptance matrix failed" >&2
+    exit 2
+  fi
+else
+  echo "FATAL: tools/bashsharp/acceptance.sh missing — Bash# matrix not executed" >&2
   exit 2
 fi
 
@@ -251,11 +283,14 @@ run_fixture() { # <file> <label> <extra bashy args...>
 # ---------------------------------------------------------------------------
 declare -a POSIX_FILES=() BPP_FILES=()
 if [ -d "${TEST_DIR}/tests/00_superset_posix2016" ]; then
-  while IFS= read -r f; do POSIX_FILES+=("$f"); done \
+while IFS= read -r f; do POSIX_FILES+=("$f"); done \
     < <(find "${TEST_DIR}/tests/00_superset_posix2016" \( -name '*.sh' -o -name '*.bpp' \) | sort)
 fi
+# Bash# has expected negative and inert-mode cases; its dedicated executable
+# gate above owns those outcomes, so the generic supported-fixture loop must
+# not double-grade them as ordinary run fixtures.
 while IFS= read -r f; do BPP_FILES+=("$f"); done \
-  < <(find "${TEST_DIR}/tests" -name '*.bpp' ! -path '*/00_superset_posix2016/*' ! -path '*/_oracles/*' | sort)
+  < <(find "${TEST_DIR}/tests" -name '*.bpp' ! -path '*/00_superset_posix2016/*' ! -path '*/_oracles/*' ! -path '*/bashsharp/*' | sort)
 
 for f in ${POSIX_FILES+"${POSIX_FILES[@]}"}; do run_fixture "$f" "POSIX-2016 superset" --posix --bashpp; done
 for f in ${BPP_FILES+"${BPP_FILES[@]}"};   do run_fixture "$f" "bash++ interpreted"   --bashpp; done

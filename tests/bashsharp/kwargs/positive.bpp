@@ -1,0 +1,5 @@
+func greet(name string, retries int) {
+    printf '%s:%d\n' name retries
+}
+
+greet(name: "Ada", retries: 3)

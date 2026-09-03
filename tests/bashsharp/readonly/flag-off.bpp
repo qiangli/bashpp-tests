@@ -1,0 +1,3 @@
+cfg := map[string]any{"nested": []any{1, 2}}
+readonly cfg
+cfg["nested"][0] = 9

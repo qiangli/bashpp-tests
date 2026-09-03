@@ -1,0 +1,1 @@
+command printf '%s\n' 'type Color enum { Red; Green }'

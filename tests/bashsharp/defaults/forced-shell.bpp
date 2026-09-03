@@ -1,0 +1,1 @@
+command printf '%s\n' 'func greet(name string, retries int = 3) {}'
