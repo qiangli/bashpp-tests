@@ -3,10 +3,9 @@ id: 759341a95870
 kind: task
 title: Execute every applicable pinned Tour example under Go and Bash++
 seq: 4
-status: assigned
+status: todo
 priority: p1
 created: 2026-09-03T09:57:58.477362Z
-weave: 17
 assignee: qiangli
 sprint: 113
 ---
