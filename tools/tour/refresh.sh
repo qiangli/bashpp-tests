@@ -26,7 +26,10 @@ if [ "${inventory_only}" -eq 0 ]; then
 fi
 
 [ -f "${src}/LICENSE" ] || { echo "FATAL: missing upstream LICENSE in ${src}" >&2; exit 2; }
-[ -f "${src}/tutorial/web-service-gin.md" ] || { echo "FATAL: missing tutorial markdown in ${src}" >&2; exit 2; }
+[ "$(find "${src}" -type f -name '*.md' -not -path '*/.git/*' | wc -l | tr -d ' ')" -gt 0 ] || {
+  echo "FATAL: pinned source contains no Markdown pages" >&2
+  exit 2
+}
 
 ruby -rdigest -e '
 root = ARGV.fetch(0)
@@ -49,52 +52,34 @@ Dir.glob("#{root}/**/*.go").sort.each do |file|
   ]
 end
 
-md_path = "#{root}/tutorial/web-service-gin.md"
-lines = File.readlines(md_path, chomp: true)
-in_fence = false
-buf = []
-start_line = 0
-index = 0
-
-lines.each_with_index do |line, i|
-  if line.match?(/^\s*```/)
-    if in_fence
-      text = buf.join("\n") + "\n"
-      if text.include?("package main") || text.match?(/^\s*(type|var|func)\s/m)
-        index += 1
-        path = "tutorial/web-service-gin.md#program-%02d-L%d" % [index, start_line]
-        applicability =
-          if text.include?("github.com/gin-gonic/gin")
-            "excluded_external_dependency"
-          elsif text.include?("package main")
-            "applicable_go_program"
-          else
-            "excluded_fragment"
-          end
-        exception =
-          case applicability
-          when "excluded_external_dependency" then "exception:external_dependency"
-          when "excluded_fragment" then "exception:fragment"
-          else "exception:none"
-          end
-        schema =
-          if applicability == "applicable_go_program"
-            "baseline:go-run;bpp_interpreted:parse-run;bpp_compiled:transpile-build-run"
-          else
-            "baseline:syntax-context-only;bpp_interpreted:not-run;bpp_compiled:not-run"
-          end
-        rows << [path, "markdown_code_program", start_line, applicability, exception, schema, text.bytesize, Digest::SHA256.hexdigest(text)]
+Dir.glob("#{root}/**/*.md").sort.each do |md_path|
+  rel = md_path.delete_prefix(root + "/")
+  lines = File.readlines(md_path, chomp: true)
+  in_fence = false
+  buf = []
+  start_line = 0
+  index = 0
+  lines.each_with_index do |line, i|
+    if line.match?(/^\s*```/)
+      if in_fence
+        text = buf.join("\n") + "\n"
+        if text.include?("package main") || text.match?(/^\s*(type|var|func)\s/m)
+          index += 1
+          path = "%s#program-%02d-L%d" % [rel, index, start_line]
+          applicability = text.include?("github.com/gin-gonic/gin") ? "excluded_external_dependency" : (text.include?("package main") ? "applicable_go_program" : "excluded_fragment")
+          exception = applicability == "excluded_external_dependency" ? "exception:external_dependency" : (applicability == "excluded_fragment" ? "exception:fragment" : "exception:none")
+          schema = applicability == "applicable_go_program" ? "baseline:go-run;bpp_interpreted:parse-run;bpp_compiled:transpile-build-run" : "baseline:syntax-context-only;bpp_interpreted:not-run;bpp_compiled:not-run"
+          rows << [path, "markdown_code_program", start_line, applicability, exception, schema, text.bytesize, Digest::SHA256.hexdigest(text)]
+        end
+        in_fence = false; buf = []
+      else
+        in_fence = true; start_line = i + 2; buf = []
       end
-      in_fence = false
-      buf = []
-    else
-      in_fence = true
-      start_line = i + 2
-      buf = []
+    elsif in_fence
+      buf << line
     end
-  elsif in_fence
-    buf << line
   end
+  abort "FATAL: unterminated Markdown code fence: #{rel}" if in_fence
 end
 
 puts "# release\tgolang/tour@#{commit}"
