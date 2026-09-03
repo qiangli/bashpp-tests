@@ -1,7 +1,10 @@
 # Plan: bash++ Conformance & Testing Framework (Go 1.27 profile + POSIX 1003.1-2016 + GNU Bash 5.3)
 
 **Target Standards & Versions:**
-- **Go Version:** Go 1.27 profile (`go1.27-profile-v1`)
+- **Bashy module compatibility floor:** Go 1.26.5 (`go` directives in
+  `bashy`, `sh`, and `coreutils`)
+- **Go conformance coordinate:** exact Go 1.27.0 corpus and oracle,
+  measuring the enumerated `go1.27-profile-v1`
 - **POSIX Version:** IEEE Std 1003.1-2016 / VSC-PCTS2016 Shell Standard (`POSIX08` profile)
 - **GNU Bash Version:** GNU Bash 5.3 (86/86 fixture suite)
 
@@ -68,7 +71,7 @@ graph TD
         L2B["Transpiled Mode (bashy transpile -> go build)"]
     end
 
-    subgraph Layer 3: Go 1.26 Feature Conformance
+    subgraph Layer 3: Go 1.27.0 Profile Conformance
         L3A["Tier 1: ../go/test/ 1:1 Fixtures"]
         L3B["Tier 2: ../go/src/ Selective Stdlib Tests"]
     end
@@ -91,7 +94,7 @@ graph TD
 
 ---
 
-## 3. Go 1.26 & POSIX Mapping Matrix
+## 3. Go 1.27.0 Profile & POSIX Mapping Matrix
 
 | Test Category | Source Location | bash++ Target Feature | Execution Mode |
 |---|---|---|---|
