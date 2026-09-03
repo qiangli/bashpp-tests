@@ -76,6 +76,12 @@ pinned bytes**. A normalization therefore exists only to cancel variance two
 separate invocations cannot avoid — wall clock, addresses, ephemeral ports,
 scheduler interleaving. It never exists to make a disagreement go away.
 
+The pinned programs have no clock or random-source injection API. The runner
+therefore exports no fictitious seed/clock variables: those rows use narrow
+typed semantic comparators that validate and retain observed values, ranges,
+arity, and order. Normalization is stream-aware; a stdout-only rule is an exact
+no-op for stderr, including an empty stderr stream.
+
 `map_iteration` is declared in the schema and used by exactly one row
 (`range-over-built-in-types`, which prints `for k, v := range kvs`). It is not
 used more widely because `fmt` prints maps in sorted key order, so `maps`,
@@ -84,9 +90,10 @@ used more widely because `fmt` prints maps in sorted key order, so `maps`,
 ### There is no N/A
 
 There is no `applicable` / `exception` / `N/A` column, and no way to reach one.
-Every program row is executed by `tools/go-by-example/gate.sh` under the
-adapters named on its own row, and the only state a bad run can produce is
-FAIL. The validator rejects `n/a`, `N/A`, `PLANNED`, `planned`, `skipped`,
+Every program row is attempted by `tools/go-by-example/gate.sh` under the
+adapters named on its own row, and an unspawned attempt is explicitly missing,
+never executed. The only overall state a bad run can produce is FAIL. The
+validator rejects `n/a`, `N/A`, `PLANNED`, `planned`, `skipped`,
 `unsupported` and `exception` as classification values outright.
 
 `runtime_asset` and `provenance` rows carry `not_a_program` on all three axes.
@@ -127,3 +134,63 @@ and `BASHY_BIN`; every adapter and normalization the schema declares must have
 an implementation registered in the runner, so a term nobody implemented is a
 configuration failure rather than a quietly skipped row; and the count of
 executed programs must equal the count of program rows.
+
+`tools/go-by-example/build-executor.sh` independently builds the reviewed
+Bashy source commit twice with separate Go caches and a path-independent,
+fixed build recipe. It installs only when both builds are byte-identical and
+match the nonzero digest in `executor.tsv`. The executor is bound to the same
+pinned toolchain as the oracle: the reviewed `go_identity` on the executor pin
+must equal the `toolchain.tsv` identity, the resolved builder is authenticated
+by release version, `VERSION` file and binary digest, and both builds run that
+binary directly under `GOTOOLCHAIN=local`. A Go 1.26 provenance record, or an
+ambient Go 1.26 builder, is refused before anything is compiled -- the gate and
+`validate-evidence.rb` refuse the same pin independently.
+
+The gate authenticates the native `go1.27.0` executable against
+`toolchain.tsv`, executes three records per program (oracle, Bash++ interpreted,
+and Bash++ compiled), retains compiled-build provenance with the compiled record,
+bounds and sweeps each process
+group, detects surviving descendants, captures all three observable channels, and writes the complete result
+set to pass/fail-specific `.cache/go-by-example/results.jsonl.{pass,fail}`
+evidence. The executor must match the
+platform artifact digest reviewed into `executor.tsv`; there is intentionally
+no caller-supplied digest override. The gate binds that identity, version,
+corpus, schema, repository-versioned normalizer module, toolchain, source,
+builder and compiled artifact hashes into the
+evidence. Surviving descendants are observed rather than assumed: every child
+inherits one end of a liveness pipe the gate closes immediately after spawn, so
+the read end reaches EOF exactly when the last descendant is gone. A descendant
+that escaped into its own session is invisible to `kill(0, -pgid)` and is still
+reported as a leak. Any timeout, surviving child,
+missing artifact/mode/result, non-UTF-8 stream, exit/status/output mismatch, or
+unregistered schema term is fatal. Complete-but-mismatching attempts are published
+atomically as failing evidence; incomplete attempts stay in the `.fail`
+evidence and never replace opposite-verdict evidence. Each final record declares
+the 255 denominator, the actually spawned numerator, every anchored digest and
+a root digest; `validate-evidence.rb` decodes every raw stream, independently
+recomputes its normalized bytes from the inventory classification and schema,
+then rechecks the derived verdict and result chain
+and requires that root in the reviewed `evidence-roots.tsv`. It is a standalone
+verifier: it hashes and reloads `classification.tsv`, re-derives the behavior
+schema vocabularies, re-checks every behavior/adapter/normalization coupling on
+every program row, requires the inventory's classification columns to be exactly
+the authored table's, and re-runs `tools/go-by-example/validate.sh` itself rather
+than trusting that the gate once did. The classification digest is anchored in
+the schema-6 manifest and summary alongside the corpus, schema, normalizer,
+toolchain and executor digests. Recomputing JSON
+self-hashes or the summary root proves consistency, not production provenance.
+`tools/go-by-example/tamper-tests.sh` runs 24 genuine mutations: missing
+adapters, permissive normalization, spawn failure, forged executors, Go 1.26
+executor pins, missing rows/modes, result tampering, stale raw and stale
+normalized bytes with recomputed roots, unbound classification tables,
+unlicensed adapter coupling, uninventoried corpus files, and timeout/leak
+handling. The leak case is a real survivor, not a forced state: the mutated
+command exits 0 only after a descendant has confirmed it left the process
+group, so the gate's unmodified cleanup, record and publication path is what
+observes the leak.
+
+The current compiler-parity tranche is intentionally red. The authenticated
+evidence in `tests/go-by-example/story198-current.jsonl.fail` records denominator
+255, executed 170, missing/unspawned 85: every compiled-mode command failed to
+spawn because the reviewed executor does not yet implement `--compile`. This
+infrastructure tranche does not close Story #198 and does not claim all modes ran.

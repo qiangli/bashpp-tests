@@ -1,5 +1,6 @@
 # kb index
 
-1 page(s). Search: `bashy kb search <query>` — check before starting a task; `bashy kb retro` after. Pages live under pages/.
+2 page(s). Search: `bashy kb search <query>` — check before starting a task; `bashy kb retro` after. Pages live under pages/.
 
 - [driving-the-official-go-test-corpus-as-an-oracle](pages/driving-the-official-go-test-corpus-as-an-oracle.md) `validated/lesson` Driving the official Go test corpus as an oracle — How to actually execute GOROOT/test/**/*.go with a pinned Go toolchain — WHEN building a conformance oracle against upstream Go tests (keywords: testdir, go corpus, compiledir, rundir, runoutput, GOTOOLCHAIN, importcfg)
+- [fail-closed-differential-gates-distinguish-attempts-from-executi](pages/fail-closed-differential-gates-distinguish-attempts-from-executi.md) `validated/lesson` Fail-closed differential gates distinguish attempts from execution — WHEN a corpus gate has multiple modes per row, allocate every expected path/mode record before verdict, give compile and each run separate child deadlines inside one row deadline, record spawned explicitly, and atomically publish pass/fail evidence containing denominator, executed numerator, anchored hashes, and a root digest. Volatile clock/random data needs typed structural/range/order validation; concurrency normalization must preserve causal subsequences instead of globally sorting output.

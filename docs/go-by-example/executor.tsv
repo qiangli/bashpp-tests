@@ -1,0 +1,6 @@
+# goos	goarch	artifact_sha256	repository	commit	tree	go_identity	build_recipe
+# Reviewed Sprint 98 executor. tools/go-by-example/build-executor.sh checks out
+# this exact commit, proves the tree, builds twice in separate directories with
+# the digest-authenticated Go 1.27.0 toolchain named below, and accepts the
+# artifact only when both independently-produced bytes equal this.
+darwin	arm64	15f69f0c1ed47aed904d515f47bc7b1e3cecd9b73f51ba90024a56815411dba4	https://github.com/qiangli/bashy.git	548aad855f0846c5cec1347dd6c282e772668b1d	7be36a7bad87a596f4b4839dac335b5114d5b9b2	go version go1.27.0 darwin/arm64	CGO_ENABLED=0 go build -trimpath -ldflags=-s,-w,-buildid=,bashVersion=5.3.0(1)-bashy-sprint98,buildID=COMMIT ./cmd/bash

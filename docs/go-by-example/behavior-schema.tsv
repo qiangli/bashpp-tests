@@ -48,8 +48,8 @@ adapter	local_http_origin	-	resolve the program's outbound host to a loopback or
 adapter	loopback_server	-	let the program bind its own port on 127.0.0.1, drive it with a pinned client exchange, then terminate it
 adapter	signal_injector	-	deliver the declared signal once the program has reported readiness
 adapter	exit_status_capture	-	capture the process exit status as a compared channel alongside stdout and stderr
-adapter	seeded_random	-	supply a fixed seed or deterministic source to the program's random generator
-adapter	fake_clock	-	supply a fixed clock origin and monotonic step to both runs
+adapter	seeded_random	-	activate the typed random-stream comparator, retaining every draw while proving arity, type, range, and tail ordering (the pinned program has no seed injection point)
+adapter	fake_clock	-	activate the typed clock comparator, retaining every rendered time and its ordering (the pinned program has no clock injection point)
 adapter	bounded_wait	-	impose a hard deadline so a scheduler stall fails the gate instead of hanging it
 adapter	go_test_runner	-	execute under `go test` rather than `go run`
 #
@@ -67,7 +67,7 @@ normalization	duration	-	replace measured elapsed durations with stable tokens
 normalization	goexit_status	-	compare the `go run` wrapper's "exit status N" line as the process exit code
 normalization	panic_trace	-	compare the panic message line only; goroutine stack frames and addresses are dropped
 normalization	random_stream	-	compare the arity, type and declared range of values drawn from a random source, not their values
-normalization	map_order	-	compare map-derived lines as a sorted multiset
-normalization	interleave_order	-	compare scheduler-interleaved lines as a sorted multiset
+normalization	map_order	-	preserve deterministic prefix/suffix and sort only each map-derived region with exact membership
+normalization	interleave_order	-	validate per-goroutine and per-job causal subsequences while licensing only cross-chain scheduling order
 normalization	throughput_count	-	compare a throughput counter as a positive integer of the declared label, not its value
 normalization	pointer_address	-	replace rendered pointer addresses with a stable token

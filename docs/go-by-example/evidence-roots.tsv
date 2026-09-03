@@ -1,0 +1,6 @@
+# story	evidence	verdict	root_digest
+# A root appears here only after its complete JSONL was produced through the
+# reviewed gate and committed for review.  JSON self-hashes are integrity
+# checks, not authentication; validate-evidence.rb requires this independent
+# repository anchor before it calls an evidence chain authenticated.
+Sprint98/Story198/fa07603b71dc	tests/go-by-example/story198-current.jsonl.fail	fail	884cdeea1559c0ca9c41ad793c0568dfd6a6acc77d9af108aa5352432cbdb04c

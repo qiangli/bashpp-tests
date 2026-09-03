@@ -78,6 +78,18 @@ else
   exit 2
 fi
 
+# Final Go-by-Example verification is never optional: all 85 pinned programs
+# must produce oracle, interpreted, compiled-build, and compiled-run records.
+if [ -x "${TEST_DIR}/tools/go-by-example/gate.sh" ]; then
+  "${TEST_DIR}/tools/go-by-example/gate.sh" || {
+    echo "FATAL: Go by Example three-mode differential failed" >&2
+    exit 2
+  }
+else
+  echo "FATAL: Go by Example final gate missing" >&2
+  exit 2
+fi
+
 # ---------------------------------------------------------------------------
 # GO ORACLE — execute a reviewed tranche of the official Go corpus for real.
 #

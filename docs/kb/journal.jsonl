@@ -1,2 +1,8 @@
 {"op":"add","slug":"driving-the-official-go-test-corpus-as-an-oracle","tool":"claude-opus5-d","host":"dragon","episode":"weave-issue-4","at":"2026-09-03T10:01:29.587946Z"}
 {"op": "validate", "slug": "driving-the-official-go-test-corpus-as-an-oracle", "tool": "claude-opus5", "host": "dragon", "episode": "weave-issue-8", "at": "2026-09-03T10:40:00.000000Z"}
+{"op":"add","slug":"fail-closed-differential-gates-distinguish-attempts-from-executi","tool":"codex-gpt5.6-sol-o","host":"dragon","episode":"weave-issue-15","at":"2026-09-03T12:45:33.875145Z"}
+{"op":"validate","slug":"fail-closed-differential-gates-distinguish-attempts-from-executi","tool":"codex-gpt5.6-sol-o","host":"dragon","episode":"weave-issue-15","at":"2026-09-03T12:45:39.875844Z"}
+{"op":"update","slug":"fail-closed-differential-gates-distinguish-attempts-from-executi","tool":"codex-gpt5.6-sol-p","host":"dragon","episode":"weave-issue-16","at":"2026-09-03T13:05:48.046616Z"}
+{"op":"update","slug":"fail-closed-differential-gates-distinguish-attempts-from-executi","tool":"codex:gpt-5.6-sol-p","host":"dragon","episode":"weave-issue-16","at":"2026-09-03T13:21:22.449873Z"}
+{"op":"validate","slug":"fail-closed-differential-gates-distinguish-attempts-from-executi","tool":"codex:gpt-5.6-sol-p","host":"dragon","episode":"weave-issue-16","at":"2026-09-03T13:41:41.848739Z"}
+{"op":"validate","slug":"fail-closed-differential-gates-distinguish-attempts-from-executi","tool":"codex:gpt-5.6-sol-s","host":"dragon","episode":"weave-issue-19","at":"2026-09-03T14:09:11.236858Z"}
