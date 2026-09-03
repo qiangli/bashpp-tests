@@ -44,14 +44,15 @@ Classification mirrors the upstream oracle `content_test.go`: every file's
 first line must be a `//go:build` comment containing `OMIT`; `nobuild`
 files are exercise skeletons; `norun` files build but are not executed.
 Applicability is classified only against the standing Sprint 98 exceptions
-in `standing-exceptions.tsv` (`none`, `fragment`, `external_dependency`):
+in `standing-exceptions.tsv` (`none`, `fragment`). Official
+`golang.org/x/tour` helper packages are reproducible module dependencies, not
+an exclusion; programs importing them remain in the executable denominator.
 
 | applicability | rule | exception |
 |---|---|---|
 | `applicable_go_program` | builds and runs (OMIT only, stdlib only) | none |
 | `build_only_go_program` | `//go:build norun` — oracle builds, does not run | none |
 | `excluded_fragment` | `nobuild` skeleton, or article inline prose block | fragment |
-| `excluded_external_dependency` | imports `golang.org/x/tour/{pic,reader,tree,wc}` | external_dependency |
 
 ## Differential result schema
 

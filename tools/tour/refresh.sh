@@ -65,7 +65,6 @@ exception_for = {
   "applicable_go_program" => "none",
   "build_only_go_program" => "none",
   "excluded_fragment" => "fragment",
-  "excluded_external_dependency" => "external_dependency",
 }
 
 referenced = Hash.new(0)
@@ -140,7 +139,6 @@ Dir.glob(File.join(tour, "**", "*.go")).sort.each do |file|
 
   applicability =
     if tag.include?("nobuild") then "excluded_fragment"
-    elsif text.include?("golang.org/x/tour") then "excluded_external_dependency"
     elsif tag.include?("norun") then "build_only_go_program"
     else "applicable_go_program"
     end

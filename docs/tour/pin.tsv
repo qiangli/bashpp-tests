@@ -10,4 +10,4 @@
 # scope for this pin.
 #
 # repo	version	commit	go_mod_sum	license	provenance	inventory_rows	inventory_data_sha256
-golang.org/x/website	v0.0.0-20260903033311-c4a9d59f9775	c4a9d59f9775d994f1700d18fa37414c3c85fa7b	h1:sKWEVclFcb47eMWJscLT/RC45vMFwwzgvPlhWHGFXSE=	BSD-3-Clause	official x/website module (go.dev/tour); inventory covers every .go program under _content/tour plus every inline tab-indented lesson block	168	bbce4c34a8e57ca27fd47b3d1b77439950f244aa30f27cd3f62918c966a37e24
+golang.org/x/website	v0.0.0-20260903033311-c4a9d59f9775	c4a9d59f9775d994f1700d18fa37414c3c85fa7b	h1:sKWEVclFcb47eMWJscLT/RC45vMFwwzgvPlhWHGFXSE=	BSD-3-Clause	official x/website module (go.dev/tour); inventory covers every .go program under _content/tour plus every inline tab-indented lesson block	168	a63b57fe844b26387c7eeb511035ed77dbf7255d6250a57cb96d83289965cf78

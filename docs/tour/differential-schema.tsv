@@ -21,4 +21,3 @@ bpp_compiled	transpile-build-run,not-run	Bash++ compiled-mode action.
 applicable_go_program	baseline:go-run;bpp_interpreted:parse-run;bpp_compiled:transpile-build-run
 build_only_go_program	baseline:go-test-or-build;bpp_interpreted:parse-or-run;bpp_compiled:transpile-build-run
 excluded_fragment	baseline:syntax-context-only;bpp_interpreted:not-run;bpp_compiled:not-run
-excluded_external_dependency	baseline:syntax-context-only;bpp_interpreted:not-run;bpp_compiled:not-run
