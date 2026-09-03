@@ -54,6 +54,20 @@ else
   exit 2
 fi
 
+# The committed tour corpus (tour/: executable sources + upstream LICENSE) is
+# checked on every run too: the pinned bytes must still BE the committed
+# bytes, in both directions of the path-set, or the corpus is untrustworthy
+# as the future Bash++ differential input.
+if [ -x "${TEST_DIR}/tools/tour/validate-corpus.sh" ]; then
+  if ! "${TEST_DIR}/tools/tour/validate-corpus.sh"; then
+    echo "FATAL: Go tour corpus validation failed" >&2
+    exit 2
+  fi
+else
+  echo "FATAL: tools/tour/validate-corpus.sh missing — Go tour corpus not checked" >&2
+  exit 2
+fi
+
 if [ -x "${TEST_DIR}/tools/go-by-example/validate.sh" ]; then
   if ! "${TEST_DIR}/tools/go-by-example/validate.sh"; then
     echo "FATAL: Go by Example corpus inventory validation failed" >&2

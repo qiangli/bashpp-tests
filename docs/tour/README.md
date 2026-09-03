@@ -18,8 +18,8 @@ go list -m -json golang.org/x/website@latest   # resolves version + commit
 - module version: `v0.0.0-20260903033311-c4a9d59f9775`
 - commit: `c4a9d59f9775d994f1700d18fa37414c3c85fa7b`
 - go.mod sum: `h1:sKWEVclFcb47eMWJscLT/RC45vMFwwzgvPlhWHGFXSE=`
-- license: BSD-3-Clause (upstream `LICENSE` preserved in provenance; this
-  repository vendors no upstream code, only hashes and metadata)
+- license: BSD-3-Clause (upstream `LICENSE` is preserved verbatim at
+  `tour/LICENSE`; the executable denominator is vendored under `tour/`)
 
 The tour binary's lesson assets are embedded from `_content/tour`
 (`content.go`: `//go:embed _content/tour`); the inventory denominates those
@@ -119,14 +119,53 @@ tools/tour/tamper-tests.sh        # negative self-tests for every gate
   harness run and fails closed on missing, duplicate, unexpected (excluded
   or unknown paths), tampered, non-pass, PLANNED, or unbound records.
 
+## Committed corpus
+
+The pin used to be metadata-only: every executable byte lived in a per-host
+module cache, and this file said so out loud. That made the corpus
+unreproducible without a network and made the BSD-3-Clause claim a promise
+about bytes the repository did not actually carry — redistribution requires
+the license to travel with the code it covers.
+
+[`tour/`](../../tour) now vendors the **executable denominator** verbatim:
+
+- **97 `.go` programs** — every `applicable_go_program` (93) and
+  `build_only_go_program` (4) inventory row — at their upstream
+  `_content/tour/...` paths, copied byte-exact from the pinned module
+  materialization.
+- **`tour/LICENSE`** — the upstream BSD-3-Clause LICENSE, verbatim.
+
+Not vendored, on purpose: the 9 `nobuild` exercise skeletons and the 62
+article inline blocks (both `excluded_fragment` — the oracle's own
+`content_test.go` never executes them), the `.article` lesson prose, the
+static web assets, and any upstream code outside `_content/tour`.
+
+`docs/tour/corpus.tsv` pins what the inventory join cannot: the corpus root,
+the LICENSE digest, and the file counts. `tools/tour/validate-corpus.sh` is
+the offline gate, wired into `harness/run.sh`: it re-proves the inventory
+against the pin's frozen hash first, then demands **path-set equality in both
+directions** (missing files, extra files, same-count renames, and smuggled
+excluded fragments all fail — a count-only check lets every one of those
+through), rejects symlinks and non-regular files standing in for sources,
+and verifies every committed byte count and SHA-256 against its inventory
+row. With `TOUR_ROOT` set it additionally byte-compares every corpus file
+against the pinned source materialization — the proof an offline hash cannot
+give, and the only thing that catches an attacker who edits a source *and*
+repins the inventory hash (the reviewed pin is the trust anchor; that
+residual is asserted explicitly in `tools/tour/corpus-tamper-tests.sh`, all
+18 fail-closed probes).
+
 ## Gates
 
 ```sh
 tools/tour/validate.sh                                   # offline
 TOUR_ROOT=<module cache dir or git clone> tools/tour/validate.sh
+tools/tour/validate-corpus.sh                            # offline (harness-wired)
+TOUR_ROOT=<module cache dir> tools/tour/validate-corpus.sh
 tools/tour/validate-results.sh                           # offline (harness-wired)
 tools/tour/run-baseline.sh                               # explicit baseline execution
 tools/tour/tamper-tests.sh                               # fail-closed self-tests
+tools/tour/corpus-tamper-tests.sh                        # fail-closed corpus self-tests
 tools/tour/refresh.sh                                    # intentional re-pin
 ```
 

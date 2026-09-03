@@ -129,6 +129,12 @@ Sprint 98 Story #1 also pins the official go.dev/tour source — the
 Lesson assets are the programs embedded from `_content/tour`. The tour
 denominator is recorded separately under `docs/tour`, `tests/tour`, and
 `tools/tour` to avoid mixing it with the Go corpus files owned by run #2.
+The executable denominator itself — the 97 `.go` programs the oracle can
+build (93 also run) — plus the upstream BSD-3-Clause LICENSE are committed
+verbatim at upstream paths under `tour/`, pinned by
+`docs/tour/corpus.tsv` and checked byte-exact against the inventory on every
+harness run by `tools/tour/validate-corpus.sh`, so the corpus no longer
+depends on a per-host module cache to exist.
 The fail-closed inventory contains **168 rows**: 106 `.go` programs (lesson
 `.play` programs, exercise solutions, and the UI-served sandbox) plus 62
 inline lesson-prose blocks from the seven `.article` files, classified
