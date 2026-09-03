@@ -34,6 +34,13 @@ echo " bash++ conformance runner"
 echo " Target binary: ${BASHY_BIN}"
 echo "=========================================================================="
 
+if [ -x "${TEST_DIR}/tools/go-corpus/validate.sh" ]; then
+  "${TEST_DIR}/tools/go-corpus/validate.sh"
+else
+  echo "FATAL: tools/go-corpus/validate.sh missing — Go corpus inventory not checked" >&2
+  exit 2
+fi
+
 if [ ! -x "${BASHY_BIN}" ]; then
   echo "FATAL: ${BASHY_BIN} is not executable." >&2
   echo "Build it first (cd ../bashy && make build-bash), or set BASHY_BIN." >&2

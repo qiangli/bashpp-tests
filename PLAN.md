@@ -1,7 +1,7 @@
-# Plan: bash++ Conformance & Testing Framework (Go 1.26 + POSIX 1003.1-2016 + GNU Bash 5.3)
+# Plan: bash++ Conformance & Testing Framework (Go 1.27 profile + POSIX 1003.1-2016 + GNU Bash 5.3)
 
 **Target Standards & Versions:**
-- **Go Version:** Go 1.26 (`go1.26`)
+- **Go Version:** Go 1.27 profile (`go1.27-profile-v1`)
 - **POSIX Version:** IEEE Std 1003.1-2016 / VSC-PCTS2016 Shell Standard (`POSIX08` profile)
 - **GNU Bash Version:** GNU Bash 5.3 (86/86 fixture suite)
 
@@ -12,11 +12,12 @@
 
 ## 1. Test Scope Strategy: Tier 1 (Language Spec) vs Tier 2 (Stdlib)
 
-To achieve 1:1 Go 1.26 compliance efficiently, we divide the Go 1.26 test suite into 2 tiers:
+To build an honest Go 1.27 profile corpus, we divide the pinned Go source
+release into 2 tiers and keep the official corpus denominator machine-checked:
 
 ```mermaid
 graph TD
-    A["Official Go 1.26 Repo (5,297 test files)"] --> B["Tier 1: Language Spec Suite<br>(../go/test/ - 3,404 files)"]
+    A["Official Go 1.27.0 source release"] --> B["Tier 1: Language Spec Suite<br>(go/test/ - 3,398 files)"]
     A --> C["Tier 2: Exposed Stdlib Package Suite<br>(../go/src/ - ~150 files)"]
     A --> D["Excluded Scope<br>(../go/src/ runtime, syscall, cmd/compile)"]
 
@@ -26,9 +27,9 @@ graph TD
 ```
 
 ### Tier 1 (Mandatory - Language Spec Suite):
-- **Source:** `../go/test/` (3,404 `.go` test files).
-- **Scope:** 100% inclusion. Tests language syntax, AST evaluation, control flow (`for`, `if`, `switch`, `range`, `defer`), data structures (`struct`, `map`, `slice`, `interface`), concurrency (`go f(x)`, `chan`, `select`), `clear()`, and diagnostic error checks (`// errorcheck`).
-- **Goal:** Proves 1:1 language specification fidelity.
+- **Source:** pinned Go 1.27.0 source release, `go/test/` (3,398 `.go` files).
+- **Scope:** inventory inclusion for denominator/provenance. Adapted bash++ fixtures remain explicitly declared as `supported` or `planned`; inventory presence alone is not a pass.
+- **Goal:** Prevent silent corpus drift while profile support is implemented incrementally.
 
 ### Tier 2 (Selective - Exposed Standard Library Packages):
 - **Source:** `../go/src/` (~150 `*_test.go` files).
@@ -84,7 +85,7 @@ graph TD
 |---|---|---|---|
 | **POSIX 1003.1-2016 Baseline** | VSC-PCTS2016 / `posix` scenario | POSIX shell non-regression | `bashy --posix --bashpp` |
 | **GNU Bash 5.3 Baseline** | `bashy` 86-fixture suite | Bash 5.3 non-regression | `bashy --bashpp` |
-| **Tier 1: Go language spec** | `../go/test/` (denominator unverified — see README) | `for`, `if`, `chan`, `select`, `defer`, `clear()` | `bashy --bashpp` (interpreted only; no transpile lane) |
+| **Tier 1: Go language spec** | pinned Go 1.27.0 `go/test/` inventory (3,398 files) | `for`, `if`, `chan`, `select`, `defer`, `clear()` | inventory gate plus declared bash++ fixtures |
 | **Tier 2: Stdlib Integration** | `../go/src/` (`encoding/json`, `strings`, `sync`) | Go bridge & Auto-JSON OS boundary | `bashy --bashpp` |
 | **Diagnostics** | `../go/test/cannotassign.go`, `assign.go` | Parsing/compile error diagnostics | `bashy --bashpp` |
 

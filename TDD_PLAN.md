@@ -1,14 +1,14 @@
-# Test-Driven Development (TDD) Plan for bash++ (Go 1.26 Support)
+# Test-Driven Development (TDD) Plan for bash++ (Go 1.27 Profile Support)
 
 **Strategy:** Test-Driven Development (TDD) — **Red → Green → Refactor**  
-**Fidelity Goal:** 1:1 Parity/Fidelity with official **Go 1.26** tests (`../go/test/`)  
+**Fidelity Goal:** incremental bash++ profile support against the pinned official **Go 1.27.0** `go/test/` inventory
 **Target Engine:** `bashy` (`sh/syntax` parser dialect `LangBashPP`, `sh/expand` `Object` values, `sh/interp` goroutine channels)
 
 ---
 
 ## 1. Scope Strategy: Tier 1 (Language Spec) vs Tier 2 (Exposed Stdlib)
 
-- **Tier 1 (Mandatory - 1:1 Language Spec):** 100% of `../go/test/` (3,404 `.go` files).
+- **Tier 1 (Mandatory denominator/provenance):** 100% inventory of Go 1.27.0 `go/test/` (3,398 `.go` files).
   - Validates `for`, `if`, `switch`, `range`, `defer`, `struct`, `map`, `slice`, `interface`, generics, `go f(x)`, `chan`, `select`, `clear()`, and `:=` short assignments.
 - **Tier 2 (Selective - Exposed Stdlib Packages):** Selective `*_test.go` files from `../go/src/` (`encoding/json`, `strings`, `bytes`, `sync`, `math`, `time`).
 - **Excluded:** Internal compiler and host OS runtime packages (`runtime`, `syscall`, `cmd/compile`).
@@ -19,7 +19,7 @@
 
 ```text
  ┌───────────────────────────────────────────────────────────────────────────┐
- │ 1. RED: Add 1:1 Go 1.26 Test Fixture to bashpp-tests/tests/              │
+ │ 1. RED: Add 1:1 Go 1.27 Test Fixture to bashpp-tests/tests/              │
  │    - Copy AST structure, assertions (panic/assertequal), and error checks│
  │    - Run harness -> Assert expected test failure                           │
  └─────────────────────────────────────┬─────────────────────────────────────┘
@@ -40,7 +40,7 @@
 
 ---
 
-## 3. 1:1 Parity Mapping Table (Go 1.26 `../go/test/` → `bashpp-tests/tests/`)
+## 3. Adapted Fixture Mapping Table (Go 1.27.0 `go/test/` → `bashpp-tests/tests/`)
 
 | Go 1.26 Original (`../go/test/`) | bash++ Test Fixture (`bashpp-tests/tests/`) | Go Category & Semantics | Action Header |
 |---|---|---|---|

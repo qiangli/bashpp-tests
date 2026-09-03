@@ -98,18 +98,25 @@ the two-word form was invented to avoid is resolved by the parens. See
 
 ## The Tier-1 denominator is currently unverifiable
 
-This suite has claimed a Tier-1 corpus of **3,404 `.go` files** under
-`../go/test/`. **That tree is not mounted here** — it is absent from disk and
-from `.gitmodules` — so the denominator cannot be checked, and the handful of
-adapted fixtures were transcribed by hand rather than derived from it.
+This suite used to claim a Tier-1 corpus of **3,404 `.go` files** under
+`../go/test/`. That was an unverifiable provenance number. Sprint 98 pins the
+first bounded official corpus slice to **Go 1.27.0 source** and records a
+machine-readable `go/test/**/*.go` inventory in
+[`docs/go-corpus/inventory.tsv`](docs/go-corpus/inventory.tsv). The derived
+fail-closed denominator for that release is **3,398 `.go` files**.
 
 Recorded rather than quietly dropped, because a denominator nobody can check is
-the exact shape of a number that drifts into being quoted as fact. Two honest
-resolutions, either acceptable:
+the exact shape of a number that drifts into being quoted as fact. The honest
+workflow is now:
 
-- **mount it** as a pinned sibling and let the runner derive the denominator; or
-- **restate the scope** as the fixtures actually present, and describe
-  `../go/test/` as the upstream *source* the corpus is adapted from rather than
-  a suite this repo runs.
+- `tools/go-corpus/refresh.sh` is the explicit networked refresh step. It
+  downloads the pinned Go source archive, verifies the published SHA-256,
+  regenerates the inventory, and validates it against the extracted tree.
+- `tools/go-corpus/validate.sh` is the normal offline gate. It checks the
+  checked-in pin and inventory on every harness run and fails closed on a
+  missing, duplicate, malformed, or count-changing row.
 
-Until one of those happens, treat "3,404" as provenance, not coverage.
+The inventory is provenance and a denominator, not a parity claim. Adapted
+fixtures still declare `supported` or `planned` in `tests/manifest.tsv`; no
+unimplemented upstream test is counted as passing merely because it appears in
+the official corpus inventory.

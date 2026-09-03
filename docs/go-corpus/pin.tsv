@@ -1,0 +1,8 @@
+# Official Go test corpus release pin.
+#
+# Reviewed for Sprint 98 / Story 175 on 2026-09-03 against:
+#   https://go.dev/dl/
+#   https://go.dev/doc/go1.27
+#
+# release	kind	filename	url	sha256	test_go_files	license	provenance
+go1.27.0	source	go1.27.0.src.tar.gz	https://go.dev/dl/go1.27.0.src.tar.gz	7002403d7cc44529ef6d26f69a44818263395ead7c16c05a5808ae047ebeb0e5	3398	BSD-3-Clause	official Go source release tarball; inventory covers go/test/**/*.go only
