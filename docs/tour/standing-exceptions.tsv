@@ -1,4 +1,5 @@
+# Standing Sprint 98 exceptions — the only exclusions a tour inventory row may cite.
 # exception	description
 none	Applicable to the differential schema without a Sprint 98 exclusion.
-fragment	Page code is a partial declaration or handler body, not a complete standalone program.
-external_dependency	Page program depends on non-standard external modules, so the pinned denominator records it but the offline differential runner does not fetch or execute it.
+fragment	Upstream marks the file nobuild (oracle refuses to build it: exercise skeleton, not a complete standalone program), or the row is an inline tab-indented snippet inside lesson prose (rendered as static preformatted text, never executed by the tour).
+external_dependency	Program imports golang.org/x/tour support packages (pic, reader, tree, wc) from outside the pinned standard library, so the pinned denominator records it but the offline differential runner does not fetch or execute it.

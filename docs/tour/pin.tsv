@@ -1,7 +1,13 @@
-# Official golang/tour source pin.
+# Official go.dev/tour source pin — golang.org/x/website module.
 #
-# Reviewed for Sprint 98 / Story #1 / Story-ID 2daf9ef04ad4 on 2026-09-03 against:
-#   https://go.googlesource.com/tour
+# Reviewed for Sprint 98 / Story #1 / Story-ID 2daf9ef04ad4 on 2026-09-03.
+# Acquisition (authoritative, reproducible):
+#   go install golang.org/x/website/tour@v0.0.0-20260903033311-c4a9d59f9775
+#   go list -m -json golang.org/x/website@latest   # resolves version + commit
+# Lesson assets are embedded from _content/tour (content.go: //go:embed
+# _content/tour); the inventory denominates those assets, not the live site.
+# The retired golang.org/x/tour repository and its Gin tutorial are out of
+# scope for this pin.
 #
-# repo	ref	commit	license	provenance	inventory_rows	inventory_data_sha256
-golang.org/x/website/tour	master	11c9ad7eadf5e916a1137ad4dcc113f307f27874	BSD-3-Clause	official golang/tour source repository; inventory covers Go source files and Go page-program blocks	16	c3496003bec47406854b86589d48026849cef915afa5136fa1db35af4c75fda4
+# repo	version	commit	go_mod_sum	license	provenance	inventory_rows	inventory_data_sha256
+golang.org/x/website	v0.0.0-20260903033311-c4a9d59f9775	c4a9d59f9775d994f1700d18fa37414c3c85fa7b	h1:sKWEVclFcb47eMWJscLT/RC45vMFwwzgvPlhWHGFXSE=	BSD-3-Clause	official x/website module (go.dev/tour); inventory covers every .go program under _content/tour plus every inline tab-indented lesson block	168	bbce4c34a8e57ca27fd47b3d1b77439950f244aa30f27cd3f62918c966a37e24

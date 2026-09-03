@@ -1,4 +1,24 @@
+# Differential result schema for the pinned go.dev/tour denominator.
+#
+# Sprint 98 / Story #1 / Story-ID 2daf9ef04ad4.
+# Source: golang.org/x/website (module), lesson assets embedded from
+# _content/tour (tour/content.go: //go:embed _content/tour).
+#
+# Section 1 — vocabularies. One row per differential mode field; allowed
+# values are comma-separated. tools/tour/validate.sh derives its accepted
+# vocabulary from these rows, so this file is the single source of truth and
+# cannot drift from the gate.
 # name	allowed_values	description
-baseline	go-test-or-build,go-run,syntax-context-only	Pinned Go behavior to compare against.
+baseline	go-test-or-build,go-run,syntax-context-only	Pinned Go behavior to compare against (x/website content_test.go oracle semantics).
 bpp_interpreted	parse-or-run,parse-run,not-run	Bash++ interpreted-mode action.
 bpp_compiled	transpile-build-run,not-run	Bash++ compiled-mode action.
+#
+# Section 2 — coupling. Each applicability class fixes the full differential
+# schema string for its rows. validate.sh rejects any row whose schema
+# disagrees with its applicability, so a row cannot quietly claim a not-run
+# Bash++ mode while remaining applicable, or run Bash++ while excluded.
+# applicability	required_differential_schema
+applicable_go_program	baseline:go-run;bpp_interpreted:parse-run;bpp_compiled:transpile-build-run
+build_only_go_program	baseline:go-test-or-build;bpp_interpreted:parse-or-run;bpp_compiled:transpile-build-run
+excluded_fragment	baseline:syntax-context-only;bpp_interpreted:not-run;bpp_compiled:not-run
+excluded_external_dependency	baseline:syntax-context-only;bpp_interpreted:not-run;bpp_compiled:not-run
