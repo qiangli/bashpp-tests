@@ -1,0 +1,2 @@
+func greet(name string) {}
+greet("Ada", name: "Grace")

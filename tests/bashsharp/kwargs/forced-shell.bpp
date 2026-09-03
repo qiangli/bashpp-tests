@@ -1,1 +1,0 @@
-command printf '%s\n' 'f(name: "Ada", retries: 3)'

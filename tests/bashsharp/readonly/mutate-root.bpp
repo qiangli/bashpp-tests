@@ -1,0 +1,3 @@
+cfg := map[string]int{"port": 80}
+readonly cfg
+cfg = map[string]int{"port": 443}

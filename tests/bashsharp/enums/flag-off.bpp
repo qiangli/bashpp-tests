@@ -1,7 +1,0 @@
-type Color enum { Red; Green }
-
-func label(c Color) {
-    printf '%s\n' green
-}
-
-label(Green)

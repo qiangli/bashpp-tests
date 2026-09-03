@@ -1,0 +1,7 @@
+# case	fixture	expectation	expected_rc	stdout	stderr
+omitted-default	omitted-default.bpp	run	0	omitted-default.out	empty
+explicit-override	explicit-override.bpp	run	0	explicit-override.out	empty
+keyword-override-interaction	keyword-override-interaction.bpp	run	0	keyword-override-interaction.out	empty
+missing-required	missing-required.bpp	reject	2	empty	missing-required.err
+too-many	too-many.bpp	reject	2	empty	too-many.err
+nontrailing-default	nontrailing-default.bpp	reject	2	empty	nontrailing-default.err

@@ -1,0 +1,7 @@
+# case	driver	expectation	fixture	expected_rc	stdout	stderr
+flow-narrow	checker	exact	flow-narrow.bpp	0	empty	empty
+false-positive-guards	checker	exact	false-positive-guards.bpp	0	empty	empty
+reassign-after-narrow	checker	exact	reassign-after-narrow.bpp	2	empty	reassign-after-narrow.err
+unsafe-deref	checker	exact	unsafe-deref.bpp	2	empty	unsafe-deref.err
+unsafe-index	checker	exact	unsafe-index.bpp	2	empty	unsafe-index.err
+unsafe-call	checker	exact	unsafe-call.bpp	2	empty	unsafe-call.err

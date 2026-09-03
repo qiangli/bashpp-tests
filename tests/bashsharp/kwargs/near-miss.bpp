@@ -1,1 +1,1 @@
-f(name "Ada", retries: 3)
+greet name: Ada

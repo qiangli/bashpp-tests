@@ -1,0 +1,11 @@
+# case	driver	expectation	fixture	expected_rc	stdout	stderr
+exhaustive	engine	exact	exhaustive.bpp	0	exhaustive.out	empty
+default-arm	engine	exact	default-arm.bpp	0	default-arm.out	empty
+nested-switch	engine	exact	nested-switch.bpp	0	nested-switch.out	empty
+invalid-member	engine	exact	invalid-member.bpp	2	empty	invalid-member.err
+duplicate-member	engine	exact	duplicate-member.bpp	2	empty	duplicate-member.err
+non-exhaustive	engine	exact	non-exhaustive.bpp	2	empty	non-exhaustive.err
+invalid-value	engine	exact	invalid-value.bpp	2	empty	invalid-value.err
+near-miss	engine	plain-parity	near-miss.bpp	plain	plain	plain
+forced-command	engine	plain-parity	forced-command.bpp	plain	plain	plain
+forced-quote	engine	plain-parity	forced-quote.bpp	plain	plain	plain

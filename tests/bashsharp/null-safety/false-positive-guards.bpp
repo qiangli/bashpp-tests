@@ -1,0 +1,9 @@
+func positive(p *int) bool {
+    return p != nil && *p > 0
+}
+func first(xs []string) string {
+    if xs == nil || len(xs) == 0 {
+        return ""
+    }
+    return xs[0]
+}

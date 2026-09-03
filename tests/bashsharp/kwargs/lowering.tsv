@@ -1,0 +1,7 @@
+# case	fixture	expectation	expected_rc	stdout	stderr
+bind-reordered	bind-reordered.bpp	run	0	bind-reordered.out	empty
+ordinary-positional-interaction	ordinary-positional-interaction.bpp	run	0	ordinary-positional-interaction.out	empty
+unknown-name	unknown-name.bpp	reject	2	empty	unknown-name.err
+duplicate-name	duplicate-name.bpp	reject	2	empty	duplicate-name.err
+duplicate-binding	duplicate-binding.bpp	reject	2	empty	duplicate-binding.err
+missing-required	missing-required.bpp	reject	2	empty	missing-required.err

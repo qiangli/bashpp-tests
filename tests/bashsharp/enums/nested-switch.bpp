@@ -1,0 +1,16 @@
+type Color enum { Red; Green }
+type Shade enum { Light; Dark }
+func label(c Color, s Shade) string {
+    switch c {
+    case Red:
+        return "red"
+    case Green:
+        switch s {
+        case Light:
+            return "light-green"
+        case Dark:
+            return "dark-green"
+        }
+    }
+}
+printf '%s\n' label(Green, Dark)

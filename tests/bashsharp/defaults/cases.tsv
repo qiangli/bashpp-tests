@@ -1,0 +1,8 @@
+# case	driver	expectation	fixture	expected_rc	stdout	stderr
+omitted-default	engine	exact	omitted-default.bpp	0	omitted-default.out	empty
+explicit-override	engine	exact	explicit-override.bpp	0	explicit-override.out	empty
+keyword-override-interaction	engine	exact	keyword-override-interaction.bpp	0	keyword-override-interaction.out	empty
+missing-required	engine	exact	missing-required.bpp	2	empty	missing-required.err
+too-many	engine	exact	too-many.bpp	2	empty	too-many.err
+nontrailing-default	engine	exact	nontrailing-default.bpp	2	empty	nontrailing-default.err
+near-miss	engine	plain-parity	near-miss.bpp	plain	plain	plain

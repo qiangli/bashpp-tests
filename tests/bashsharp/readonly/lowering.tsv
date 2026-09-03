@@ -1,0 +1,9 @@
+# case	fixture	expectation	expected_rc	stdout	stderr
+deep-read	deep-read.bpp	run	0	deep-read.out	empty
+mutate-root	mutate-root.bpp	run	2	empty	mutate-root.err
+mutate-map	mutate-map.bpp	run	2	empty	mutate-map.err
+mutate-slice	mutate-slice.bpp	run	2	empty	mutate-slice.err
+mutate-struct	mutate-struct.bpp	run	2	empty	mutate-struct.err
+mutate-alias	mutate-alias.bpp	run	2	empty	mutate-alias.err
+mutate-subshell	mutate-subshell.bpp	run	2	empty	mutate-subshell.err
+mutate-imported	mutate-imported.bpp	run	2	empty	mutate-imported.err
