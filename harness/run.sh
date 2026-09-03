@@ -130,6 +130,19 @@ else
   exit 2
 fi
 
+# Story #4's three-mode JSONL ledger is validated independently from its
+# producer. A FAIL verdict is honest evidence (and expected while the Bash++
+# compiler is absent); structural/authenticity failure is fatal.
+if [ -x "${TEST_DIR}/tools/tour/validate-evidence.sh" ]; then
+  if ! "${TEST_DIR}/tools/tour/validate-evidence.sh"; then
+    echo "FATAL: Tour JSONL evidence validation failed" >&2
+    exit 2
+  fi
+else
+  echo "FATAL: tools/tour/validate-evidence.sh missing — Tour evidence not checked" >&2
+  exit 2
+fi
+
 if [ ! -x "${BASHY_BIN}" ]; then
   echo "FATAL: ${BASHY_BIN} is not executable." >&2
   echo "Build it first (cd ../bashy && make build-bash), or set BASHY_BIN." >&2

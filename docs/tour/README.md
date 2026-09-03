@@ -169,6 +169,69 @@ tools/tour/corpus-tamper-tests.sh                        # fail-closed corpus se
 tools/tour/refresh.sh                                    # intentional re-pin
 ```
 
+## Three-mode JSONL evidence
+
+Sprint 98 / Story #4 records exactly 97 programs by three modes (291
+attempts) in `tests/tour/evidence.jsonl`. Its manifest binds the inventory,
+the accepted pinned-Go observation file and pin, the exact Go 1.27 binary
+(cross-checked against `docs/tour/toolchain.tsv`, not just self-consistency —
+a Go 1.26 binary rejects), the exact Bashy executable, and the versioned
+normalizer checksum. Each attempt retains base64 raw stdout and stderr,
+spawn/state/exit facts, and derived normalized bytes and hashes.
+
+`bpp_compiled` is a real three-stage pipeline, not a single command: bashy
+**transpiles** the pinned Go source, the exact pinned Go 1.27 toolchain
+**builds** the transpiled output, and the resulting binary is **executed**.
+The recorded raw/state/exit belong to whichever stage is authoritative — the
+first stage that fails to produce its declared artifact, or the executed
+binary itself when every stage succeeds — never just the transpiler's own
+output.
+
+Evidence generation requires a clean, published, reproducible Bashy binary
+(`bashy self fetch`, or any build whose `--version` names a release tag with
+no `-dirty` suffix); a workspace dev build is refused before a single
+attempt runs. `BASHPP_BIN` must be set explicitly — there is no dev-binary
+fallback.
+
+`tools/tour/validate-evidence.sh` runs two independent layers, neither of
+which trusts the producer:
+
+- **Structural** — revalidates the accepted baseline, decodes every raw
+  stream, runs the pinned normalizer again, rebuilds comparison outcomes,
+  coverage, summary, evidence root and verdict, and checks mode-specific
+  executable/command binding (including the transpile/build/run pipeline
+  binding for `compiled`). This alone cannot detect a ledger whose raw bytes
+  were copied between rows — a copy is internally consistent, so every
+  recomputed hash still balances. Builder provenance is re-derived from the
+  live binaries, not the manifest: the Go builder's `go version` output and
+  the bashy `--version` output are both re-executed and cross-checked against
+  `docs/tour/toolchain.tsv` and the published-release/dirty parse, so a Go
+  1.26 builder, a dev/dirty bashy, or a fabricated version string paired
+  with a true checksum is refused however internally consistent the ledger is.
+- **Process (replay)** — re-executes every one of the 291 attempts for real,
+  against a freshly materialized module, using the exact pinned Go 1.27
+  binary and the exact bashy binary named in the manifest, and requires the
+  fresh spawn/state/exit (and, for the two Bash++ modes, the fresh
+  normalized output) to match what the ledger recorded. A forged row's raw
+  bytes did not come from executing *its own* bound command, so replaying
+  that command reproduces different bytes and the row is rejected — the
+  external attestation the structural layer alone cannot provide. Only
+  pinned-Go baseline rows tolerate byte drift (official Go programs are not
+  all deterministic), and only once their spawn/state/exit already match a
+  fresh run.
+
+A missing Bash++ compiler remains a checked-in, structurally valid `FAIL`
+verdict rather than disappearing as a skip or an aborted run.
+
+```sh
+tools/tour/run-evidence.sh
+tools/tour/validate-evidence.sh
+tools/tour/evidence-selftests.sh    # real launch/deadline/process-tree probes
+tools/tour/evidence-tamper-tests.sh # rejects synthetic equality AND full-ledger
+                                    # baseline-cloning forgery (real per-row
+                                    # commands, forged process/raw fields)
+```
+
 `TOUR_ROOT` mode re-derives the inventory from a local source (module cache
 directory or git clone at the pinned commit) and diffs it against the
 checked-in denominator. The refresh extractor is itself fail-closed:

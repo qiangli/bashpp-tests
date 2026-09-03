@@ -5,4 +5,7 @@
 {"op":"update","slug":"fail-closed-differential-gates-distinguish-attempts-from-executi","tool":"codex-gpt5.6-sol-p","host":"dragon","episode":"weave-issue-16","at":"2026-09-03T13:05:48.046616Z"}
 {"op":"update","slug":"fail-closed-differential-gates-distinguish-attempts-from-executi","tool":"codex:gpt-5.6-sol-p","host":"dragon","episode":"weave-issue-16","at":"2026-09-03T13:21:22.449873Z"}
 {"op":"validate","slug":"fail-closed-differential-gates-distinguish-attempts-from-executi","tool":"codex:gpt-5.6-sol-p","host":"dragon","episode":"weave-issue-16","at":"2026-09-03T13:41:41.848739Z"}
+{"op":"add","slug":"authenticate-volatile-execution-evidence-without-erasing-it","tool":"codex:gpt-5.6-sol-r","host":"dragon","episode":"weave-issue-18","at":"2026-09-03T14:03:09.611554Z"}
+{"op":"validate","slug":"authenticate-volatile-execution-evidence-without-erasing-it","tool":"codex:gpt-5.6-sol-r","host":"dragon","episode":"weave-issue-18","at":"2026-09-03T14:03:15.491454Z"}
 {"op":"validate","slug":"fail-closed-differential-gates-distinguish-attempts-from-executi","tool":"codex:gpt-5.6-sol-s","host":"dragon","episode":"weave-issue-19","at":"2026-09-03T14:09:11.236858Z"}
+{"op":"validate","slug":"authenticate-volatile-execution-evidence-without-erasing-it","tool":"claude-sonnet5","host":"dragon","episode":"weave-issue-22","at":"2026-09-03T14:55:10Z","note":"corrected: self-consistency alone is insufficient; added replay authentication"}
