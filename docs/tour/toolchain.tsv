@@ -1,0 +1,19 @@
+# Exact Go toolchain pin for the tour Go baseline (Story #5, supersedes weave 6).
+#
+# The baseline is only meaningful under the exact pinned toolchain: a run
+# under any other Go is not the pinned Go baseline and must fail closed.
+# Identity is the FULL `go version` output; the checksum is SHA-256 of the
+# executing go binary itself. One row per measured platform; a platform
+# without a row is unsupported, not degraded.
+#
+# Acquisition (official, reproducible):
+#   GOTOOLCHAIN=go1.27.0 go env GOROOT   # resolves (downloading if needed)
+#   the golang.org/toolchain module from proxy.golang.org; the baseline
+#   binary is $GOROOT/bin/go.
+#
+# Reviewed for Sprint 98 / Story #5 / Story-ID 4895df27bdb9 on 2026-09-03
+# against https://go.dev/dl/ (go1.27.0 source release, pinned for the Go
+# corpus in docs/go-corpus/pin.tsv at 7002403d7cc44529ef6d26f69a44818263395ead).
+#
+# goos	goarch	version	identity	go_bin_sha256	acquisition	provenance
+darwin	arm64	go1.27.0	go version go1.27.0 darwin/arm64	a19a71df81715c12d9a7e81bab036c12696fec1ddbd4258b48a2131a9080b267	GOTOOLCHAIN=go1.27.0 (golang.org/toolchain@v0.0.1-go1.27.0.darwin-arm64 via proxy.golang.org)	official Go toolchain module; measured on this host 2026-09-03; exact go version output and SHA-256 of bin/go recorded

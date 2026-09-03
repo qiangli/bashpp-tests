@@ -1,0 +1,14 @@
+# Official go.dev/tour helper module dependencies — pinned reference (Story #5).
+#
+# Retained verbatim from the rejected weave 6 inventory review: the pinned
+# x/website go.mod itself requires golang.org/x/tour v0.1.0, and these are
+# the ONLY non-stdlib imports in the executable tour denominator
+# (pic, reader, tree, wc). They are official module dependencies, not
+# vendored copies and not an exclusion: rows importing them stay executable.
+#
+# Reviewed for Sprint 98 / Story #5 / Story-ID 4895df27bdb9 on 2026-09-03.
+# Sums verified against the pinned x/website go.sum
+# (golang.org/x/website@v0.0.0-20260903033311-c4a9d59f9775).
+#
+# module	version	license	go_mod_sum	zip_sum	packages	provenance
+golang.org/x/tour	v0.1.0	BSD-3-Clause	h1:DUZC6G8mR1AXgXy73r8qt/G5RsefKIlSj6jBMc8b9Wc=	h1:OWzbINRoGf1wwBhKdFDpYwM88NM0d1SL/Nj6PagS6YE=	pic,reader,tree,wc	official module required by the pinned x/website go.mod; acquired from proxy.golang.org; upstream LICENSE preserved in the module (BSD-3-Clause, Go Authors 2011)

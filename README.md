@@ -196,3 +196,16 @@ file executed a command, and when no command was spawned at all — and every fa
 path still writes a machine-readable summary carrying the executed and failed
 counts reached so far. See [`docs/go-oracle/README.md`](docs/go-oracle/README.md)
 for the semantics table, the selection rule and the result schema.
+
+Sprint 98 Story #5 supersedes the rejected weave 6 with **runner
+infrastructure, not parity evidence**: `tools/tour/run-baseline.sh` executes
+the pinned-Go baseline for the 93 applicable and 4 build-only rows under an
+exactly pinned Go 1.27 toolchain (full identity + binary checksum in
+`docs/tour/toolchain.tsv`) with the official `golang.org/x/tour` helper
+module pinned in `docs/tour/helpers.tsv`, bounded process-tree cleanup,
+strict-UTF-8 stream capture (invalid bytes are rejected, never replaced),
+and per-row records in `tests/tour/results.tsv` bound by
+`docs/tour/baseline-pin.tsv`. `tools/tour/validate-results.sh` re-proves
+those records offline on every harness run, and
+`tools/tour/tamper-tests.sh` proves the gates fail closed under tampering.
+The Bash++ differential modes remain declared but unexecuted.

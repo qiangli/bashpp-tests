@@ -79,6 +79,21 @@ else
   exit 2
 fi
 
+# Tour Go-baseline results: offline tamper-evident check that the checked-in
+# records still bind to the pinned inventory revision, the exact pinned Go
+# toolchain identity+checksum and the official helper module. Executing the
+# baseline itself is the explicit tools/tour/run-baseline.sh step; this gate
+# runs on every invocation so a stale or edited results file fails the run.
+if [ -x "${TEST_DIR}/tools/tour/validate-results.sh" ]; then
+  if ! "${TEST_DIR}/tools/tour/validate-results.sh"; then
+    echo "FATAL: Go tour baseline results validation failed" >&2
+    exit 2
+  fi
+else
+  echo "FATAL: tools/tour/validate-results.sh missing — Go tour baseline results not checked" >&2
+  exit 2
+fi
+
 if [ ! -x "${BASHY_BIN}" ]; then
   echo "FATAL: ${BASHY_BIN} is not executable." >&2
   echo "Build it first (cd ../bashy && make build-bash), or set BASHY_BIN." >&2
