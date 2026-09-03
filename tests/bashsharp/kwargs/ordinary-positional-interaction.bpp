@@ -1,0 +1,6 @@
+func pair(left string, right string) {
+    printf '%s/%s\n' left right
+}
+
+pair("ordinary", "go")
+pair("ordinary", right: "named")

@@ -1,0 +1,3 @@
+cfg := map[string]map[string]int{"nested": {"port": 80}}
+readonly cfg
+cfg["nested"]["port"] = 443

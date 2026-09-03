@@ -1,6 +1,6 @@
-# id	feature	positive	near_miss	forced_shell	flag_off	unsupported	checker	lowering	expected_rc	expected_output
-kwargs	keyword-arguments	kwargs/positive.bpp	kwargs/near-miss.bpp	kwargs/forced-shell.bpp	kwargs/flag-off.bpp	kwargs/unsupported.bpp	none	kwargs/positive.bpp	0	kwargs/positive.out
-defaults	default-parameters	defaults/positive.bpp	defaults/near-miss.bpp	defaults/forced-shell.bpp	defaults/flag-off.bpp	defaults/unsupported.bpp	none	defaults/positive.bpp	0	defaults/positive.out
-readonly	deep-readonly	readonly/positive.bpp	readonly/near-miss.bpp	readonly/forced-shell.bpp	readonly/flag-off.bpp	readonly/unsupported.bpp	none	readonly/positive.bpp	0	readonly/positive.out
-enums	exhaustive-enums	enums/positive.bpp	enums/near-miss.bpp	enums/forced-shell.bpp	enums/flag-off.bpp	enums/unsupported.bpp	none	enums/positive.bpp	0	enums/positive.out
-null-safety	null-safety	null-safety/positive.bpp	null-safety/near-miss.bpp	null-safety/forced-shell.bpp	null-safety/flag-off.bpp	null-safety/unsupported.bpp	null-safety/positive.bpp	null-safety/positive.bpp	0	null-safety/positive.out
+# id	feature	class	cases	lowering
+kwargs	keyword-arguments	R	kwargs/cases.tsv	kwargs/lowering.tsv
+defaults	default-parameters	R	defaults/cases.tsv	defaults/lowering.tsv
+readonly	deep-readonly	E	readonly/cases.tsv	readonly/lowering.tsv
+enums	exhaustive-enums	E	enums/cases.tsv	enums/lowering.tsv
+null-safety	null-safety	checker	null-safety/cases.tsv	null-safety/lowering.tsv

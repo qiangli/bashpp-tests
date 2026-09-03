@@ -1,0 +1,5 @@
+func deref(p *int, replacement *int) int {
+    if p == nil { return 0 }
+    p = replacement
+    return *p
+}

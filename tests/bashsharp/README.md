@@ -1,39 +1,81 @@
 # Bash# executable acceptance matrix
 
-This directory is the executable acceptance boundary for the five Bash#
-features accepted by the design of record:
+This directory is the test-contract boundary for the five and only five Bash#
+features approved for Sprint 114: keyword arguments, default parameters, deep
+readonly, exhaustive enums, and null-safety checking. Fixtures intentionally
+describe the design contract; they may remain red until implementation lands.
+A red fixture must not be deleted, skipped, or weakened to match a current
+binary.
 
-1. keyword arguments;
-2. default parameters;
-3. deep readonly;
-4. exhaustive enums; and
-5. null-safety checking.
+`matrix.tsv` has exactly five feature rows. Each row names a closed
+`cases.tsv` interpreted ledger and a separately closed `lowering.tsv` ledger.
+The per-family ledgers expand the denominator without turning required cases
+into extra feature rows. The validator rejects missing and unreferenced
+fixtures, changed case sets, vague diagnostics, zero-case ledgers, fake shell
+escapes, and loss of either phase.
 
-`matrix.tsv` is deliberately a small, closed denominator. Every feature has a
-positive case, a near-miss, a forced-shell escape, an invocation with the
-Bash++ selector disabled, an inert POSIX invocation, an unsupported-form
-diagnostic, and a transpile/build/run parity check. Null safety additionally
-uses the `check` command because it is a static rule and has no new syntax.
+## Sprint 114: interpreted semantics
 
-Run the executable gate with:
+Run:
 
 ```sh
-BASHY_BIN=/path/to/bashy tools/bashsharp/acceptance.sh
+BASH_ENGINE_BIN=/path/to/bash BASHY_BIN=/path/to/bashy \
+  tools/bashsharp/acceptance.sh
 ```
 
-The gate is fail-closed. It requires a real executable target, exactly five
-matrix rows, all fixture files, no `planned`/`skip` status, and a successful
-selector probe. A missing selector or a missing compiler is a failure, never a
-planned result. The target must be run from each fixture's directory so that
-relative imports and source locations retain their meaning.
+`BASH_ENGINE_BIN` is the bash-compatible shell engine. It owns script
+execution under plain, `--bashpp`, and `--posix --bashpp` modes. `BASHY_BIN` is
+the bashy front door and is used only for `bashy check --bashpp`, because null
+safety is a checker rule with no syntax. The Sprint 114 gate never invokes
+`transpile` and does not require a Go compiler.
 
-The plain-shell result is captured for each near-miss and escape. Bash++ must
-match that result byte-for-byte, including exit status. POSIX+Bash++ must also
-match the plain result, proving the ergonomics tier is inert in certification
-mode. Positive and lowering cases require exact expected output and equal
-interpreted/compiled exit status.
+For every source fixture the gate captures status, stdout, and stderr from the
+plain/POSIX-off engine and from `--posix --bashpp`. Those results must be
+byte-identical. This is the POSIX inertness oracle:
 
-The top-level harness invokes the schema and tamper gates before checking the
-target binary, then invokes this executable gate once the binary is available.
-Thus a missing compiler cannot conceal a malformed denominator, while an
-unavailable Bash++ selector remains a hard failure rather than a skip.
+```text
+bash fixture  ==  bash --posix --bashpp fixture
+```
+
+The POSIX result is never compared with enabled Bash++ semantics or Bash#
+diagnostics. Positive and invalid Bash# cases run separately under `--bashpp`;
+invalid cases have exact one-line diagnostics with stable `BASHPP-E…` codes.
+Near misses compare enabled Bash++ with plain shell behavior. Every positive
+engine case is also required to differ from its selector-off result, so a no-op
+runner cannot make the gate green. Checker negatives prove null-safety
+activation by requiring their exact diagnostic under `--bashpp` and forbidding
+that diagnostic code with the selector off.
+
+Only `type Color enum { … }` has an escape obligation: it is Class E and rides
+the committed `type` start site. `enums/forced-command.bpp` and
+`enums/forced-quote.bpp` execute the escaped command forms. Keyword arguments
+and defaults are Class R and require no escape; readonly extends an existing
+builtin without new grammar; null safety is checker-only. Printing a Bash#
+source string is not an escape test and is rejected by validation.
+
+Coverage is contractual: kwargs/defaults include binding errors and their
+interaction; readonly covers nested maps, slices, structs, aliases, subshells,
+and imported values across mutation paths; enums cover invalid and duplicate
+members plus exhaustive, default, nested, and invalid-value cases; null safety
+covers flow narrowing, reassignment, dereference, index, call, and
+false-positive guards.
+
+## Sprint 117: lowering and parity
+
+Run separately:
+
+```sh
+BASH_ENGINE_BIN=/path/to/bash BASHY_BIN=/path/to/bashy \
+  tools/bashsharp/lowering.sh
+```
+
+This gate fails closed if the bashy front door, `transpile`, Go compiler,
+generated source, deterministic second lowering, build, or interpreted versus
+compiled byte parity is missing. Keeping it separate prevents Sprint 114 from
+demanding a transpile command that belongs to Sprint 117 while preserving an
+executable lowering obligation.
+
+Rejected Bash# proposals remain excluded: comprehensions, ternary, `match`,
+try/catch, operator or method overloading, inheritance, async/await, optional
+chaining, nullish operators, decorators, arrows, and a separate Bash# mode.
+There are no `planned`, `skip`, or `n/a` rows.

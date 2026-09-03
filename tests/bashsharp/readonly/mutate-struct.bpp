@@ -1,0 +1,4 @@
+type Config struct { Name string }
+cfg := Config{Name: "prod"}
+readonly cfg
+cfg.Name = "dev"

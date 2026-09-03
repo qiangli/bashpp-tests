@@ -1,0 +1,4 @@
+import "net/url"
+endpoint, _ := url.Parse("https://example.test/original")
+readonly endpoint
+endpoint.Host = "changed.test"

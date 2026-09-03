@@ -1,1 +1,1 @@
-type Color enu { Red; Green }
+type Color enu '{' Red ';' Green '}'

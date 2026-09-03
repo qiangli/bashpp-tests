@@ -1,0 +1,8 @@
+# case	driver	expectation	fixture	expected_rc	stdout	stderr
+bind-reordered	engine	exact	bind-reordered.bpp	0	bind-reordered.out	empty
+ordinary-positional-interaction	engine	exact	ordinary-positional-interaction.bpp	0	ordinary-positional-interaction.out	empty
+unknown-name	engine	exact	unknown-name.bpp	2	empty	unknown-name.err
+duplicate-name	engine	exact	duplicate-name.bpp	2	empty	duplicate-name.err
+duplicate-binding	engine	exact	duplicate-binding.bpp	2	empty	duplicate-binding.err
+missing-required	engine	exact	missing-required.bpp	2	empty	missing-required.err
+near-miss	engine	plain-parity	near-miss.bpp	plain	plain	plain

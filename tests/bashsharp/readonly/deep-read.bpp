@@ -1,0 +1,10 @@
+type Metadata struct { Name string }
+type Config struct { Meta Metadata; Ports []int; Labels map[string]string }
+cfg := Config{
+    Meta: Metadata{Name: "prod"},
+    Ports: []int{80, 443},
+    Labels: map[string]string{"tier": "edge"},
+}
+readonly cfg
+alias := cfg
+printf '%s:%d:%s\n' alias.Meta.Name alias.Ports[1] alias.Labels["tier"]

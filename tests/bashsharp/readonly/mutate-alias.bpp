@@ -1,0 +1,4 @@
+cfg := map[string][]int{"ports": {80, 443}}
+alias := cfg
+readonly cfg
+alias["ports"][0] = 8080

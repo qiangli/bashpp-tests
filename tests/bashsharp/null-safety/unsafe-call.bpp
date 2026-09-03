@@ -1,0 +1,3 @@
+func invoke(fn func() int) int {
+    return fn()
+}

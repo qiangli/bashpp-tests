@@ -1,0 +1,7 @@
+# case	fixture	expectation	expected_rc	stdout	stderr
+flow-narrow	flow-narrow.bpp	run	0	empty	empty
+false-positive-guards	false-positive-guards.bpp	run	0	empty	empty
+reassign-after-narrow	reassign-after-narrow.bpp	reject	2	empty	reassign-after-narrow.err
+unsafe-deref	unsafe-deref.bpp	reject	2	empty	unsafe-deref.err
+unsafe-index	unsafe-index.bpp	reject	2	empty	unsafe-index.err
+unsafe-call	unsafe-call.bpp	reject	2	empty	unsafe-call.err

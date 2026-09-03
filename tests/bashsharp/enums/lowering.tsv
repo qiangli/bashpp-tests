@@ -1,0 +1,8 @@
+# case	fixture	expectation	expected_rc	stdout	stderr
+exhaustive	exhaustive.bpp	run	0	exhaustive.out	empty
+default-arm	default-arm.bpp	run	0	default-arm.out	empty
+nested-switch	nested-switch.bpp	run	0	nested-switch.out	empty
+invalid-member	invalid-member.bpp	reject	2	empty	invalid-member.err
+duplicate-member	duplicate-member.bpp	reject	2	empty	duplicate-member.err
+non-exhaustive	non-exhaustive.bpp	reject	2	empty	non-exhaustive.err
+invalid-value	invalid-value.bpp	reject	2	empty	invalid-value.err

@@ -1,0 +1,10 @@
+# case	driver	expectation	fixture	expected_rc	stdout	stderr
+deep-read	engine	exact	deep-read.bpp	0	deep-read.out	empty
+mutate-root	engine	exact	mutate-root.bpp	2	empty	mutate-root.err
+mutate-map	engine	exact	mutate-map.bpp	2	empty	mutate-map.err
+mutate-slice	engine	exact	mutate-slice.bpp	2	empty	mutate-slice.err
+mutate-struct	engine	exact	mutate-struct.bpp	2	empty	mutate-struct.err
+mutate-alias	engine	exact	mutate-alias.bpp	2	empty	mutate-alias.err
+mutate-subshell	engine	exact	mutate-subshell.bpp	2	empty	mutate-subshell.err
+mutate-imported	engine	exact	mutate-imported.bpp	2	empty	mutate-imported.err
+near-miss	engine	plain-parity	near-miss.bpp	plain	plain	plain

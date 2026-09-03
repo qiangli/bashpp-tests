@@ -1,0 +1,2 @@
+type() { printf 'quoted:%s\n' "$*"; }
+"type" Color enum '{' Red ';' Green '}'

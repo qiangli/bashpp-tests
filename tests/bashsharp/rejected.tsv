@@ -1,0 +1,14 @@
+# feature	decision
+list-comprehensions	rejected
+ternary	rejected
+pattern-match	rejected
+try-catch	rejected
+operator-overloading	rejected
+method-overloading	rejected
+inheritance	rejected
+async-await	rejected
+optional-chaining	rejected
+nullish-operators	rejected
+separate-bashsharp-mode	rejected
+decorators	deferred
+arrow-syntax	never-claimed

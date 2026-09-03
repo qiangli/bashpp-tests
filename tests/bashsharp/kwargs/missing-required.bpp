@@ -1,0 +1,2 @@
+func greet(name string, retries int) {}
+greet(name: "Ada")

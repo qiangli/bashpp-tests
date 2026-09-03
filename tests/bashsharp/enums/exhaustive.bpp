@@ -1,0 +1,10 @@
+type Color enum { Red; Green }
+func label(c Color) string {
+    switch c {
+    case Red:
+        return "red"
+    case Green:
+        return "green"
+    }
+}
+printf '%s\n' label(Green)

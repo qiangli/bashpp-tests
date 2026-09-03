@@ -1,0 +1,2 @@
+type Color enum { Red; Green }
+c := Color(9)
