@@ -1,0 +1,102 @@
+# Authored classification for the pinned Go by Example corpus.
+#
+# This table is the HUMAN-OWNED input. docs/go-by-example/inventory.tsv is the
+# DERIVED join of this table with the measured bytes and digests of the copied
+# files (tools/go-by-example/refresh.sh). A path that appears upstream with no
+# row here is a fail-closed error, so the corpus cannot grow silently.
+#
+# Every axis value is declared in docs/go-by-example/behavior-schema.tsv. There
+# is no "applicable"/"exception"/"N/A" column: every program row is executed by
+# tools/go-by-example/gate.sh under the adapters named on its own row. A run
+# that fails is a FAILURE, never a reclassification.
+#
+# path	kind	behavior	normalization	adapter	requires
+examples/UPSTREAM-README.md	provenance	not_a_program	not_a_program	not_a_program	none
+examples/arrays/arrays.go	program	deterministic	none	none	none
+examples/atomic-counters/atomic-counters.go	program	concurrency	none	bounded_wait	none
+examples/base64-encoding/base64-encoding.go	program	deterministic	none	none	none
+examples/channel-buffering/channel-buffering.go	program	deterministic	none	none	none
+examples/channel-directions/channel-directions.go	program	deterministic	none	none	none
+examples/channel-synchronization/channel-synchronization.go	program	concurrency,timeout	none	bounded_wait	none
+examples/channels/channels.go	program	concurrency	none	bounded_wait	none
+examples/closing-channels/closing-channels.go	program	concurrency	none	bounded_wait	none
+examples/closures/closures.go	program	deterministic	none	none	none
+examples/command-line-arguments/command-line-arguments.go	program	argv	argv0_path	argv_fixture	none
+examples/command-line-flags/command-line-flags.go	program	argv	none	argv_fixture	none
+examples/command-line-subcommands/command-line-subcommands.go	program	argv	none	argv_fixture	none
+examples/constants/constants.go	program	deterministic	none	none	none
+examples/context/context.go	program	concurrency,network_server,timeout	none	bounded_wait,loopback_server	none
+examples/custom-errors/custom-errors.go	program	deterministic	none	none	none
+examples/defer/defer.go	program	filesystem_temp	none	tmpdir	none
+examples/directories/directories.go	program	filesystem_cwd	none	hermetic_cwd	none
+examples/embed-directive/embed-directive.go	program	deterministic	none	none	examples/embed-directive/folder/file1.hash,examples/embed-directive/folder/file2.hash,examples/embed-directive/folder/single_file.txt
+examples/embed-directive/folder/file1.hash	runtime_asset	not_a_program	not_a_program	not_a_program	none
+examples/embed-directive/folder/file2.hash	runtime_asset	not_a_program	not_a_program	not_a_program	none
+examples/embed-directive/folder/single_file.txt	runtime_asset	not_a_program	not_a_program	not_a_program	none
+examples/enums/enums.go	program	deterministic	none	none	none
+examples/environment-variables/environment-variables.go	program	environment	env_listing	fixed_env	none
+examples/epoch/epoch.go	program	clock	wallclock	fake_clock	none
+examples/errors/errors.go	program	deterministic	none	none	none
+examples/execing-processes/execing-processes.go	program	filesystem_cwd,process_exec	file_metadata	fixed_env,hermetic_cwd	none
+examples/exit/exit.go	program	process_exit	goexit_status	exit_status_capture	none
+examples/file-paths/file-paths.go	program	deterministic	none	none	none
+examples/for/for.go	program	deterministic	none	none	none
+examples/functions/functions.go	program	deterministic	none	none	none
+examples/generics/generics.go	program	deterministic	none	none	none
+examples/goroutines/goroutines.go	program	concurrency,timeout	interleave_order	bounded_wait	none
+examples/hello-world/hello-world.go	program	deterministic	none	none	none
+examples/http-client/http-client.go	program	network_client	none	fixed_env,local_http_origin	none
+examples/http-server/http-server.go	program	network_server	none	loopback_server	none
+examples/if-else/if-else.go	program	deterministic	none	none	none
+examples/interfaces/interfaces.go	program	deterministic	none	none	none
+examples/json/json.go	program	deterministic	none	none	none
+examples/line-filters/line-filters.go	program	stdin	none	stdin_fixture	none
+examples/logging/logging.go	program	clock	wallclock	fake_clock	none
+examples/maps/maps.go	program	deterministic	none	none	none
+examples/methods/methods.go	program	deterministic	none	none	none
+examples/multiple-return-values/multiple-return-values.go	program	deterministic	none	none	none
+examples/mutexes/mutexes.go	program	concurrency	none	bounded_wait	none
+examples/non-blocking-channel-operations/non-blocking-channel-operations.go	program	deterministic	none	none	none
+examples/number-parsing/number-parsing.go	program	deterministic	none	none	none
+examples/panic/panic.go	program	process_exit	panic_trace	exit_status_capture	none
+examples/pointers/pointers.go	program	deterministic	none	none	none
+examples/random-numbers/random-numbers.go	program	random	random_stream	seeded_random	none
+examples/range-over-built-in-types/range-over-built-in-types.go	program	map_iteration	map_order	none	none
+examples/range-over-channels/range-over-channels.go	program	deterministic	none	none	none
+examples/range-over-iterators/range-over-iterators.go	program	deterministic	none	none	none
+examples/rate-limiting/rate-limiting.go	program	clock,concurrency,timeout	wallclock	bounded_wait,fake_clock	none
+examples/reading-files/reading-files.go	program	file_input,filesystem_temp	none	input_file_fixture,tmpdir	none
+examples/recover/recover.go	program	deterministic	none	none	none
+examples/recursion/recursion.go	program	deterministic	none	none	none
+examples/regular-expressions/regular-expressions.go	program	deterministic	none	none	none
+examples/select/select.go	program	concurrency,timeout	none	bounded_wait	none
+examples/sha256-hashes/sha256-hashes.go	program	deterministic	none	none	none
+examples/signals/signals.go	program	signals	none	signal_injector	none
+examples/slices/slices.go	program	deterministic	none	none	none
+examples/sorting-by-functions/sorting-by-functions.go	program	deterministic	none	none	none
+examples/sorting/sorting.go	program	deterministic	none	none	none
+examples/spawning-processes/spawning-processes.go	program	filesystem_cwd,process_exec	file_metadata,wallclock	fixed_env,hermetic_cwd	none
+examples/stateful-goroutines/stateful-goroutines.go	program	concurrency,random,timeout	throughput_count	bounded_wait,seeded_random	none
+examples/string-formatting/string-formatting.go	program	pointer_identity	pointer_address	none	none
+examples/string-functions/string-functions.go	program	deterministic	none	none	none
+examples/strings-and-runes/strings-and-runes.go	program	deterministic	none	none	none
+examples/struct-embedding/struct-embedding.go	program	deterministic	none	none	none
+examples/structs/structs.go	program	deterministic	none	none	none
+examples/switch/switch.go	program	clock	wallclock	fake_clock	none
+examples/tcp-server/tcp-server.go	program	concurrency,network_server	none	bounded_wait,loopback_server	none
+examples/temporary-files-and-directories/temporary-files-and-directories.go	program	filesystem_temp	tmp_path	tmpdir	none
+examples/testing-and-benchmarking/main_test.go	test_program	test_harness,timeout	duration	bounded_wait,go_test_runner	none
+examples/text-templates/text-templates.go	program	deterministic	none	none	none
+examples/tickers/tickers.go	program	clock,concurrency,timeout	wallclock	bounded_wait,fake_clock	none
+examples/time-formatting-parsing/time-formatting-parsing.go	program	clock	wallclock	fake_clock	none
+examples/time/time.go	program	clock	wallclock	fake_clock	none
+examples/timeouts/timeouts.go	program	concurrency,timeout	none	bounded_wait	none
+examples/timers/timers.go	program	concurrency,timeout	none	bounded_wait	none
+examples/url-parsing/url-parsing.go	program	deterministic	none	none	none
+examples/values/values.go	program	deterministic	none	none	none
+examples/variables/variables.go	program	deterministic	none	none	none
+examples/variadic-functions/variadic-functions.go	program	deterministic	none	none	none
+examples/waitgroups/waitgroups.go	program	concurrency,timeout	interleave_order	bounded_wait	none
+examples/worker-pools/worker-pools.go	program	concurrency,timeout	interleave_order	bounded_wait	none
+examples/writing-files/writing-files.go	program	filesystem_temp	none	tmpdir	none
+examples/xml/xml.go	program	deterministic	none	none	none

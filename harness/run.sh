@@ -54,6 +54,16 @@ else
   exit 2
 fi
 
+if [ -x "${TEST_DIR}/tools/go-by-example/validate.sh" ]; then
+  if ! "${TEST_DIR}/tools/go-by-example/validate.sh"; then
+    echo "FATAL: Go by Example corpus inventory validation failed" >&2
+    exit 2
+  fi
+else
+  echo "FATAL: tools/go-by-example/validate.sh missing — Go by Example corpus not checked" >&2
+  exit 2
+fi
+
 # ---------------------------------------------------------------------------
 # GO ORACLE — execute a reviewed tranche of the official Go corpus for real.
 #

@@ -1,0 +1,73 @@
+# Go by Example differential-execution schema.
+#
+# This table is the single source of truth for the three classification axes.
+# tools/go-by-example/validate.sh loads the vocabularies and the coupling from
+# here; it does not hardcode them. Adding a term to an inventory row without
+# declaring it here is a fail-closed error.
+#
+# The comparison this schema describes is: pinned Go 1.27 reference run vs
+# Bash++ run of the SAME pinned bytes. A normalization therefore exists only to
+# cancel variance that two separate invocations cannot avoid (wall clock,
+# addresses, scheduler interleaving); it never exists to hide a disagreement.
+#
+# record	name	requires_adapters	allows_normalizations
+#
+# behavior — the environmental surface the pinned program actually touches.
+# A row carries a comma-joined, sorted, duplicate-free subset. `deterministic`
+# is exclusive: it may not be combined with any other behavior.
+behavior	deterministic	none	none
+behavior	argv	argv_fixture	argv0_path
+behavior	environment	fixed_env	env_listing
+behavior	filesystem_cwd	hermetic_cwd	file_metadata
+behavior	filesystem_temp	tmpdir	tmp_path
+behavior	file_input	input_file_fixture,tmpdir	none
+behavior	network_client	fixed_env,local_http_origin	none
+behavior	network_server	loopback_server	ephemeral_port
+behavior	stdin	stdin_fixture	none
+behavior	signals	signal_injector	none
+behavior	process_exec	fixed_env,hermetic_cwd	file_metadata,wallclock
+behavior	process_exit	exit_status_capture	goexit_status,panic_trace
+behavior	clock	fake_clock	wallclock
+behavior	timeout	bounded_wait	duration
+behavior	random	seeded_random	random_stream
+behavior	map_iteration	none	map_order
+behavior	concurrency	bounded_wait	interleave_order,throughput_count
+behavior	pointer_identity	none	pointer_address
+behavior	test_harness	go_test_runner	duration
+#
+# adapter — the deterministic environment construction applied BEFORE the run.
+# Adapters make a run hermetic; they never edit the pinned source bytes.
+adapter	none	-	no adapter is needed; the program is hermetic as written
+adapter	argv_fixture	-	invoke the built binary with a fixed argv recorded by the gate
+adapter	fixed_env	-	run under a fully enumerated, fixed environment block (no host inheritance)
+adapter	hermetic_cwd	-	run in a fresh fixture directory whose entire file set is created by the gate
+adapter	tmpdir	-	point TMPDIR at a fresh private directory removed after the run
+adapter	input_file_fixture	-	pre-create the input files the program reads with pinned bytes (reading-files: $TMPDIR/dat = "hello\ngo\n")
+adapter	stdin_fixture	-	feed a pinned stdin document then close the descriptor
+adapter	local_http_origin	-	resolve the program's outbound host to a loopback origin serving a pinned response, with the trust anchor supplied through the fixed environment
+adapter	loopback_server	-	let the program bind its own port on 127.0.0.1, drive it with a pinned client exchange, then terminate it
+adapter	signal_injector	-	deliver the declared signal once the program has reported readiness
+adapter	exit_status_capture	-	capture the process exit status as a compared channel alongside stdout and stderr
+adapter	seeded_random	-	supply a fixed seed or deterministic source to the program's random generator
+adapter	fake_clock	-	supply a fixed clock origin and monotonic step to both runs
+adapter	bounded_wait	-	impose a hard deadline so a scheduler stall fails the gate instead of hanging it
+adapter	go_test_runner	-	execute under `go test` rather than `go run`
+#
+# normalization — the ONLY licensed post-run rewrites, applied identically to
+# both sides of the differential. Each one must be licensed by a behavior that
+# the row actually declares.
+normalization	none	-	compare raw bytes of stdout, stderr and exit status
+normalization	argv0_path	-	replace the rendered argv[0] path with a stable token
+normalization	env_listing	-	compare only the environment keys the program itself sets, not the inherited key list
+normalization	file_metadata	-	replace owner, size and mtime columns of a directory listing with stable tokens
+normalization	tmp_path	-	replace host temp directory prefixes and random temp name suffixes with stable tokens
+normalization	ephemeral_port	-	replace a rendered bound port number with a stable token
+normalization	wallclock	-	replace rendered absolute dates and times with stable tokens
+normalization	duration	-	replace measured elapsed durations with stable tokens
+normalization	goexit_status	-	compare the `go run` wrapper's "exit status N" line as the process exit code
+normalization	panic_trace	-	compare the panic message line only; goroutine stack frames and addresses are dropped
+normalization	random_stream	-	compare the arity, type and declared range of values drawn from a random source, not their values
+normalization	map_order	-	compare map-derived lines as a sorted multiset
+normalization	interleave_order	-	compare scheduler-interleaved lines as a sorted multiset
+normalization	throughput_count	-	compare a throughput counter as a positive integer of the declared label, not its value
+normalization	pointer_address	-	replace rendered pointer addresses with a stable token
