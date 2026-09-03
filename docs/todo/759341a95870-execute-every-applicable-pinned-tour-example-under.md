@@ -8,7 +8,7 @@ priority: p1
 created: 2026-09-03T09:57:58.477362Z
 weave: 17
 assignee: qiangli
-sprint: 98
+sprint: 113
 ---
 
 Depends on the pinned 168-row x/website inventory delivered in fd676b7 and parser/evaluator/compiler foundations. Build a deterministic executor that copies all 93 applicable and 4 build-only official programs with BSD provenance, provisions official golang.org/x/tour helper module dependencies, runs the declared pinned Go baseline, Bash++ interpreted, and Bash++ compiled modes, and records exit/stdout/stderr with explicit normalization. The gate must fail on missing, PLANNED, unexpected N/A, or mismatched results. It may land infrastructure before language support, but cannot close until all declared rows pass.
