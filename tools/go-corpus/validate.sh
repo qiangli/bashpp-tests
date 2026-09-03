@@ -11,7 +11,7 @@ die() {
 }
 
 pin_row="$(awk -F '\t' '$1 !~ /^#/ && NF { print; exit }' "${PIN}")"
-IFS=$'\t' read -r release kind filename url sha256 expected_count license provenance <<<"${pin_row}"
+IFS=$'\t' read -r release kind filename url sha256 expected_count license provenance inventory_data_sha256 <<<"${pin_row}"
 
 [ -n "${release:-}" ] || die "missing corpus pin"
 [ "${kind:-}" = source ] || die "pin kind must be source"
@@ -24,6 +24,8 @@ case "${expected_count:-}" in ''|*[!0-9]*) die "pin test_go_files must be an int
 [ "${expected_count}" -gt 0 ] || die "pin test_go_files must be positive"
 [ "${license:-}" = BSD-3-Clause ] || die "pin license must preserve upstream BSD-3-Clause provenance"
 [ -n "${provenance:-}" ] || die "pin provenance is required"
+case "${inventory_data_sha256:-}" in *[!0-9a-f]*|'') die "pin inventory_data_sha256 must be lowercase hex" ;; esac
+[ "${#inventory_data_sha256}" -eq 64 ] || die "pin inventory_data_sha256 must be 64 hex characters"
 
 [ -f "${INV}" ] || die "missing Go corpus inventory: ${INV}"
 
@@ -39,6 +41,10 @@ expect_header source "${url}"
 expect_header source_sha256 "${sha256}"
 expect_header license "${license}"
 expect_header generated_by "tools/go-corpus/refresh.sh"
+
+actual_inventory_data_sha256="$(awk '$0 !~ /^#/ && NF' "${INV}" | shasum -a 256 | awk '{print $1}')"
+[ "${actual_inventory_data_sha256}" = "${inventory_data_sha256}" ] || \
+  die "inventory data sha256 mismatch: expected ${inventory_data_sha256}, got ${actual_inventory_data_sha256}"
 
 rows="$(awk -F '\t' '$1 !~ /^#/ && NF { count++ } END { print count + 0 }' "${INV}")"
 if [ "${rows}" -ne "${expected_count}" ]; then

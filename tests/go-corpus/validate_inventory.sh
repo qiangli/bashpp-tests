@@ -42,4 +42,24 @@ if GO_CORPUS_INVENTORY="${tmp}/outside-test.tsv" "${ROOT}/tools/go-corpus/valida
   exit 1
 fi
 
+awk -F '\t' 'BEGIN { OFS="\t"; done=0 } /^#/ { print; next } !done { $2 = ($2 == "none" ? "run" : "none"); done=1 } { print }' \
+  "${ROOT}/docs/go-corpus/inventory.tsv" > "${tmp}/substituted-row.tsv"
+if GO_CORPUS_INVENTORY="${tmp}/substituted-row.tsv" "${ROOT}/tools/go-corpus/validate.sh" >/dev/null 2>&1; then
+  echo "expected validator to reject same-count inventory row substitution" >&2
+  exit 1
+fi
+
+marker="${tmp}/target-invoked"
+printf '#!/bin/sh\n: > %s\n' "${marker}" > "${tmp}/target"
+chmod +x "${tmp}/target"
+if GO_CORPUS_INVENTORY="${tmp}/missing-one.tsv" BASHY_BIN="${tmp}/target" \
+  "${ROOT}/harness/run.sh" >/dev/null 2>&1; then
+  echo "expected harness to fail when corpus validation fails" >&2
+  exit 1
+fi
+if [ -e "${marker}" ]; then
+  echo "harness invoked target after corpus validation failed" >&2
+  exit 1
+fi
+
 echo "go-corpus validator self-tests OK"

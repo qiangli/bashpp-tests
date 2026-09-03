@@ -35,7 +35,10 @@ echo " Target binary: ${BASHY_BIN}"
 echo "=========================================================================="
 
 if [ -x "${TEST_DIR}/tools/go-corpus/validate.sh" ]; then
-  "${TEST_DIR}/tools/go-corpus/validate.sh"
+  if ! "${TEST_DIR}/tools/go-corpus/validate.sh"; then
+    echo "FATAL: Go corpus inventory validation failed" >&2
+    exit 2
+  fi
 else
   echo "FATAL: tools/go-corpus/validate.sh missing — Go corpus inventory not checked" >&2
   exit 2

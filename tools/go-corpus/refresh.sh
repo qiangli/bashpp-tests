@@ -11,7 +11,7 @@ read_pin() {
 }
 
 pin_row="$(read_pin)"
-IFS=$'\t' read -r release kind filename url sha256 expected_count license provenance <<<"${pin_row}"
+IFS=$'\t' read -r release kind filename url sha256 expected_count license provenance inventory_data_sha256 <<<"${pin_row}"
 
 archive="${CACHE}/${filename}"
 src="${CACHE}/${release}"
@@ -59,4 +59,11 @@ fi
 } > "${tmp}"
 
 mv "${tmp}" "${OUT}"
+actual_inventory_data_sha256="$(awk '$0 !~ /^#/ && NF' "${OUT}" | shasum -a 256 | awk '{print $1}')"
+if [ "${actual_inventory_data_sha256}" != "${inventory_data_sha256}" ]; then
+  echo "FATAL: refreshed inventory data sha256 differs from reviewed pin" >&2
+  echo "  expected ${inventory_data_sha256}" >&2
+  echo "  actual   ${actual_inventory_data_sha256}" >&2
+  exit 2
+fi
 GO_CORPUS_ROOT="${src}" "${ROOT}/tools/go-corpus/validate.sh"
