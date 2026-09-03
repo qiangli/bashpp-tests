@@ -1,3 +1,6 @@
 .cache/
 .agents/
 .claude/
+
+# Built by tools/go-oracle/run.sh (it normally writes into .cache/go-oracle/).
+tools/go-oracle/go-oracle

@@ -10,6 +10,18 @@
 
 - **Tier 1 (Mandatory denominator/provenance):** 100% inventory of Go 1.27.0 `go/test/` (3,398 `.go` files).
   - Validates `for`, `if`, `switch`, `range`, `defer`, `struct`, `map`, `slice`, `interface`, generics, `go f(x)`, `chan`, `select`, `clear()`, and `:=` short assignments.
+  - **Oracle execution:** a reviewed 35-file tranche of that inventory is really
+    executed by `tools/go-oracle` under the pinned Go 1.27.0 toolchain, covering
+    `run`, `build`, `errorcheck`, `compile`, `compiledir`, `rundir` and
+    `runoutput` — seven of upstream's seventeen actions, with the other ten
+    enumerated and disclaimed rather than implied. That establishes the RED-phase
+    ground truth a bash++ fixture is later compared against; it says nothing about
+    bash++ itself.
+  - **Oracle integrity:** compile/build/link steps assert the artifact they
+    promised (kind, existence, non-empty); every consumed `.out` sidecar and
+    `.dir` manifest is digest-pinned with tamper regressions; and the toolchain is
+    identified by pinned distribution checksums, because `go version` is a string
+    the suite's own sabotage fixtures print.
 - **Tier 2 (Selective - Exposed Stdlib Packages):** Selective `*_test.go` files from `../go/src/` (`encoding/json`, `strings`, `bytes`, `sync`, `math`, `time`).
 - **Excluded:** Internal compiler and host OS runtime packages (`runtime`, `syscall`, `cmd/compile`).
 

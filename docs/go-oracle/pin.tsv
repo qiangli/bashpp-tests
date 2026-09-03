@@ -1,0 +1,31 @@
+# Go oracle driver pin.
+#
+# Reviewed for Sprint 98 / Story 175 on 2026-09-03.
+#
+# release              the Go release whose toolchain executes the corpus. Must
+#                      match docs/go-corpus/pin.tsv, because running one
+#                      release's tests with another release's compiler is not an
+#                      oracle.
+# semantics_path       the upstream runner this driver reimplements. Historically
+#                      GOROOT/test/run.go; since Go 1.21 it lives here.
+# semantics_sha256     digest of that file in the pinned source. The driver
+#                      REQUIRES it and refuses to run when it differs: a changed
+#                      runner means the reimplementation is stale, and a stale
+#                      oracle is worse than no oracle.
+# tranche              the reviewed selection that is the run's denominator.
+# per_action           rows selected per action by tools/go-oracle/select-tranche.sh.
+# tranche_rows         total rows; the driver must report exactly this many results.
+# actions              the SEVEN actions this slice commits to executing.
+# unsupported_actions  the TEN upstream actions it deliberately does not. Stated
+#                      here, printed by run.sh and published in the run summary,
+#                      so "the oracle is green" can never be read as "upstream's
+#                      full runner is green". Seven of seventeen is a tranche.
+# aux_inventory        provenance for every auxiliary input the driver consumes:
+#                      .out sidecars (including the ones upstream does NOT ship)
+#                      and .dir manifests. The .go files are covered by
+#                      docs/go-corpus/inventory.tsv.
+# toolchain_pin        distribution checksums that identify the toolchain. `go
+#                      version` is a forgeable string and is not trusted for this.
+#
+# release	semantics_path	semantics_sha256	tranche	per_action	tranche_rows	actions	unsupported_actions	aux_inventory	toolchain_pin
+go1.27.0	src/cmd/internal/testdir/testdir_test.go	54900709a1fae5f469aa7bf59b22660f6fb9eb169e84f9c0d9760f0fe38444f4	docs/go-oracle/tranche-001.tsv	5	35	run,build,errorcheck,compile,compiledir,rundir,runoutput	asmcheck,builddir,buildrun,buildrundir,errorcheckandrundir,errorcheckdir,errorcheckoutput,errorcheckwithauto,runindir,skip	docs/go-oracle/aux-inventory.tsv	docs/go-oracle/toolchain.tsv

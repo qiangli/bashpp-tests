@@ -1,0 +1,55 @@
+# Go oracle toolchain identity pin.
+#
+# Reviewed for Sprint 98 / Story 175 on 2026-09-03.
+#
+# WHY THIS FILE EXISTS. `go version` prints a string, and a five-line shell
+# script prints it just as convincingly — the mutation tests in
+# tools/go-oracle/oracle_test.go rely on exactly that to sabotage the toolchain.
+# A provenance check that its own fixtures can forge is not a provenance check,
+# so the driver identifies the toolchain from pinned distribution checksums and
+# treats `go version` as a diagnostic only.
+#
+# ---------------------------------------------------------------------------
+# goroot_probe<TAB>path<TAB>sha256
+#
+# Files that must be byte-identical inside the candidate toolchain's own GOROOT.
+# The digests are taken from the official Go SOURCE release
+# (go1.27.0.src.tar.gz, sha256 pinned in docs/go-corpus/pin.tsv and published on
+# https://go.dev/dl/), and the binary distribution's src/ and VERSION are
+# byte-identical to it — verified on 2026-09-03 by extracting
+# go1.27.0.darwin-arm64.tar.gz and diffing digests.
+#
+# This layer is platform-independent, and it is the layer a shell stub cannot
+# satisfy: a fake `go` has no GOROOT carrying the pinned upstream sources.
+# ---------------------------------------------------------------------------
+goroot_probe	VERSION	964a484ac6011bfc2770d672c3ba1c466f64258fcb0441c8147adb1ac2ee3b30
+goroot_probe	go.env	98fcab78e155e9fa0c36b18874add30724d04c2452078117c78618107ebfbc9e
+goroot_probe	src/cmd/internal/testdir/testdir_test.go	54900709a1fae5f469aa7bf59b22660f6fb9eb169e84f9c0d9760f0fe38444f4
+goroot_probe	src/runtime/proc.go	40d15ce858cf058cff92606001a29ee1689db88c121a2f0c283163a0d64a7375
+goroot_probe	src/go/build/build.go	a8b066521d73f2b1c1f01d65588483e416deeab9b2139991645da0dc89dd7d49
+#
+# ---------------------------------------------------------------------------
+# toolchain<TAB>release<TAB>goos<TAB>goarch<TAB>go_sha256<TAB>dist_filename<TAB>dist_sha256<TAB>module<TAB>module_version<TAB>module_ziphash
+#
+# go_sha256        sha256 of the distribution's bin/go for this platform. The
+#                  driver hashes the `go` it is about to run and refuses on any
+#                  difference, so a stub cannot stand in for the real compiler
+#                  driver no matter what it prints.
+# dist_filename    the official archive this binary was taken from.
+# dist_sha256      that archive's sha256 as published at https://go.dev/dl/
+#                  (?mode=json&include=all). ORIGIN 1.
+# module/…/ziphash the golang.org/toolchain module the Go command itself fetches
+#                  for GOTOOLCHAIN, and the zip hash the module cache records;
+#                  that hash is what sum.golang.org attests. ORIGIN 2.
+#
+# The darwin/arm64 row was established on 2026-09-03 by downloading
+# go1.27.0.darwin-arm64.tar.gz, confirming its published sha256, and observing
+# that its bin/go is byte-identical to the bin/go of the module-cache
+# distribution golang.org/toolchain@v0.0.1-go1.27.0.darwin-arm64. Two
+# independent official origins, one digest.
+#
+# A platform with no row here is FATAL, not skipped. Add a row the same way:
+# download the published archive, check its sha256 against go.dev/dl, and record
+# the sha256 of go/bin/go from inside it.
+# ---------------------------------------------------------------------------
+toolchain	go1.27.0	darwin	arm64	a19a71df81715c12d9a7e81bab036c12696fec1ddbd4258b48a2131a9080b267	go1.27.0.darwin-arm64.tar.gz	90493b3bbd5e10f91d12153198bf1994fd756399b4fec93b49b0c6e2acdeeb3e	golang.org/toolchain	v0.0.1-go1.27.0.darwin-arm64	h1:QFUhEu+WNZ4lGI/0ual1EOKBq/Z/df/cL75PkCW8m1k=

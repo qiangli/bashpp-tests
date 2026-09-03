@@ -1,0 +1,41 @@
+# release	go1.27.0
+# corpus_pin	docs/go-corpus/pin.tsv
+# tranche	docs/go-oracle/tranche-001.tsv
+# generated_by	tools/go-oracle/select-aux.sh
+#
+# role	path	presence	bytes	sha256
+#
+# expected_output  the sibling "<name>.out". presence=absent (bytes 0,
+#                  sha256 "-") is a real assertion: upstream ships no .out
+#                  for this test, so its output must be empty.
+# dir_manifest     the sibling "<name>.dir". bytes is the number of regular
+#                  files it holds; sha256 digests the sorted listing of
+#                  "<relpath><TAB><sha256>" lines, so an ADDED or DELETED
+#                  member is caught as well as an edited one.
+# dir_input        a non-.go file inside a "<name>.dir". The .go members are
+#                  already digested by docs/go-corpus/inventory.tsv.
+expected_output	test/235.out	absent	0	-
+expected_output	test/64bit.out	absent	0	-
+expected_output	test/abi/convF_criteria.out	present	25	bf6d74954384392e085e073b594e95c21b2bba14dafe7ea53358f8c5d2421c1a
+expected_output	test/abi/convT64_criteria.out	present	17	219d8c9af614ea9384f636800ee2522159aef4bb645d7bb06bcc9f2232ee2be3
+expected_output	test/abi/defer_aggregate.out	absent	0	-
+expected_output	test/abi/defer_recover_results.out	absent	0	-
+expected_output	test/alias3.out	absent	0	-
+dir_manifest	test/alias3.dir	present	3	24e027f0683899c418c0b1276b02b46e741f40f35106fca17a9b485f33c63e58
+expected_output	test/bom.out	absent	0	-
+expected_output	test/chan/select5.out	absent	0	-
+expected_output	test/clearfat.out	absent	0	-
+dir_manifest	test/closure5.dir	present	2	cfd5f63415d6fcabfba788a8409b07d33b51a1d211bef24e8522880fb82d8c98
+expected_output	test/convinline.out	absent	0	-
+expected_output	test/ddd2.out	absent	0	-
+dir_manifest	test/ddd2.dir	present	2	c96c34a37a386468b2e5d428525d2ca77bcb0b05140fe236a70b23984355ccc1
+expected_output	test/dwarf/dwarf.out	absent	0	-
+dir_manifest	test/dwarf/dwarf.dir	present	21	f6376ae1208c320de57e33b54e5e247c1824aa9fd53ceccb6d26559f5de20d24
+dir_manifest	test/fixedbugs/bug088.dir	present	2	19e749f87880ea3c7a39e7513201715d706818412ce6616c318cc0f7df9a8e85
+dir_manifest	test/fixedbugs/bug106.dir	present	2	794ce159b081c8acc30cd3e84b5a3a353d9dc8cd10a1b562ee4698ae38af676f
+expected_output	test/fixedbugs/bug160.out	absent	0	-
+dir_manifest	test/fixedbugs/bug160.dir	present	2	de0af7133896877d3922ce59bec4b949735138bb4043fafdbd56a5571ee4e596
+expected_output	test/fixedbugs/bug191.out	absent	0	-
+dir_manifest	test/fixedbugs/bug191.dir	present	3	f7d109409e05e8a9027bedd16fae30578a512d11d36d92399265d6fed0237eb0
+dir_manifest	test/fixedbugs/bug222.dir	present	2	d37c7b66f070aed6ad594fad5dc3a3bfa6432365e41215a5ddf98073abaa3bf2
+dir_manifest	test/fixedbugs/bug282.dir	present	2	39c3e4cdec33fd8457af56cbb900cb853f428ff4e77b4ee2cc944c671a7168e9

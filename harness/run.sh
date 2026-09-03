@@ -54,6 +54,31 @@ else
   exit 2
 fi
 
+# ---------------------------------------------------------------------------
+# GO ORACLE — execute a reviewed tranche of the official Go corpus for real.
+#
+# This runs BEFORE the bashy checks and is independent of them: it measures the
+# pinned Go toolchain against the pinned Go corpus, so that the Bash++ work above
+# has a ground truth to be compared with later. It is not a Bash++ result and
+# nothing here may be read as parity.
+#
+# Fatal by default, for the same reason the missing-binary check below is fatal:
+# a run that measured nothing must not be reportable as a run. Set GO_ORACLE=off
+# to declare, deliberately, that this invocation is not checking the oracle.
+# ---------------------------------------------------------------------------
+if [ "${GO_ORACLE:-on}" = off ]; then
+  echo "NOTE: Go oracle DISABLED by GO_ORACLE=off; this run does not check the Go corpus." >&2
+elif [ -x "${TEST_DIR}/tools/go-oracle/run.sh" ]; then
+  echo
+  if ! "${TEST_DIR}/tools/go-oracle/run.sh"; then
+    echo "FATAL: the Go oracle did not execute its tranche cleanly" >&2
+    exit 2
+  fi
+else
+  echo "FATAL: tools/go-oracle/run.sh missing — the Go oracle was not run" >&2
+  exit 2
+fi
+
 if [ ! -x "${BASHY_BIN}" ]; then
   echo "FATAL: ${BASHY_BIN} is not executable." >&2
   echo "Build it first (cd ../bashy && make build-bash), or set BASHY_BIN." >&2

@@ -30,6 +30,18 @@ graph TD
 - **Source:** pinned Go 1.27.0 source release, `go/test/` (3,398 `.go` files).
 - **Scope:** inventory inclusion for denominator/provenance. Adapted bash++ fixtures remain explicitly declared as `supported` or `planned`; inventory presence alone is not a pass.
 - **Goal:** Prevent silent corpus drift while profile support is implemented incrementally.
+- **Execution:** a reviewed tranche of that inventory is actually run by
+  `tools/go-oracle` under the pinned Go 1.27.0 toolchain, using the semantics of
+  upstream's own runner. Tranche 1 is 35 files covering `run`, `build`,
+  `errorcheck`, `compile`, `compiledir`, `rundir` and `runoutput` — **seven of
+  upstream's seventeen actions**, with the other ten enumerated and disclaimed in
+  `docs/go-oracle/pin.tsv` and in every result summary. This is the trusted Go
+  **oracle** — the left-hand side of the differential comparison — and it is not a
+  Bash++ parity claim. See `docs/go-oracle/README.md`.
+- **Integrity:** artifacts are asserted (kind, existence, non-empty), every
+  consumed `.out`/`.dir`/auxiliary input is digest-pinned in
+  `docs/go-oracle/aux-inventory.tsv`, and the toolchain is identified by pinned
+  distribution checksums rather than by the forgeable `go version` string.
 
 ### Tier 2 (Selective - Exposed Standard Library Packages):
 - **Source:** `../go/src/` (~150 `*_test.go` files).
@@ -86,6 +98,7 @@ graph TD
 | **POSIX 1003.1-2016 Baseline** | VSC-PCTS2016 / `posix` scenario | POSIX shell non-regression | `bashy --posix --bashpp` |
 | **GNU Bash 5.3 Baseline** | `bashy` 86-fixture suite | Bash 5.3 non-regression | `bashy --bashpp` |
 | **Tier 1: Go language spec** | pinned Go 1.27.0 `go/test/` inventory (3,398 files) | `for`, `if`, `chan`, `select`, `defer`, `clear()` | inventory gate plus declared bash++ fixtures |
+| **Go oracle (ground truth)** | reviewed tranche of the same inventory (35 files) | none — this measures Go, not bash++ | `tools/go-oracle/run.sh` with the pinned Go 1.27.0 toolchain |
 | **Tier 2: Stdlib Integration** | `../go/src/` (`encoding/json`, `strings`, `sync`) | Go bridge & Auto-JSON OS boundary | `bashy --bashpp` |
 | **Diagnostics** | `../go/test/cannotassign.go`, `assign.go` | Parsing/compile error diagnostics | `bashy --bashpp` |
 

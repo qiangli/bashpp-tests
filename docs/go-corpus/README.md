@@ -18,3 +18,13 @@ runs the same offline validator against the extracted tree.
 The upstream Go source release is BSD-3-Clause licensed. This repository stores
 only metadata for this slice; the refresh cache contains upstream source and
 license files and is intentionally not the conformance result.
+
+The inventory is provenance, not behaviour. What the corpus actually *does* is
+measured by the Go oracle in `../go-oracle/`, which executes a reviewed tranche
+of these files with the pinned toolchain and records the command, exit code,
+duration, action and artifact of every process it spawns.
+
+Auxiliary inputs the oracle consumes — the `.out` sidecars and the `.dir`
+manifests — are outside this inventory by construction (it covers
+`test/**/*.go`) and are pinned separately in
+[`../go-oracle/aux-inventory.tsv`](../go-oracle/aux-inventory.tsv).

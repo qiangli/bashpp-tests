@@ -137,3 +137,62 @@ classified only against the standing Sprint 98 exceptions in
 `docs/tour/standing-exceptions.tsv`, and the tour differential schema names
 pinned Go, Bash++ interpreted mode, and Bash++ compiled mode explicitly.
 `PLANNED` is intentionally invalid in this inventory.
+
+## The Go oracle now actually runs
+
+Pinning an inventory answers "what is in the corpus". It does not answer "what
+does the corpus do", and the previous slice could not: it read each file's
+`// run` / `// errorcheck` / `// compile` header and stopped there. A contract
+like that derives every number it reports from the same row it is supposed to be
+checking, so a green run and an empty run look identical from the outside.
+
+`tools/go-oracle` closes that. It executes a reviewed, bounded tranche of the
+pinned Go 1.27.0 corpus with the pinned Go 1.27.0 toolchain, following the
+semantics of upstream's own runner (`src/cmd/internal/testdir/testdir_test.go`,
+historically `test/run.go`), and writes one machine-readable record per file
+carrying the command, exit code, duration, action and artifact. Tranche 1 is 35
+files, five each across **run, build, errorcheck, compile, compiledir, rundir and
+runoutput** — the seven actions this slice commits to executing rather than
+classifying.
+
+Four things this is **not**:
+
+- It is not a Bash++ result. It is the left-hand side of the differential method
+  described in [`tests/_oracles/README.md`](tests/_oracles/README.md): the
+  trusted Go behaviour that a bash++ form will later be compared against. No
+  parity is claimed by this slice.
+- It is not the whole corpus. The tranche is 35 of 3,398 files, and the
+  denominator reported is the tranche, never the corpus.
+- **It is not upstream's runner.** Seven of upstream's seventeen actions are
+  executed. The other ten — `asmcheck`, `builddir`, `buildrun`, `buildrundir`,
+  `errorcheckandrundir`, `errorcheckdir`, `errorcheckoutput`,
+  `errorcheckwithauto`, `runindir`, `skip` — are enumerated with their reasons in
+  `docs/go-oracle/pin.tsv`, printed by the runner, and published in every result
+  summary. The seven-plus-ten split is re-derived from the pinned upstream source
+  on every run, so a new upstream action cannot slip in unclassified.
+- It is not an adapter-limitations exercise. Nothing here is marked N/A; the
+  seven actions are executed, and an unimplemented upstream action is a fatal
+  error naming the action and the reason rather than a shrug.
+
+Three things it now checks that a metadata-shaped driver cannot:
+
+- **Artifacts are asserted, not just measured.** Every compile, link and build
+  step declares what it must produce and is checked for it: existence, regular
+  file, the right kind (Go object archive / native executable / Go source), and
+  non-empty. A toolchain that exits 0 and writes a zero-byte object fails.
+- **Every consumed byte is pinned.** The corpus inventory covers `*.go`;
+  `docs/go-oracle/aux-inventory.tsv` covers the `.out` sidecars and the `.dir`
+  manifests, *including the sidecars upstream deliberately does not ship* —
+  "absent" is an assertion, because no `.out` means the output must be empty.
+- **The toolchain is identified by checksum, not by `go version`.** That string
+  is forgeable — this suite's own mutation tests forge it. The gate instead
+  requires the pinned upstream sources inside the candidate's own GOROOT and a
+  `go` binary whose SHA-256 matches the reviewed distribution digest, recorded
+  next to both its go.dev/dl archive checksum and its `sum.golang.org`-attested
+  module hash.
+
+The driver fails closed when the record count does not equal the tranche, when no
+file executed a command, and when no command was spawned at all — and every fatal
+path still writes a machine-readable summary carrying the executed and failed
+counts reached so far. See [`docs/go-oracle/README.md`](docs/go-oracle/README.md)
+for the semantics table, the selection rule and the result schema.
