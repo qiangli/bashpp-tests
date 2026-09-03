@@ -1,0 +1,4 @@
+# exception	description
+none	Applicable to the differential schema without a Sprint 98 exclusion.
+fragment	Page code is a partial declaration or handler body, not a complete standalone program.
+external_dependency	Page program depends on non-standard external modules, so the pinned denominator records it but the offline differential runner does not fetch or execute it.

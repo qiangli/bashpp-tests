@@ -1,0 +1,7 @@
+# Official golang/tour source pin.
+#
+# Reviewed for Sprint 98 / Story #1 / Story-ID 2daf9ef04ad4 on 2026-09-03 against:
+#   https://go.googlesource.com/tour
+#
+# repo	ref	commit	license	provenance	inventory_rows	inventory_data_sha256
+golang.org/x/website/tour	master	11c9ad7eadf5e916a1137ad4dcc113f307f27874	BSD-3-Clause	official golang/tour source repository; inventory covers Go source files and Go page-program blocks	16	c3496003bec47406854b86589d48026849cef915afa5136fa1db35af4c75fda4

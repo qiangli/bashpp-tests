@@ -120,3 +120,13 @@ The inventory is provenance and a denominator, not a parity claim. Adapted
 fixtures still declare `supported` or `planned` in `tests/manifest.tsv`; no
 unimplemented upstream test is counted as passing merely because it appears in
 the official corpus inventory.
+
+Sprint 98 Story #1 also pins the official `golang/tour` source at commit
+`11c9ad7eadf5e916a1137ad4dcc113f307f27874`. The tour denominator is recorded
+separately under `docs/tour`, `tests/tour`, and `tools/tour` to avoid mixing it
+with the Go corpus files owned by run #2. The fail-closed inventory contains
+**16 rows**: 5 upstream Go source/test files plus 11 Go page-program blocks from
+`tutorial/web-service-gin.md`. Applicability is classified only against the
+standing Sprint 98 exceptions in `docs/tour/standing-exceptions.tsv`, and the
+tour differential schema names pinned Go, Bash++ interpreted mode, and Bash++
+compiled mode explicitly. `PLANNED` is intentionally invalid in this inventory.

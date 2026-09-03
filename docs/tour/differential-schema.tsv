@@ -1,0 +1,4 @@
+# name	allowed_values	description
+baseline	go-test-or-build,go-run,syntax-context-only	Pinned Go behavior to compare against.
+bpp_interpreted	parse-or-run,parse-run,not-run	Bash++ interpreted-mode action.
+bpp_compiled	transpile-build-run,not-run	Bash++ compiled-mode action.

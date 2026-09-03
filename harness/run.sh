@@ -44,6 +44,16 @@ else
   exit 2
 fi
 
+if [ -x "${TEST_DIR}/tools/tour/validate.sh" ]; then
+  if ! "${TEST_DIR}/tools/tour/validate.sh"; then
+    echo "FATAL: Go tour inventory validation failed" >&2
+    exit 2
+  fi
+else
+  echo "FATAL: tools/tour/validate.sh missing — Go tour inventory not checked" >&2
+  exit 2
+fi
+
 if [ ! -x "${BASHY_BIN}" ]; then
   echo "FATAL: ${BASHY_BIN} is not executable." >&2
   echo "Build it first (cd ../bashy && make build-bash), or set BASHY_BIN." >&2

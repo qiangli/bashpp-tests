@@ -1,0 +1,21 @@
+# release	golang/tour@11c9ad7eadf5e916a1137ad4dcc113f307f27874
+# source	https://go.googlesource.com/tour
+# license	BSD-3-Clause
+# generated_by	tools/tour/refresh.sh
+# path	kind	start_line	applicability	exception	differential_schema	bytes	sha256
+pic/pic.go	go_package_source	n/a	not_applicable_support_package	exception:none	baseline:go-test-or-build;bpp_interpreted:parse-or-run;bpp_compiled:transpile-build-run	1417	49828310ea5585d794300c359af17c0d1aedf8c5e683989837dbd4f4f3a2e796
+pic/pic_test.go	go_test_source	n/a	not_applicable_support_package	exception:none	baseline:go-test-or-build;bpp_interpreted:parse-or-run;bpp_compiled:transpile-build-run	1384	6d863d0f6ae6bdce2fc29eeee9a187622239b8e09ef5c0f07728fcaecdfc779e
+reader/validate.go	go_package_source	n/a	not_applicable_support_package	exception:none	baseline:go-test-or-build;bpp_interpreted:parse-or-run;bpp_compiled:transpile-build-run	741	3e7e7dd1e77d441d4173584eb9bdf6297b5772236c5c97339ea6bcb8d884050f
+tree/tree.go	go_package_source	n/a	not_applicable_support_package	exception:none	baseline:go-test-or-build;bpp_interpreted:parse-or-run;bpp_compiled:transpile-build-run	955	91e784eeb7f3e925a170d3150a7245c6e5261c157b4837b05c8d3f9068fb62a9
+tutorial/web-service-gin.md#program-01-L111	markdown_code_program	111	applicable_go_program	exception:none	baseline:go-run;bpp_interpreted:parse-run;bpp_compiled:transpile-build-run	17	eb303ebb1a00cf7dcb438bd8c7071871e5974e04f4561f12403c2bdb0c9a71c3
+tutorial/web-service-gin.md#program-02-L124	markdown_code_program	124	excluded_fragment	exception:fragment	baseline:syntax-context-only;bpp_interpreted:not-run;bpp_compiled:not-run	219	a1fb1d170a63431ac04380c9a9578a2a98c738b9b801039e2cb90a1d79c6a053
+tutorial/web-service-gin.md#program-03-L137	markdown_code_program	137	excluded_fragment	exception:fragment	baseline:syntax-context-only;bpp_interpreted:not-run;bpp_compiled:not-run	324	dacd441cbcb8620126f5bbbb04046bb5c1750b2dad0e337662a22193ebe92c20
+tutorial/web-service-gin.md#program-04-L172	markdown_code_program	172	excluded_fragment	exception:fragment	baseline:syntax-context-only;bpp_interpreted:not-run;bpp_compiled:not-run	149	536a5eca277067cd4e3df6d9342a2c578776ecddd11411aa9d11e55bc688bc9e
+tutorial/web-service-gin.md#program-05-L208	markdown_code_program	208	excluded_fragment	exception:fragment	baseline:syntax-context-only;bpp_interpreted:not-run;bpp_compiled:not-run	130	f65dde850a6e27cb5cf0ea8ce1d8efcb05af930e9098dedd882e3a1c64dfc05e
+tutorial/web-service-gin.md#program-06-L236	markdown_code_program	236	excluded_external_dependency	exception:external_dependency	baseline:syntax-context-only;bpp_interpreted:not-run;bpp_compiled:not-run	86	1ed6baa85de8e771c0d62a8c00cdb07472d433d3daad82108c0e8343ff4999f6
+tutorial/web-service-gin.md#program-07-L333	markdown_code_program	333	excluded_fragment	exception:fragment	baseline:syntax-context-only;bpp_interpreted:not-run;bpp_compiled:not-run	411	e32ec8fe6ef20ff2648963ab3f0f9ebd0cd5f8bf6eca0bf33d3a58057ba54e9d
+tutorial/web-service-gin.md#program-08-L362	markdown_code_program	362	excluded_fragment	exception:fragment	baseline:syntax-context-only;bpp_interpreted:not-run;bpp_compiled:not-run	166	68ad5e3c1cf78326a3c1c9088cb7f388daa1c53a254d69ea8f77e0e6a52e43ea
+tutorial/web-service-gin.md#program-09-L480	markdown_code_program	480	excluded_fragment	exception:fragment	baseline:syntax-context-only;bpp_interpreted:not-run;bpp_compiled:not-run	522	41b529899c45fbf4658742008684e532e7d57ebfd78efacafa9e9bdeeb5114a4
+tutorial/web-service-gin.md#program-10-L518	markdown_code_program	518	excluded_fragment	exception:fragment	baseline:syntax-context-only;bpp_interpreted:not-run;bpp_compiled:not-run	211	6561b0b5170ac766383eb88f07be67ed36696cd30a9b68b20802d01d94499ea5
+tutorial/web-service-gin.md#program-11-L587	markdown_code_program	587	excluded_external_dependency	exception:external_dependency	baseline:syntax-context-only;bpp_interpreted:not-run;bpp_compiled:not-run	1712	12bfe1df70d6b483e4f6c6b556d1b7d077f0541f0050ec0d9e1878ff98123012
+wc/wc.go	go_package_source	n/a	not_applicable_support_package	exception:none	baseline:go-test-or-build;bpp_interpreted:parse-or-run;bpp_compiled:transpile-build-run	1245	a32735af22eeea9ab3901cb62e4be019304b1b6ee722e083d01dcc0d3257ccf4
