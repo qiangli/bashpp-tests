@@ -274,8 +274,12 @@ exactly what the runner builds — nothing is inherited:
 LC_ALL=C.UTF-8  LANG=C.UTF-8  TZ=UTC  PWD=<execution root>
 HOME=<execution root>/.bashpp-run/home
 TMPDIR=<execution root>/.bashpp-run/tmp
+TEST_TELEMETRY_DIR=<execution root>/.bashpp-run/telemetry
 PATH=<--run-path, default: an empty directory>
 ```
+
+plus, **for the interpreter only**, the tooling variables described in the next
+section.
 
 `HOME` and `TMPDIR` sit at *identical relative paths inside each execution
 root*, so the two environments are genuinely equivalent and their contents are
@@ -286,8 +290,62 @@ prefix is replaced by `${EXEC_ROOT}`. Without that normalization the absolute
 paths guarantee a difference and the comparison can never gate anything — which
 is exactly how an environment "check" becomes decorative. Any key that differs
 outside the declared divergence list is a case failure. The declared divergence
-list is empty in the default mode and is exactly `["PATH"]` under `--typed-only`,
-where the artifact is intentionally given an empty `PATH`.
+list is exactly the interpreter tooling keys `GOCACHE`, `GOMODCACHE` and
+`GOTOOLCHAIN`, plus `PATH` under `--typed-only` where the artifact is
+intentionally given an empty one.
+
+## Interpreter tooling — configured, not exempted
+
+The interpreter links in the Go import compiler infrastructure. Running a
+fixture that imports a stdlib package therefore makes it behave like a build
+tool: measured on `stdlib-import`, a default `HOME` collects **685 entries** of
+Go build cache and telemetry that the native artifact never produces. Left
+alone, four real cases with byte-identical streams and status fail on effects.
+
+Turning telemetry off is **not** sufficient, and this document previously
+implied it was: `TEST_TELEMETRY_DIR` with a mode-off file stops the counters,
+but the Go **build cache** still lands under `HOME`. The two are separate
+mechanisms and both have to be configured.
+
+The fix is configuration, never exemption. **No filesystem path is excused
+anywhere.** Instead:
+
+| Setting | Value | Where |
+| --- | --- | --- |
+| `GOCACHE` | dedicated tooling directory, recorded in evidence | **outside** every execution root |
+| `GOMODCACHE` | dedicated tooling directory, recorded in evidence | **outside** every execution root |
+| `GOTOOLCHAIN` | `local` | interpreter only |
+| `TEST_TELEMETRY_DIR` | `<execution root>/.bashpp-run/telemetry`, holding a `mode` file containing `off` | **inside**, identical in both modes |
+
+Reusing the authenticated build caches for the tooling directories is permitted;
+what matters is that they are outside the compared tree.
+
+The telemetry directory is deliberately *inside* the execution root, created
+identically in both modes **before the baseline snapshot**, so the `mode` file
+is part of the compared surface. A tool that flips it back on, drops a counter
+beside it, or deletes it is a divergence like any other write. That is
+controlling the tool's configuration, not ignoring the program's writes.
+
+Consequences, and the limits of the claim:
+
+* The native artifact carries **no `GO*` variable at all**, and keeps its empty
+  `PATH` under `--typed-only`.
+* **No new tool is exposed on any `PATH`.** The Go infrastructure is linked into
+  the interpreter, so nothing needs to be reachable through `PATH`; the Go
+  binary the build uses is still the authenticated one and is not put in front
+  of either program.
+* `GOCACHE`, `GOMODCACHE` and `GOTOOLCHAIN` are the *only* declared environment
+  difference between the modes, and they are recorded in `meta.json` and in the
+  interpreted observation. Being declared, they are no longer compared — that is
+  a real, if narrow, reduction in what the environment gate covers.
+* Everything else stays compared, including arbitrary writes to `HOME` and
+  `TMPDIR`. Verified from both sides: with the tooling configured the
+  `stdlib-import` case leaves **zero** entries under `HOME` and reaches parity,
+  while an arbitrary `$HOME/arbitrary` write by either mode still fails.
+* This recognizes one specific fact — that the interpreter embeds the Go import
+  compiler — and configures it. It is not a general licence to relocate
+  inconvenient output, and it does not cover a future tool that writes somewhere
+  else.
 
 ## Filesystem effects — what is and is not detected
 
@@ -484,6 +542,9 @@ requirement rather than meet it.
 * The "no effect before the designated error" assertion for `semantic-reject`
   identities is a property of these 15 reviewed fixtures, not a general promise
   that an effectful program can reject early.
+* The interpreter's Go build cache and module cache are written outside the
+  compared tree, so what the interpreter's embedded compiler does inside those
+  caches is recorded but not diffed.
 * The `mvdan.cc/sh/v3` requirement in the generated module is satisfied by a
   local directory `replace`; the module's own version graph is not exercised.
 * Timing-dependent or concurrency-dependent fixtures can diverge legitimately;

@@ -58,6 +58,25 @@ TYPED_ONLY_FORBIDDEN_DEPS = %w[
 # writes are observable, at identical relative paths in both modes.
 RUNTIME_DIR = '.bashpp-run'.freeze
 
+# The interpreter links in the Go import compiler infrastructure, so running a
+# fixture that imports a stdlib package makes it behave like a build tool: it
+# writes a Go build cache and telemetry counters. Under a default HOME that is
+# hundreds of files inside the execution root, which the native artifact never
+# produces.
+#
+# The answer is NOT to exempt those paths after the fact -- that would blanket
+# excuse $HOME and hide real program writes. Instead the tooling is CONFIGURED:
+# its caches are pointed outside every execution root, and its telemetry is
+# pointed at a private mode-off directory created before the baseline snapshot.
+# Nothing is removed from the compared surface.
+TELEMETRY_DIR = "#{RUNTIME_DIR}/telemetry".freeze
+TELEMETRY_MODE_FILE = "#{TELEMETRY_DIR}/mode".freeze
+TELEMETRY_MODE_OFF = "off\n".freeze
+
+# The only environment keys that may differ between the two modes because of
+# that tooling. The native artifact carries none of them.
+INTERPRETER_TOOLING_KEYS = %w[GOCACHE GOMODCACHE GOTOOLCHAIN].freeze
+
 # The only fixture-root-relative path that is exempt from the effect diff, and
 # only for the compiled mode: the original Bash++ source is deleted before the
 # native artifact runs, to prove the artifact does not read it back.
@@ -713,8 +732,14 @@ def prepare_execution_root(fixture_root, destination)
   preflight!("fixture root already contains the reserved runtime path #{RUNTIME_DIR}") if File.exist?(File.join(destination, RUNTIME_DIR))
   home = File.join(destination, RUNTIME_DIR, 'home')
   tmp = File.join(destination, RUNTIME_DIR, 'tmp')
+  telemetry = File.join(destination, TELEMETRY_DIR)
   FileUtils.mkdir_p(home)
   FileUtils.mkdir_p(tmp)
+  FileUtils.mkdir_p(telemetry)
+  # Created identically in BOTH modes before the baseline snapshot, so the mode
+  # file is part of the compared surface: a tool that flips it back on, or
+  # drops a counter beside it, is a divergence like any other.
+  File.write(File.join(destination, TELEMETRY_MODE_FILE), TELEMETRY_MODE_OFF)
   destination
 end
 
@@ -722,16 +747,28 @@ end
 # whole environment the process sees; nothing is inherited. HOME and TMPDIR sit
 # at identical relative paths inside each execution root so their contents are
 # part of the compared effect surface.
-def run_environment(exec_root, path_value)
-  {
+def run_environment(exec_root, path_value, tooling: nil)
+  env = {
     'LC_ALL' => 'C.UTF-8',
     'LANG' => 'C.UTF-8',
     'TZ' => 'UTC',
     'PWD' => exec_root,
     'HOME' => File.join(exec_root, RUNTIME_DIR, 'home'),
     'TMPDIR' => File.join(exec_root, RUNTIME_DIR, 'tmp'),
+    # Identical in both modes, inside the execution root, so the mode file and
+    # anything written beside it stay compared.
+    'TEST_TELEMETRY_DIR' => File.join(exec_root, TELEMETRY_DIR),
     'PATH' => path_value
   }
+  if tooling
+    # Interpreter only. The native artifact gets no GO* variable at all, and no
+    # new tool is put on its PATH -- the Go import infrastructure is linked into
+    # the interpreter, so nothing needs to be reachable through PATH.
+    env['GOCACHE'] = tooling.fetch('gocache')
+    env['GOMODCACHE'] = tooling.fetch('gomodcache')
+    env['GOTOOLCHAIN'] = 'local'
+  end
+  env
 end
 
 # Environment reduced to a root-independent form so the two modes are actually
@@ -1095,7 +1132,16 @@ begin
   build_home = File.join(artifact_root, 'build-home')
   build_tmp = File.join(artifact_root, 'build-tmp')
   empty_path_dir = File.join(artifact_root, 'empty-path')
-  [shared_gocache, shared_gomodcache, build_home, build_tmp, empty_path_dir].each { |dir| FileUtils.mkdir_p(dir) }
+  # Interpreter tooling caches. Reusing the authenticated build caches is
+  # permitted; either way these live OUTSIDE every execution root, so tooling
+  # output never enters the compared surface and never has to be excused from it.
+  tooling_root = File.join(artifact_root, 'interpreter-tooling')
+  interpreter_tooling = {
+    'gocache' => options[:go_cache] ? shared_gocache : File.join(tooling_root, 'gocache'),
+    'gomodcache' => options[:go_mod_cache] ? shared_gomodcache : File.join(tooling_root, 'gomodcache')
+  }
+  [shared_gocache, shared_gomodcache, build_home, build_tmp, empty_path_dir,
+   interpreter_tooling['gocache'], interpreter_tooling['gomodcache']].each { |dir| FileUtils.mkdir_p(dir) }
 
   run_path = options[:run_path] || empty_path_dir
   go_bin_dir = File.dirname(go['bin'])
@@ -1127,6 +1173,20 @@ begin
     'engine_bin' => engine_bin,
     'engine_bin_sha256' => Digest::SHA256.file(engine_bin).hexdigest,
     'run_path' => run_path,
+    'interpreter_tooling' => {
+      'schema' => 'lowering.interpreter-tooling.v1',
+      'why' => 'the interpreter links in the Go import compiler infrastructure, so a stdlib import makes it write a Go build cache and telemetry counters',
+      'gocache' => interpreter_tooling['gocache'],
+      'gomodcache' => interpreter_tooling['gomodcache'],
+      'gotoolchain' => 'local',
+      'telemetry_dir' => "${EXEC_ROOT}/#{TELEMETRY_DIR}",
+      'telemetry_mode' => TELEMETRY_MODE_OFF.strip,
+      'telemetry_scope' => 'private to each execution root, created before the baseline snapshot, identical in both modes, and compared',
+      'declared_env_divergence' => INTERPRETER_TOOLING_KEYS,
+      'native_runtime_go_env' => 'none',
+      'path_tools_added' => 'none: the Go infrastructure is linked into the interpreter, nothing is exposed through PATH',
+      'exempted_paths' => 'none: no filesystem path is excused; the tooling is configured out of the execution tree instead'
+    },
     'effect_detection' => {
       'method' => 'sha256 tree snapshot of the execution root before and after the run',
       'covers' => "every path under the execution root, including #{RUNTIME_DIR}/home (HOME), #{RUNTIME_DIR}/tmp (TMPDIR), dotfiles and files named *.raw",
@@ -1202,7 +1262,7 @@ begin
         # The interpreter is exercised independently and must still produce the
         # original observation. A truncated lifecycle cannot certify anything.
         interpreted_root = prepare_execution_root(fixture_root, File.join(case_dir, 'run', 'interpreted'))
-        env_interpreted = run_environment(interpreted_root, run_path)
+        env_interpreted = run_environment(interpreted_root, run_path, tooling: interpreter_tooling)
         before_interpreted = filesystem_snapshot(interpreted_root)
         interpreted = invoke_subprocess(env_interpreted, [engine_bin, '--bashpp', fixture], chdir: interpreted_root, timeout: options[:timeout])
         after_interpreted = filesystem_snapshot(interpreted_root)
@@ -1279,11 +1339,14 @@ begin
       FileUtils.rm_f(File.join(compiled_root, fixture))
       ignored_compiled = compiled_only_ignored_paths(fixture)
 
-      env_interpreted = run_environment(interpreted_root, run_path)
+      env_interpreted = run_environment(interpreted_root, run_path, tooling: interpreter_tooling)
       env_compiled = run_environment(compiled_root, options[:typed_only] ? '' : run_path)
       profile_interpreted = environment_profile(env_interpreted, interpreted_root)
       profile_compiled = environment_profile(env_compiled, compiled_root)
-      declared_divergence = options[:typed_only] ? ['PATH'] : []
+      # The interpreter tooling keys are the ONLY declared difference, plus the
+      # deliberately empty PATH of a typed-only artifact. Every other key is
+      # still gated, and no filesystem path is exempted anywhere.
+      declared_divergence = INTERPRETER_TOOLING_KEYS + (options[:typed_only] ? ['PATH'] : [])
 
       env_diff = (profile_interpreted.keys | profile_compiled.keys).reject do |key|
         profile_interpreted[key] == profile_compiled[key]
@@ -1314,7 +1377,9 @@ begin
                              'stdout_bytes' => result['stdout_bytes'], 'stderr_bytes' => result['stderr_bytes'] },
           'environment' => { 'schema' => 'lowering.controlled-env.v1', 'inherited' => false,
                              'profile' => profile, 'profile_sha256' => environment_digest(profile),
-                             'declared_divergence' => declared_divergence, 'keys' => env.keys.sort },
+                             'declared_divergence' => declared_divergence, 'keys' => env.keys.sort,
+                             'interpreter_tooling' => mode == 'interpreted' ? interpreter_tooling : nil,
+                             'telemetry_dir' => "${EXEC_ROOT}/#{TELEMETRY_DIR}" },
           'effects' => { 'schema' => 'lowering.execution-root-effects.v1',
                          'method' => 'pre/post sha256 tree snapshot of the execution root',
                          'syscall_hooks' => false,

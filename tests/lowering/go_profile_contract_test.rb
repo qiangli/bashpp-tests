@@ -692,7 +692,9 @@ check 'typed-only runs the artifact with an empty PATH and gates the declared di
   compiled = phase(records, 'compiled-run')['observation']
   interpreted = phase(records, 'interpreted-run')['observation']
   assert(compiled['environment']['profile']['PATH'] == '', "compiled PATH was #{compiled['environment']['profile']['PATH'].inspect}")
-  assert(compiled['environment']['declared_divergence'] == ['PATH'], 'PATH divergence was not declared')
+  # PATH plus the interpreter tooling keys, and nothing else.
+  assert(compiled['environment']['declared_divergence'].sort == %w[GOCACHE GOMODCACHE GOTOOLCHAIN PATH],
+         "unexpected declared divergence: #{compiled['environment']['declared_divergence'].inspect}")
   assert(compiled['environment']['inherited'] == false, 'the runner must not claim an inherited environment')
   assert(interpreted['environment']['profile']['HOME'] == compiled['environment']['profile']['HOME'],
          'HOME is not at an equivalent path in both modes')
@@ -746,6 +748,85 @@ check 'EFFECTS: a pre-existing fixture named *.raw is mutated-detected' do
                      extra_files: { 'payload.raw' => "original\n" })
   assert(!result[:status].success?, 'a mutation of a pre-existing *.raw fixture was ignored')
   assert_includes(result[:all], 'payload.raw', 'the diagnostic should name the mutated .raw fixture')
+end
+
+puts 'go-profile contract: interpreter tooling is configured, never exempted'
+
+# The interpreter links in the Go import compiler infrastructure, so a stdlib
+# import makes it write a Go build cache and telemetry counters. Those writes
+# are configured OUT of the execution tree; nothing is excused from the diff.
+# These checks pin that distinction from both sides.
+
+check 'TOOLING: an arbitrary HOME write by the interpreter is still a divergence' do
+  # The one that matters: pointing the tooling caches elsewhere must not have
+  # turned $HOME into an ignored path.
+  result = mechanism('tooling-home-write', go_source: GO_HELLO,
+                     engine_body: %(printf 'mine\\n' > "$HOME/arbitrary"\nprintf 'hello\\n'\n))
+  assert(!result[:status].success?, 'an arbitrary HOME write was excused by the tooling configuration')
+  assert_includes(result[:all], 'filesystem effects diverged', 'expected the effect diagnostic')
+  assert_includes(result[:all], '.bashpp-run/home/arbitrary', 'the diagnostic should name the HOME path')
+end
+
+check 'TOOLING: a HOME write by the artifact is still a divergence' do
+  result = mechanism('tooling-home-write-compiled',
+                     go_source: go_writes('os.Getenv("HOME") + "/arbitrary"', "mine\n"),
+                     engine_body: ENGINE_HELLO)
+  assert(!result[:status].success?, 'an arbitrary HOME write by the artifact was excused')
+  assert_includes(result[:all], '.bashpp-run/home/arbitrary', 'the diagnostic should name the HOME path')
+end
+
+check 'TOOLING: the telemetry mode file exists in both modes before the run' do
+  result = mechanism('tooling-mode-baseline', go_source: GO_HELLO, engine_body: ENGINE_HELLO)
+  assert(result[:status].success?, "baseline run failed:\n#{result[:all]}")
+  %w[interpreted compiled].each do |mode|
+    path = File.join(result[:artifacts], 'mech', 'case-1', 'run', mode, '.bashpp-run', 'telemetry', 'mode')
+    assert(File.file?(path), "no telemetry mode file in the #{mode} execution root")
+    assert(File.binread(path) == "off\n", "the #{mode} telemetry mode file is not off: #{File.binread(path).inspect}")
+  end
+  records = ledger(result, 'mech', 'case-1')
+  interpreted = phase(records, 'interpreted-run')['observation']['environment']
+  compiled = phase(records, 'compiled-run')['observation']['environment']
+  assert(interpreted['telemetry_dir'] == compiled['telemetry_dir'], 'the telemetry directory is not identical in both modes')
+  assert(interpreted['profile']['TEST_TELEMETRY_DIR'] == compiled['profile']['TEST_TELEMETRY_DIR'],
+         'TEST_TELEMETRY_DIR differs between the modes')
+  assert(interpreted['declared_divergence'].sort == %w[GOCACHE GOMODCACHE GOTOOLCHAIN],
+         "unexpected declared divergence: #{interpreted['declared_divergence'].inspect}")
+  assert(!compiled['keys'].any? { |key| key.start_with?('GO') },
+         "the native runtime carries a Go variable: #{compiled['keys'].inspect}")
+  %w[GOCACHE GOMODCACHE GOTOOLCHAIN].each do |key|
+    assert(interpreted['profile'].key?(key), "the interpreter is missing its tooling variable #{key}")
+  end
+  tooling = interpreted['interpreter_tooling']
+  assert(tooling, 'the interpreter tooling paths were not recorded in the evidence')
+  exec_root = File.join(result[:artifacts], 'mech', 'case-1', 'run', 'interpreted')
+  %w[gocache gomodcache].each do |key|
+    assert(!tooling[key].start_with?(exec_root), "the #{key} tooling directory is inside the compared execution tree")
+    assert(File.directory?(tooling[key]), "the #{key} tooling directory was not created")
+  end
+  meta = JSON.parse(File.read(File.join(result[:artifacts], 'meta.json')))
+  assert(meta['interpreter_tooling']['exempted_paths'].include?('none'), 'the metadata must not claim an exemption')
+end
+
+check 'TOOLING: flipping the telemetry mode file is a divergence' do
+  result = mechanism('tooling-mode-tamper', go_source: GO_HELLO,
+                     engine_body: %(printf 'on\\n' > "$TEST_TELEMETRY_DIR/mode"\nprintf 'hello\\n'\n))
+  assert(!result[:status].success?, 'a telemetry mode flip was accepted')
+  assert_includes(result[:all], 'filesystem effects diverged', 'expected the effect diagnostic')
+  assert_includes(result[:all], '.bashpp-run/telemetry/mode', 'the diagnostic should name the mode file')
+end
+
+check 'TOOLING: a counter written beside the mode file is a divergence' do
+  result = mechanism('tooling-counter', go_source: GO_HELLO,
+                     engine_body: %(printf 'x\\n' > "$TEST_TELEMETRY_DIR/counter.v1.count"\nprintf 'hello\\n'\n))
+  assert(!result[:status].success?, 'a telemetry counter write was accepted')
+  assert_includes(result[:all], '.bashpp-run/telemetry/counter.v1.count', 'the diagnostic should name the counter file')
+end
+
+check 'TOOLING: deleting the telemetry mode file is a divergence' do
+  result = mechanism('tooling-mode-delete', go_source: GO_HELLO,
+                     engine_body: %(rm -f "$TEST_TELEMETRY_DIR/mode"\nprintf 'hello\\n'\n))
+  assert(!result[:status].success?, 'deleting the telemetry mode file was accepted')
+  assert_includes(result[:all], '.bashpp-run/telemetry/mode', 'the diagnostic should name the mode file')
 end
 
 puts 'go-profile contract: timeouts and descendant drain'
@@ -1421,6 +1502,62 @@ check 'ACCEPTANCE: the same case passes --typed-only with an empty PATH' do
   compiled = phase(records, 'compiled-run')
   assert(compiled['observation']['environment']['profile']['PATH'] == '', 'the typed artifact was given a PATH')
   assert(compiled['typed_only']['package'] == 'main', 'the typed artifact is not package main')
+end
+
+puts 'go-profile contract: real stdlib import acceptance'
+
+check 'ACCEPTANCE: a real stdlib import matches streams, status and program-root effects' do
+  cli = ENV['S117_EC4_CLI']
+  engine = ENV['S117_EC4_ENGINE']
+  fixture = File.join(ROOT, 'tests/lowering/profile-additional/stdlib-import.bpp')
+  unless cli && engine && File.executable?(cli) && File.executable?(engine)
+    raise 'set S117_EC4_CLI and S117_EC4_ENGINE to the stdlib-import capable CLI and engine'
+  end
+  raise "missing fixture #{fixture}" unless File.file?(fixture)
+
+  dir = File.join(WORK, 'acceptance-stdlib')
+  fixtures = File.join(dir, 'fixtures')
+  FileUtils.mkdir_p(fixtures)
+  FileUtils.cp(fixture, File.join(fixtures, 'stdlib-import.bpp'))
+  manifest = File.join(dir, 'manifest.tsv')
+  File.write(manifest, <<~TSV)
+    # ACCEPTANCE manifest: a real stdlib import through the real CLI and engine.
+    id\tcategory\tfixture\texpected_status\tstdout\tstderr\tpublic_test_ref
+    stdlib-import\tstd\tstdlib-import.bpp\t0\t"incremental\\n"\t""\tsh/interp/bashpp_test.go:TestBashPPStdlibImport
+  TSV
+  artifacts = File.join(dir, 'artifacts')
+  out, err, status = run({}, RUBY, RUNNER, '--bashy', cli, '--engine', engine, '--go', REAL_GO,
+                         '--sh-module', REAL_SH_MODULE, '--manifest', manifest,
+                         '--fixture-root', fixtures, '--artifacts', artifacts,
+                         '--artifact-only', *CACHE_ARGS)
+  assert(status.success?, "the real stdlib import did not reach parity:\n#{out}#{err}")
+  assert_includes(out, 'PARITY PASS stdlib-import', 'expected the artifact-run pass line')
+
+  result = { artifacts: artifacts }
+  records = ledger(result, 'std', 'stdlib-import')
+  interpreted = phase(records, 'interpreted-run')
+  compiled = phase(records, 'compiled-run')
+  assert(interpreted['stdout_sha256'] == compiled['stdout_sha256'], 'stdout digests differ')
+  assert(interpreted['stderr_sha256'] == compiled['stderr_sha256'], 'stderr digests differ')
+  assert(interpreted['exit'] == compiled['exit'], 'exit statuses differ')
+
+  # The point of the exercise: the interpreter compiled a real stdlib import and
+  # the program-root effects still match, because the tooling wrote outside the
+  # tree rather than being excused inside it.
+  before = interpreted['observation']['effects']['filesystem_before']
+  after = interpreted['observation']['effects']['filesystem_after']
+  assert(before['sha256'] == after['sha256'],
+         "the interpreter left #{after['count'] - before['count']} entries in its execution root")
+  interpreted_root = File.join(artifacts, 'std', 'stdlib-import', 'run', 'interpreted')
+  home_files = Dir.glob(File.join(interpreted_root, '.bashpp-run', 'home', '**', '*'), File::FNM_DOTMATCH)
+                  .reject { |path| File.basename(path) =~ /\A\.\.?\z/ }
+  assert(home_files.empty?, "the interpreter wrote #{home_files.length} entries under HOME: #{home_files.first(3).inspect}")
+  mode_file = File.join(interpreted_root, '.bashpp-run', 'telemetry', 'mode')
+  assert(File.binread(mode_file) == "off\n", 'the telemetry mode file was mutated by the run')
+
+  tooling = interpreted['observation']['environment']['interpreter_tooling']
+  cache_entries = Dir.glob(File.join(tooling['gocache'], '**', '*')).length
+  assert(cache_entries > 0, 'the interpreter build cache is empty; the tooling redirection was not exercised')
 end
 
 puts
