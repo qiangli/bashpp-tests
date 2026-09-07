@@ -1,0 +1,1 @@
+agentic(1) func marked() { echo body-must-not-run; }

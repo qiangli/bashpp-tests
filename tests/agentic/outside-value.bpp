@@ -1,0 +1,3 @@
+agentic func marked() { echo body-must-not-run; }
+action := marked
+action()

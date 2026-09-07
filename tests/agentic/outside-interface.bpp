@@ -1,0 +1,6 @@
+type Value int
+agentic func (v Value) Show() { echo body-must-not-run; }
+type Shower interface { Show() }
+var v Value = 1
+var view Shower = v
+view.Show()

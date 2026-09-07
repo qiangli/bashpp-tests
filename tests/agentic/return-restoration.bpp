@@ -1,0 +1,6 @@
+agentic function marked() { echo body-must-not-run; }
+helper() {
+    agentic { return 0; }
+}
+helper
+marked

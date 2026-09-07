@@ -1,24 +1,97 @@
 ---
 id: 642584d1c9e9
 kind: task
-title: Commit the agentic rung-declaration start sites to the corpus (measurement DONE — all Class R)
+title: 'Agentic MVP: measure source forms and gate functions, scripts and tools'
 seq: 7
-status: todo
+status: done
 priority: p2
 created: 2026-09-07T08:33:48.101616Z
-sprint: 131
+sprint: 134
 ---
 
-THE MEASUREMENT IS DONE AND IT IS RECORDED HERE. What remains is to make it DURABLE by committing the rows, so the ratchet covers them. Design of record: docs/agentic-tool-duality-design.md section 14 in the umbrella (sprint 131, story dbe12300f0e1); the consuming Bash++ story is 72cd8bec on sprint 117, PROPOSED and owned by the Bash++ gates.
+Execution 2026-09-07: accountable owner codex-gpt5.6-sol; internal helper
+`/root/agentic_corpus` owns Phase A in bashpp-tests; manager owns final gates.
+Both baseline oracles measured definitions Class R and the block prefix Class E.
 
-WHAT WAS ASKED. Bash# admissibility test 1 requires a COMMITTED START SHAPE, and the standing rule in the design is that test 1 is MEASURED by tools/startsites and NEVER ASSERTED. An earlier probe in the umbrella session had rejected four candidate spellings under a stock bash and was recorded as an INDICATION of Class R rather than a classification, deliberately, for three reasons this tool makes explicit: it used ONE oracle where classify.sh requires TWO, since a classification produced by only one would silently become an assertion again; it ran bash 3.2 rather than the 5.3 the tool enforces; and it measured COMPLETE FORMS rather than the commit point, which the README warns records a site as free when it is not, because a parser decides at the opening line and never sees the closing brace first.
+Final manager acceptance 2026-09-07: both rebuilt product matrices independently
+pass 546 executions each; current two-oracle --check and --posix-gate pass all
+205 shapes. Engine and native-adapter broad/race gates pass. The umbrella guard
+migration preserves original Go coverage and mapping hashes, passes all 29
+validator self-tests and 36 strict-closure checks. Exact integration/handoff
+is recorded in the umbrella docs/sprint-134-handoff.md.
 
-THE MEASUREMENT, run with classify.sh --tsv against a SCRATCH corpus via the SHAPES override, so nothing committed was touched. Oracles: bash53 = GNU bash 5.3.15(1)-release aarch64-apple-darwin25.4.0, bashy = GNU bash 5.3.0(1)-bashy-dev bc9e466. Eight shapes, classified at the COMMIT POINT: agentic function f() open-brace; agentic f() open-brace; agentic func f() open-brace; agentic 3 func f() open-brace; agentic(3) func f() open-brace; at-agentic func f() open-brace; agentic:3 func f() open-brace; plus one complete form as a control.
+Moved from Sprint 131 to Sprint 134 for the user-approved bare `agentic` MVP.
+An action is input -> output | error, including methods, functions, scripts,
+commands, utilities and tools. Numeric determinism levels are not the contract.
 
-RESULT: 8 shapes, 8 CLASS R, 0 class E, 0 engine disagreement, both oracles agreeing on every row. Every candidate spelling of the declaration is PURELY ADDITIVE - no existing script can contain it, so Bash++ may claim the shape with NO TABLE ROW, NO NEAR-MISS FALLBACK, NO command-or-quote ESCAPE and no compatibility risk. Two things worth drawing out. The level-carrying parenthesised form agentic(3) is also Class R, which matters because the declaration must carry a LEVEL rather than a boolean - a boolean would collapse five rungs into two, keeping the TRUST boundary and losing the COST boundary entirely - and it is a further instance of the law this corpus already exposed, that the parenthesised call is Bash++'s free disambiguator, since bash's only word-open-paren production is name-open-paren-close-paren. And the prefix and complete forms agreed here, which is NOT guaranteed in general and is exactly why the commit point is the thing to measure.
+Phase A (prerequisite for parser story be84e6c6dedf):
+Commit the selected typed-function/method and shell-function prefixes to
+tools/startsites/shapes.tsv and baseline.tsv. Prior scratch measurement recorded
+eight Class-R candidates with bash 5.3.15 and bashy bc9e466; keep that historical
+fact distinct from newly committed evidence and the selected bare spelling.
+Measure the NEW `agentic {` block at its commitment point with completing
+contexts, both required oracles, and buffered/one-byte parser cases. Do not
+assume the block inherits the definition forms' classification. Where Class E,
+require the decision-table row, near-miss fallback and command/quote escapes.
+Numeric alternatives are rejection/compatibility cases, not accepted features.
+Run the existing --check and --posix-gate according to repository gate policy.
 
-THE WORK REMAINING, and it is small. Add these rows to the committed shapes.tsv with a real id, phase and feature, regenerate baseline.tsv, and confirm classify.sh --check is green so the ratchet catches a future class flip. Also run --posix-gate, the cert-safety mode that proves Bash++ syntax is inert under posix, since section 14.9's hard limit is that the construct is inert under posix and the GNU Bash and POSIX gates stay green with the feature absent, disabled and enabled - that gate is the one that proves it rather than asserting it.
+Phase A measurement evidence (2026-09-07):
+`tools/startsites/shapes.tsv` and its generated baseline now contain 17 selected
+`agentic-*` rows, measured with GNU Bash 5.3.15 and baseline bashy bc9e466.
+The three definition prefixes and completed bodies are Class R. The exact
+`agentic {` prefix and `agentic { : }` argv form are Class E; a later rejected
+multiline closing brace does not change the prefix's classification.
+`tools/startsites/README.md` records the commitment table, command/quote escapes,
+near-miss fallback, and numeric rejection versus ordinary numeric arguments.
+Both `tools/startsites/classify.sh --check` and `--posix-gate` exit 0 over
+205 shapes (86 R, 119 E, zero oracle disagreements). These checks only parse;
+buffered/one-byte feature admission remains with parser story be84e6c6dedf and
+product execution remains Phase B below. No final sprint gate is claimed here.
 
-SCOPE NOTE. This story covers the CORPUS ROWS only. It does NOT admit the keyword to the language, does not choose the spelling among the seven, and does not authorize any parser change: per section 14.8 the declaration syntax, the Bash# interaction and the activation semantics are Bash++ design decisions owned by the Bash++ gates, and this measurement is an INPUT to that decision rather than a substitute for it. A Class R result says a spelling is FREE to claim, not that it SHOULD be claimed.
+Phase B (final verification after runtime 1a1dc881f966 and bridge 872f9f15885f):
+Add a bounded agentic fixture group using existing harness conventions. Prove
+normal input/output/error behavior for a typed function, receiver method, shell
+function, standalone script and command/utility/tool wrapper. Include a marked
+callable passed by value/interface; an explicit region in a closure; ordinary
+helpers; eval/source; restoration on return/failure; and concurrent isolation.
+A marked call outside explicit scope must fail before its body executes.
+An unmarked helper must not inherit implicit assistance.
 
-COORDINATION. This repo is actively worked - recent commits integrate the Bash# executable contract - so the corpus edit should either be taken by that lane or coordinated with it before landing. The measurement above required no repo change and none was made.
+The bounded source/product corpus is `tests/agentic/cases.tsv` (13 cases), run
+by `BASHY_BIN=/path/to/current/bash ruby tools/agentic/acceptance.rb`. The
+main harness invokes it and excludes its expected negatives from generic
+fixture grading. It exercises file/stdin/-c with ambient opt-in unset/set,
+plus GNU-oracle Classic/POSIX comparisons. The baseline product bc9e466
+correctly fails the new feature assertions; passing evidence requires the
+updated product binary. Native adapter/provider tests remain owned by bashy.
+
+Phase B product evidence (2026-09-07): both commands below exit 0 and report
+13 cases / 546 product-oracle executions each against GNU Bash 5.3.15:
+
+```sh
+BASHY_BIN=/tmp/sprint134.JlFdIu/bash ruby tools/agentic/acceptance.rb
+BASHY_BIN=/tmp/sprint134.JlFdIu/bashy ruby tools/agentic/acceptance.rb
+```
+
+The runner sets existing `BASHY_HINTS=off` to suppress optional advice during
+stream comparisons, while still testing `BASHY_AGENTIC` unset and `1`.
+Binary SHA-256: bash `96bb4509998c02165841ee3309c65e6f5f1ace977865c572c08cec08d8996dd1`;
+bashy `c15b25297bddb04fedd71484321499d8d90d2c7d2d4d5e895ce76392dcb4f52e`.
+The earlier product exposed 22 `-c` parsing failures; the corrected build now
+passes those same assertions. Engine and native adapter evidence, final commits
+and Sprint 117 handoff are recorded by the manager in the umbrella.
+
+Drive one production LLM adapter through its injectable runner/local fixture:
+success, provider error and cancellation. Assert actual dispatch and scope
+observations, not only emitted prose. Verify command argv/stdin/stdout/stderr/
+status preservation, ordinary tool pass-through, no automatic retries, and that
+BASHY_AGENTIC does not supply source opt-in. Run the actual file/stdin/-c product
+entry paths and the existing Classic/POSIX matrix. No paid model is needed for
+the deterministic gate; provide a runnable configured-provider example.
+
+Record exact revisions, commands/results and the Sprint 117 handoff in the
+umbrella. Sprint 134 proves interpreted execution only. Sprint 117's lowering
+story adds compiled parity with the SAME deterministic provider fixture;
+independently sampled live-model prose is never the byte-equality oracle.
+Do not claim syntax admission or behavior from scratch measurements alone.

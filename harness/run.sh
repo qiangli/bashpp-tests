@@ -188,6 +188,11 @@ fi
 # `supported`, which is the conservative reading — an unlisted fixture is held
 # to the full standard rather than quietly excused.
 # ---------------------------------------------------------------------------
+if ! BASHY_BIN="${BASHY_BIN}" ruby "${TEST_DIR}/tools/agentic/acceptance.rb"; then
+  echo "FATAL: agentic interpreted product fixtures failed" >&2
+  exit 2
+fi
+
 declare -A MF_STATUS=() MF_FEATURE=()
 if [ -f "${MANIFEST}" ]; then
   while IFS=$'\t' read -r mid mstatus mfeature _rest; do
@@ -286,11 +291,11 @@ if [ -d "${TEST_DIR}/tests/00_superset_posix2016" ]; then
 while IFS= read -r f; do POSIX_FILES+=("$f"); done \
     < <(find "${TEST_DIR}/tests/00_superset_posix2016" \( -name '*.sh' -o -name '*.bpp' \) | sort)
 fi
-# Bash# has expected negative and inert-mode cases; its dedicated executable
-# gate above owns those outcomes, so the generic supported-fixture loop must
+# Bash# and agentic have expected negative and inert-mode cases; their dedicated
+# gates above own those outcomes, so the generic supported-fixture loop must
 # not double-grade them as ordinary run fixtures.
 while IFS= read -r f; do BPP_FILES+=("$f"); done \
-  < <(find "${TEST_DIR}/tests" -name '*.bpp' ! -path '*/00_superset_posix2016/*' ! -path '*/_oracles/*' ! -path '*/bashsharp/*' | sort)
+  < <(find "${TEST_DIR}/tests" -name '*.bpp' ! -path '*/00_superset_posix2016/*' ! -path '*/_oracles/*' ! -path '*/bashsharp/*' ! -path '*/agentic/*' | sort)
 
 for f in ${POSIX_FILES+"${POSIX_FILES[@]}"}; do run_fixture "$f" "POSIX-2016 superset" --posix --bashpp; done
 for f in ${BPP_FILES+"${BPP_FILES[@]}"};   do run_fixture "$f" "bash++ interpreted"   --bashpp; done

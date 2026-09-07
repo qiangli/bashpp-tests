@@ -1,0 +1,2 @@
+agentic function marked() { echo body-must-not-run; }
+agentic { source ./source-unmarked.sh; }

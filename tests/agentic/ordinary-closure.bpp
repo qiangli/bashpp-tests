@@ -1,0 +1,5 @@
+agentic func marked() { echo body-must-not-run; }
+agentic {
+    helper := func() { marked(); }
+    helper()
+}

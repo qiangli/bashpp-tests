@@ -1,0 +1,11 @@
+agentic function marked() { echo "$1"; }
+before=$PWD
+agentic {
+    value=retained
+    eval 'marked eval'
+    source ./source-marked.sh
+    marked restored-caller
+    cd ..
+}
+printf 'value:%s\n' "$value"
+test "$PWD" != "$before" || exit 9

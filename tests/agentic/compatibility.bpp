@@ -1,0 +1,9 @@
+agentic() { printf '<%s>\n' "$@"; }
+agentic word
+agentic func f
+agentic function f
+agentic {suffix
+"agentic" {
+agentic "{"
+echo agentic {
+agentic 1

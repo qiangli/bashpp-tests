@@ -225,3 +225,21 @@ switch-type	P1	switch	switch v := x.(type) { case int: echo a }
 switch-tagless	P1	switch	switch { case x > 1: echo a }
 if-else	P1	if	if x { echo a } else { echo b }
 if-else-if	P1	if	if x { echo a } else if y { echo b }
+# Sprint 134: bare agentic contract. Prefix classification, not whole-body rejection, owns commitment.
+agentic-func	S134	agentic	agentic func f()	agentic func f() { :; }
+agentic-method	S134	agentic	agentic func (r Report) Summarize()	agentic func (r Report) Summarize() { :; }
+agentic-function	S134	agentic	agentic function f()	agentic function f() { :; }
+agentic-block-prefix	S134	agentic	agentic {
+agentic-block-complete	S134	agentic	agentic {\n: \n}
+agentic-block-argv	S134	agentic	agentic { : }
+agentic-command-escape	S134	agentic	command agentic {
+agentic-quote-escape	S134	agentic	"agentic" {
+agentic-brace-quote-escape	S134	agentic	agentic "{"
+agentic-argument	S134	agentic	echo agentic {
+agentic-nearmiss-bare	S134	agentic	agentic
+agentic-nearmiss-word	S134	agentic	agentic word
+agentic-nearmiss-func	S134	agentic	agentic func f
+agentic-nearmiss-function	S134	agentic	agentic function f
+agentic-nearmiss-brace	S134	agentic	agentic {suffix
+agentic-numeric-decl	S134	agentic	agentic(1) func f()	agentic(1) func f() { :; }
+agentic-numeric-command	S134	agentic	agentic 1

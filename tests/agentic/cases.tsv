@@ -1,0 +1,14 @@
+# id	fixture	exit	stdout	stderr
+actions	actions.bpp	0	actions.out	empty
+dynamic-scope	dynamic-scope.bpp	0	dynamic-scope.out	empty
+outside-value	outside-value.bpp	nonzero	empty	scope
+outside-interface	outside-interface.bpp	nonzero	empty	scope
+outside-shell	outside-shell.bpp	nonzero	empty	scope
+ordinary-helper	ordinary-helper.bpp	nonzero	empty	scope
+ordinary-shell-helper	ordinary-shell-helper.bpp	nonzero	empty	scope
+ordinary-closure	ordinary-closure.bpp	nonzero	empty	scope
+restoration	restoration.bpp	nonzero	empty	scope
+return-restoration	return-restoration.bpp	nonzero	empty	scope
+source-reset	source-reset.bpp	nonzero	empty	scope
+numeric	numeric.bpp	nonzero	empty	syntax
+compatibility	compatibility.bpp	0	compatibility.out	empty

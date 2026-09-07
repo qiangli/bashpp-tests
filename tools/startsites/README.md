@@ -61,6 +61,36 @@ parses in bash 5.3 — the `{` is just the last word of the condition — so
 10 {` stays Class R because no completing context makes it parse. Both results
 are measured; neither is reasoned from the other.
 
+## Sprint 134: bare `agentic`
+
+Measured on 2026-09-07 with GNU Bash **5.3.15** and baseline bashy
+**bc9e466** using parse-only `-n` in Classic mode. The 17 `agentic-*` rows
+record the selected forms and their compatibility neighbors; all agree between
+the two oracles. These are syntax classifications, not agentic implementation
+or execution evidence.
+
+| Commitment shape | Class | Bash++ decision / escape |
+|---|:-:|---|
+| `agentic func f()` | R | Typed definition; completed body also rejected by both Classic oracles. |
+| `agentic func (r Report) Summarize()` | R | Receiver method; completed body also rejected. |
+| `agentic function f()` | R | Shell definition; completed body also rejected. |
+| `agentic {` | E | Commit only on the exact unquoted keyword and unquoted brace token at statement start. Preserve `command agentic {`, `"agentic" {`, and `agentic "{"` as ordinary commands. |
+
+The block's opening line is already a complete Classic command: `{` is an
+argument. `agentic { : }` also parses as a Classic command. A multiline block
+with `}` at statement start is rejected, but that later rejection does not make
+the opening commitment Class R. `agentic-block-prefix` owns the commitment
+classification; `agentic-block-complete` records that contrasting completion.
+
+Bare `agentic`, `agentic word`, `agentic func f`, `agentic function f`,
+`agentic {suffix`, and argument-position `echo agentic {` remain shell fallback.
+The parser must not commit to definitions before their discriminating parens.
+`agentic(1) func f()` is a rejected numeric alternative, while `agentic 1`
+remains an ordinary Classic command; the numeric rows do not admit a feature.
+
+Buffered/one-byte admission and escape behavior belong to the parser story;
+runtime and product execution belong to Phase B of story `642584d1c9e9`.
+
 ## Usage
 
 ```sh
