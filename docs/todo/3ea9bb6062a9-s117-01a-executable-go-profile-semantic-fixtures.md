@@ -3,9 +3,10 @@ id: 3ea9bb6062a9
 kind: task
 title: 'S117-01A: executable Go-profile semantic fixtures'
 seq: 10
-status: todo
+status: doing
 priority: p0
 created: 2026-09-07T18:10:52.750213Z
+assignee: ycode-glm-5.3
 sprint: 117
 ---
 

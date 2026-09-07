@@ -3,9 +3,11 @@ id: 65f43d377225
 kind: task
 title: 'S117-01: complete lowering coverage and differential contract'
 seq: 8
-status: todo
+status: doing
 priority: p0
 created: 2026-09-07T17:54:05.999208Z
+weave: 2
+assignee: codex-gpt5.6-terra
 sprint: 117
 ---
 
