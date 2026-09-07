@@ -1,0 +1,5 @@
+import (
+	f "fmt"
+	_ "embed"
+)
+f.Println("alias")

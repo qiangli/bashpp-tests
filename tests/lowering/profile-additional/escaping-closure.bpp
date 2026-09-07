@@ -1,0 +1,11 @@
+func counter() func {
+ var n = 0
+ return func() int {
+  n=$((n + 1))
+  return n
+ }
+}
+next := counter()
+p := next()
+q := next()
+echo "$p $q"

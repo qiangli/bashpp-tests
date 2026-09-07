@@ -1,0 +1,6 @@
+func main() {
+var x int = 7
+x%=4
+printf '%s' "$x"
+}
+main()

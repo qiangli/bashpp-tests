@@ -1,0 +1,11 @@
+
+func main() {
+ ch := make(chan string, 1)
+ ch <- yes
+ close(ch)
+ first, open := <-ch
+ echo "$first:$open"
+ second, still := <-ch
+ echo "$second:$still"
+}
+main()

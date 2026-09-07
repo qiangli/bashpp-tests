@@ -1,0 +1,4 @@
+func tag(p string, rest ...int) {
+ echo "$p:${#rest[@]}:${rest[0]}"
+}
+tag(hi, 7, 8)

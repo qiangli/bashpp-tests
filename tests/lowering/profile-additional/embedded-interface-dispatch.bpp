@@ -1,0 +1,28 @@
+type Speaker interface { Speak() }
+type Voice struct { N int }
+func (v Voice) Speak() { printf 'v%s:' v.N }
+type Outer struct { Speaker }
+type Alias = Speaker
+type AliasOuter struct { Alias }
+func main() {
+ v := Voice{N: 3}
+ var s Speaker = v
+ o := Outer{Speaker: s}
+ o.Speak()
+ var promoted Speaker = o
+ promoted.Speak()
+ selected := o.Speaker
+ selected.Speak()
+ o.Speaker.Speak()
+ a := AliasOuter{Alias: s}
+ a.Speak()
+ p := &o
+ p.Speak()
+ var pointerPromoted Speaker = p
+ pointerPromoted.Speak()
+ Outer.Speak(o)
+ (*Outer).Speak(p)
+ f := o.Speak
+ f()
+}
+main()

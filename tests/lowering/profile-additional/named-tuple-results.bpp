@@ -1,0 +1,7 @@
+func pair(a, b int) (x, y int) {
+ x=a
+ y=b
+ return
+}
+x, y := pair(1, 2)
+echo "$x:$y"

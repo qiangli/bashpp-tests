@@ -1,0 +1,6 @@
+func main() {
+ a := 1.5
+ b := 0x1.8p+1
+ println(a, b)
+}
+main()

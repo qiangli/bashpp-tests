@@ -1,0 +1,10 @@
+type Stringer interface { String() string }
+type Name string
+func (v Name) String() string { return v }
+func choose[A Stringer, B any](a A, b B) B { return b }
+func main() {
+ var n Name = "n"
+ x := choose(n, 7)
+ echo "$x"
+}
+main()

@@ -1,0 +1,5 @@
+func main() {
+	n := 8 >> 2
+	printf '%s' "$n"
+}
+main()

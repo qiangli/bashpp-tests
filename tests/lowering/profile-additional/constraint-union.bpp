@@ -1,0 +1,5 @@
+func id[T ~int\|string](v T) T {
+ return v
+}
+x := id[string](hi)
+echo "$x"

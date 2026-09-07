@@ -1,0 +1,6 @@
+type Env map[string]int
+func main() {
+ e := Env{"a": 1}
+ for k, v := range e { printf '%s=%s\n' "$k" "$v" }
+}
+main()

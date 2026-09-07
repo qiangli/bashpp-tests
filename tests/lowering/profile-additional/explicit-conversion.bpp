@@ -1,0 +1,9 @@
+func main() {
+	base := 40
+	copy := base
+	n := copy + 2
+	ok := n == 42
+	s := string(65)
+	printf '%s:%s:%s' "$n" "$ok" "$s"
+}
+main()

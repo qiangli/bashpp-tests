@@ -1,0 +1,71 @@
+# Public source scenarios; interpreted observations only, no compiled-parity claim.
+# Fixture paths are relative to tests/lowering/profile-additional; stdout/stderr are JSON strings.
+id	category	fixture	expected_status	stdout	stderr	public_test_ref
+scalar-operator-00	expressions	scalar-operator-00.bpp	0	"true"	""	sh/interp/bashpp_test.go:TestBashPPScalarShellOperatorExpressionsEvaluate/true || false
+scalar-operator-01	expressions	scalar-operator-01.bpp	0	"false"	""	sh/interp/bashpp_test.go:TestBashPPScalarShellOperatorExpressionsEvaluate/true && false
+scalar-operator-02	expressions	scalar-operator-02.bpp	0	"true"	""	sh/interp/bashpp_test.go:TestBashPPScalarShellOperatorExpressionsEvaluate/1 < 2
+scalar-operator-03	expressions	scalar-operator-03.bpp	0	"true"	""	sh/interp/bashpp_test.go:TestBashPPScalarShellOperatorExpressionsEvaluate/1 <= 2
+scalar-operator-04	expressions	scalar-operator-04.bpp	0	"false"	""	sh/interp/bashpp_test.go:TestBashPPScalarShellOperatorExpressionsEvaluate/1 > 2
+scalar-operator-05	expressions	scalar-operator-05.bpp	0	"false"	""	sh/interp/bashpp_test.go:TestBashPPScalarShellOperatorExpressionsEvaluate/1 >= 2
+scalar-operator-06	expressions	scalar-operator-06.bpp	0	"7"	""	sh/interp/bashpp_test.go:TestBashPPScalarShellOperatorExpressionsEvaluate/6 | 3
+scalar-operator-07	expressions	scalar-operator-07.bpp	0	"2"	""	sh/interp/bashpp_test.go:TestBashPPScalarShellOperatorExpressionsEvaluate/6 & 3
+scalar-operator-08	expressions	scalar-operator-08.bpp	0	"4"	""	sh/interp/bashpp_test.go:TestBashPPScalarShellOperatorExpressionsEvaluate/6 &^ 3
+scalar-operator-09	expressions	scalar-operator-09.bpp	0	"4"	""	sh/interp/bashpp_test.go:TestBashPPScalarShellOperatorExpressionsEvaluate/1 << 2
+scalar-operator-10	expressions	scalar-operator-10.bpp	0	"2"	""	sh/interp/bashpp_test.go:TestBashPPScalarShellOperatorExpressionsEvaluate/8 >> 2
+compound-operator-00	expressions	compound-operator-00.bpp	0	"8"	""	sh/interp/bashpp_update_test.go:TestBashPPCompoundOperatorMatrix/+=
+compound-operator-01	expressions	compound-operator-01.bpp	0	"4"	""	sh/interp/bashpp_update_test.go:TestBashPPCompoundOperatorMatrix/-=
+compound-operator-02	expressions	compound-operator-02.bpp	0	"12"	""	sh/interp/bashpp_update_test.go:TestBashPPCompoundOperatorMatrix/*=
+compound-operator-03	expressions	compound-operator-03.bpp	0	"3"	""	sh/interp/bashpp_update_test.go:TestBashPPCompoundOperatorMatrix//=
+compound-operator-04	expressions	compound-operator-04.bpp	0	"3"	""	sh/interp/bashpp_update_test.go:TestBashPPCompoundOperatorMatrix/%=
+compound-operator-05	expressions	compound-operator-05.bpp	0	"2"	""	sh/interp/bashpp_update_test.go:TestBashPPCompoundOperatorMatrix/&=
+compound-operator-06	expressions	compound-operator-06.bpp	0	"7"	""	sh/interp/bashpp_update_test.go:TestBashPPCompoundOperatorMatrix/|=
+compound-operator-07	expressions	compound-operator-07.bpp	0	"5"	""	sh/interp/bashpp_update_test.go:TestBashPPCompoundOperatorMatrix/^=
+compound-operator-08	expressions	compound-operator-08.bpp	0	"12"	""	sh/interp/bashpp_update_test.go:TestBashPPCompoundOperatorMatrix/<<=
+compound-operator-09	expressions	compound-operator-09.bpp	0	"3"	""	sh/interp/bashpp_update_test.go:TestBashPPCompoundOperatorMatrix/>>=
+compound-operator-10	expressions	compound-operator-10.bpp	0	"5"	""	sh/interp/bashpp_update_test.go:TestBashPPCompoundOperatorMatrix/&^=
+explicit-conversion	conversions	explicit-conversion.bpp	0	"42:true:A"	""	sh/interp/bashpp_test.go:TestBashPPParsedScalarExpressionsEvaluate
+constant-beyond-int64	constants	constant-beyond-int64.bpp	0	"9223372036854775809"	""	sh/interp/bashpp_test.go:TestBashPPParsedScalarConstantsUseGoConstantPrecision
+unicode-identifiers	lexical	unicode-identifiers.bpp	0	"6 7\n"	""	sh/interp/bashpp_unicode_ident_test.go:TestBashPPUnicodeIdentifiersRuntime
+uint64-wrap-string-provenance	expressions	uint64-wrap-string-provenance.bpp	0	"0:234"	""	sh/interp/bashpp_update_test.go:TestBashPPUpdateScalarProvenanceAndUint64Wrap
+named-tuple-results	functions	named-tuple-results.bpp	0	"1:2\n"	""	sh/interp/bashpp_func_test.go:TestBashPPFuncRuntimeProbe/multiple results
+named-result	functions	named-result.bpp	0	"x=5\n"	""	sh/interp/bashpp_func_test.go:TestBashPPFuncRuntimeProbe/named result
+function-live-capture	functions	function-live-capture.bpp	0	"x=2\n"	""	sh/interp/bashpp_func_test.go:TestBashPPFuncRuntimeProbe/closure observes live cell
+defer-status	functions	defer-status.bpp	0	"x=2 status=7\n"	""	sh/interp/bashpp_func_test.go:TestBashPPFuncRuntimeProbe/defer captures and propagates failure
+tuple-function-results	functions	tuple-function-results.bpp	0	"7:true"	""	sh/interp/bashpp_story204_residual_test.go:TestBashPPTupleAssignFunctionResultsAtomic
+tuple-rollback	functions	tuple-rollback.bpp	0	"|1:2|"	"tuple-rollback.bpp: line 5: BASHPP-EASSIGN-TYPE: cannot assign bool to int\n"	sh/interp/bashpp_story204_residual_test.go:TestBashPPTupleAssignFunctionTypeFailureRollsBack
+escaping-closure	functions	escaping-closure.bpp	0	"1 2\n"	""	sh/interp/bashpp_funclit_test.go:TestBashPPFuncLitRuntime/closure escapes its factory and mutates the captured cell
+closure-per-invocation	functions	closure-per-invocation.bpp	0	"11 12\n"	""	sh/interp/bashpp_funclit_test.go:TestBashPPFuncLitRuntime/capture is per invocation
+defer-argument-capture	functions	defer-argument-capture.bpp	0	"seen=1\n"	""	sh/interp/bashpp_funclit_test.go:TestBashPPFuncLitRuntime/deferred closure captures its arguments at defer time
+closure-parameter	functions	closure-parameter.bpp	0	"v=4\n"	""	sh/interp/bashpp_funclit_test.go:TestBashPPFuncLitRuntime/closure passed as a func-typed parameter
+variadic-fixed	functions	variadic-fixed.bpp	0	"hi:2:7\n"	""	sh/interp/bashpp_funclit_test.go:TestBashPPVariadicRuntime/fixed parameters keep their own values
+variadic-unnamed	functions	variadic-unnamed.bpp	0	"ok\n"	""	sh/interp/bashpp_funclit_test.go:TestBashPPVariadicRuntime/an unnamed variadic group accepts and discards
+variadic-spread	functions	variadic-spread.bpp	0	"x=9\n"	""	sh/interp/bashpp_funclit_test.go:TestBashPPVariadicRuntime/spread forwards a variadic parameter
+variadic-spread-empty	functions	variadic-spread-empty.bpp	0	"x=0\n"	""	sh/interp/bashpp_funclit_test.go:TestBashPPVariadicRuntime/spread of an empty slice passes nothing
+panic-recover	panic	panic-recover.bpp	0	"got=boom\nresumed\n"	""	sh/interp/bashpp_panic_test.go:TestBashPPPanicUnwinding/a deferred call recovers the panic and the caller resumes
+panic-shell-unwind	panic	panic-shell-unwind.bpp	0	"insf\ngot=viasf\nend\n"	""	sh/interp/bashpp_panic_test.go:TestBashPPPanicUnwinding/a panic unwinds through a shell function frame
+panic-named-result	panic	panic-named-result.bpp	0	"x=99\n"	""	sh/interp/bashpp_panic_test.go:TestBashPPPanicNamedResults/a recovering defer supplies the named result
+defer-named-result	panic	defer-named-result.bpp	0	"x=6\n"	""	sh/interp/bashpp_panic_test.go:TestBashPPPanicNamedResults/an ordinary defer amends the returned named result
+panic-unrecovered	panic	panic-unrecovered.bpp	2	"before\n"	"panic: boom\n"	sh/interp/bashpp_panic_test.go:TestBashPPPanicUnwinding/an unrecovered panic abandons every frame and the script
+ordinary-embedding	embedding	ordinary-embedding.bpp	0	"3:x:4:6"	""	sh/interp/bashpp_embed_test.go:TestBashPPPromotedFieldsReadWriteAndShadowing
+embedded-interface-dispatch	embedding	embedded-interface-dispatch.bpp	0	"v3:v3:v3:v3:v3:v3:v3:v3:v3:v3:"	""	sh/interp/bashpp_embed_test.go:TestBashPPEmbeddedInterfacePromotesDynamicMethods
+promoted-literal-keys	embedding	promoted-literal-keys.bpp	0	"x:3:deep"	""	sh/interp/bashpp_selector_key_test.go:TestBashPPStructPromotedSelectorKeys
+constraint-approximation	generics	constraint-approximation.bpp	0	"9\n"	""	sh/interp/bashpp_story203_manager_test.go:TestBashPPGenericTypeSetConstraints/approximation accepts named underlying int
+constraint-union	generics	constraint-union.bpp	0	"hi\n"	""	sh/interp/bashpp_story203_manager_test.go:TestBashPPGenericTypeSetConstraints/union accepts string
+multiple-inference	generics	multiple-inference.bpp	0	"7\n"	""	sh/interp/bashpp_story203_manager_test.go:TestBashPPGenericMultipleInferenceAndNamedConstraint
+generic-receiver-interface	generics	generic-receiver-interface.bpp	0	"9\n"	""	sh/interp/bashpp_story203_manager_test.go:TestBashPPInstantiatedGenericMethodImplementsInterface
+recursive-substitution	generics	recursive-substitution.bpp	0	"{\"Item\":{\"First\":\"n\",\"Second\":7}}\n"	""	sh/interp/bashpp_story203_manager_test.go:TestBashPPGenericNamedTypeRecursiveSubstitution/nested named composite substitution
+channel-go-range	concurrency	channel-go-range.bpp	0	"1\n2\n"	""	sh/interp/bashpp_concurrency_test.go:TestBashPPChannelsAndGo
+channel-closed-receive	concurrency	channel-closed-receive.bpp	0	"yes:true\n:false\n"	""	sh/interp/bashpp_concurrency_test.go:TestBashPPClosedTwoValueReceive
+select-ready-default-closed	concurrency	select-ready-default-closed.bpp	0	"ready:true\n:false\ndefault\n"	""	sh/interp/bashpp_concurrency_test.go:TestBashPPSelectReceiveDeclDefaultAndClosed
+nested-task-join	concurrency	nested-task-join.bpp	0	"nested\n"	""	sh/interp/bashpp_concurrency_test.go:TestBashPPNestedTaskRegistration
+stdlib-import	imports	stdlib-import.bpp	0	"incremental\n"	""	sh/interp/bashpp_import_test.go:TestBashPPStdlibImportSelectorCalls
+stdlib-import-alias-blank	imports	stdlib-import-alias-blank.bpp	0	"alias\n"	""	sh/interp/bashpp_import_test.go:TestBashPPStdlibImportSelectorCalls
+stdlib-import-dot	imports	stdlib-import-dot.bpp	0	"dot\n"	""	sh/interp/bashpp_import_test.go:TestBashPPStdlibImportSelectorCalls
+local-selector-shadows-import	imports	local-selector-shadows-import.bpp	0	"package\nlocal"	""	sh/interp/bashpp_import_test.go:TestBashPPLocalMultipartSelectorWinsOverImport
+named-map-range	composites	named-map-range.bpp	0	"a=1\n"	""	sh/interp/bashpp_story201_closure_test.go:TestBashPPStory201NamedCompositeClosure/named map range
+selected-slice	composites	selected-slice.bpp	0	"2\n"	""	sh/interp/bashpp_story201_closure_test.go:TestBashPPStory201NamedCompositeClosure/selected slice operand
+named-array-equality	composites	named-array-equality.bpp	0	"eq\n"	""	sh/interp/bashpp_story201_closure_test.go:TestBashPPStory201NamedCompositeClosure/named array equality
+literal-integer	literals	literal-integer.bpp	0	"5 15 31 1000\n"	""	tests/lowering/profile-additional/literal-integer.bpp
+literal-float	literals	literal-float.bpp	0	"3/2 3\n"	""	tests/lowering/profile-additional/literal-float.bpp
+literal-rune	literals	literal-rune.bpp	0	"233 10\n"	""	tests/lowering/profile-additional/literal-rune.bpp
+array-range	composites	array-range.bpp	0	"0:4\n1:5\n"	""	tests/lowering/profile-additional/array-range.bpp

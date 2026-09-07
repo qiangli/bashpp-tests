@@ -1,0 +1,8 @@
+func pair() (int, bool) { return 7, true }
+func main() {
+var x int = 1
+var y int = 2
+x, y = pair()
+printf '|%s:%s|' "$x" "$y"
+}
+main()

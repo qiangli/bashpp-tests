@@ -1,0 +1,10 @@
+func mk(n int) func {
+ return func(add int) int {
+  return $((n + add))
+ }
+}
+a := mk(1)
+b := mk(2)
+x := a(10)
+y := b(10)
+echo "$x $y"

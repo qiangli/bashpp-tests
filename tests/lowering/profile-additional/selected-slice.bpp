@@ -1,0 +1,7 @@
+type Cfg struct { Ports []int }
+func main() {
+ c := Cfg{Ports: []int{1, 2, 3}}
+ s := c.Ports[1:3]
+ printf '%s\n' s[0]
+}
+main()

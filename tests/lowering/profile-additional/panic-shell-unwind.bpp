@@ -1,0 +1,11 @@
+sf() { echo insf; panic(viasf); echo unreachable; }
+func f() {
+ defer func() {
+  v := recover()
+  echo "got=$v"
+ }()
+ sf
+ echo unreachable
+}
+f()
+echo end

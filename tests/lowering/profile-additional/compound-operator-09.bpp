@@ -1,0 +1,6 @@
+func main() {
+var x int = 12
+x>>=2
+printf '%s' "$x"
+}
+main()

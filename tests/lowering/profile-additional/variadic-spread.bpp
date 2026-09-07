@@ -1,0 +1,11 @@
+func sum(nums ...int) int {
+ t=0
+ for v in "${nums[@]}"; do t=$((t + v)); done
+ return $t
+}
+func fwd(rest ...int) int {
+ t := sum(rest...)
+ return t
+}
+x := fwd(4, 5)
+echo "x=$x"

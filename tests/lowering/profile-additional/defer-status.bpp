@@ -1,0 +1,11 @@
+func bad() {
+ return 7
+}
+func f() int {
+ n=1
+ defer bad()
+ n=2
+ return n
+}
+x := f()
+echo "x=$x status=$?"

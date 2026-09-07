@@ -1,0 +1,13 @@
+import "fmt"
+fmt.Println("package")
+type Speaker interface { Speak() }
+type Voice int
+func (v Voice) Speak() { printf local }
+type Holder struct { Speaker }
+func main() {
+ var voice Voice = 0
+ var speaker Speaker = voice
+ fmt := Holder{Speaker: speaker}
+ fmt.Speaker.Speak()
+}
+main()

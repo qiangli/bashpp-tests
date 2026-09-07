@@ -1,0 +1,6 @@
+func named() (n int) {
+ n=5
+ return
+}
+x := named()
+echo "x=$x"

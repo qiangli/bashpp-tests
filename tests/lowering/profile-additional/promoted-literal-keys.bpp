@@ -1,0 +1,8 @@
+type Leaf struct { Depth int; Label string }
+type Habitat struct { Leaf }
+type Gopher struct { Name string; Habitat }
+func main() {
+ g := Gopher{Name: "x", Depth: 3, Label: "deep"}
+ printf '%s:%s:%s' g.Name g.Depth g.Label
+}
+main()

@@ -1,0 +1,10 @@
+func f() {
+ defer func() {
+  v := recover()
+  echo "got=$v"
+ }()
+ panic(boom)
+ echo unreachable
+}
+f()
+echo resumed

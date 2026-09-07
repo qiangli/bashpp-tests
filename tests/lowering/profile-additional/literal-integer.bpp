@@ -1,0 +1,8 @@
+func main() {
+ a := 0b101
+ b := 0o17
+ c := 0x1f
+ d := 1_000
+ println(a, b, c, d)
+}
+main()

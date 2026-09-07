@@ -1,0 +1,13 @@
+type Leaf struct { N int }
+type Left struct { Leaf }
+type Right struct { N int }
+type Outer struct { Left; Label string }
+type Shadow struct { Left; N int }
+func main() {
+ o := Outer{Left: Left{Leaf: Leaf{N: 3}}, Label: "x"}
+ printf '%s:%s:' o.N o.Label
+ o.N = 4
+ s := Shadow{Left: Left{Leaf: Leaf{N: 5}}, N: 6}
+ printf '%s:%s' o.N s.N
+}
+main()

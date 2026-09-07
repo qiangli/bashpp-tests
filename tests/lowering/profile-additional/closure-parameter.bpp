@@ -1,0 +1,7 @@
+func apply(cb func, n int) {
+ cb($n)
+}
+show := func(v int) {
+ echo "v=$v"
+}
+apply($show, 4)

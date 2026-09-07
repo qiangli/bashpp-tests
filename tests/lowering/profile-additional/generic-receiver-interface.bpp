@@ -1,0 +1,10 @@
+type Echoer interface { Echo(int) int }
+type Box[T any] struct { Value T }
+func (b Box[T]) Echo(v T) T { return v }
+func main() {
+ var b Box[int] = Box[int]{Value:1}
+ var e Echoer = b
+ x := e.Echo(9)
+ echo "$x"
+}
+main()

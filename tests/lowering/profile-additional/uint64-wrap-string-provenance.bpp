@@ -1,0 +1,9 @@
+func main() {
+ var n uint64 = 18446744073709551615
+ n++
+ text := "2"
+ text += "3"
+ text += "4"
+ printf '%s:%s' "$n" "$text"
+}
+main()

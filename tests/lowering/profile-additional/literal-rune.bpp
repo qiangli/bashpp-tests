@@ -1,0 +1,6 @@
+func main() {
+ a := 'é'
+ b := '\n'
+ println(a, b)
+}
+main()

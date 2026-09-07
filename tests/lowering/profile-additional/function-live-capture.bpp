@@ -1,0 +1,7 @@
+var prefix = 1
+func f() int {
+ return prefix
+}
+prefix=2
+x := f()
+echo "x=$x"

@@ -1,0 +1,9 @@
+
+func leaf(ch) { ch <- nested; close(ch); }
+func parent(ch) { go leaf(ch); }
+func main() {
+ ch := make(chan string)
+ go parent(ch)
+ for v := range ch { echo $v; }
+}
+main()

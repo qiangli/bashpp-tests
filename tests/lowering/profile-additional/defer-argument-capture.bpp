@@ -1,0 +1,8 @@
+func f() {
+ v=1
+ defer func(seen int) {
+  echo "seen=$seen"
+ }($v)
+ v=2
+}
+f()

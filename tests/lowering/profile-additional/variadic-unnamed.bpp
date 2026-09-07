@@ -1,0 +1,4 @@
+func any(...int) {
+ echo ok
+}
+any(1, 2)

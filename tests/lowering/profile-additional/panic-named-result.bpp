@@ -1,0 +1,10 @@
+func f() (n int) {
+ defer func() {
+  recover()
+  n=99
+ }()
+ n=1
+ panic(boom)
+}
+x := f()
+echo "x=$x"

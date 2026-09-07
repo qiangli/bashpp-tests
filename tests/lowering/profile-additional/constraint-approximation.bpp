@@ -1,0 +1,7 @@
+type Age int
+func id[T ~int\|string](v T) T {
+ return v
+}
+var a Age = 9
+x := id(a)
+echo "$x"

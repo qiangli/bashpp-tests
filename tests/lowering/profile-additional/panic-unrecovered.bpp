@@ -1,0 +1,7 @@
+func f() {
+ echo before
+ panic(boom)
+ echo after
+}
+f()
+echo unreachable
