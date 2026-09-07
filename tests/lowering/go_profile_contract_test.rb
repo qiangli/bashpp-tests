@@ -101,8 +101,8 @@ at_exit { FileUtils.remove_entry(WORK) if File.directory?(WORK) }
 # A build cache shared across every scenario in this run. It is created if it is
 # missing and NEVER removed -- this suite does not clean up a directory it was
 # handed, and a warm cache is what keeps ~50 real Go builds affordable.
-GO_CACHE = ENV['S117_GO_CACHE'] || File.join(Dir.tmpdir, 's117-runner-correction-cache')
-GO_MOD_CACHE = ENV['S117_GO_MOD_CACHE'] || File.join(GO_CACHE, 'mod')
+GO_CACHE = ENV['CONTRACT_GO_CACHE'] || File.join(Dir.tmpdir, 'go-profile-contract-cache')
+GO_MOD_CACHE = ENV['CONTRACT_GO_MOD_CACHE'] || File.join(GO_CACHE, 'mod')
 FileUtils.mkdir_p(GO_CACHE)
 FileUtils.mkdir_p(GO_MOD_CACHE)
 CACHE_ARGS = ['--go-cache', GO_CACHE, '--go-mod-cache', GO_MOD_CACHE].freeze
@@ -408,20 +408,20 @@ check 'unknown positional arguments are rejected' do
   assert_includes(out + err, 'unexpected arguments', 'expected the stray-argument diagnostic')
 end
 
-# The phase contract is owned by the coverage worker. Until it lands in this
-# repository the runner must fail closed, and this suite reads the candidate
-# from S117_PHASES_CANDIDATE so the pairing is still exercised for real.
+# The canonical phase contract lives in this repository and is owned by the
+# coverage worker. CONTRACT_PHASES is an optional override for validating a
+# candidate document before it lands; it is not required.
 def default_phase_contract
-  landed = File.join(ROOT, 'docs/lowering/go-profile-phases.tsv')
-  return landed if File.file?(landed)
-  candidate = ENV['S117_PHASES_CANDIDATE']
-  return candidate if candidate && File.file?(candidate)
+  override = ENV['CONTRACT_PHASES']
+  return override if override && File.file?(override)
+  canonical = File.join(ROOT, 'docs/lowering/go-profile-phases.tsv')
+  return canonical if File.file?(canonical)
   nil
 end
 
 check 'the repository inventory covers all 120 cases across both manifests' do
   contract = default_phase_contract
-  raise 'no phase contract available; set S117_PHASES_CANDIDATE' unless contract
+  raise 'no phase contract at docs/lowering/go-profile-phases.tsv (override with CONTRACT_PHASES)' unless contract
   out, err, status = run({}, RUBY, RUNNER, '--inventory', '--phases', contract)
   assert(status.success?, "inventory failed:\n#{out}#{err}")
   assert_includes(out, 'INVENTORY docs/lowering/go-profile-cases.tsv tests/lowering/go-profile 52', 'go-profile manifest inventory line')
@@ -1210,7 +1210,7 @@ end
 
 check 'POLICY: the default phase contract validates the 120/105/15 split' do
   candidate = default_phase_contract
-  raise 'no default phase contract available; set S117_PHASES_CANDIDATE' unless candidate
+  raise 'no phase contract at docs/lowering/go-profile-phases.tsv (override with CONTRACT_PHASES)' unless candidate
   out, err, status = run({}, RUBY, RUNNER, '--inventory', '--phases', candidate)
   assert(status.success?, "the default phase contract did not validate:\n#{out}#{err}")
   assert_includes(out, 'INVENTORY OK: 120 cases across 2 manifests', 'inventory total')
@@ -1507,12 +1507,15 @@ end
 puts 'go-profile contract: real stdlib import acceptance'
 
 check 'ACCEPTANCE: a real stdlib import matches streams, status and program-root effects' do
-  cli = ENV['S117_EC4_CLI']
-  engine = ENV['S117_EC4_ENGINE']
+  # Uses the same CLI and engine as every other acceptance check. The optional
+  # CONTRACT_STDLIB_CLI / CONTRACT_STDLIB_ENGINE overrides exist only for
+  # pointing this one case at a different build; they default to the binaries
+  # this suite was already given, and this check is never skipped.
+  cli = ENV['CONTRACT_STDLIB_CLI'] || REAL_BASHY
+  engine = ENV['CONTRACT_STDLIB_ENGINE'] || REAL_ENGINE
   fixture = File.join(ROOT, 'tests/lowering/profile-additional/stdlib-import.bpp')
-  unless cli && engine && File.executable?(cli) && File.executable?(engine)
-    raise 'set S117_EC4_CLI and S117_EC4_ENGINE to the stdlib-import capable CLI and engine'
-  end
+  raise "stdlib CLI is not executable: #{cli}" unless File.executable?(cli)
+  raise "stdlib engine is not executable: #{engine}" unless File.executable?(engine)
   raise "missing fixture #{fixture}" unless File.file?(fixture)
 
   dir = File.join(WORK, 'acceptance-stdlib')

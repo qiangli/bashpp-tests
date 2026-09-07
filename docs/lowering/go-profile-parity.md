@@ -508,10 +508,26 @@ are rejected, and a typed program whose comments name an interpreter is accepted
 while one that imports `os/exec` is rejected. A gate that only ever fails proves
 nothing.
 
-The suite shares one Go build cache across its scenarios (`S117_GO_CACHE`,
-default `$TMPDIR/s117-runner-correction-cache`). It creates the directory if it
-is missing and never removes it: this suite does not clean up a directory it was
+The suite shares one Go build cache across its scenarios (`CONTRACT_GO_CACHE`,
+default `$TMPDIR/go-profile-contract-cache`). It creates the directory if it is
+missing and never removes it: this suite does not clean up a directory it was
 handed.
+
+Every input is supplied through a generic, documented variable, and none is
+optional in the sense of being skippable:
+
+| variable | meaning |
+| --- | --- |
+| `CONTRACT_BASHY_CLI` | the transpile CLI under test (required) |
+| `CONTRACT_ENGINE` | the interpreter under test (required) |
+| `CONTRACT_SH_MODULE` | the local `mvdan.cc/sh/v3` module (required) |
+| `CONTRACT_PHASES` | optional override for the phase contract; defaults to the canonical `docs/lowering/go-profile-phases.tsv` |
+| `CONTRACT_STDLIB_CLI` / `CONTRACT_STDLIB_ENGINE` | optional overrides for the real stdlib-import acceptance; default to `CONTRACT_BASHY_CLI` / `CONTRACT_ENGINE` |
+| `CONTRACT_GO_CACHE` / `CONTRACT_GO_MOD_CACHE` | optional shared build cache |
+
+The real stdlib-import acceptance is **mandatory**. It runs against whatever
+`CONTRACT_BASHY_CLI` and `CONTRACT_ENGINE` name, and there is no code path that
+skips it.
 
 ## Current status
 
