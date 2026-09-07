@@ -1,12 +1,27 @@
 # Sprint 117 lowering boundary
 
 `identities.tsv` is an independently checked, exact ordered identity manifest.
-It inventories the 61 public AST nodes (all 59 structs in
-`syntax/bashpp_nodes.go`, `BashPPAgenticBlock`, and agentic `FuncDecl`), 39
-significant expression/type/start-site/class variants, the runtime obligation
+It inventories the 62 public AST nodes (all 60 structs in
+`syntax/bashpp_nodes.go`, `BashPPAgenticBlock`, and agentic `FuncDecl`), 41
+significant expression/type/start-site/class variants, one returned-call field
+edge, the runtime obligation
 inventory, approved corpus/profile identities, five Bash# families, and the
 33 lowering cases. Start-site ownership is deliberately separate: its 205
 rows are not an AST-node inventory.
+
+The AST snapshot includes the public parser change
+`25276aa1495735628d9ee0d16e4856b37ee6b237`: `BashPPFuncType` represents a
+concrete callable signature, `BashPPCall` also implements `BashPPExpr`, and
+`BashPPReturn.Call` retains the positioned returned call. Return `Results` words
+remain available for compatibility; the field edge requires consumers to account
+for the call, rather than assuming every returned value is only a word.
+
+Measured totals are 62 nodes, 15 expression variants, 9 type variants, 15
+start-site variants, 2 site-class variants, and 1 field edge: **104 AST
+identities**. The field-edge inventory is an explicit significant-edge contract,
+not an exhaustive list of every field in every node. These are structural
+obligations; neither parser availability nor this inventory proves lowering,
+null-checker coverage, interpreted behavior, or compiled parity.
 
 The 33 lowering cases are exactly **18 runtime** cases and **15 deterministic
 rejections**. A `run` case may correctly exit non-zero when the specified

@@ -18,6 +18,7 @@ node:BashPPConvertExpr	node	syntax/bashpp_nodes.go
 node:BashPPIndexExpr	node	syntax/bashpp_nodes.go
 node:BashPPSliceExpr	node	syntax/bashpp_nodes.go
 node:BashPPSelectorExpr	node	syntax/bashpp_nodes.go
+node:BashPPFuncType	node	syntax/bashpp_nodes.go
 node:BashPPNamedType	node	syntax/bashpp_nodes.go
 node:BashPPTypeParamType	node	syntax/bashpp_nodes.go
 node:BashPPUnionType	node	syntax/bashpp_nodes.go
@@ -75,6 +76,8 @@ variant:BashPPExpr:BashPPAddressExpr	expr-variant	syntax/bashpp_nodes.go
 variant:BashPPExpr:BashPPDerefExpr	expr-variant	syntax/bashpp_nodes.go
 variant:BashPPExpr:BashPPNewExpr	expr-variant	syntax/bashpp_nodes.go
 variant:BashPPExpr:BashPPTypeAssertExpr	expr-variant	syntax/bashpp_nodes.go
+variant:BashPPExpr:BashPPCall	expr-variant	syntax/bashpp_nodes.go
+variant:BashPPTypeExpr:BashPPFuncType	type-variant	syntax/bashpp_nodes.go
 variant:BashPPTypeExpr:BashPPNamedType	type-variant	syntax/bashpp_nodes.go
 variant:BashPPTypeExpr:BashPPCollectionType	type-variant	syntax/bashpp_nodes.go
 variant:BashPPTypeExpr:BashPPStructType	type-variant	syntax/bashpp_nodes.go
@@ -100,3 +103,4 @@ variant:StartSite:select	start-site	syntax/bashpp_nodes.go
 variant:StartSite:agentic	start-site	syntax/bashpp_nodes.go
 variant:SiteClass:R	site-class	syntax/bashpp_nodes.go
 variant:SiteClass:E	site-class	syntax/bashpp_nodes.go
+edge:BashPPReturn:Call	field-edge	syntax/bashpp_nodes.go

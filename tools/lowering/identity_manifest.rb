@@ -69,7 +69,7 @@ AST_NODES = %w[
   BashPPDecl BashPPConstGroup BashPPConstSpec BashPPAssign BashPPShortDecl
   BashPPBasicLit BashPPIdent BashPPTypeAssertExpr BashPPParenExpr BashPPUnaryExpr
   BashPPAddressExpr BashPPDerefExpr BashPPNewExpr BashPPBinaryExpr BashPPConvertExpr
-  BashPPIndexExpr BashPPSliceExpr BashPPSelectorExpr BashPPNamedType BashPPTypeParamType
+  BashPPIndexExpr BashPPSliceExpr BashPPSelectorExpr BashPPFuncType BashPPNamedType BashPPTypeParamType
   BashPPUnionType BashPPApproxType BashPPPointerType BashPPCollectionType BashPPStructType
   BashPPInterfaceType BashPPInterfaceElem BashPPMethodSpec BashPPCompositeLit BashPPCompositeElem
   BashPPCall BashPPCommandCall BashPPImport BashPPImportSpec BashPPIf BashPPFor
@@ -78,8 +78,8 @@ AST_NODES = %w[
   BashPPReturn BashPPDefer BashPPGo BashPPChanType BashPPMakeChan BashPPSend BashPPReceive
   BashPPClose BashPPSelect BashPPSelectCase BashPPRange BashPPAgenticBlock FuncDecl[Agentic]
 ].freeze
-EXPR_VARIANTS = %w[BashPPBasicLit BashPPIdent BashPPParenExpr BashPPUnaryExpr BashPPBinaryExpr BashPPConvertExpr BashPPIndexExpr BashPPSliceExpr BashPPSelectorExpr BashPPCompositeLit BashPPAddressExpr BashPPDerefExpr BashPPNewExpr BashPPTypeAssertExpr].freeze
-TYPE_VARIANTS = %w[BashPPNamedType BashPPCollectionType BashPPStructType BashPPPointerType BashPPInterfaceType BashPPTypeParamType BashPPUnionType BashPPApproxType].freeze
+EXPR_VARIANTS = %w[BashPPBasicLit BashPPIdent BashPPParenExpr BashPPUnaryExpr BashPPBinaryExpr BashPPConvertExpr BashPPIndexExpr BashPPSliceExpr BashPPSelectorExpr BashPPCompositeLit BashPPAddressExpr BashPPDerefExpr BashPPNewExpr BashPPTypeAssertExpr BashPPCall].freeze
+TYPE_VARIANTS = %w[BashPPFuncType BashPPNamedType BashPPCollectionType BashPPStructType BashPPPointerType BashPPInterfaceType BashPPTypeParamType BashPPUnionType BashPPApproxType].freeze
 START_SITE_VARIANTS = %w[none var const type := call if import func defer return funclit go select agentic].freeze
 RUNTIME_OBLIGATIONS = %w[
   status.exit-status types.values-and-zero effects.cwd-env-filesystem
@@ -87,17 +87,35 @@ RUNTIME_OBLIGATIONS = %w[
   concurrency.goroutine-channel-order
 ].freeze
 
-def ast_api(root)
-  rows = data_lines(File.join(root, 'docs/lowering/ast_api.tsv')).map { |line| line.split("\t", -1) }
+AST_FIELD_EDGES = %w[edge:BashPPReturn:Call].freeze
+
+def ast_api(root, source = File.join(root, 'docs/lowering/ast_api.tsv'))
+  rows = data_lines(source).map { |line| line.split("\t", -1) }
   fail!('AST API row must have exactly three fields') unless rows.all? { |row| row.length == 3 && row.all? { |field| !field.empty? } }
   node_names = rows.select { |row| row[1] == 'node' }.map { |row| row[0].delete_prefix('node:') }
-  fail!('AST API nodes are not the complete 59 Bash++ structs plus agentic block and marked FuncDecl') unless node_names == AST_NODES
-  variants = rows.reject { |row| row[1] == 'node' }.map(&:first)
+  fail!('AST API nodes are not the complete 60 Bash++ structs plus agentic block and marked FuncDecl') unless node_names == AST_NODES
+  classes = %w[node expr-variant type-variant start-site site-class field-edge]
+  fail!('AST API has an unknown identity class') unless rows.all? { |row| classes.include?(row[1]) }
+  rows.each do |identity, klass, source_path|
+    expected_source = case identity
+                      when 'node:BashPPAgenticBlock' then 'syntax/bashpp_agentic.go'
+                      when 'node:FuncDecl[Agentic]' then 'syntax/nodes.go'
+                      else 'syntax/bashpp_nodes.go'
+                      end
+    fail!("AST API declaring source differs for #{identity}") unless source_path == expected_source
+  end
+  variants = rows.reject { |row| %w[node field-edge].include?(row[1]) }.map(&:first)
   expected = EXPR_VARIANTS.map { |name| "variant:BashPPExpr:#{name}" } +
     TYPE_VARIANTS.map { |name| "variant:BashPPTypeExpr:#{name}" } +
     START_SITE_VARIANTS.map { |name| "variant:StartSite:#{name}" } +
     %w[variant:SiteClass:R variant:SiteClass:E]
   fail!('AST API significant variants differ from the declared public variants') unless variants == expected
+  variant_classes = EXPR_VARIANTS.map { 'expr-variant' } + TYPE_VARIANTS.map { 'type-variant' } +
+    START_SITE_VARIANTS.map { 'start-site' } + %w[site-class site-class]
+  actual_classes = rows.reject { |row| %w[node field-edge].include?(row[1]) }.map { |row| row[1] }
+  fail!('AST API variant classes differ from the declared public variants') unless actual_classes == variant_classes
+  edges = rows.select { |row| row[1] == 'field-edge' }.map(&:first)
+  fail!('AST API field edges differ from the declared public edges') unless edges == AST_FIELD_EDGES
   rows.map(&:first)
 end
 
@@ -109,11 +127,18 @@ def runtime_obligations(root)
   identities
 end
 
-options = { manifest: File.join(ROOT, 'docs/lowering/identities.tsv') }
-OptionParser.new { |parser| parser.on('--manifest PATH', 'test-only alternate manifest') { |path| options[:manifest] = path } }.parse!
+options = { manifest: File.join(ROOT, 'docs/lowering/identities.tsv'), ast_api: File.join(ROOT, 'docs/lowering/ast_api.tsv') }
+OptionParser.new do |parser|
+  parser.on('--manifest PATH', 'test-only alternate manifest') { |path| options[:manifest] = path }
+  parser.on('--ast-api PATH', 'test-only alternate AST inventory') { |path| options[:ast_api] = path }
+end.parse!
 manifest = File.expand_path(options[:manifest])
 default_manifest = File.join(ROOT, 'docs/lowering/identities.tsv')
 fail!('manifest must be the checked-in file or a /tmp tamper copy') unless manifest == default_manifest || manifest.start_with?(File.join(Dir.tmpdir, ''))
+
+ast_source = File.expand_path(options[:ast_api])
+fail!('AST inventory must be the checked-in file or a temporary tamper copy') unless
+  ast_source == File.join(ROOT, 'docs/lowering/ast_api.tsv') || ast_source.start_with?(File.join(Dir.tmpdir, ''))
 
 seen_ids = {}
 rows = data_lines(manifest).map.with_index(1) do |line, number|
@@ -137,7 +162,7 @@ fail!('manifest groups differ from the complete public boundary') unless rows.to
 rows.each do |id, source, kind, expected_count, expected_digest|
   identities = case kind
                when 'bashsharp-runtime' then bashsharp_lowering(ROOT)
-               when 'ast-api' then ast_api(ROOT)
+               when 'ast-api' then ast_api(ROOT, ast_source)
                when 'runtime-obligation' then runtime_obligations(ROOT)
                else first_column(ROOT, source)
                end
