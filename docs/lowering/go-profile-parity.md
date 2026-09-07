@@ -40,6 +40,8 @@ ruby tools/lowering/go_profile.rb \
 | `--run-path PATH` | `PATH` handed to both execution modes; defaults to an empty directory |
 | `--typed-only` | additionally require an interpreter-free typed artifact, run with an empty `PATH` |
 | `--timeout SECONDS` | per-subprocess bound (default 60) |
+| `--go-cache PATH` | `GOCACHE` for the build; defaults to a directory inside `--artifacts` |
+| `--go-mod-cache PATH` | `GOMODCACHE` for the build; same default |
 | `--inventory` | validate every repository manifest and exit |
 
 No host path is committed anywhere in this story's files. Binaries and the `sh`
@@ -104,10 +106,28 @@ top-level fields — extras and omissions are both rejected:
 | `mappings` | non-empty array |
 
 Each mapping entry must carry exactly `go_line`, `go_col`, `source_line`,
-`source_col`, `source_offset` and `node`; the line and column coordinates must be
-integers `>= 1`, the offset `>= 0`, the node a non-empty string, and no `go_line`
-may point past the end of the generated Go. Both transpiles must produce
+`source_col`, `source_offset` and `node`. Both transpiles must produce
 byte-identical maps.
+
+**A positive integer is not a coordinate.** Every mapping is checked against the
+bytes of the artifact it claims to address, in both directions:
+
+* `go_line` must exist in the generated Go, and `go_col` must be inside that
+  line;
+* `source_line` must exist in the fixture, and `source_col` must be inside that
+  line;
+* `source_offset` must be exactly the byte position that `source_line` and
+  `source_col` denote — the three fields must agree with each other and with the
+  file, not merely be individually plausible;
+* positions are **byte** positions, 1-based lines and columns with a 0-based
+  offset, so a multi-byte source cannot shift a coordinate silently; a position
+  landing inside a multi-byte UTF-8 sequence is rejected.
+
+This invariant was validated against 200 real mappings produced by the CLI
+across 20 real fixtures before it was made a gate, and the contract test pins
+both directions: correct byte coordinates into a source containing two- and
+three-byte characters are accepted, while the same coordinates counted in
+characters are rejected.
 
 The `go_digest` check is what makes the map load-bearing: a map that does not
 hash to the exact Go source it accompanies is rejected, so a stale or
@@ -191,32 +211,72 @@ What it does not cover, stated plainly:
 * effects with no filesystem trace (network, IPC, non-persistent state);
 * file metadata not in the snapshot tuple (mtime, ownership, xattrs).
 
-Exactly one path is exempt from the effect diff, and only because it cannot
-exist in both modes: the original Bash++ source, deleted before the compiled
-run. It is removed from *both* sides of the comparison so the diff stays
-apples-to-apples, and the unfiltered snapshot is still what gets recorded.
+### The one path that cannot be diffed
 
-## Timeouts, process groups and partial evidence
+Exactly one path cannot be compared between the modes: the original Bash++
+source, which the compiled artifact runs without. That is not a licence to stop
+looking at it — a blanket ignore also hides a compiled artifact that *recreates*
+the source path, and an interpreted run that rewrites its own source.
+
+So instead of excusing the path, its state is pinned explicitly at both ends in
+both modes, and every one of these is a case failure:
+
+* the interpreted root must contain the source before the run;
+* the interpreted run must leave it byte-identical — modifying or deleting its
+  own source fails;
+* the compiled root must not contain it before the run;
+* the compiled root must **still** not contain it, or anything under that path,
+  after the run — recreating or writing it fails.
+
+Only once those transitions are asserted is the path normalized out of the
+general effect diff, and the unfiltered snapshot is still what gets recorded.
+
+## Process lifetime, timeouts and partial evidence
 
 Every subprocess is started in its **own process group** with `pgroup: true`,
 and its pipes are drained by a single bounded `IO.select` loop that appends to
-the byte buffers as data arrives. Consequences:
+the byte buffers as data arrives.
 
-* A process that exceeds `--timeout` is killed and reported as a **timeout with
-  exit 124** — a case failure. A timeout is never reported as a clean exit.
-* When the leader exits but a descendant still holds the pipe open, the drain
-  continues for a bounded grace period and then the process group is killed.
-  This is recorded as `drain_killed`, and it is *not* a failure: the leader's
-  output is complete and correct.
+The rule the runner enforces is that **an observation is only evidence if the
+runner watched the whole process tree finish.** Pipe EOF does not prove that:
+a descendant can close or redirect the inherited descriptors and keep running,
+and keep writing into the execution root, long after the pipes have closed.
+Liveness is therefore probed on the *process group* — `kill(0, -pgid)` — not
+inferred from the pipes. `invoke_subprocess` does not return while a process it
+spawned is still alive in that group.
+
+Each run records a `lifecycle`, and only `clean` is acceptable:
+
+| lifecycle | meaning | verdict |
+| --- | --- | --- |
+| `clean` | leader exited, pipes closed, process group empty — observed to completion | case may pass |
+| `timeout` | exceeded `--timeout`; group killed; exit reported as 124 | **case fails** |
+| `group-outlived-drain` | a process was still alive in the group after the leader exited and the bounded grace expired; the group was killed | **case fails** |
+| `group-unreapable` | the group could not be emptied | **case fails** |
+
+`group-outlived-drain` is a failure, not a footnote. If the runner had to cut a
+live process short, the streams and the snapshot that follow are truncated by
+construction, and reporting parity on them would be reporting parity on an
+observation that was still in progress. The explicit reason is included in the
+failure text.
+
+A process group that empties **on its own** inside the grace is not killed and
+not penalised: the runner waits for it and the work it did is part of the
+compared effects. Both directions are pinned in the contract test — a descendant
+that finishes in time passes with its effect captured; one that outlives the
+grace, with pipes open *or* closed, fails.
+
+Other guarantees:
+
 * Whatever bytes arrived before a kill are retained. Raw `stdout`/`stderr` are
   written to `<phase>.stdout.raw` / `<phase>.stderr.raw` at **every** phase,
-  including failing and timed-out ones.
+  including failing, timed-out and truncated ones.
 * Termination is `SIGTERM`, a short bounded wait, then `SIGKILL`, addressed to
   the runner's own process group id and nothing else. There is no `pgrep`, no
-  `ps` scan, and no sleep-then-kill over unrelated processes. The group id is
-  only ever signalled while the group is known to be non-empty — either the
-  leader is alive, or a descendant of it is still holding a pipe — so the id
-  cannot have been recycled by an unrelated process.
+  `ps` scan, and no sleep-then-kill over unrelated processes.
+* A signal is only ever sent after `group_alive?` has confirmed the group is
+  non-empty. A process group id cannot be recycled while the group still has
+  members, so the runner cannot signal an unrelated process.
 
 ## Failure handling
 
@@ -280,9 +340,17 @@ It separates two kinds of evidence, and labels each check accordingly:
   real source map to be present, schema-correct and digest-bound. They must pass.
 
 Both positive and negative directions are pinned for the load-bearing gates: a
-matching `HOME` write is accepted while a one-sided one fails, and a typed
-program whose comments name an interpreter is accepted while one that imports
-`os/exec` is rejected. A gate that only ever fails proves nothing.
+matching `HOME` write is accepted while a one-sided one fails, a descendant that
+finishes inside the grace passes while one that outlives it fails, correct byte
+coordinates into a multi-byte source are accepted while character-counted ones
+are rejected, and a typed program whose comments name an interpreter is accepted
+while one that imports `os/exec` is rejected. A gate that only ever fails proves
+nothing.
+
+The suite shares one Go build cache across its scenarios (`S117_GO_CACHE`,
+default `$TMPDIR/s117-runner-correction-cache`). It creates the directory if it
+is missing and never removes it: this suite does not clean up a directory it was
+handed.
 
 ## Known limitations
 

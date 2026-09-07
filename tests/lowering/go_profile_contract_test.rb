@@ -98,6 +98,15 @@ RUN_PATH = '/usr/bin:/bin'.freeze
 WORK = Dir.mktmpdir('s117-goprofile-contract-')
 at_exit { FileUtils.remove_entry(WORK) if File.directory?(WORK) }
 
+# A build cache shared across every scenario in this run. It is created if it is
+# missing and NEVER removed -- this suite does not clean up a directory it was
+# handed, and a warm cache is what keeps ~50 real Go builds affordable.
+GO_CACHE = ENV['S117_GO_CACHE'] || File.join(Dir.tmpdir, 's117-runner-correction-cache')
+GO_MOD_CACHE = ENV['S117_GO_MOD_CACHE'] || File.join(GO_CACHE, 'mod')
+FileUtils.mkdir_p(GO_CACHE)
+FileUtils.mkdir_p(GO_MOD_CACHE)
+CACHE_ARGS = ['--go-cache', GO_CACHE, '--go-mod-cache', GO_MOD_CACHE].freeze
+
 # --- MECHANISM harness ------------------------------------------------------
 
 TRANSPILER_TEMPLATE = <<~'TEMPLATE'
@@ -178,7 +187,7 @@ def mechanism(name, go_source:, map_hook: '', engine_body:, fixture: 'case.bpp',
           '--bashy', transpiler, '--engine', engine, '--go', REAL_GO,
           '--sh-module', REAL_SH_MODULE, '--manifest', manifest,
           '--fixture-root', fixtures, '--artifacts', artifacts,
-          '--run-path', RUN_PATH, '--timeout', '20'] + args
+          '--run-path', RUN_PATH, '--timeout', '20'] + CACHE_ARGS + args
   out, err, status = run({}, *argv)
   { out: out, err: err, status: status, all: out + err, dir: dir, artifacts: artifacts,
     manifest: manifest, fixtures: fixtures }
@@ -680,38 +689,197 @@ check 'TIMEOUT: a hung interpreted run fails and keeps the partial stream' do
   assert(interpreted['exit'] == 124, "timeout exit recorded as #{interpreted['exit']}, expected 124")
 end
 
-check 'DRAIN: a descendant holding the pipe after the leader exits is bounded and killed' do
-  pid_log = File.join(WORK, 'drain-pids.log')
+# --- REGRESSION 1 and 2: process lifetime -----------------------------------
+#
+# Reviewer defects 1 and 2. Both are the same lie told two ways: the runner
+# stopped observing while a process it had spawned was still running, and then
+# reported parity on the truncated observation. Defect 1 cut a descendant off at
+# the drain grace and called the result a pass; defect 2 never noticed the
+# descendant at all, because it had closed its inherited pipes, and it went on
+# writing into the execution root after the snapshot was taken.
+
+# Waits out a background writer and reports whether it managed to touch the
+# execution root after the runner had already returned.
+def late_file_appeared?(artifacts, relative, wait_seconds)
+  path = File.join(artifacts, 'mech', 'case-1', 'run', 'interpreted', relative)
+  deadline = Time.now + wait_seconds
+  while Time.now < deadline
+    return true if File.exist?(path)
+    sleep 0.25
+  end
+  File.exist?(path)
+end
+
+check 'LIFETIME: a descendant that outlives the drain while holding the pipe fails the case' do
   engine = <<~SH
-    ( sleep 120 ) >&2 &
-    child=$!
-    printf '%s\\n' "$child" >> #{pid_log}
+    ( sleep 8; printf 'late-output\\n'; printf 'late-effect\\n' > late.txt ) &
     printf 'hello\\n'
     exit 0
   SH
   started = Time.now
-  result = mechanism('drain-descendant', go_source: GO_HELLO, engine_body: engine, args: ['--timeout', '30'])
+  result = mechanism('lifetime-drain-cut', go_source: GO_HELLO, engine_body: engine, args: ['--timeout', '30'])
   elapsed = Time.now - started
-  assert(result[:status].success?, "the descendant drain turned a clean run into a failure:\n#{result[:all]}")
-  assert(elapsed < 60, "the runner waited on the descendant instead of bounding the drain (#{elapsed.round(1)}s)")
-  path = File.join(result[:artifacts], 'mech', 'case-1', 'interpreted.stdout.raw')
-  assert(File.binread(path) == "hello\n", 'the leader output was lost during the bounded drain')
+  assert(!result[:status].success?, 'a killed, still-running descendant was accepted as a pass')
+  assert_includes(result[:all], 'left a process alive in its own process group', 'expected an explicit lifecycle reason')
+  assert_includes(result[:all], 'truncated', 'the reason must say the observation is truncated')
+  assert(elapsed < 60, "the runner did not bound the drain (#{elapsed.round(1)}s)")
   records = ledger(result, 'mech', 'case-1')
   interpreted = phase(records, 'interpreted-run')
-  assert(interpreted['timeout'] == false, 'a bounded drain must not be reported as a timeout')
-  assert(interpreted['drain_killed'] == true, 'the ledger does not record the bounded drain kill')
-  assert(File.file?(pid_log), 'the fake engine did not record its descendant pid')
-  File.readlines(pid_log, chomp: true).map(&:to_i).reject(&:zero?).each do |pid|
-    alive = begin
-      Process.kill(0, pid)
-      true
-    rescue Errno::ESRCH
-      false
-    rescue Errno::EPERM
-      true
-    end
-    assert(!alive, "descendant #{pid} survived the bounded drain")
-  end
+  assert(interpreted['lifecycle'] == 'group-outlived-drain', "lifecycle recorded as #{interpreted['lifecycle'].inspect}")
+  assert(interpreted['group_killed'] == true, 'the ledger does not record the group kill')
+  assert(interpreted['timeout'] == false, 'an outliving group is not a timeout')
+  assert(File.binread(File.join(result[:artifacts], 'mech', 'case-1', 'interpreted.stdout.raw')) == "hello\n",
+         'the leader output was lost')
+  assert(!late_file_appeared?(result[:artifacts], 'late.txt', 10),
+         'the descendant survived the runner and wrote into the execution root')
+end
+
+check 'LIFETIME: a descendant that closes its inherited pipes is still detected and killed' do
+  # Both pipes hit EOF the moment the leader exits, so a pipe-only drain sees a
+  # clean, finished run. The process is still there, and two seconds later it
+  # writes into the execution root the runner has already snapshotted.
+  engine = <<~SH
+    ( exec >/dev/null 2>&1; sleep 8; printf 'late-effect\\n' > late.txt ) &
+    printf 'hello\\n'
+    exit 0
+  SH
+  started = Time.now
+  result = mechanism('lifetime-closed-pipes', go_source: GO_HELLO, engine_body: engine, args: ['--timeout', '30'])
+  elapsed = Time.now - started
+  assert(!result[:status].success?, 'a surviving descendant with closed pipes was accepted as a pass')
+  assert_includes(result[:all], 'left a process alive in its own process group', 'expected an explicit lifecycle reason')
+  assert(elapsed < 60, "the runner did not bound the wait (#{elapsed.round(1)}s)")
+  records = ledger(result, 'mech', 'case-1')
+  interpreted = phase(records, 'interpreted-run')
+  assert(interpreted['lifecycle'] == 'group-outlived-drain', "lifecycle recorded as #{interpreted['lifecycle'].inspect}")
+  assert(interpreted['group_killed'] == true, 'the ledger does not record the group kill')
+  assert(!late_file_appeared?(result[:artifacts], 'late.txt', 10),
+         'the descendant survived the runner and wrote into the execution root after the snapshot')
+end
+
+check 'LIFETIME: a descendant that finishes inside the grace is waited for, not killed' do
+  # The positive control. The runner must not simply fail anything that
+  # backgrounds work: it must wait for the owned process group to empty and
+  # include what that work did in the compared effects.
+  engine = <<~SH
+    ( sleep 0.4; printf 'late-effect\\n' > shared.txt ) &
+    printf 'hello\\n'
+    exit 0
+  SH
+  result = mechanism('lifetime-completes', go_source: go_writes('"shared.txt"', "late-effect\n"),
+                     engine_body: engine, args: ['--timeout', '30'])
+  assert(result[:status].success?, "a descendant that finished in time was rejected:\n#{result[:all]}")
+  records = ledger(result, 'mech', 'case-1')
+  interpreted = phase(records, 'interpreted-run')
+  assert(interpreted['lifecycle'] == 'clean', "lifecycle recorded as #{interpreted['lifecycle'].inspect}")
+  assert(interpreted['group_killed'] == false, 'the runner killed a group that was finishing on its own')
+  written = File.join(result[:artifacts], 'mech', 'case-1', 'run', 'interpreted', 'shared.txt')
+  assert(File.file?(written), 'the descendant effect was not captured in the execution root')
+  assert(File.binread(written) == "late-effect\n", 'the descendant effect was captured incompletely')
+end
+
+
+puts 'go-profile contract: map coordinates address real artifacts'
+
+# --- REGRESSION 3 -----------------------------------------------------------
+# Reviewer defect 3: coordinates were only checked for being positive, so a map
+# claiming line 1000000 of a two-line fixture was accepted.
+
+check 'COORDINATES: impossible coordinates on a tiny source are rejected' do
+  hook = "map['mappings'][0].merge!('go_col' => 1000000, 'source_line' => 1000000, 'source_col' => 1000000, 'source_offset' => 1000000)"
+  result = mechanism('coords-impossible', go_source: GO_HELLO, engine_body: ENGINE_HELLO, map_hook: hook)
+  assert(!result[:status].success?, 'impossible map coordinates were accepted')
+  assert(/does not address/.match?(result[:all]), "expected a coordinate diagnostic, got:\n#{result[:all]}")
+end
+
+check 'COORDINATES: a go_col past the end of its generated line is rejected' do
+  hook = "map['mappings'][0]['go_col'] = 4096"
+  result = mechanism('coords-gocol', go_source: GO_HELLO, engine_body: ENGINE_HELLO, map_hook: hook)
+  assert(!result[:status].success?, 'an out-of-range go_col was accepted')
+  assert_includes(result[:all], 'does not address the generated Go', 'expected a generated-Go coordinate diagnostic')
+  assert_includes(result[:all], 'go_col', 'the diagnostic should name go_col')
+end
+
+check 'COORDINATES: a source_line past the end of the fixture is rejected' do
+  hook = "map['mappings'][0]['source_line'] = 99"
+  result = mechanism('coords-srcline', go_source: GO_HELLO, engine_body: ENGINE_HELLO, map_hook: hook)
+  assert(!result[:status].success?, 'an out-of-range source_line was accepted')
+  assert_includes(result[:all], 'is past the end of the', 'expected a source coordinate diagnostic')
+end
+
+check 'COORDINATES: a source_offset inconsistent with its line and column is rejected' do
+  # The subtle one: every field is individually plausible, but together they do
+  # not denote a byte position in the fixture.
+  hook = "map['mappings'][0]['source_offset'] = 3"
+  result = mechanism('coords-offset', go_source: GO_HELLO, engine_body: ENGINE_HELLO, map_hook: hook)
+  assert(!result[:status].success?, 'an inconsistent source_offset was accepted')
+  assert_includes(result[:all], 'does not agree with', 'expected an offset-consistency diagnostic')
+end
+
+check 'COORDINATES: correct byte coordinates into a multi-byte source are accepted' do
+  # Positive control, and the UTF-8 half of it: line 1 holds two- and three-byte
+  # characters, so the byte offset of line 2 is not its character offset.
+  hook = <<~'HOOK'
+    src = File.binread(input)
+    first = src.split("\n", -1)[0]
+    map['mappings'][0].merge!('source_line' => 2, 'source_col' => 1, 'source_offset' => first.bytesize + 1)
+  HOOK
+  result = mechanism('coords-utf8-ok', go_source: GO_HELLO, engine_body: ENGINE_HELLO,
+                     fixture_body: "# h\u00e9llo \u4e2d\necho case\n", map_hook: hook)
+  assert(result[:status].success?, "correct byte coordinates into a UTF-8 source were rejected:\n#{result[:all]}")
+end
+
+check 'COORDINATES: character-counted coordinates into a multi-byte source are rejected' do
+  hook = <<~'HOOK'
+    src = File.binread(input)
+    first = src.split("\n", -1)[0]
+    chars = first.dup.force_encoding('UTF-8').length
+    map['mappings'][0].merge!('source_line' => 2, 'source_col' => 1, 'source_offset' => chars + 1)
+  HOOK
+  result = mechanism('coords-utf8-chars', go_source: GO_HELLO, engine_body: ENGINE_HELLO,
+                     fixture_body: "# h\u00e9llo \u4e2d\necho case\n", map_hook: hook)
+  assert(!result[:status].success?, 'character-counted coordinates were accepted for a multi-byte source')
+  assert_includes(result[:all], 'does not agree with', 'expected an offset-consistency diagnostic')
+end
+
+puts 'go-profile contract: the deliberately absent source path'
+
+# --- REGRESSION 4 -----------------------------------------------------------
+# Reviewer defect 4: the original source path was removed from both sides of the
+# effect diff wholesale, so a compiled artifact that recreated it was invisible.
+
+check 'SOURCE PATH: a compiled artifact that recreates the deleted source fails' do
+  go = <<~GO
+    package main
+
+    import (
+    \t"fmt"
+    \t"os"
+    )
+
+    func main() {
+    \tos.WriteFile("case.bpp", []byte("compiled-only-effect\\n"), 0o600)
+    \tfmt.Println("hello")
+    }
+  GO
+  result = mechanism('source-recreated', go_source: go, engine_body: ENGINE_HELLO)
+  assert(!result[:status].success?, 'a compiled artifact recreated the deleted source and was accepted')
+  assert_includes(result[:all], 'recreated or wrote the deliberately absent source path', 'expected the source-path diagnostic')
+  assert_includes(result[:all], 'case.bpp', 'the diagnostic should name the source path')
+end
+
+check 'SOURCE PATH: an interpreted run that rewrites its own source fails' do
+  engine = %(printf 'mutated\\n' > case.bpp\nprintf 'hello\\n'\n)
+  result = mechanism('source-mutated', go_source: GO_HELLO, engine_body: engine)
+  assert(!result[:status].success?, 'an interpreted run rewrote its own source and was accepted')
+  assert_includes(result[:all], 'modified its own source', 'expected the source-mutation diagnostic')
+end
+
+check 'SOURCE PATH: an interpreted run that deletes its own source fails' do
+  engine = %(rm -f case.bpp\nprintf 'hello\\n'\n)
+  result = mechanism('source-deleted', go_source: GO_HELLO, engine_body: engine)
+  assert(!result[:status].success?, 'an interpreted run deleted its own source and was accepted')
+  assert_includes(result[:all], 'deleted its own source', 'expected the source-deletion diagnostic')
 end
 
 puts 'go-profile contract: multi-case behaviour'
@@ -733,7 +901,7 @@ check 'every selected case runs even when earlier cases fail' do
                          '--go', REAL_GO, '--sh-module', REAL_SH_MODULE,
                          '--manifest', result[:manifest], '--fixture-root', result[:fixtures],
                          '--artifacts', File.join(result[:dir], 'artifacts-all'),
-                         '--run-path', RUN_PATH, '--timeout', '20')
+                         '--run-path', RUN_PATH, '--timeout', '20', *CACHE_ARGS)
   assert(!status.success?, 'a run with four failing cases reported success')
   assert_includes(out + err, 'failures across 4 selected cases', 'expected the aggregate failure line')
   assert_includes(out + err, '4 failures', 'all four cases should have been evaluated')
@@ -778,7 +946,7 @@ def acceptance(name, args: [])
   out, err, status = run({}, RUBY, RUNNER,
                          '--bashy', REAL_BASHY, '--engine', REAL_ENGINE, '--go', REAL_GO,
                          '--sh-module', REAL_SH_MODULE, '--manifest', manifest,
-                         '--fixture-root', fixtures, '--artifacts', artifacts, *args)
+                         '--fixture-root', fixtures, '--artifacts', artifacts, *CACHE_ARGS, *args)
   { out: out, err: err, status: status, all: out + err, artifacts: artifacts }
 end
 

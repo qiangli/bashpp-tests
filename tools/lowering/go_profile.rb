@@ -66,9 +66,27 @@ def compiled_only_ignored_paths(fixture)
 end
 
 DEFAULT_TIMEOUT = 60
-DRAIN_GRACE = 2.0       # keep reading a pipe this long after the leader exits
+DRAIN_GRACE = 2.0       # let an owned process group finish this long after the leader exits
 FINAL_DRAIN = 0.5       # keep reading this long after killing the process group
 KILL_GRACE = 0.25       # TERM -> KILL escalation window, bounded and targeted
+GROUP_REAP_GRACE = 2.0  # bounded wait for an owned process group to become empty
+
+# How a subprocess's whole process tree ended. Only CLEAN is acceptable: it is
+# the only outcome in which the runner observed the tree to completion. Every
+# other outcome means the runner had to cut a still-live process short, so the
+# streams and the filesystem snapshot that follow are truncated and cannot be
+# offered as parity evidence.
+LIFECYCLE_CLEAN = 'clean'.freeze
+LIFECYCLE_TIMEOUT = 'timeout'.freeze
+LIFECYCLE_OUTLIVED = 'group-outlived-drain'.freeze
+LIFECYCLE_UNREAPABLE = 'group-unreapable'.freeze
+
+LIFECYCLE_REASONS = {
+  LIFECYCLE_TIMEOUT => 'timed out and its process group was killed',
+  LIFECYCLE_OUTLIVED => 'left a process alive in its own process group after the leader exited; ' \
+                        'the runner killed the group, so the observed streams and effects are truncated',
+  LIFECYCLE_UNREAPABLE => 'left a process group that could not be reaped'
+}.freeze
 
 # The repository inventory this runner is contracted to support.
 DEFAULT_INVENTORY = [
@@ -85,53 +103,80 @@ end
 
 # --- process control --------------------------------------------------------
 
+# Is the owned process group still non-empty?
+#
+# Signal 0 to a negative pid probes the process group without delivering
+# anything. This is the only reliable liveness question: pipe EOF does NOT mean
+# the tree is gone, because a descendant can close or redirect the inherited
+# descriptors and keep running -- and keep writing to the execution root long
+# after the runner would otherwise have snapshotted it.
+def group_alive?(pgid)
+  return false if pgid.nil? || pgid <= 0
+  Process.kill(0, -pgid)
+  true
+rescue Errno::ESRCH
+  false
+rescue Errno::EPERM
+  true
+rescue StandardError
+  false
+end
+
+# Bounded wait for an owned process group to become empty.
+def wait_group_empty(pgid, grace)
+  deadline = Time.now + grace
+  loop do
+    return true unless group_alive?(pgid)
+    return false if Time.now >= deadline
+    IO.select(nil, nil, nil, 0.02)
+  end
+end
+
 # Terminate the process group whose group id is `pgid`.
 #
 # Safety: this is only ever called with the pgid of a group this runner created
 # (pgroup: true makes the spawned leader its own group leader, so pgid == leader
-# pid), and only while that group is known to be non-empty -- either the leader
-# is still alive, or a descendant of it is still holding a pipe open. A process
-# group id cannot be recycled while the group has members, so this can never
-# signal an unrelated process. No pgrep, no ps, no global scan.
+# pid), and only after group_alive? has confirmed the group is non-empty. A
+# process group id cannot be recycled while the group still has members, so this
+# can never signal an unrelated process. No pgrep, no ps, no global scan.
 def kill_group(pgid)
-  return if pgid.nil? || pgid <= 0
+  return false if pgid.nil? || pgid <= 0
+  return false unless group_alive?(pgid)
   begin
     Process.kill('-TERM', pgid)
   rescue StandardError
     nil
   end
-  deadline = Time.now + KILL_GRACE
-  while Time.now < deadline
+  wait_group_empty(pgid, KILL_GRACE)
+  if group_alive?(pgid)
     begin
-      Process.kill(0, pgid)
-    rescue Errno::ESRCH, Errno::EPERM
-      break
+      Process.kill('-KILL', pgid)
     rescue StandardError
-      break
+      nil
     end
-    IO.select(nil, nil, nil, 0.02)
   end
-  begin
-    Process.kill('-KILL', pgid)
-  rescue StandardError
-    nil
-  end
+  true
 end
 
-# Run argv with a fully explicit environment, in its own process group, with a
-# bounded drain.
+# Run argv with a fully explicit environment, in its own process group, and
+# observe its whole process tree to completion.
 #
 # Guarantees:
 #   * the child never inherits this runner's environment (unsetenv_others)
 #   * whatever bytes were produced before a kill are retained (partial streams)
-#   * a leader that exits while a descendant keeps the pipe open cannot hang the
-#     runner: the drain is bounded by DRAIN_GRACE, then the group is killed
-#   * a timeout is reported as a timeout, never as a clean exit
+#   * the call does not return while a process this runner spawned is still
+#     alive in its own process group -- pipe EOF is not accepted as proof of
+#     death, because a descendant can close the inherited descriptors and keep
+#     running. Liveness is probed on the group itself.
+#   * if the runner ever has to cut a live process short -- a timeout, or a
+#     group that outlived the drain grace -- it says so in `lifecycle`, and the
+#     caller must fail the case. A truncated observation is never parity
+#     evidence, however clean the bytes that did arrive look.
 def invoke_subprocess(env, argv, chdir: ROOT, timeout: DEFAULT_TIMEOUT, drain_grace: DRAIN_GRACE)
   out_buf = String.new.force_encoding('BINARY')
   err_buf = String.new.force_encoding('BINARY')
-  timed_out = false
-  drain_killed = false
+  lifecycle = LIFECYCLE_CLEAN
+  group_killed = false
   status = nil
   started = Time.now
 
@@ -140,39 +185,49 @@ def invoke_subprocess(env, argv, chdir: ROOT, timeout: DEFAULT_TIMEOUT, drain_gr
     pgid = wait_thr.pid
     pipes = { stdout => out_buf, stderr => err_buf }
     hard_deadline = started + timeout
-    drain_deadline = nil
+    group_deadline = nil
     final_deadline = nil
     reaped = nil
 
     loop do
       if reaped.nil? && wait_thr.join(0)
         reaped = wait_thr.value
-        drain_deadline = Time.now + drain_grace
+        group_deadline = Time.now + drain_grace
       end
       now = Time.now
 
       if final_deadline.nil? && reaped.nil? && now >= hard_deadline
-        timed_out = true
-        kill_group(pgid)
+        lifecycle = LIFECYCLE_TIMEOUT
+        group_killed = kill_group(pgid) || group_killed
         final_deadline = Time.now + FINAL_DRAIN
       end
 
-      if final_deadline.nil? && drain_deadline && !pipes.empty? && now >= drain_deadline
-        drain_killed = true
-        kill_group(pgid)
-        final_deadline = Time.now + FINAL_DRAIN
+      if final_deadline.nil? && reaped
+        # The leader is gone. The tree is only finished when every pipe has
+        # closed AND the process group is empty. Either one alone is a lie.
+        outstanding = !pipes.empty? || group_alive?(pgid)
+        if !outstanding
+          break
+        elsif now >= group_deadline
+          lifecycle = LIFECYCLE_OUTLIVED
+          group_killed = kill_group(pgid) || group_killed
+          final_deadline = Time.now + FINAL_DRAIN
+        end
       end
 
-      break if pipes.empty? && reaped
       break if final_deadline && Time.now >= final_deadline
 
       if pipes.empty?
-        wait_thr.join(0.05)
+        if reaped
+          IO.select(nil, nil, nil, 0.02)
+        else
+          wait_thr.join(0.05)
+        end
         next
       end
 
       slice = 0.05
-      [hard_deadline, drain_deadline, final_deadline].compact.each do |deadline|
+      [hard_deadline, group_deadline, final_deadline].compact.each do |deadline|
         remaining = deadline - Time.now
         slice = remaining if remaining > 0 && remaining < slice
       end
@@ -197,13 +252,23 @@ def invoke_subprocess(env, argv, chdir: ROOT, timeout: DEFAULT_TIMEOUT, drain_gr
     end
 
     if reaped.nil?
-      kill_group(pgid)
-      timed_out = true unless drain_killed
+      lifecycle = LIFECYCLE_TIMEOUT if lifecycle == LIFECYCLE_CLEAN
+      group_killed = kill_group(pgid) || group_killed
       reaped = wait_thr.value
     end
     status = reaped
+
+    # Nothing this runner spawned may still be running when this returns. If
+    # the group is still alive here, the loop above left it that way, so the
+    # observation is truncated by definition.
+    if group_alive?(pgid)
+      lifecycle = LIFECYCLE_OUTLIVED if lifecycle == LIFECYCLE_CLEAN
+      group_killed = kill_group(pgid) || group_killed
+      lifecycle = LIFECYCLE_UNREAPABLE unless wait_group_empty(pgid, GROUP_REAP_GRACE)
+    end
   end
 
+  timed_out = lifecycle == LIFECYCLE_TIMEOUT
   exit_code =
     if timed_out
       124
@@ -220,7 +285,9 @@ def invoke_subprocess(env, argv, chdir: ROOT, timeout: DEFAULT_TIMEOUT, drain_gr
     'cwd' => chdir,
     'exit' => exit_code,
     'timeout' => timed_out,
-    'drain_killed' => drain_killed,
+    'lifecycle' => lifecycle,
+    'lifecycle_clean' => lifecycle == LIFECYCLE_CLEAN,
+    'group_killed' => group_killed,
     'duration_ms' => ((Time.now - started) * 1000).round,
     'stdout_bytes' => out_buf.bytesize,
     'stderr_bytes' => err_buf.bytesize,
@@ -450,6 +517,49 @@ def snapshot_reject(snapshot, ignored)
   { 'sha256' => Digest::SHA256.hexdigest(JSON.generate(entries)), 'count' => entries.length, 'entries' => entries }
 end
 
+def snapshot_entry(snapshot, relative)
+  snapshot['entries'].find { |entry| entry[0] == relative }
+end
+
+def snapshot_under(snapshot, prefix)
+  snapshot['entries'].select { |entry| entry[0] == prefix || entry[0].start_with?("#{prefix}/") }
+end
+
+# The one path that cannot be diffed between the modes is the original Bash++
+# source, because the compiled artifact runs with it deliberately deleted. That
+# is not a licence to stop looking at it: a blanket ignore also hides a compiled
+# artifact that RECREATES or rewrites the source path, and an interpreted run
+# that rewrites its own source.
+#
+# So instead of excusing the path, its state is pinned explicitly at both ends
+# in both modes. Only once each of those transitions is asserted is the path
+# normalized out of the general effect diff.
+def source_path_problems(fixture, before_interpreted, after_interpreted, before_compiled, after_compiled)
+  problems = []
+
+  original = snapshot_entry(before_interpreted, fixture)
+  if original.nil?
+    problems << "the interpreted execution root did not contain the original source #{fixture} before the run"
+  else
+    final = snapshot_entry(after_interpreted, fixture)
+    if final.nil?
+      problems << "the interpreted run deleted its own source #{fixture}"
+    elsif final != original
+      problems << "the interpreted run modified its own source #{fixture} (#{original[1..-1].inspect} -> #{final[1..-1].inspect})"
+    end
+  end
+
+  stale = snapshot_under(before_compiled, fixture)
+  problems << "the compiled execution root still held the original source path before the run: #{stale.map(&:first).inspect}" unless stale.empty?
+
+  recreated = snapshot_under(after_compiled, fixture)
+  unless recreated.empty?
+    problems << "the compiled artifact recreated or wrote the deliberately absent source path: #{recreated.map(&:first).inspect}"
+  end
+
+  problems
+end
+
 def snapshot_diff(left, right, limit = 12)
   left_map = left['entries'].to_h { |entry| [entry[0], entry[1..]] }
   right_map = right['entries'].to_h { |entry| [entry[0], entry[1..]] }
@@ -531,7 +641,58 @@ end
 # schema, a non-empty origin naming the real source, a go_digest that binds it
 # to the exact generated Go bytes, and at least one mapping with valid Go and
 # source coordinates. No extra top-level or entry fields are tolerated.
-def parse_source_map(map_path, generated, fixture, label)
+# Byte line index: the lines of `bytes` and the byte offset each one starts at.
+# Positions in the map artifact are 1-based byte lines and 1-based byte columns
+# with a 0-based byte offset, so every check below is done in bytes, not
+# characters -- a multi-byte source must not shift a coordinate silently.
+def byte_line_index(bytes)
+  lines = bytes.split("\n", -1)
+  offset = 0
+  starts = lines.map do |line|
+    start = offset
+    offset += line.bytesize + 1
+    start
+  end
+  [lines, starts]
+end
+
+# Is this byte the middle of a UTF-8 sequence? A coordinate that lands there is
+# not a real position in the artifact.
+def utf8_continuation_byte?(bytes, offset)
+  return false if offset >= bytes.bytesize
+  (bytes.getbyte(offset) & 0xC0) == 0x80
+end
+
+# Check one (line, col, offset) triple against the artifact it claims to point
+# into. A positive integer is not a coordinate: the line must exist, the column
+# must be inside that line, the offset must be exactly the byte position that
+# line and column denote, and it must not land inside a multi-byte character.
+def coordinate_problems(bytes, kind, line, col, offset, label_utf8)
+  lines, starts = byte_line_index(bytes)
+  problems = []
+  if line > lines.length
+    problems << "#{kind}_line #{line} is past the end of the #{lines.length}-line artifact"
+    return problems
+  end
+  width = lines[line - 1].bytesize
+  problems << "#{kind}_col #{col} is past the end of #{kind}_line #{line} (#{width} bytes)" if col > width + 1
+  return problems unless problems.empty?
+
+  expected = starts[line - 1] + (col - 1)
+  unless offset.nil?
+    problems << "#{kind}_offset #{offset} is past the end of the #{bytes.bytesize}-byte artifact" if offset > bytes.bytesize
+    problems << "#{kind}_offset #{offset} does not agree with #{kind}_line #{line} #{kind}_col #{col} (byte #{expected})" if problems.empty? && offset != expected
+  end
+  return problems unless problems.empty?
+
+  position = offset || expected
+  if label_utf8 && utf8_continuation_byte?(bytes, position)
+    problems << "#{kind} position #{position} lands inside a multi-byte UTF-8 character"
+  end
+  problems
+end
+
+def parse_source_map(map_path, generated, source_bytes, fixture, label)
   raise CaseFailure, "#{label}: missing source map file '#{map_path}'" unless File.file?(map_path)
   raw = File.binread(map_path)
   raise CaseFailure, "#{label}: empty source map file '#{map_path}'" if raw.empty?
@@ -553,6 +714,8 @@ def parse_source_map(map_path, generated, fixture, label)
 
   mappings = data['mappings']
   raise CaseFailure, "#{label}: source map mappings must be a non-empty array" unless mappings.is_a?(Array) && !mappings.empty?
+  generated_utf8 = generated.dup.force_encoding('UTF-8').valid_encoding?
+  source_utf8 = source_bytes.dup.force_encoding('UTF-8').valid_encoding?
   mappings.each_with_index do |entry, index|
     raise CaseFailure, "#{label}: source map mapping #{index} is not an object" unless entry.is_a?(Hash)
     entry_extra = entry.keys - MAP_ENTRY_KEYS
@@ -566,11 +729,14 @@ def parse_source_map(map_path, generated, fixture, label)
     end
     offset = entry['source_offset']
     raise CaseFailure, "#{label}: source map mapping #{index} source_offset must be an integer >= 0, got #{offset.inspect}" unless offset.is_a?(Integer) && offset >= 0
-  end
 
-  go_lines = generated.count("\n") + 1
-  over = mappings.find { |entry| entry['go_line'] > go_lines }
-  raise CaseFailure, "#{label}: source map go_line #{over['go_line']} exceeds the #{go_lines} lines of generated Go" if over
+    # Positive integers are not coordinates. Both ends of every mapping are
+    # checked against the bytes of the artifact they address.
+    go_problems = coordinate_problems(generated, 'go', entry['go_line'], entry['go_col'], nil, generated_utf8)
+    raise CaseFailure, "#{label}: source map mapping #{index} does not address the generated Go: #{go_problems.join('; ')}" unless go_problems.empty?
+    source_problems = coordinate_problems(source_bytes, 'source', entry['source_line'], entry['source_col'], offset, source_utf8)
+    raise CaseFailure, "#{label}: source map mapping #{index} does not address #{fixture}: #{source_problems.join('; ')}" unless source_problems.empty?
+  end
 
   { 'bytes' => raw, 'digest' => Digest::SHA256.hexdigest(raw), 'mappings' => mappings.length,
     'origin' => origin, 'go_digest' => data['go_digest'] }
@@ -633,6 +799,8 @@ options = {
   typed_only: false,
   run_path: nil,
   timeout: DEFAULT_TIMEOUT,
+  go_cache: nil,
+  go_mod_cache: nil,
   inventory: false
 }
 
@@ -649,6 +817,8 @@ parser = OptionParser.new do |opts|
   opts.on('--typed-only', 'require a source-absent, interpreter-free typed artifact') { options[:typed_only] = true }
   opts.on('--run-path PATH', 'PATH given to both execution modes (default: an empty directory)') { |value| options[:run_path] = value }
   opts.on('--timeout SECONDS', Integer) { |value| options[:timeout] = value }
+  opts.on('--go-cache PATH', 'GOCACHE for the build (default: inside the artifact directory)') { |value| options[:go_cache] = value }
+  opts.on('--go-mod-cache PATH', 'GOMODCACHE for the build (default: inside the artifact directory)') { |value| options[:go_mod_cache] = value }
   opts.on('--inventory', 'validate every repository manifest and exit') { options[:inventory] = true }
 end
 parser.parse!
@@ -711,8 +881,11 @@ begin
   artifact_root = File.expand_path(artifact_root)
   FileUtils.mkdir_p(artifact_root)
 
-  shared_gocache = File.join(artifact_root, 'go-build-cache')
-  shared_gomodcache = File.join(artifact_root, 'go-mod-cache')
+  # Build caches default to the artifact directory. They can be pointed at a
+  # shared directory so a long contract run does not rebuild the world; the
+  # runner only ever creates them, it never removes a directory it was handed.
+  shared_gocache = options[:go_cache] ? File.expand_path(options[:go_cache]) : File.join(artifact_root, 'go-build-cache')
+  shared_gomodcache = options[:go_mod_cache] ? File.expand_path(options[:go_mod_cache]) : File.join(artifact_root, 'go-mod-cache')
   build_home = File.join(artifact_root, 'build-home')
   build_tmp = File.join(artifact_root, 'build-tmp')
   empty_path_dir = File.join(artifact_root, 'empty-path')
@@ -729,6 +902,8 @@ begin
 
   metadata = {
     'schema' => 'lowering.go-profile-run.v1',
+    'go_cache' => shared_gocache,
+    'go_mod_cache' => shared_gomodcache,
     'sprint' => 117, 'story' => 9, 'story_id' => 'e400885f8746',
     'manifest' => manifest_path,
     'fixture_root' => fixture_root,
@@ -782,7 +957,10 @@ begin
       second = invoke_subprocess(transpile_env, [bashy_bin, 'transpile', '--bashpp', fixture, '-o', source_two], chdir: sandbox_two, timeout: options[:timeout])
       evidence(second.merge('phase' => 'transpile', 'case' => label, 'attempt' => 2), case_dir: case_dir, ledger: ledger, name: 'transpile.two')
 
-      raise CaseFailure, "#{label}: transpile timed out" if first['timeout'] || second['timeout']
+      [[first, 1], [second, 2]].each do |result, attempt|
+        next if result['lifecycle_clean']
+        raise CaseFailure, "#{label}: transpile attempt #{attempt} #{LIFECYCLE_REASONS.fetch(result['lifecycle'], result['lifecycle'])}"
+      end
       raise CaseFailure, "#{label}: transpilation failed (exit #{first['exit']}/#{second['exit']}): #{first['stderr'].strip}" unless first['exit'].zero? && second['exit'].zero?
       raise CaseFailure, "#{label}: transpilation emitted no Go source" unless File.size?(source_one) && File.size?(source_two)
 
@@ -791,8 +969,9 @@ begin
       raise CaseFailure, "#{label}: generated Go is nondeterministic" unless generated_one == generated_two
 
       # -- source map is required, schema-checked, and digest-bound
-      map_one = parse_source_map("#{source_one}.map", generated_one, fixture, label)
-      map_two = parse_source_map("#{source_two}.map", generated_two, fixture, label)
+      source_bytes = File.binread(File.join(fixture_root, fixture))
+      map_one = parse_source_map("#{source_one}.map", generated_one, source_bytes, fixture, label)
+      map_two = parse_source_map("#{source_two}.map", generated_two, source_bytes, fixture, label)
       raise CaseFailure, "#{label}: generated source map is nondeterministic" unless map_one['digest'] == map_two['digest']
       evidence({ 'phase' => 'source-map', 'case' => label, 'schema' => MAP_SCHEMA,
                  'origin' => map_one['origin'], 'go_digest' => map_one['go_digest'],
@@ -808,7 +987,7 @@ begin
       built = File.join(build_dir, 'lowered.bin')
       build = invoke_subprocess(build_env, [go['bin'], 'build', '-o', built, '.'], chdir: build_dir, timeout: [options[:timeout], 300].max)
       evidence(build.merge('phase' => 'build', 'case' => label, 'generated_go_sha256' => Digest::SHA256.hexdigest(generated_one)), case_dir: case_dir, ledger: ledger, name: 'build')
-      raise CaseFailure, "#{label}: generated Go build timed out" if build['timeout']
+      raise CaseFailure, "#{label}: generated Go build #{LIFECYCLE_REASONS.fetch(build['lifecycle'], build['lifecycle'])}" unless build['lifecycle_clean']
       raise CaseFailure, "#{label}: generated Go did not build: #{build['stderr'].strip}" unless build['exit'].zero? && File.executable?(built)
 
       typed_profile = nil
@@ -856,7 +1035,8 @@ begin
       observation = lambda do |result, mode, before, after, env, profile|
         {
           'mode' => mode,
-          'status' => { 'exit' => result['exit'], 'timeout' => result['timeout'], 'drain_killed' => result['drain_killed'] },
+          'status' => { 'exit' => result['exit'], 'timeout' => result['timeout'],
+                        'lifecycle' => result['lifecycle'], 'group_killed' => result['group_killed'] },
           'raw_streams' => { 'schema' => 'lowering.raw-byte-streams.v1',
                              'stdout_sha256' => result['stdout_sha256'], 'stderr_sha256' => result['stderr_sha256'],
                              'stdout_bytes' => result['stdout_bytes'], 'stderr_bytes' => result['stderr_bytes'] },
@@ -880,8 +1060,18 @@ begin
                case_dir: case_dir, ledger: ledger, name: 'compiled')
 
       problems = []
-      problems << "interpreted run timed out after #{options[:timeout]}s" if interpreted['timeout']
-      problems << "compiled run timed out after #{options[:timeout]}s" if compiled['timeout']
+      # A run whose process tree the runner had to cut short is not evidence.
+      # This covers a plain timeout and, just as importantly, a process that
+      # outlived the leader in the runner's own process group -- including one
+      # that closed its inherited pipes first and would otherwise have looked
+      # like a clean, finished run while it kept writing to the execution root.
+      [[interpreted, 'interpreted'], [compiled, 'compiled']].each do |result, mode|
+        next if result['lifecycle_clean']
+        reason = LIFECYCLE_REASONS.fetch(result['lifecycle'], result['lifecycle'])
+        detail = result['lifecycle'] == LIFECYCLE_TIMEOUT ? " (budget #{options[:timeout]}s)" : ''
+        problems << "#{mode} run #{reason}#{detail}"
+      end
+      problems.concat(source_path_problems(fixture, before_interpreted, after_interpreted, before_compiled, after_compiled))
 
       if interpreted['exit'] != row[:expected_status]
         problems << "interpreted expected exit #{row[:expected_status]} but got #{interpreted['exit']}"
