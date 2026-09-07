@@ -87,7 +87,7 @@ RUNTIME_OBLIGATIONS = %w[
   concurrency.goroutine-channel-order
 ].freeze
 
-AST_FIELD_EDGES = %w[edge:BashPPReturn:Call].freeze
+AST_FIELD_EDGES = %w[edge:BashPPReturn:Call edge:BashPPReturn:Expr].freeze
 
 def ast_api(root, source = File.join(root, 'docs/lowering/ast_api.tsv'))
   rows = data_lines(source).map { |line| line.split("\t", -1) }

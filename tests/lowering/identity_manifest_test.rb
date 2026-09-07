@@ -45,10 +45,13 @@ Dir.mktmpdir('s117-lowering-manifest-') do |dir|
     variant:BashPPTypeExpr:BashPPFuncType
     variant:BashPPExpr:BashPPCall
     edge:BashPPReturn:Call
+    edge:BashPPReturn:Expr
   ]
   ast_mutations = identity_drops.to_h do |identity|
     ["drop #{identity}", ast_baseline.lines.reject { |line| line.start_with?(identity + "\t") }.join]
   end
+  ast_mutations['duplicate scalar return edge'] = ast_baseline + "edge:BashPPReturn:Expr\tfield-edge\tsyntax/bashpp_nodes.go\n"
+  ast_mutations['misclassify scalar return edge'] = ast_baseline.sub("edge:BashPPReturn:Expr\tfield-edge\t", "edge:BashPPReturn:Expr\texpr-variant\t")
   ast_mutations['duplicate returned call edge'] = ast_baseline + "edge:BashPPReturn:Call\tfield-edge\tsyntax/bashpp_nodes.go\n"
   ast_mutations['misclassify concrete signature'] = ast_baseline.sub("node:BashPPFuncType\tnode\t", "node:BashPPFuncType\ttype-variant\t")
   ast_mutations['misattribute returned call edge'] = ast_baseline.sub("edge:BashPPReturn:Call\tfield-edge\tsyntax/bashpp_nodes.go", "edge:BashPPReturn:Call\tfield-edge\tsyntax/nodes.go")

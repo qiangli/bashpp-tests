@@ -104,3 +104,4 @@ variant:StartSite:agentic	start-site	syntax/bashpp_nodes.go
 variant:SiteClass:R	site-class	syntax/bashpp_nodes.go
 variant:SiteClass:E	site-class	syntax/bashpp_nodes.go
 edge:BashPPReturn:Call	field-edge	syntax/bashpp_nodes.go
+edge:BashPPReturn:Expr	field-edge	syntax/bashpp_nodes.go
