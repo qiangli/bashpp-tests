@@ -1,0 +1,8 @@
+func main() {
+ m := map[string]uint8{"present": 254}
+ key := "present"
+ m[key]++
+ m["missing"] += 2
+ printf '%s:%s' m["present"] m["missing"]
+}
+main()

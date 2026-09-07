@@ -1,0 +1,5 @@
+func sink[T any](v T) {
+ echo ok
+}
+var xs []int = []int{1, 2}
+sink(xs)

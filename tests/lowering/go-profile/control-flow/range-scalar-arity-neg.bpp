@@ -1,0 +1,4 @@
+func main() {
+for i, v := range 2 {}
+}
+main()

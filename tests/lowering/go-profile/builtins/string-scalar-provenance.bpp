@@ -1,0 +1,26 @@
+type Label string
+type LabelAlias = Label
+func requireSame[T any](a T, b T) { printf 'typed:%s:%s\n' "$a" "$b" }
+func main() {
+ numeric := "10"
+ numericAlias := numeric
+ truth := "true"
+ truthAlias := truth
+ shortMin := min(numericAlias, "2")
+	shortMinAlias := shortMin
+	truthMin := min(truthAlias, "z")
+	shortLen := len(truthAlias)
+	selectedLen := len(shortMinAlias)
+	copiedBytes := make([]byte, 4)
+	copied := copy(copiedBytes, truthAlias)
+	empty := make([]byte, 0, 2)
+	appended := append(empty, numericAlias...)
+ var defined LabelAlias = "20"
+ definedMin := min(defined, "3")
+ requireSame(definedMin, defined)
+ definedLen := len(defined)
+	definedEmpty := make([]byte, 0, 2)
+	definedBytes := append(definedEmpty, defined...)
+ printf 'short:%s:%s:%s:%s copy:%s:%s:%s:%s:%s append:%s:%s defined:%s:%s:%s:%s\n' "$shortMin" "$truthMin" "$shortLen" "$selectedLen" "$copied" copiedBytes[0] copiedBytes[1] copiedBytes[2] copiedBytes[3] appended[0] appended[1] "$definedMin" "$definedLen" definedBytes[0] definedBytes[1]
+}
+main()

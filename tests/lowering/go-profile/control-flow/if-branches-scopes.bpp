@@ -1,0 +1,19 @@
+func main() {
+	n := 9
+	if n := 2; n > 2 {
+		echo high
+	} else if n == 2 {
+		echo "equal:$n"
+		branch := "yes"
+		echo "$branch"
+	} else {
+		echo low
+	}
+	echo "after:$n:${branch-unset}"
+	if false {
+		echo wrong
+	} else {
+		echo fallback
+	}
+}
+main()

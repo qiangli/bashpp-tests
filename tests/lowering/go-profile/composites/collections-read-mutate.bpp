@@ -1,0 +1,14 @@
+func main() {
+ a := [3]int{1, 2: 7}
+ b := [...]string{1: "x", "y"}
+ s := []int{1, 2}
+ m := map[string][]int{"a": {4, 5}}
+ printf '%s:%s:%s:%s:%s\n' a[0] a[2] b[1] b[2] m["a"][1]
+ a[1] = 9
+ s[0] = 8
+ m["a"][0] = 6
+ m["z"] = []int{3}
+ missing := m["missing"]
+ printf '%s:%s:%s:%s:%s\n' a[1] s[0] m["a"][0] m["z"][0] missing
+}
+main()

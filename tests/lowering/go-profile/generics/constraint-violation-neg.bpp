@@ -1,0 +1,3 @@
+func bad[T comparable](v T) {}
+var xs []int = []int{1}
+bad(xs)

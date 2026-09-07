@@ -1,0 +1,18 @@
+type Box struct { N int }
+func main() {
+ var x int = 5
+ x += 3
+ x *= 2
+ x--
+ var text string = "a"
+ text += "b"
+ values := []int{2}
+ i := 0
+ values[i]+=3
+ box := Box{N: 4}
+ box.N++
+ p := &x
+ *p += 2
+ printf '%s:%s:%s:%s' "$x" "$text" values[0] box.N
+}
+main()

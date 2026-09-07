@@ -1,0 +1,30 @@
+func main() {
+	n := 2
+	switch x := n + 1; x {
+	case 1, 3:
+		seen := "first"
+		echo "$seen:$x"
+	case x:
+		echo wrong
+	default:
+		echo fallback
+	}
+	echo "after:${x-unset}:${seen-unset}"
+	switch {
+	case n < 0:
+		echo wrong
+	case n == 2, true:
+		inside := "yes"
+		echo "tagless:$inside"
+	default:
+		echo wrong
+	}
+	echo "scope:${inside-unset}"
+	switch n = n + 1; {
+	case n == 3:
+		echo "assigned:$n"
+	default:
+		echo wrong
+	}
+}
+main()

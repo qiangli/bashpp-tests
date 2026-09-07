@@ -1,0 +1,10 @@
+type Count int
+const (
+ A Count = 1
+ B = A + 1
+)
+func same[T any](a T, b T) { printf 'same:%s:%s\n' "$a" "$b" }
+func main() {
+ same(A, B)
+}
+main()

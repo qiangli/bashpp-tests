@@ -1,0 +1,2 @@
+func main() { switch 1 { case "1": echo wrong } }
+main()

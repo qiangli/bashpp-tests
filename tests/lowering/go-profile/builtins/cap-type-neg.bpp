@@ -1,0 +1,4 @@
+func main() {
+ _ := cap(1)
+}
+main()

@@ -1,0 +1,4 @@
+const (
+ A int8 = iota + 127
+ B
+)

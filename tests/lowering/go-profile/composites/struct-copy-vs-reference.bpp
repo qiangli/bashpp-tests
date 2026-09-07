@@ -1,0 +1,12 @@
+type Inner struct { Name string }
+type Config struct { Inner Inner; Fixed [1]Inner; Ports []int; Labels map[string][]int }
+func main() {
+ a := Config{Inner: Inner{Name: "a"}, Fixed: [1]Inner{{Name: "fixed"}}, Ports: []int{1}, Labels: map[string][]int{"x": {2}}}
+ b := a
+ b.Inner.Name = "b"
+ b.Fixed[0].Name = "copy"
+ b.Ports[0] = 3
+ b.Labels["x"][0] = 4
+ printf '%s:%s:%s:%s:%s:%s:%s:%s\n' a.Inner.Name b.Inner.Name a.Fixed[0].Name b.Fixed[0].Name a.Ports[0] b.Ports[0] a.Labels["x"][0] b.Labels["x"][0]
+}
+main()

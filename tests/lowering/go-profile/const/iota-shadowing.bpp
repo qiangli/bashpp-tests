@@ -1,0 +1,6 @@
+const (
+ iota = iota
+ A = iota
+)
+func main() { printf '%s:%s\n' "$iota" "$A" }
+main()

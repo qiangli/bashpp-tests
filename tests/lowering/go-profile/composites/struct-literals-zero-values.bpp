@@ -1,0 +1,12 @@
+type Inner struct { Name string; Count int }
+type Config struct { Inner Inner; Fixed [1]Inner; Ports []int; Labels map[string]string }
+func main() {
+	var zero Config
+	var initialized Config = Config{Inner: Inner{Name: "decl"}}
+ keyed := Config{Inner: Inner{Name: "prod"}, Fixed: [1]Inner{{Name: "fixed"}}, Ports: []int{80}, Labels: map[string]string{"tier": "edge"}}
+ positional := Inner{"pos", 2}
+ anon := struct{Name string}{Name: "anon"}
+ keyed.Inner.Count = 4
+	printf '%s:%s:%s:%s:%s:%s:%s:%s\n' zero.Inner.Name zero.Inner.Count initialized.Inner.Name keyed.Inner.Name keyed.Inner.Count keyed.Fixed[0].Name positional.Name anon.Name
+}
+main()

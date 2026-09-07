@@ -1,0 +1,7 @@
+type T int
+func (v T) M(s string) { }
+type U int
+func (v U) M(s string) { }
+type I interface { M(string) }
+func main() { var v T = 1; var i I = v; x := i.(U); echo $x }
+main()

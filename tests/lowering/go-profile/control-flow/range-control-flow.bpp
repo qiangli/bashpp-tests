@@ -1,0 +1,15 @@
+func stop() {
+ for i := range 5 {
+  if i == 0 { continue }
+  printf 'loop:%s\n' "$i"
+  if i == 2 { return }
+ }
+ echo unreachable
+}
+func main() {
+ for i := range 2 { if i == 1 { break } }
+ printf 'after:<%s>\n' "${i-unset}"
+ stop()
+ echo caller
+}
+main()

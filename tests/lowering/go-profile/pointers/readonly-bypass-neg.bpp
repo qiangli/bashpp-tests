@@ -1,0 +1,7 @@
+func main() {
+ x := 1
+ p := &x
+ readonly x
+ *p = 2
+}
+main()

@@ -1,0 +1,5 @@
+func same[T comparable](a, b T) T {
+ return a
+}
+x := same[int](1, 2)
+echo "$x"

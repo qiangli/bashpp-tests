@@ -1,0 +1,5 @@
+func main() {
+ var p *int
+ x := *p
+}
+main()

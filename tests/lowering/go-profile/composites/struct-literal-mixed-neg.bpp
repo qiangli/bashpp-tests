@@ -1,0 +1,5 @@
+type Pair struct { A int; B int }
+func main() {
+ x := Pair{A: 1, 2}
+}
+main()

@@ -1,0 +1,16 @@
+type Box struct { N int }
+func (v Box) Value(prefix string) { printf '%s:%s\n' "$prefix" v.N; }
+func (p *Box) Set(n int) { p.N = n; }
+type Valuer interface { Value(string) }
+type Mutator interface { Set(int) }
+func main() {
+	var b Box = Box{N: 4}
+	var v Valuer = b
+	b.N = 9
+	v.Value(copy)
+	bp := &b
+	var m Mutator = bp
+	m.Set(12)
+	printf 'mutated:%s\n' b.N
+}
+main()

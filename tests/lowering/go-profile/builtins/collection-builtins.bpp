@@ -1,0 +1,35 @@
+type Vec[T any] []T
+func main() {
+	 var nilSlice []int
+	 empty := []int{}
+	 made := make(Vec[int], 1, 3)
+ alias := made
+ grown := append(made, 2, 3)
+ view := alias[:3]
+ spread := append(nilSlice, grown...)
+ copied := make([]int, 3)
+ count := copy(copied, spread)
+ m := make(map[string]int, 2)
+ m["x"] = 7
+ ma := m
+ delete(ma, "x")
+	 m["y"] = 8
+	 clear(ma)
+	 nilLen := len(nilSlice)
+	 emptyLen := len(empty)
+	 grownLen := len(grown)
+	 grownCap := cap(grown)
+	 mapLen := len(m)
+	 strLen := len("é")
+	 nilSliceOK := nilSlice == nil
+	 emptyNil := empty == nil
+	 madeNil := made == nil
+	 mapNil := m == nil
+	 print("lens:", nilLen, ":", emptyLen, ":", grownLen, ":", grownCap, " ")
+	 println("copy", count, copied[2], "alias", view[2], "map", mapLen, "str", strLen, "nil", nilSliceOK, emptyNil, madeNil, mapNil)
+	 clear(grown)
+	 low := min(4, 2, 3)
+	 high := max("a", "z", "m")
+	 println("clear", view[0], view[1], view[2], "order", low, high)
+}
+main()

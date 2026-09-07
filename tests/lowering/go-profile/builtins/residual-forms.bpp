@@ -1,0 +1,30 @@
+type Count uint64
+func requireSame[T any](a T, b T) { printf 'typed:%s:%s\n' "$a" "$b" }
+func main() {
+ ch := make(chan int, 3)
+ ch <- 7
+ channelLen := len(ch)
+ channelCap := cap(ch)
+ close(ch)
+ closedLen := len(ch)
+ arrayPointer := new([4]int)
+ pointerLen := len(arrayPointer)
+ pointerCap := cap(arrayPointer)
+ var nilArray *[5]int
+ nilPointerLen := len(nilArray)
+ nilPointerCap := cap(nilArray)
+ bytes := make([]byte, 3)
+ copied := copy(bytes, "éx")
+ empty := make([]byte, 0, 3)
+ appended := append(empty, "Aé"...)
+ exact := max(9007199254740992, 9007199254740993)
+ negativeA := -9007199254740993
+ negativeB := -9007199254740992
+ exactNegative := min(negativeA, negativeB)
+ var count Count = 9007199254740993
+ typed := min(count, 9007199254740994)
+ requireSame(typed, count)
+ println("exact-print", exact)
+ printf 'channel:%s:%s:%s pointer:%s:%s:%s:%s copy:%s:%s:%s:%s append:%s:%s:%s exact:%s:%s\n' "$channelLen" "$channelCap" "$closedLen" "$pointerLen" "$pointerCap" "$nilPointerLen" "$nilPointerCap" "$copied" bytes[0] bytes[1] bytes[2] appended[0] appended[1] appended[2] "$exact" "$exactNegative"
+}
+main()

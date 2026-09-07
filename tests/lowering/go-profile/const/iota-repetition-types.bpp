@@ -1,0 +1,14 @@
+type Count int
+const (
+ A = iota
+ B
+ C = iota + 3
+ D Count = iota
+ E
+)
+func same[T any](a T, b T) { printf 'same:%s:%s\n' "$a" "$b" }
+func main() {
+ same(D, E)
+ printf '%s:%s:%s:%s:%s\n' "$A" "$B" "$C" "$D" "$E"
+}
+main()

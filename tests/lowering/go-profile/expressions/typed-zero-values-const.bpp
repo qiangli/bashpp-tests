@@ -1,0 +1,5 @@
+var n int
+var ok bool
+var text string
+const K int8 = 7
+printf '<%s>:<%s>:<%s>:%s' "$n" "$ok" "$text" "$K"

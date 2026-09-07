@@ -1,0 +1,21 @@
+func main() {
+	for i := 0; i < 5; i++ {
+		body := i
+		switch i {
+		case 0:
+			continue
+		case 1:
+			fallthrough
+		case 99:
+			echo "fell:$body"
+		case 2:
+			break
+		default:
+			echo "body:$body"
+		}
+		if i == 3 { break }
+		echo "tail:$i"
+	}
+	echo done
+}
+main()

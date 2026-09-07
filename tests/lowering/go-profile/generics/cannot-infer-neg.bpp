@@ -1,0 +1,4 @@
+func zero[T any]() T {
+ return 0
+}
+zero()

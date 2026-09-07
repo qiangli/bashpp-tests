@@ -1,0 +1,29 @@
+type File struct { N int }
+func (v File) Read(prefix string) { echo "read:$prefix"; }
+func (p *File) Close() { p.N = 0; echo closed; }
+type Reader interface { Read(string) }
+type Closer interface { Close() }
+type ReadCloser interface { Reader; Closer }
+func main() {
+	var f File = File{N: 8}
+	p := &f
+	var rc ReadCloser = p
+	rc.Read(file)
+	rc.Close()
+	var r Reader = rc
+	r.Read(after)
+	c, ok := r.(Closer)
+	echo "assert-interface:$ok"
+	c.Close()
+	switch x := r.(type) {
+	case Closer:
+		echo closer
+	default:
+		echo "$x"
+	}
+	var nilRC ReadCloser
+	var nilR Reader = nilRC
+	nilC, nilOK := nilR.(Closer)
+	echo "nil-interface-assert:$nilC:$nilOK"
+}
+main()

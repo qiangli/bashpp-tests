@@ -1,0 +1,7 @@
+func main() {
+ x := 1
+ p := &x
+ ( *p = 2; printf 'sub:%s\n' "$x" )
+	 printf 'parent:%s\n' "$x"
+}
+main()

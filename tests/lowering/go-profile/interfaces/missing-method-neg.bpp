@@ -1,0 +1,5 @@
+type T int
+func (v T) N(s string) { }
+type I interface { M(string) }
+func main() { var v T = 1; var i I = v }
+main()

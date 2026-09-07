@@ -1,0 +1,46 @@
+type Count int
+func (v Count) Show(prefix string) { echo "$prefix:$v"; }
+func (v Count) Label(n int) string { return "$n:$v"; }
+type Shower interface { Show(string) }
+type Labeler interface { Label(int) string }
+func main() {
+	var v Count = 7
+	var i Shower = v
+	x, ok := i.(Count)
+	echo "assert:$x:$ok"
+	var l Labeler = v
+	label := l.Label(3)
+	echo "label:$label"
+	i.Show(iface)
+	y := i.(Count)
+	y.Show(method)
+	var nilI Shower
+	switch n := nilI.(type) {
+	case nil:
+		echo nil-interface
+	default:
+		echo "$n"
+	}
+	var p *Count = nil
+	var pi Shower = p
+	switch q := pi.(type) {
+	case nil:
+		echo wrong
+	default:
+		echo typed-nil-pointer:${q-unset}
+	}
+	switch z := i.(type) {
+	case nil:
+		echo wrong
+	case Count:
+		echo "type:$z"
+	default:
+		echo wrong
+	}
+	snap(i)
+}
+func snap(i Shower) {
+	a, ok := i.(Count)
+	echo "subshell:$a:$ok"
+}
+main()

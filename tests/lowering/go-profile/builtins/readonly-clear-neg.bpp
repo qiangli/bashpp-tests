@@ -1,0 +1,6 @@
+func main() {
+ s := []int{1}
+ readonly s
+ clear(s)
+}
+main()

@@ -1,0 +1,8 @@
+const (
+ _ = iota
+ A
+ _
+ B
+)
+func main() { printf '%s:%s\n' "$A" "$B" }
+main()

@@ -1,0 +1,29 @@
+type S struct { N int }
+func main() {
+ x := 1
+ p := &x
+ before := *p
+ *p = 3
+ s := S{N: 4}
+ fp := &s.N
+ *fp = 5
+ a := [1]int{6}
+ ap := &a[0]
+ *ap = 7
+ sl := []int{8}
+ sp := &sl[0]
+ *sp = 9
+ np := new(int)
+ *np = 10
+ nv := *np
+ ns := new(S)
+ sv := *ns
+ na := new([1]int)
+ av := *na
+ nsl := new([]int)
+ slv := *nsl
+ nm := new(map[string]int)
+ mv := *nm
+ printf '%s:%s:%s:%s:%s:%s:%s:%s:%s:%s\n' "$before" "$x" s.N a[0] sl[0] "$nv" sv.N av[0] "$slv" "$mv"
+}
+main()

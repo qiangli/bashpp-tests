@@ -1,0 +1,12 @@
+func main() {
+	outer := 9
+	for false { echo wrong }
+	for i := 0; i < 3; i++ {
+		defer func() { echo "capture:$i" }()
+		body := i
+		echo "body:$body"
+	}
+	echo "after:$outer:${i-unset}:${body-unset}"
+	for { echo infinite; return }
+}
+main()
