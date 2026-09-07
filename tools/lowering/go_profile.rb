@@ -75,7 +75,7 @@ TELEMETRY_MODE_OFF = "off\n".freeze
 
 # The only environment keys that may differ between the two modes because of
 # that tooling. The native artifact carries none of them.
-INTERPRETER_TOOLING_KEYS = %w[GOCACHE GOMODCACHE GOTOOLCHAIN].freeze
+INTERPRETER_TOOLING_KEYS = %w[GOCACHE GOMODCACHE GOROOT GOTOOLCHAIN].freeze
 
 # The only fixture-root-relative path that is exempt from the effect diff, and
 # only for the compiled mode: the original Bash++ source is deleted before the
@@ -432,8 +432,18 @@ def authenticate_go(go)
   actual_sha = Digest::SHA256.file(real_go).hexdigest
   preflight!("Go identity #{actual_identity.inspect}, expected #{identity.inspect}") unless actual_identity == identity
   preflight!("Go binary digest #{actual_sha}, expected #{expected_sha}") unless actual_sha == expected_sha
+  # Resolve SDK ownership from the already authenticated executable, with no
+  # inherited GOROOT. Trimpath-built consumers have no embedded SDK location.
+  sdk = invoke_subprocess(
+    { 'GOTOOLCHAIN' => 'local', 'HOME' => Dir.tmpdir, 'PATH' => File.dirname(real_go) },
+    [real_go, 'env', 'GOROOT'], chdir: ROOT, timeout: 30
+  )
+  preflight!("authenticated Go could not report GOROOT") unless sdk['exit'].zero? && sdk['lifecycle_clean']
+  goroot = (File.realpath(sdk['stdout'].strip) rescue nil)
+  sdk_go = (File.realpath(File.join(goroot, 'bin', 'go')) rescue nil) if goroot
+  preflight!('authenticated SDK GOROOT does not own the verified Go executable') unless sdk_go == real_go && File.directory?(File.join(goroot, 'src'))
   { 'bin' => real_go, 'identity' => identity, 'sha256' => actual_sha, 'version' => version,
-    'goos' => goos, 'goarch' => goarch }
+    'goos' => goos, 'goarch' => goarch, 'goroot' => goroot }
 end
 
 def resolve_pinned_go
@@ -766,6 +776,7 @@ def run_environment(exec_root, path_value, tooling: nil)
     # the interpreter, so nothing needs to be reachable through PATH.
     env['GOCACHE'] = tooling.fetch('gocache')
     env['GOMODCACHE'] = tooling.fetch('gomodcache')
+    env['GOROOT'] = tooling.fetch('goroot')
     env['GOTOOLCHAIN'] = 'local'
   end
   env
@@ -790,6 +801,7 @@ def build_environment(go, gocache, gomodcache, gohome, gotmp)
     'HOME' => gohome,
     'TMPDIR' => gotmp,
     'GOTMPDIR' => gotmp,
+    'GOROOT' => go.fetch('goroot'),
     'PATH' => File.dirname(go['bin']),
     'GOTOOLCHAIN' => 'local',
     'GOCACHE' => gocache,
@@ -1137,6 +1149,7 @@ begin
   # output never enters the compared surface and never has to be excused from it.
   tooling_root = File.join(artifact_root, 'interpreter-tooling')
   interpreter_tooling = {
+    'goroot' => go.fetch('goroot'),
     'gocache' => options[:go_cache] ? shared_gocache : File.join(tooling_root, 'gocache'),
     'gomodcache' => options[:go_mod_cache] ? shared_gomodcache : File.join(tooling_root, 'gomodcache')
   }
@@ -1173,11 +1186,14 @@ begin
     'engine_bin' => engine_bin,
     'engine_bin_sha256' => Digest::SHA256.file(engine_bin).hexdigest,
     'run_path' => run_path,
+    'transpile_tooling' => { 'goroot' => go.fetch('goroot'), 'gotoolchain' => 'local',
+                             'sdk_source' => 'authenticated toolchain.bin env GOROOT; bin/go ownership verified' },
     'interpreter_tooling' => {
       'schema' => 'lowering.interpreter-tooling.v1',
       'why' => 'the interpreter links in the Go import compiler infrastructure, so a stdlib import makes it write a Go build cache and telemetry counters',
       'gocache' => interpreter_tooling['gocache'],
       'gomodcache' => interpreter_tooling['gomodcache'],
+      'goroot' => interpreter_tooling['goroot'],
       'gotoolchain' => 'local',
       'telemetry_dir' => "${EXEC_ROOT}/#{TELEMETRY_DIR}",
       'telemetry_mode' => TELEMETRY_MODE_OFF.strip,
@@ -1224,7 +1240,8 @@ begin
       sandbox_before = semantic ? [filesystem_snapshot(sandbox_one), filesystem_snapshot(sandbox_two)] : nil
 
       transpile_env = { 'LC_ALL' => 'C.UTF-8', 'LANG' => 'C.UTF-8', 'TZ' => 'UTC',
-                        'HOME' => build_home, 'TMPDIR' => build_tmp, 'PATH' => run_path }
+                        'HOME' => build_home, 'TMPDIR' => build_tmp, 'PATH' => run_path,
+                        'GOROOT' => go.fetch('goroot'), 'GOTOOLCHAIN' => 'local' }
       first = invoke_subprocess(transpile_env, [bashy_bin, 'transpile', '--bashpp', fixture, '-o', source_one], chdir: sandbox_one, timeout: options[:timeout])
       evidence(first.merge('phase' => 'transpile', 'case' => label, 'attempt' => 1), case_dir: case_dir, ledger: ledger, name: 'transpile.one')
       second = invoke_subprocess(transpile_env, [bashy_bin, 'transpile', '--bashpp', fixture, '-o', source_two], chdir: sandbox_two, timeout: options[:timeout])

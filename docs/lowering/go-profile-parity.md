@@ -290,7 +290,7 @@ prefix is replaced by `${EXEC_ROOT}`. Without that normalization the absolute
 paths guarantee a difference and the comparison can never gate anything — which
 is exactly how an environment "check" becomes decorative. Any key that differs
 outside the declared divergence list is a case failure. The declared divergence
-list is exactly the interpreter tooling keys `GOCACHE`, `GOMODCACHE` and
+list is exactly the interpreter tooling keys `GOCACHE`, `GOMODCACHE`, `GOROOT` and
 `GOTOOLCHAIN`, plus `PATH` under `--typed-only` where the artifact is
 intentionally given an empty one.
 
@@ -314,8 +314,11 @@ anywhere.** Instead:
 | --- | --- | --- |
 | `GOCACHE` | dedicated tooling directory, recorded in evidence | **outside** every execution root |
 | `GOMODCACHE` | dedicated tooling directory, recorded in evidence | **outside** every execution root |
-| `GOTOOLCHAIN` | `local` | interpreter only |
+| `GOROOT` | SDK root reported by the authenticated `--go` binary; its `bin/go` must resolve to that binary | transpilation and interpreter import tooling only |
+| `GOTOOLCHAIN` | `local` | transpilation and interpreter import tooling only |
 | `TEST_TELEMETRY_DIR` | `<execution root>/.bashpp-run/telemetry`, holding a `mode` file containing `off` | **inside**, identical in both modes |
+
+Trimpath-built products need an explicit SDK location because they carry no embedded GOROOT. Authentication queries `go env GOROOT` in a scrubbed environment only after binary version/digest validation. `meta.json` records this exact root in `toolchain`, `transpile_tooling` and `interpreter_tooling`; it is not discovered from the program source or inherited host GOROOT. No SDK directory is added to runtime PATH, and the native artifact receives no Go environment variables. This authenticates the selected executable and SDK ownership, not every SDK file by content hash.
 
 Reusing the authenticated build caches for the tooling directories is permitted;
 what matters is that they are outside the compared tree.
@@ -334,7 +337,7 @@ Consequences, and the limits of the claim:
   the interpreter, so nothing needs to be reachable through `PATH`; the Go
   binary the build uses is still the authenticated one and is not put in front
   of either program.
-* `GOCACHE`, `GOMODCACHE` and `GOTOOLCHAIN` are the *only* declared environment
+* `GOCACHE`, `GOMODCACHE`, `GOROOT` and `GOTOOLCHAIN` are the *only* declared environment
   difference between the modes, and they are recorded in `meta.json` and in the
   interpreted observation. Being declared, they are no longer compared — that is
   a real, if narrow, reduction in what the environment gate covers.

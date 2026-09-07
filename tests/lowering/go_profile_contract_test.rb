@@ -27,6 +27,7 @@ require 'fileutils'
 require 'json'
 require 'open3'
 require 'rbconfig'
+require 'shellwords'
 require 'tmpdir'
 
 ROOT = File.expand_path('../..', __dir__)
@@ -693,7 +694,7 @@ check 'typed-only runs the artifact with an empty PATH and gates the declared di
   interpreted = phase(records, 'interpreted-run')['observation']
   assert(compiled['environment']['profile']['PATH'] == '', "compiled PATH was #{compiled['environment']['profile']['PATH'].inspect}")
   # PATH plus the interpreter tooling keys, and nothing else.
-  assert(compiled['environment']['declared_divergence'].sort == %w[GOCACHE GOMODCACHE GOTOOLCHAIN PATH],
+  assert(compiled['environment']['declared_divergence'].sort == %w[GOCACHE GOMODCACHE GOROOT GOTOOLCHAIN PATH],
          "unexpected declared divergence: #{compiled['environment']['declared_divergence'].inspect}")
   assert(compiled['environment']['inherited'] == false, 'the runner must not claim an inherited environment')
   assert(interpreted['environment']['profile']['HOME'] == compiled['environment']['profile']['HOME'],
@@ -789,11 +790,11 @@ check 'TOOLING: the telemetry mode file exists in both modes before the run' do
   assert(interpreted['telemetry_dir'] == compiled['telemetry_dir'], 'the telemetry directory is not identical in both modes')
   assert(interpreted['profile']['TEST_TELEMETRY_DIR'] == compiled['profile']['TEST_TELEMETRY_DIR'],
          'TEST_TELEMETRY_DIR differs between the modes')
-  assert(interpreted['declared_divergence'].sort == %w[GOCACHE GOMODCACHE GOTOOLCHAIN],
+  assert(interpreted['declared_divergence'].sort == %w[GOCACHE GOMODCACHE GOROOT GOTOOLCHAIN],
          "unexpected declared divergence: #{interpreted['declared_divergence'].inspect}")
   assert(!compiled['keys'].any? { |key| key.start_with?('GO') },
          "the native runtime carries a Go variable: #{compiled['keys'].inspect}")
-  %w[GOCACHE GOMODCACHE GOTOOLCHAIN].each do |key|
+  %w[GOCACHE GOMODCACHE GOROOT GOTOOLCHAIN].each do |key|
     assert(interpreted['profile'].key?(key), "the interpreter is missing its tooling variable #{key}")
   end
   tooling = interpreted['interpreter_tooling']
@@ -805,6 +806,21 @@ check 'TOOLING: the telemetry mode file exists in both modes before the run' do
   end
   meta = JSON.parse(File.read(File.join(result[:artifacts], 'meta.json')))
   assert(meta['interpreter_tooling']['exempted_paths'].include?('none'), 'the metadata must not claim an exemption')
+  expected_root = File.realpath(File.join(File.dirname(REAL_GO), '..'))
+  assert(meta['toolchain']['goroot'] == expected_root, 'SDK root is not bound to the authenticated binary')
+  assert(meta['transpile_tooling']['goroot'] == expected_root, 'transpiler SDK is not recorded')
+  assert(interpreted['profile']['GOROOT'] == expected_root, 'interpreter does not carry the verified SDK')
+
+end
+
+check 'TOOLING: transpiler and interpreter use the verified SDK without exposing it to the artifact' do
+  expected_root = File.realpath(File.join(File.dirname(REAL_GO), '..'))
+  hook = "raise 'wrong transpile SDK' unless ENV['GOROOT'] == #{expected_root.inspect}; raise 'toolchain auto-selection' unless ENV['GOTOOLCHAIN'] == 'local'"
+  result = mechanism('tooling-sdk-binding', go_source: GO_HELLO, map_hook: hook,
+                     engine_body: "[ \"$GOROOT\" = #{expected_root.shellescape} ] || exit 91\nprintf 'hello\\n'\n")
+  assert(result[:status].success?, "explicit SDK binding failed:\n#{result[:all]}")
+  compiled = phase(ledger(result, 'mech', 'case-1'), 'compiled-run')['observation']['environment']
+  assert(!compiled['keys'].any? { |key| key.start_with?('GO') }, 'native artifact received Go tooling')
 end
 
 check 'TOOLING: flipping the telemetry mode file is a divergence' do
