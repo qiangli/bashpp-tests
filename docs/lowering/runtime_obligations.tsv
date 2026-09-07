@@ -1,0 +1,8 @@
+# Exact runtime/effect obligations; these are separate from AST ownership.
+# identity	observation	interpreter-owner	lowered-owner	harness-owner
+status.exit-status	exit status	interpreter execution	binary execution	compare exact integer
+types.values-and-zero	typed result and zero value	interpreter type evaluator	generated Go type semantics	compare structured typed observation
+effects.cwd-env-filesystem	working directory, environment, filesystem delta	interpreter process	binary process	clone equivalent state and compare snapshot
+errors.streams-and-diagnostics	stdout, stderr, diagnostic class	interpreter diagnostics	generated Go diagnostics	compare bytes and classified error
+cancellation.signal-context-timeout	signal, context, timeout outcome	interpreter cancellation	binary cancellation	apply same deadline/signal and compare outcome
+concurrency.goroutine-channel-order	completion, channel values, ordering	interpreter scheduler	generated Go scheduler	capture ordered event observation

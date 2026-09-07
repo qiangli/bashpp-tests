@@ -1,24 +1,60 @@
 # Sprint 117 lowering boundary
 
-`identities.tsv` independently inventories every certified start-site node,
-public profile/corpus identity, five Bash# families, 33 compiled-runtime cases,
-and 13 agentic boundary cases. It stores an exact ordered identity digest, not
-only a count, so an equal-size substitution cannot pass.
+`identities.tsv` is an independently checked, exact ordered identity manifest.
+It inventories the 61 public AST nodes (all 59 structs in
+`syntax/bashpp_nodes.go`, `BashPPAgenticBlock`, and agentic `FuncDecl`), 39
+significant expression/type/start-site/class variants, the runtime obligation
+inventory, approved corpus/profile identities, five Bash# families, and the
+33 lowering cases. Start-site ownership is deliberately separate: its 205
+rows are not an AST-node inventory.
 
-Run the P0 structural gate:
+The 33 lowering cases are exactly **18 runtime** cases and **15 deterministic
+rejections**. A `run` case may correctly exit non-zero when the specified
+runtime behavior is a diagnostic; `reject` means the transpiler must issue the
+specified diagnostic and emit no Go.
+
+Run either configured structural contract command (they are intentionally the
+same P0 gate):
 
 ```sh
-tools/lowering/validate.sh
+ruby tools/lowering/validate.rb --self-test
+ruby tools/lowering/validate.rb
 ```
 
-`tools/lowering/differential.rb` accepts `--case FAMILY/CASE` (or a shell
-glob). It authenticates Go against the existing public Go 1.27.0 pin in
-`docs/tour/toolchain.tsv`, requires two identical generated Go files, builds
-and executes the binary, and compares byte-identical interpreter parity. A
-missing compiler, skipped case, or interpreter wrapper is always a FAIL.
+Make a compiled BASHSHARP33 parity attempt explicitly:
 
-On this host the existing `GOTOOLCHAIN=go1.27.0 go env GOROOT` acquisition
-path resolves the exact pinned binary and its checksum. A real one-case attempt
-then reaches `bashy transpile --bashpp … -o …go`; the current product exits 127
-there, so it records an honest transpilation/parity failure before any generated
-Go, build, or binary run can be claimed.
+```sh
+ruby tools/lowering/validate.rb --parity
+# or: ruby tools/lowering/differential.rb
+```
+
+It is expected to fail today, honestly: `GOTOOLCHAIN=go1.27.0` resolves the
+pinned, checksummed Go binary, but the product has no usable `bashy transpile
+--bashpp` compiler yet. A structural pass is not compiler parity.
+
+`tools/lowering/differential.rb` retains every copied input, generated source,
+binary, isolated execution state, and JSONL evidence under a printed artifact
+directory (or `--artifacts DIR`). Each runtime mode gets a fresh equivalent
+cwd/environment/filesystem template. The evidence records status, the raw
+stream schema, typed-output schema and proof state, filesystem/environment
+effects, stdout/stderr errors, and explicit cancellation/concurrency
+observations. Typed output is `unproved-by-this-fixture` unless a fixture
+declares and captures that channel; raw stdout is never copied in as typed-value
+proof. The latter two report `not-requested` unless a fixture requests them;
+their required ownership is still recorded in `runtime_obligations.tsv` and
+cannot be claimed as complete merely by P0.
+
+Phase ownership is deliberate: the interpreter owns interpreted semantics;
+the generated executable owns lowered semantics; the harness owns identical
+state creation, execution controls, structured observation, and comparison.
+Source/transpilation artifacts are never discarded. The typed-only
+authenticity fixture additionally runs the binary with its original source
+absent and with a shell-free `PATH`; it demands direct Go arithmetic, callable,
+and control flow and rejects interpreter, shell, and generated-runtime-helper
+wrappers. Dynamic shell fallback remains legal for ordinary (non-typed-only)
+fixtures.
+
+`--case FAMILY/CASE` is useful for diagnosis, but a subset pass prints
+`BASHSHARP33 PARITY SUBSET PASS` and explicitly leaves BASHSHARP33 completion
+and compiled compiler/corpus parity unestablished. Even all 33 rows establish
+only BASHSHARP33 parity, not compiler/corpus parity.

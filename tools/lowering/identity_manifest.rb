@@ -13,9 +13,11 @@ SOURCES = {
   'tests/manifest.tsv' => :first_column,
   'docs/go-corpus/inventory.tsv' => :first_column,
   'docs/go-by-example/inventory.tsv' => :first_column,
-  'tests/tour/inventory.tsv' => :first_column
+  'tests/tour/inventory.tsv' => :first_column,
+  'docs/lowering/ast_api.tsv' => :ast_api,
+  'docs/lowering/runtime_obligations.tsv' => :runtime_obligations
 }.freeze
-KINDS = %w[agentic-boundary bashsharp-family bashsharp-runtime certified-node public-profile public-corpus].freeze
+KINDS = %w[agentic-boundary ast-api bashsharp-family bashsharp-runtime certified-node public-profile public-corpus runtime-obligation].freeze
 REQUIRED_GROUPS = {
   'agentic-boundaries' => ['tests/agentic/cases.tsv', 'agentic-boundary'],
   'bashsharp-families' => ['tests/bashsharp/matrix.tsv', 'bashsharp-family'],
@@ -23,8 +25,10 @@ REQUIRED_GROUPS = {
   'certified-startsites' => ['tools/startsites/baseline.tsv', 'certified-node'],
   'go-profile-fixtures' => ['tests/manifest.tsv', 'public-profile'],
   'official-go-corpus' => ['docs/go-corpus/inventory.tsv', 'public-corpus'],
+  'public-ast-api' => ['docs/lowering/ast_api.tsv', 'ast-api'],
   'public-go-by-example' => ['docs/go-by-example/inventory.tsv', 'public-corpus'],
-  'public-go-tour' => ['tests/tour/inventory.tsv', 'public-corpus']
+  'public-go-tour' => ['tests/tour/inventory.tsv', 'public-corpus'],
+  'runtime-obligations' => ['docs/lowering/runtime_obligations.tsv', 'runtime-obligation']
 }.freeze
 
 def fail!(message)
@@ -61,6 +65,50 @@ def bashsharp_lowering(root)
   identities
 end
 
+AST_NODES = %w[
+  BashPPDecl BashPPConstGroup BashPPConstSpec BashPPAssign BashPPShortDecl
+  BashPPBasicLit BashPPIdent BashPPTypeAssertExpr BashPPParenExpr BashPPUnaryExpr
+  BashPPAddressExpr BashPPDerefExpr BashPPNewExpr BashPPBinaryExpr BashPPConvertExpr
+  BashPPIndexExpr BashPPSliceExpr BashPPSelectorExpr BashPPNamedType BashPPTypeParamType
+  BashPPUnionType BashPPApproxType BashPPPointerType BashPPCollectionType BashPPStructType
+  BashPPInterfaceType BashPPInterfaceElem BashPPMethodSpec BashPPCompositeLit BashPPCompositeElem
+  BashPPCall BashPPCommandCall BashPPImport BashPPImportSpec BashPPIf BashPPFor
+  BashPPForAssign BashPPIncDec BashPPUpdate BashPPBranch BashPPSwitch BashPPSwitchArm
+  BashPPField BashPPTypeParam BashPPTypeArg BashPPFuncDecl BashPPReceiver BashPPFuncLit
+  BashPPReturn BashPPDefer BashPPGo BashPPChanType BashPPMakeChan BashPPSend BashPPReceive
+  BashPPClose BashPPSelect BashPPSelectCase BashPPRange BashPPAgenticBlock FuncDecl[Agentic]
+].freeze
+EXPR_VARIANTS = %w[BashPPBasicLit BashPPIdent BashPPParenExpr BashPPUnaryExpr BashPPBinaryExpr BashPPConvertExpr BashPPIndexExpr BashPPSliceExpr BashPPSelectorExpr BashPPCompositeLit BashPPAddressExpr BashPPDerefExpr BashPPNewExpr BashPPTypeAssertExpr].freeze
+TYPE_VARIANTS = %w[BashPPNamedType BashPPCollectionType BashPPStructType BashPPPointerType BashPPInterfaceType BashPPTypeParamType BashPPUnionType BashPPApproxType].freeze
+START_SITE_VARIANTS = %w[none var const type := call if import func defer return funclit go select agentic].freeze
+RUNTIME_OBLIGATIONS = %w[
+  status.exit-status types.values-and-zero effects.cwd-env-filesystem
+  errors.streams-and-diagnostics cancellation.signal-context-timeout
+  concurrency.goroutine-channel-order
+].freeze
+
+def ast_api(root)
+  rows = data_lines(File.join(root, 'docs/lowering/ast_api.tsv')).map { |line| line.split("\t", -1) }
+  fail!('AST API row must have exactly three fields') unless rows.all? { |row| row.length == 3 && row.all? { |field| !field.empty? } }
+  node_names = rows.select { |row| row[1] == 'node' }.map { |row| row[0].delete_prefix('node:') }
+  fail!('AST API nodes are not the complete 59 Bash++ structs plus agentic block and marked FuncDecl') unless node_names == AST_NODES
+  variants = rows.reject { |row| row[1] == 'node' }.map(&:first)
+  expected = EXPR_VARIANTS.map { |name| "variant:BashPPExpr:#{name}" } +
+    TYPE_VARIANTS.map { |name| "variant:BashPPTypeExpr:#{name}" } +
+    START_SITE_VARIANTS.map { |name| "variant:StartSite:#{name}" } +
+    %w[variant:SiteClass:R variant:SiteClass:E]
+  fail!('AST API significant variants differ from the declared public variants') unless variants == expected
+  rows.map(&:first)
+end
+
+def runtime_obligations(root)
+  rows = data_lines(File.join(root, 'docs/lowering/runtime_obligations.tsv')).map { |line| line.split("\t", -1) }
+  fail!('runtime obligation row must have exactly five populated fields') unless rows.all? { |row| row.length == 5 && row.all? { |field| !field.empty? } }
+  identities = rows.map(&:first)
+  fail!('runtime obligation identities differ from the contract') unless identities == RUNTIME_OBLIGATIONS
+  identities
+end
+
 options = { manifest: File.join(ROOT, 'docs/lowering/identities.tsv') }
 OptionParser.new { |parser| parser.on('--manifest PATH', 'test-only alternate manifest') { |path| options[:manifest] = path } }.parse!
 manifest = File.expand_path(options[:manifest])
@@ -87,7 +135,12 @@ fail!('manifest ids must be strictly sorted') unless rows.map(&:first) == rows.m
 fail!('manifest groups differ from the complete public boundary') unless rows.to_h { |id, source, kind, *_| [id, [source, kind]] } == REQUIRED_GROUPS
 
 rows.each do |id, source, kind, expected_count, expected_digest|
-  identities = kind == 'bashsharp-runtime' ? bashsharp_lowering(ROOT) : first_column(ROOT, source)
+  identities = case kind
+               when 'bashsharp-runtime' then bashsharp_lowering(ROOT)
+               when 'ast-api' then ast_api(ROOT)
+               when 'runtime-obligation' then runtime_obligations(ROOT)
+               else first_column(ROOT, source)
+               end
   fail!("#{id} has zero identities") if identities.empty?
   fail!("#{id} identities are duplicated") unless identities.uniq.length == identities.length
   actual_digest = Digest::SHA256.hexdigest(identities.join("\n") + "\n")

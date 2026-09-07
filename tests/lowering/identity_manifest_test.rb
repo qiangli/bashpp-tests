@@ -22,7 +22,9 @@ Dir.mktmpdir('s117-lowering-manifest-') do |dir|
     'digest mutation' => baseline.sub(/a8bfbba9/, '00000000'),
     'deferred state' => baseline.sub('agentic-boundary', 'planned'),
     'unapproved source' => baseline.sub('tests/agentic/cases.tsv', 'private/umbrella.tsv'),
-    'dropped group' => baseline.lines.reject { |line| line.start_with?("public-go-tour\t") }.join
+    'dropped group' => baseline.lines.reject { |line| line.start_with?("public-go-tour\t") }.join,
+    'public AST count mutation' => baseline.sub("public-ast-api\tdocs/lowering/ast_api.tsv\tast-api\t100", "public-ast-api\tdocs/lowering/ast_api.tsv\tast-api\t99"),
+    'runtime obligation digest mutation' => baseline.sub(/e53f1080/, '00000000')
   }
   mutations.each do |label, contents|
     path = File.join(dir, label.gsub(' ', '-') + '.tsv')
