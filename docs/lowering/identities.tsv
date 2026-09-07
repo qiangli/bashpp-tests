@@ -6,7 +6,7 @@ bashsharp-lowering	tests/bashsharp/matrix.tsv	bashsharp-runtime	33	a8bfbba9f7d52
 certified-startsites	tools/startsites/baseline.tsv	certified-node	205	ac4702e39f42bec5ad1243720d53a9fc05ff84a8d31ab5d95c2f00ac93e3077b
 go-profile-fixtures	tests/manifest.tsv	public-profile	4	bf18a04c50e3d496173ac614b0a27bf67f793fa40fee748ea85babe280b8e5a5
 official-go-corpus	docs/go-corpus/inventory.tsv	public-corpus	3398	cdf2910a0118a596cc820e5269393d949b009cbfadf0596da7de084a852f4590
-public-ast-api	docs/lowering/ast_api.tsv	ast-api	105	6d5e2f09327c9b8a0ff849bfdfc8f8180e312f33dd84c377e023d7deb28defd3
+public-ast-api	docs/lowering/ast_api.tsv	ast-api	106	ae461c6fbcaa56eff17e8560345e30b60011b777b1f194c9948ff31d37156c87
 public-go-by-example	docs/go-by-example/inventory.tsv	public-corpus	89	bc7a2208b2d90aaa49bd337775bcf21097681cf0a959a9c7d35f206c2c4a7878
 public-go-tour	tests/tour/inventory.tsv	public-corpus	168	31c5877fbb68a54a5daf7aa5c99f45a25316bf7305cb95873672991fb9752e33
 runtime-obligations	docs/lowering/runtime_obligations.tsv	runtime-obligation	6	e53f10800873702dbcbd378f1489fd69324e750478ee01eddd8d791bac90f57a

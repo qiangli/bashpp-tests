@@ -105,3 +105,4 @@ variant:SiteClass:R	site-class	syntax/bashpp_nodes.go
 variant:SiteClass:E	site-class	syntax/bashpp_nodes.go
 edge:BashPPReturn:Call	field-edge	syntax/bashpp_nodes.go
 edge:BashPPReturn:Expr	field-edge	syntax/bashpp_nodes.go
+edge:BashPPCall:ArgExprs	field-edge	syntax/bashpp_nodes.go

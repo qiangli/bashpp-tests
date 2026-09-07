@@ -3,7 +3,7 @@
 `identities.tsv` is an independently checked, exact ordered identity manifest.
 It inventories the 62 public AST nodes (all 60 structs in
 `syntax/bashpp_nodes.go`, `BashPPAgenticBlock`, and agentic `FuncDecl`), 41
-significant expression/type/start-site/class variants, two returned-value field
+significant expression/type/start-site/class variants, three significant field
 edges, the runtime obligation
 inventory, approved corpus/profile identities, five Bash# families, and the
 33 lowering cases. Start-site ownership is deliberately separate: its 205
@@ -18,9 +18,15 @@ for the call, rather than assuming every returned value is only a word.
 The typed-operand repair `589d12e2` adds `BashPPReturn.Expr`, a positioned
 scalar operator tree with the complete legacy `Results` word retained. This is
 another field edge, with no additional node or expression variant.
+The scalar-call repair `97353a91` adds `BashPPCall.ArgExprs`. These positioned
+arguments own scalar-call evaluation, traversal, and printing. Legacy `Args`
+words remain available, but consumers must use the typed edge when present;
+Walk visits it instead of visiting the same logical arguments twice. Typed JSON
+retains both fields. Parser bytewise/print/mutation tests and typed JSON round
+trips verify this ownership; the new edge adds no node or expression variant.
 
 Measured totals are 62 nodes, 15 expression variants, 9 type variants, 15
-start-site variants, 2 site-class variants, and 2 field edges: **105 AST
+start-site variants, 2 site-class variants, and 3 field edges: **106 AST
 identities**. The field-edge inventory is an explicit significant-edge contract,
 not an exhaustive list of every field in every node. These are structural
 obligations; neither parser availability nor this inventory proves lowering,

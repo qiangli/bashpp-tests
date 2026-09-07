@@ -46,10 +46,14 @@ Dir.mktmpdir('s117-lowering-manifest-') do |dir|
     variant:BashPPExpr:BashPPCall
     edge:BashPPReturn:Call
     edge:BashPPReturn:Expr
+    edge:BashPPCall:ArgExprs
   ]
   ast_mutations = identity_drops.to_h do |identity|
     ["drop #{identity}", ast_baseline.lines.reject { |line| line.start_with?(identity + "\t") }.join]
   end
+  ast_mutations['duplicate typed argument edge'] = ast_baseline + "edge:BashPPCall:ArgExprs\tfield-edge\tsyntax/bashpp_nodes.go\n"
+  ast_mutations['misclassify typed argument edge'] = ast_baseline.sub("edge:BashPPCall:ArgExprs\tfield-edge\t", "edge:BashPPCall:ArgExprs\texpr-variant\t")
+  ast_mutations['misattribute typed argument edge'] = ast_baseline.sub("edge:BashPPCall:ArgExprs\tfield-edge\tsyntax/bashpp_nodes.go", "edge:BashPPCall:ArgExprs\tfield-edge\tsyntax/nodes.go")
   ast_mutations['duplicate scalar return edge'] = ast_baseline + "edge:BashPPReturn:Expr\tfield-edge\tsyntax/bashpp_nodes.go\n"
   ast_mutations['misclassify scalar return edge'] = ast_baseline.sub("edge:BashPPReturn:Expr\tfield-edge\t", "edge:BashPPReturn:Expr\texpr-variant\t")
   ast_mutations['duplicate returned call edge'] = ast_baseline + "edge:BashPPReturn:Call\tfield-edge\tsyntax/bashpp_nodes.go\n"
