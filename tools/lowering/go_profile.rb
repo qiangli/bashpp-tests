@@ -1,0 +1,928 @@
+#!/usr/bin/env ruby
+# Sprint: #117
+# Story: #9
+# Story-ID: e400885f8746
+#
+# Generalized Go-profile differential lowering runner.
+#
+# Authenticates that a Bash++ fixture executed by the interpreter and the same
+# fixture lowered to Go, compiled by the pinned Go 1.27.0 toolchain and executed
+# as a source-absent native artifact, agree on stdout bytes, stderr bytes, the
+# numeric exit status, and the observable filesystem effects of the run.
+#
+# This runner makes no language-conformance claim. It authenticates evidence.
+require 'digest'
+require 'fileutils'
+require 'find'
+require 'json'
+require 'open3'
+require 'optparse'
+require 'rbconfig'
+require 'securerandom'
+require 'tmpdir'
+
+ROOT = File.expand_path('../..', __dir__)
+
+# --- contract constants -----------------------------------------------------
+
+# Exact manifest header. Seven columns, expected_status is the numeric exit
+# code, stdout/stderr are JSON string literals.
+EXPECTED_HEADER = "id\tcategory\tfixture\texpected_status\tstdout\tstderr\tpublic_test_ref".freeze
+MANIFEST_COLUMNS = 7
+
+# Source map artifact emitted by `bashy transpile`. Schema and field names are
+# fixed by the public CLI (bashy agentos transpile).
+MAP_SCHEMA = 'bashy-transpile-map-v1'.freeze
+MAP_TOP_KEYS = %w[schema_version origin go_digest mappings].freeze
+MAP_ENTRY_KEYS = %w[go_line go_col source_line source_col source_offset node].freeze
+
+# Import prefixes the typed-only profile allows beyond the Go standard library.
+# `mvdan.cc/sh/v3/lower/shellrt` is the typed lowering bridge runtime; it is
+# itself stdlib-only and contains no interpreter.
+TYPED_ONLY_ALLOWED_PREFIXES = ['mvdan.cc/sh/v3/lower/shellrt'].freeze
+
+# Packages that would let a "compiled" artifact re-enter a shell interpreter or
+# spawn one. Rejected anywhere in the transitive dependency set under
+# --typed-only. Determined from `go list`, i.e. from the Go toolchain's own
+# parser, never from a textual scan of the generated source.
+TYPED_ONLY_FORBIDDEN_DEPS = %w[
+  os/exec
+  plugin
+  mvdan.cc/sh/v3/interp
+  mvdan.cc/sh/v3/syntax
+  mvdan.cc/sh/v3/expand
+  mvdan.cc/sh/v3/pattern
+].freeze
+
+# Runtime scaffolding placed INSIDE each execution root so that HOME and TMPDIR
+# writes are observable, at identical relative paths in both modes.
+RUNTIME_DIR = '.bashpp-run'.freeze
+
+# The only fixture-root-relative path that is exempt from the effect diff, and
+# only for the compiled mode: the original Bash++ source is deleted before the
+# native artifact runs, to prove the artifact does not read it back.
+def compiled_only_ignored_paths(fixture)
+  [fixture]
+end
+
+DEFAULT_TIMEOUT = 60
+DRAIN_GRACE = 2.0       # keep reading a pipe this long after the leader exits
+FINAL_DRAIN = 0.5       # keep reading this long after killing the process group
+KILL_GRACE = 0.25       # TERM -> KILL escalation window, bounded and targeted
+
+# The repository inventory this runner is contracted to support.
+DEFAULT_INVENTORY = [
+  ['docs/lowering/go-profile-cases.tsv', 'tests/lowering/go-profile'],
+  ['docs/lowering/profile-additional.tsv', 'tests/lowering/profile-additional']
+].freeze
+
+class CaseFailure < StandardError; end
+class PreflightFailure < StandardError; end
+
+def preflight!(message)
+  raise PreflightFailure, message
+end
+
+# --- process control --------------------------------------------------------
+
+# Terminate the process group whose group id is `pgid`.
+#
+# Safety: this is only ever called with the pgid of a group this runner created
+# (pgroup: true makes the spawned leader its own group leader, so pgid == leader
+# pid), and only while that group is known to be non-empty -- either the leader
+# is still alive, or a descendant of it is still holding a pipe open. A process
+# group id cannot be recycled while the group has members, so this can never
+# signal an unrelated process. No pgrep, no ps, no global scan.
+def kill_group(pgid)
+  return if pgid.nil? || pgid <= 0
+  begin
+    Process.kill('-TERM', pgid)
+  rescue StandardError
+    nil
+  end
+  deadline = Time.now + KILL_GRACE
+  while Time.now < deadline
+    begin
+      Process.kill(0, pgid)
+    rescue Errno::ESRCH, Errno::EPERM
+      break
+    rescue StandardError
+      break
+    end
+    IO.select(nil, nil, nil, 0.02)
+  end
+  begin
+    Process.kill('-KILL', pgid)
+  rescue StandardError
+    nil
+  end
+end
+
+# Run argv with a fully explicit environment, in its own process group, with a
+# bounded drain.
+#
+# Guarantees:
+#   * the child never inherits this runner's environment (unsetenv_others)
+#   * whatever bytes were produced before a kill are retained (partial streams)
+#   * a leader that exits while a descendant keeps the pipe open cannot hang the
+#     runner: the drain is bounded by DRAIN_GRACE, then the group is killed
+#   * a timeout is reported as a timeout, never as a clean exit
+def invoke_subprocess(env, argv, chdir: ROOT, timeout: DEFAULT_TIMEOUT, drain_grace: DRAIN_GRACE)
+  out_buf = String.new.force_encoding('BINARY')
+  err_buf = String.new.force_encoding('BINARY')
+  timed_out = false
+  drain_killed = false
+  status = nil
+  started = Time.now
+
+  Open3.popen3(env, *argv, chdir: chdir, pgroup: true, unsetenv_others: true) do |stdin, stdout, stderr, wait_thr|
+    stdin.close
+    pgid = wait_thr.pid
+    pipes = { stdout => out_buf, stderr => err_buf }
+    hard_deadline = started + timeout
+    drain_deadline = nil
+    final_deadline = nil
+    reaped = nil
+
+    loop do
+      if reaped.nil? && wait_thr.join(0)
+        reaped = wait_thr.value
+        drain_deadline = Time.now + drain_grace
+      end
+      now = Time.now
+
+      if final_deadline.nil? && reaped.nil? && now >= hard_deadline
+        timed_out = true
+        kill_group(pgid)
+        final_deadline = Time.now + FINAL_DRAIN
+      end
+
+      if final_deadline.nil? && drain_deadline && !pipes.empty? && now >= drain_deadline
+        drain_killed = true
+        kill_group(pgid)
+        final_deadline = Time.now + FINAL_DRAIN
+      end
+
+      break if pipes.empty? && reaped
+      break if final_deadline && Time.now >= final_deadline
+
+      if pipes.empty?
+        wait_thr.join(0.05)
+        next
+      end
+
+      slice = 0.05
+      [hard_deadline, drain_deadline, final_deadline].compact.each do |deadline|
+        remaining = deadline - Time.now
+        slice = remaining if remaining > 0 && remaining < slice
+      end
+      slice = 0.01 if slice <= 0
+
+      ready = IO.select(pipes.keys, nil, nil, slice)
+      next unless ready
+      ready[0].each do |io|
+        begin
+          pipes[io] << io.read_nonblock(65_536)
+        rescue IO::WaitReadable
+          next
+        rescue EOFError, IOError, Errno::EIO, Errno::EBADF
+          pipes.delete(io)
+          begin
+            io.close unless io.closed?
+          rescue StandardError
+            nil
+          end
+        end
+      end
+    end
+
+    if reaped.nil?
+      kill_group(pgid)
+      timed_out = true unless drain_killed
+      reaped = wait_thr.value
+    end
+    status = reaped
+  end
+
+  exit_code =
+    if timed_out
+      124
+    elsif status.exitstatus
+      status.exitstatus
+    elsif status.termsig
+      128 + status.termsig
+    else
+      1
+    end
+
+  {
+    'argv' => argv,
+    'cwd' => chdir,
+    'exit' => exit_code,
+    'timeout' => timed_out,
+    'drain_killed' => drain_killed,
+    'duration_ms' => ((Time.now - started) * 1000).round,
+    'stdout_bytes' => out_buf.bytesize,
+    'stderr_bytes' => err_buf.bytesize,
+    'stdout_sha256' => Digest::SHA256.hexdigest(out_buf),
+    'stderr_sha256' => Digest::SHA256.hexdigest(err_buf),
+    'stdout' => out_buf,
+    'stderr' => err_buf
+  }
+end
+
+# --- evidence ---------------------------------------------------------------
+
+# Always retains the raw byte streams, at every phase, including partial streams
+# from a timed-out or drain-killed process. Raw artifacts live in the case
+# evidence directory, which is OUTSIDE every execution root.
+def evidence(record, case_dir: nil, ledger: nil, name: nil)
+  if name && case_dir && File.directory?(case_dir)
+    File.binwrite(File.join(case_dir, "#{name}.stdout.raw"), record['stdout'] || '')
+    File.binwrite(File.join(case_dir, "#{name}.stderr.raw"), record['stderr'] || '')
+  end
+  line = JSON.generate(record.reject { |key, _| %w[stdout stderr].include?(key) })
+  puts line
+  File.open(ledger, 'a') { |file| file.puts(line) } if ledger
+  line
+end
+
+def data_lines(path)
+  preflight!("missing data file #{path}") unless File.file?(path) && !File.symlink?(path)
+  File.readlines(path, chomp: true)
+end
+
+# --- toolchain authentication ----------------------------------------------
+
+def host_platform
+  os = RbConfig::CONFIG.fetch('host_os')
+  goos = os.include?('darwin') ? 'darwin' : os.include?('linux') ? 'linux' : os
+  cpu = RbConfig::CONFIG.fetch('host_cpu')
+  goarch = %w[arm64 aarch64].include?(cpu) ? 'arm64' : cpu == 'x86_64' ? 'amd64' : cpu
+  [goos, goarch]
+end
+
+TOOLCHAIN_TSV = 'docs/tour/toolchain.tsv'.freeze
+TOOLCHAIN_COLUMNS = 7
+PINNED_GO_VERSION = 'go1.27.0'.freeze
+
+# Authenticate the Go binary against the exact pinned row in docs/tour/toolchain.tsv:
+# exact version coordinate, exact `go version` identity string, and SHA-256 of
+# the executing binary. A host without a row is unsupported, not degraded.
+def authenticate_go(go)
+  goos, goarch = host_platform
+  rows = data_lines(File.join(ROOT, TOOLCHAIN_TSV))
+             .reject { |line| line.strip.empty? || line.start_with?('#') }
+             .map { |line| line.split("\t", -1) }
+  row = rows.find { |fields| fields[0] == goos && fields[1] == goarch }
+  preflight!("no pinned Go toolchain row for #{goos}/#{goarch} in #{TOOLCHAIN_TSV}") unless row
+  preflight!("toolchain row for #{goos}/#{goarch} has #{row.length} columns, expected #{TOOLCHAIN_COLUMNS}") unless row.length == TOOLCHAIN_COLUMNS
+  _goos, _goarch, version, identity, expected_sha, acquisition, provenance = row
+  preflight!("toolchain pin version is #{version.inspect}, not #{PINNED_GO_VERSION}") unless version == PINNED_GO_VERSION
+  preflight!('toolchain pin identity is empty') if identity.to_s.strip.empty?
+  preflight!('toolchain pin digest is not a sha256 hex digest') unless expected_sha.to_s.match?(/\A[0-9a-f]{64}\z/)
+  preflight!('toolchain pin acquisition is empty') if acquisition.to_s.strip.empty?
+  preflight!('toolchain pin provenance is empty') if provenance.to_s.strip.empty?
+
+  candidate =
+    if go.include?(File::SEPARATOR)
+      go
+    else
+      ENV.fetch('PATH', '').split(File::PATH_SEPARATOR)
+         .map { |dir| File.join(dir, go) }.find { |path| File.executable?(path) }
+    end
+  real_go = (File.realpath(candidate) rescue nil) if candidate
+  preflight!("Go executable is missing: #{go}") unless real_go && File.executable?(real_go) && File.file?(real_go)
+
+  result = invoke_subprocess(
+    { 'GOTOOLCHAIN' => 'local', 'HOME' => Dir.tmpdir, 'PATH' => File.dirname(real_go) },
+    [real_go, 'version'], chdir: ROOT, timeout: 30
+  )
+  preflight!("`go version` failed with exit #{result['exit']}") unless result['exit'].zero?
+  actual_identity = result['stdout'].strip
+  actual_sha = Digest::SHA256.file(real_go).hexdigest
+  preflight!("Go identity #{actual_identity.inspect}, expected #{identity.inspect}") unless actual_identity == identity
+  preflight!("Go binary digest #{actual_sha}, expected #{expected_sha}") unless actual_sha == expected_sha
+  { 'bin' => real_go, 'identity' => identity, 'sha256' => actual_sha, 'version' => version,
+    'goos' => goos, 'goarch' => goarch }
+end
+
+def resolve_pinned_go
+  out, err, status = Open3.capture3({ 'GOTOOLCHAIN' => PINNED_GO_VERSION }, 'go', 'env', 'GOROOT')
+  preflight!("GOTOOLCHAIN=#{PINNED_GO_VERSION} could not resolve Go: #{err.strip}") unless status.success? && !out.strip.empty?
+  File.join(out.strip, 'bin', 'go')
+end
+
+# --- manifest ---------------------------------------------------------------
+
+def decode_stream(value, column, id)
+  preflight!("case #{id}: #{column} column must be a JSON string literal, got #{value.inspect}") unless value.start_with?('"') && value.end_with?('"') && value.length >= 2
+  parsed = JSON.parse(value) rescue nil
+  preflight!("case #{id}: #{column} column is not valid JSON, got #{value.inspect}") unless parsed.is_a?(String)
+  parsed.dup.force_encoding('BINARY')
+end
+
+# Load and fully validate a seven-column numeric-status manifest against its
+# fixture root. Every check here is fail-closed and runs before any case does.
+def load_cases(manifest_path, fixture_root)
+  preflight!("fixture root is not a directory: #{fixture_root}") unless File.directory?(fixture_root)
+  real_root = File.realpath(fixture_root)
+  rows = []
+  header_found = false
+
+  data_lines(manifest_path).each_with_index do |line, index|
+    stripped = line.strip
+    next if stripped.empty? || stripped.start_with?('#')
+
+    unless header_found
+      preflight!("#{manifest_path}: header mismatch, expected #{EXPECTED_HEADER.inspect}, got #{line.inspect}") unless line == EXPECTED_HEADER
+      header_found = true
+      next
+    end
+
+    fields = line.split("\t", -1)
+    preflight!("#{manifest_path}:#{index + 1}: expected #{MANIFEST_COLUMNS} tab-separated fields, got #{fields.length}") unless fields.length == MANIFEST_COLUMNS
+    id, category, fixture, status_text, stdout_text, stderr_text, public_test_ref = fields
+
+    preflight!("#{manifest_path}:#{index + 1}: invalid id #{id.inspect}") unless id.match?(/\A[A-Za-z0-9][A-Za-z0-9_.-]*\z/)
+    preflight!("#{manifest_path}:#{index + 1}: invalid category #{category.inspect}") unless category.match?(/\A[A-Za-z0-9][A-Za-z0-9_.-]*\z/)
+    preflight!("#{manifest_path}:#{index + 1}: public_test_ref must be non-empty") if public_test_ref.to_s.strip.empty?
+    preflight!("#{manifest_path}:#{index + 1}: public_test_ref must not carry surrounding whitespace") unless public_test_ref == public_test_ref.strip
+
+    preflight!("#{manifest_path}:#{index + 1}: fixture path must be relative and contained: #{fixture.inspect}") if fixture.empty? || fixture.start_with?('/') || fixture.split('/').include?('..') || fixture.split('/').include?('.')
+    preflight!("#{manifest_path}:#{index + 1}: fixture must be a .bpp source: #{fixture.inspect}") unless fixture.end_with?('.bpp')
+    preflight!("#{manifest_path}:#{index + 1}: fixture must not live under the reserved runtime path #{RUNTIME_DIR}") if fixture.split('/').first == RUNTIME_DIR
+
+    absolute = File.join(fixture_root, fixture)
+    preflight!("#{manifest_path}:#{index + 1}: missing fixture on disk: #{absolute}") unless File.file?(absolute)
+    real_fixture = File.realpath(absolute) rescue nil
+    preflight!("#{manifest_path}:#{index + 1}: fixture realpath escapes the fixture root: #{fixture.inspect}") unless real_fixture && real_fixture.start_with?(real_root + File::SEPARATOR)
+
+    expected_status = (Integer(status_text, 10) rescue nil)
+    preflight!("#{manifest_path}:#{index + 1}: expected_status must be a decimal integer 0..255, got #{status_text.inspect}") unless expected_status && expected_status.between?(0, 255)
+
+    rows << {
+      id: id,
+      category: category,
+      fixture: fixture,
+      expected_status: expected_status,
+      stdout: decode_stream(stdout_text, 'stdout', id),
+      stderr: decode_stream(stderr_text, 'stderr', id),
+      public_test_ref: public_test_ref,
+      manifest: manifest_path,
+      fixture_root: fixture_root
+    }
+  end
+
+  preflight!("#{manifest_path}: manifest has no header row") unless header_found
+  preflight!("#{manifest_path}: manifest declares zero cases") if rows.empty?
+  seen = Hash.new(0)
+  rows.each { |row| seen[row[:id]] += 1 }
+  duplicates = seen.select { |_, count| count > 1 }.keys
+  preflight!("#{manifest_path}: duplicate case ids #{duplicates.inspect}") unless duplicates.empty?
+
+  on_disk = []
+  Find.find(fixture_root) do |path|
+    next unless File.file?(path)
+    next unless path.end_with?('.bpp')
+    on_disk << path.sub(%r{\A#{Regexp.escape(fixture_root)}/?}, '')
+  end
+  declared = rows.map { |row| row[:fixture] }
+  unlisted = (on_disk - declared).sort
+  preflight!("#{manifest_path}: .bpp fixtures on disk are absent from the manifest: #{unlisted.inspect}") unless unlisted.empty?
+
+  rows
+end
+
+# --- filesystem effects -----------------------------------------------------
+
+def copy_tree(source, destination)
+  FileUtils.mkdir_p(destination)
+  Dir.children(source).each do |entry|
+    next if %w[.git .agents].include?(entry)
+    FileUtils.cp_r(File.join(source, entry), destination, preserve: true)
+  end
+end
+
+# Content-addressed snapshot of an execution root.
+#
+# Nothing is ignored except the paths explicitly passed in `ignored`, which is
+# empty for the interpreted mode and exactly the deleted original source for the
+# compiled mode. Files whose names end in `.raw`, dotfiles, and the HOME/TMPDIR
+# scaffolding under RUNTIME_DIR are all included, so a fixture that writes to
+# $HOME, $TMPDIR, or a file called `evidence.raw` is compared, not excused.
+def filesystem_snapshot(root, ignored = [])
+  entries = []
+  Find.find(root) do |path|
+    relative = path.sub(%r{\A#{Regexp.escape(root)}/?}, '')
+    next if relative.empty?
+    next if ignored.any? { |ig| relative == ig || relative.start_with?("#{ig}/") }
+    stat = File.lstat(path)
+    kind = stat.symlink? ? 'symlink' : stat.directory? ? 'directory' : stat.file? ? 'file' : 'other'
+    content =
+      if stat.symlink?
+        File.readlink(path)
+      elsif stat.file?
+        Digest::SHA256.file(path).hexdigest
+      else
+        ''
+      end
+    size = stat.file? ? stat.size : -1
+    entries << [relative, kind, stat.mode & 0o7777, size, content]
+  end
+  entries.sort!
+  { 'sha256' => Digest::SHA256.hexdigest(JSON.generate(entries)), 'count' => entries.length, 'entries' => entries }
+end
+
+def snapshot_public(snapshot)
+  { 'sha256' => snapshot['sha256'], 'count' => snapshot['count'] }
+end
+
+# View of a snapshot with the given root-relative paths removed. Used only to
+# make the two modes comparable across the one path that cannot exist in both:
+# the original Bash++ source, deleted before the compiled artifact runs. The
+# unfiltered snapshot is what gets recorded as evidence.
+def snapshot_reject(snapshot, ignored)
+  return snapshot if ignored.empty?
+  entries = snapshot['entries'].reject do |entry|
+    ignored.any? { |ig| entry[0] == ig || entry[0].start_with?("#{ig}/") }
+  end
+  { 'sha256' => Digest::SHA256.hexdigest(JSON.generate(entries)), 'count' => entries.length, 'entries' => entries }
+end
+
+def snapshot_diff(left, right, limit = 12)
+  left_map = left['entries'].to_h { |entry| [entry[0], entry[1..]] }
+  right_map = right['entries'].to_h { |entry| [entry[0], entry[1..]] }
+  diffs = []
+  (left_map.keys | right_map.keys).sort.each do |key|
+    next if left_map[key] == right_map[key]
+    diffs << "#{key}: interpreted=#{left_map[key].inspect} compiled=#{right_map[key].inspect}"
+    break if diffs.length >= limit
+  end
+  diffs
+end
+
+# --- execution environment --------------------------------------------------
+
+def prepare_execution_root(fixture_root, destination)
+  copy_tree(fixture_root, destination)
+  preflight!("fixture root already contains the reserved runtime path #{RUNTIME_DIR}") if File.exist?(File.join(destination, RUNTIME_DIR))
+  home = File.join(destination, RUNTIME_DIR, 'home')
+  tmp = File.join(destination, RUNTIME_DIR, 'tmp')
+  FileUtils.mkdir_p(home)
+  FileUtils.mkdir_p(tmp)
+  destination
+end
+
+# Explicit, controlled environment. Combined with unsetenv_others this is the
+# whole environment the process sees; nothing is inherited. HOME and TMPDIR sit
+# at identical relative paths inside each execution root so their contents are
+# part of the compared effect surface.
+def run_environment(exec_root, path_value)
+  {
+    'LC_ALL' => 'C.UTF-8',
+    'LANG' => 'C.UTF-8',
+    'TZ' => 'UTC',
+    'PWD' => exec_root,
+    'HOME' => File.join(exec_root, RUNTIME_DIR, 'home'),
+    'TMPDIR' => File.join(exec_root, RUNTIME_DIR, 'tmp'),
+    'PATH' => path_value
+  }
+end
+
+# Environment reduced to a root-independent form so the two modes are actually
+# comparable. Without this the absolute execution-root prefix guarantees a
+# difference and the comparison can never gate anything.
+def environment_profile(env, exec_root)
+  env.transform_values { |value| value.to_s.gsub(exec_root, '${EXEC_ROOT}') }
+end
+
+def environment_digest(profile)
+  Digest::SHA256.hexdigest(JSON.generate(profile.sort))
+end
+
+def build_environment(go, gocache, gomodcache, gohome, gotmp)
+  {
+    'LC_ALL' => 'C.UTF-8',
+    'LANG' => 'C.UTF-8',
+    'TZ' => 'UTC',
+    'HOME' => gohome,
+    'TMPDIR' => gotmp,
+    'GOTMPDIR' => gotmp,
+    'PATH' => File.dirname(go['bin']),
+    'GOTOOLCHAIN' => 'local',
+    'GOCACHE' => gocache,
+    'GOMODCACHE' => gomodcache,
+    'GOFLAGS' => '-mod=mod',
+    'GOPROXY' => 'off',
+    'GOSUMDB' => 'off',
+    'GONOSUMDB' => '*',
+    'GONOSUMCHECK' => '1',
+    'GOWORK' => 'off',
+    'GOOS' => go['goos'],
+    'GOARCH' => go['goarch'],
+    'CGO_ENABLED' => '0'
+  }
+end
+
+# --- source map -------------------------------------------------------------
+
+# The source map is REQUIRED for every case. It must carry the exact public
+# schema, a non-empty origin naming the real source, a go_digest that binds it
+# to the exact generated Go bytes, and at least one mapping with valid Go and
+# source coordinates. No extra top-level or entry fields are tolerated.
+def parse_source_map(map_path, generated, fixture, label)
+  raise CaseFailure, "#{label}: missing source map file '#{map_path}'" unless File.file?(map_path)
+  raw = File.binread(map_path)
+  raise CaseFailure, "#{label}: empty source map file '#{map_path}'" if raw.empty?
+  data = JSON.parse(raw) rescue nil
+  raise CaseFailure, "#{label}: source map is not a JSON object" unless data.is_a?(Hash)
+
+  extra = data.keys - MAP_TOP_KEYS
+  missing = MAP_TOP_KEYS - data.keys
+  raise CaseFailure, "#{label}: source map has unexpected fields #{extra.sort.inspect}" unless extra.empty?
+  raise CaseFailure, "#{label}: source map is missing fields #{missing.sort.inspect}" unless missing.empty?
+  raise CaseFailure, "#{label}: source map schema_version is #{data['schema_version'].inspect}, expected #{MAP_SCHEMA.inspect}" unless data['schema_version'] == MAP_SCHEMA
+
+  origin = data['origin']
+  raise CaseFailure, "#{label}: source map origin must be a non-empty string" unless origin.is_a?(String) && !origin.strip.empty?
+  raise CaseFailure, "#{label}: source map origin is #{origin.inspect}, expected the transpiled source #{fixture.inspect}" unless origin == fixture
+
+  expected_digest = "sha256:#{Digest::SHA256.hexdigest(generated)}"
+  raise CaseFailure, "#{label}: source map go_digest #{data['go_digest'].inspect} is not bound to the generated Go (expected #{expected_digest})" unless data['go_digest'] == expected_digest
+
+  mappings = data['mappings']
+  raise CaseFailure, "#{label}: source map mappings must be a non-empty array" unless mappings.is_a?(Array) && !mappings.empty?
+  mappings.each_with_index do |entry, index|
+    raise CaseFailure, "#{label}: source map mapping #{index} is not an object" unless entry.is_a?(Hash)
+    entry_extra = entry.keys - MAP_ENTRY_KEYS
+    entry_missing = MAP_ENTRY_KEYS - entry.keys
+    raise CaseFailure, "#{label}: source map mapping #{index} has unexpected fields #{entry_extra.sort.inspect}" unless entry_extra.empty?
+    raise CaseFailure, "#{label}: source map mapping #{index} is missing fields #{entry_missing.sort.inspect}" unless entry_missing.empty?
+    raise CaseFailure, "#{label}: source map mapping #{index} node must be a non-empty string" unless entry['node'].is_a?(String) && !entry['node'].strip.empty?
+    %w[go_line go_col source_line source_col].each do |key|
+      value = entry[key]
+      raise CaseFailure, "#{label}: source map mapping #{index} #{key} must be an integer >= 1, got #{value.inspect}" unless value.is_a?(Integer) && value >= 1
+    end
+    offset = entry['source_offset']
+    raise CaseFailure, "#{label}: source map mapping #{index} source_offset must be an integer >= 0, got #{offset.inspect}" unless offset.is_a?(Integer) && offset >= 0
+  end
+
+  go_lines = generated.count("\n") + 1
+  over = mappings.find { |entry| entry['go_line'] > go_lines }
+  raise CaseFailure, "#{label}: source map go_line #{over['go_line']} exceeds the #{go_lines} lines of generated Go" if over
+
+  { 'bytes' => raw, 'digest' => Digest::SHA256.hexdigest(raw), 'mappings' => mappings.length,
+    'origin' => origin, 'go_digest' => data['go_digest'] }
+end
+
+# --- typed-only profile -----------------------------------------------------
+
+def stdlib_import?(path)
+  !path.split('/').first.to_s.include?('.')
+end
+
+def allowed_typed_import?(path)
+  return true if stdlib_import?(path)
+  TYPED_ONLY_ALLOWED_PREFIXES.any? { |prefix| path == prefix || path.start_with?("#{prefix}/") }
+end
+
+# Assert that the compiled artifact is a direct typed Go program: package main,
+# importing only the standard library and the stdlib-only typed bridge runtime,
+# with no dynamic interpreter or process-exec package anywhere in its transitive
+# dependency set. Facts come from `go list`, i.e. from the Go toolchain's own
+# parser -- not from regex over the generated text, which would match comments
+# and identifiers.
+def assert_typed_only!(go, build_env, build_dir, label, case_dir, ledger)
+  meta = invoke_subprocess(build_env, [go['bin'], 'list', '-f', "{{.Name}}\n{{range .Imports}}import {{.}}\n{{end}}", '.'], chdir: build_dir, timeout: 60)
+  evidence(meta.merge('phase' => 'typed-only-imports', 'case' => label), case_dir: case_dir, ledger: ledger, name: 'typed-only.imports')
+  raise CaseFailure, "#{label}: typed-only assertion failed: `go list` could not describe the generated package (exit #{meta['exit']})" unless meta['exit'].zero?
+
+  lines = meta['stdout'].split("\n").map(&:strip).reject(&:empty?)
+  package_name = lines.shift
+  raise CaseFailure, "#{label}: typed-only assertion failed: generated package is #{package_name.inspect}, expected \"main\"" unless package_name == 'main'
+  imports = lines.select { |line| line.start_with?('import ') }.map { |line| line.sub('import ', '') }
+
+  rejected = imports.reject { |path| allowed_typed_import?(path) }
+  raise CaseFailure, "#{label}: typed-only assertion failed: non-typed imports #{rejected.sort.inspect}" unless rejected.empty?
+
+  deps_result = invoke_subprocess(build_env, [go['bin'], 'list', '-deps', '.'], chdir: build_dir, timeout: 120)
+  evidence(deps_result.merge('phase' => 'typed-only-deps', 'case' => label), case_dir: case_dir, ledger: ledger, name: 'typed-only.deps')
+  raise CaseFailure, "#{label}: typed-only assertion failed: `go list -deps` failed (exit #{deps_result['exit']})" unless deps_result['exit'].zero?
+  deps = deps_result['stdout'].split("\n").map(&:strip).reject(&:empty?)
+
+  forbidden = deps & TYPED_ONLY_FORBIDDEN_DEPS
+  raise CaseFailure, "#{label}: typed-only assertion failed: depends on an interpreter or process-exec package #{forbidden.sort.inspect}" unless forbidden.empty?
+  foreign = deps.reject { |path| allowed_typed_import?(path) }
+  raise CaseFailure, "#{label}: typed-only assertion failed: transitive non-typed dependencies #{foreign.sort.inspect}" unless foreign.empty?
+
+  { 'package' => package_name, 'imports' => imports.sort, 'transitive_deps' => deps.length }
+end
+
+# --- options ----------------------------------------------------------------
+
+options = {
+  case_filter: nil,
+  bashy: ENV['BASHY_BIN'] || File.join(ROOT, '../bashy/bashy'),
+  engine: ENV['BASH_ENGINE_BIN'] || File.join(ROOT, '../bashy/bin/bash'),
+  go: ENV['GO_BIN'],
+  sh_module: ENV['SH_MODULE'],
+  fixture_root: nil,
+  manifest: nil,
+  artifacts: nil,
+  typed_only: false,
+  run_path: nil,
+  timeout: DEFAULT_TIMEOUT,
+  inventory: false
+}
+
+parser = OptionParser.new do |opts|
+  opts.banner = 'usage: go_profile.rb --manifest TSV --fixture-root DIR --sh-module DIR [options]'
+  opts.on('--case FILTER', 'exact case id or shell glob') { |value| options[:case_filter] = value }
+  opts.on('--bashy PATH', 'bashy CLI providing `transpile --bashpp`') { |value| options[:bashy] = value }
+  opts.on('--engine PATH', 'bash engine providing `--bashpp` interpretation') { |value| options[:engine] = value }
+  opts.on('--go PATH', 'pinned go1.27.0 binary') { |value| options[:go] = value }
+  opts.on('--sh-module PATH', 'local mvdan.cc/sh/v3 module directory') { |value| options[:sh_module] = value }
+  opts.on('--fixture-root PATH') { |value| options[:fixture_root] = value }
+  opts.on('--manifest PATH') { |value| options[:manifest] = value }
+  opts.on('--artifacts PATH', 'retained evidence directory (must not already exist)') { |value| options[:artifacts] = value }
+  opts.on('--typed-only', 'require a source-absent, interpreter-free typed artifact') { options[:typed_only] = true }
+  opts.on('--run-path PATH', 'PATH given to both execution modes (default: an empty directory)') { |value| options[:run_path] = value }
+  opts.on('--timeout SECONDS', Integer) { |value| options[:timeout] = value }
+  opts.on('--inventory', 'validate every repository manifest and exit') { options[:inventory] = true }
+end
+parser.parse!
+
+def fail_closed(message)
+  warn "PARITY FAIL: #{message}"
+  exit 1
+end
+
+begin
+  fail_closed("unexpected arguments #{ARGV.inspect}") unless ARGV.empty?
+
+  if options[:inventory]
+    total = 0
+    DEFAULT_INVENTORY.each do |manifest_rel, root_rel|
+      manifest = File.join(ROOT, manifest_rel)
+      root = File.join(ROOT, root_rel)
+      cases = load_cases(manifest, root)
+      total += cases.length
+      puts "INVENTORY #{manifest_rel} #{root_rel} #{cases.length}"
+    end
+    puts "INVENTORY OK: #{total} cases across #{DEFAULT_INVENTORY.length} manifests"
+    exit 0
+  end
+
+  preflight!('--manifest is required') unless options[:manifest]
+  preflight!('--fixture-root is required') unless options[:fixture_root]
+  preflight!('--sh-module is required (or set SH_MODULE)') unless options[:sh_module]
+
+  sh_module = File.realpath(options[:sh_module]) rescue nil
+  preflight!("sh module directory does not exist: #{options[:sh_module]}") unless sh_module && File.directory?(sh_module)
+  preflight!("sh module has no go.mod: #{sh_module}") unless File.file?(File.join(sh_module, 'go.mod'))
+
+  bashy_bin = File.realpath(options[:bashy]) rescue nil
+  preflight!("bashy CLI is missing or not executable: #{options[:bashy]}") unless bashy_bin && File.executable?(bashy_bin) && File.file?(bashy_bin)
+  engine_bin = File.realpath(options[:engine]) rescue nil
+  preflight!("bash engine is missing or not executable: #{options[:engine]}") unless engine_bin && File.executable?(engine_bin) && File.file?(engine_bin)
+
+  manifest_path = File.expand_path(options[:manifest])
+  fixture_root = File.realpath(options[:fixture_root]) rescue nil
+  preflight!("fixture root does not exist: #{options[:fixture_root]}") unless fixture_root
+
+  identity = invoke_subprocess(
+    { 'LC_ALL' => 'C.UTF-8', 'TZ' => 'UTC', 'HOME' => Dir.tmpdir, 'PATH' => '/usr/bin:/bin' },
+    [RbConfig.ruby, File.join(ROOT, 'tools/lowering/identity_manifest.rb')], chdir: ROOT, timeout: 120
+  )
+  evidence(identity.merge('phase' => 'identity-manifest'))
+  preflight!('identity manifest rejected the repository state') unless identity['exit'].zero?
+
+  all_cases = load_cases(manifest_path, fixture_root)
+  selected = all_cases.select do |row|
+    options[:case_filter].nil? || row[:id] == options[:case_filter] || File.fnmatch?(options[:case_filter], row[:id])
+  end
+  preflight!("case filter #{options[:case_filter].inspect} selected zero of #{all_cases.length} cases") if selected.empty?
+
+  go = authenticate_go(options[:go] || resolve_pinned_go)
+
+  artifact_root = options[:artifacts] || File.join(Dir.tmpdir, "go-profile-artifacts-#{Time.now.utc.strftime('%Y%m%dT%H%M%S')}-#{Process.pid}-#{SecureRandom.hex(4)}")
+  preflight!("artifact directory already exists: #{artifact_root}") if File.exist?(artifact_root)
+  artifact_root = File.expand_path(artifact_root)
+  FileUtils.mkdir_p(artifact_root)
+
+  shared_gocache = File.join(artifact_root, 'go-build-cache')
+  shared_gomodcache = File.join(artifact_root, 'go-mod-cache')
+  build_home = File.join(artifact_root, 'build-home')
+  build_tmp = File.join(artifact_root, 'build-tmp')
+  empty_path_dir = File.join(artifact_root, 'empty-path')
+  [shared_gocache, shared_gomodcache, build_home, build_tmp, empty_path_dir].each { |dir| FileUtils.mkdir_p(dir) }
+
+  run_path = options[:run_path] || empty_path_dir
+  go_bin_dir = File.dirname(go['bin'])
+  run_path_dirs = run_path.split(File::PATH_SEPARATOR).reject(&:empty?)
+  preflight!("run PATH exposes the Go toolchain directory #{go_bin_dir}; the executed artifact must not see a Go runtime") if run_path_dirs.include?(go_bin_dir)
+  leaked_go = run_path_dirs.find { |dir| File.executable?(File.join(dir, 'go')) }
+  preflight!("run PATH directory #{leaked_go} exposes a `go` executable; the executed artifact must not see a Go runtime") if leaked_go
+
+  build_env = build_environment(go, shared_gocache, shared_gomodcache, build_home, build_tmp)
+
+  metadata = {
+    'schema' => 'lowering.go-profile-run.v1',
+    'sprint' => 117, 'story' => 9, 'story_id' => 'e400885f8746',
+    'manifest' => manifest_path,
+    'fixture_root' => fixture_root,
+    'cases_declared' => all_cases.length,
+    'cases_selected' => selected.length,
+    'typed_only' => options[:typed_only],
+    'toolchain' => go,
+    'module_import' => 'mvdan.cc/sh/v3',
+    'sh_module_path' => sh_module,
+    'bashy_bin' => bashy_bin,
+    'bashy_bin_sha256' => Digest::SHA256.file(bashy_bin).hexdigest,
+    'engine_bin' => engine_bin,
+    'engine_bin_sha256' => Digest::SHA256.file(engine_bin).hexdigest,
+    'run_path' => run_path,
+    'effect_detection' => {
+      'method' => 'sha256 tree snapshot of the execution root before and after the run',
+      'covers' => "every path under the execution root, including #{RUNTIME_DIR}/home (HOME), #{RUNTIME_DIR}/tmp (TMPDIR), dotfiles and files named *.raw",
+      'exempt' => 'compiled mode only: the deleted original Bash++ source path',
+      'syscall_hooks' => false,
+      'limitation' => 'writes to absolute paths outside the execution root are not observed by this runner'
+    }
+  }
+  File.write(File.join(artifact_root, 'meta.json'), JSON.pretty_generate(metadata))
+  puts "ARTIFACTS RETAINED: #{artifact_root}"
+  puts JSON.generate(metadata)
+
+  go_mod = "module bashylowered\n\ngo 1.27\n\nrequire mvdan.cc/sh/v3 v3.0.0\n\nreplace mvdan.cc/sh/v3 => #{sh_module}\n"
+  failures = []
+
+  selected.each do |row|
+    label = row[:id]
+    fixture = row[:fixture]
+    case_dir = File.join(artifact_root, row[:category], label)
+    FileUtils.mkdir_p(case_dir)
+    ledger = File.join(case_dir, 'evidence.jsonl')
+
+    begin
+      # -- transpile twice, from two independent sandbox copies of the fixture
+      #    tree. Outputs land in the evidence directory, outside every root.
+      source_one = File.join(case_dir, 'generated.one.go')
+      source_two = File.join(case_dir, 'generated.two.go')
+      sandbox_one = File.join(case_dir, 'transpile.one')
+      sandbox_two = File.join(case_dir, 'transpile.two')
+      copy_tree(fixture_root, sandbox_one)
+      copy_tree(fixture_root, sandbox_two)
+
+      transpile_env = { 'LC_ALL' => 'C.UTF-8', 'LANG' => 'C.UTF-8', 'TZ' => 'UTC',
+                        'HOME' => build_home, 'TMPDIR' => build_tmp, 'PATH' => run_path }
+      first = invoke_subprocess(transpile_env, [bashy_bin, 'transpile', '--bashpp', fixture, '-o', source_one], chdir: sandbox_one, timeout: options[:timeout])
+      evidence(first.merge('phase' => 'transpile', 'case' => label, 'attempt' => 1), case_dir: case_dir, ledger: ledger, name: 'transpile.one')
+      second = invoke_subprocess(transpile_env, [bashy_bin, 'transpile', '--bashpp', fixture, '-o', source_two], chdir: sandbox_two, timeout: options[:timeout])
+      evidence(second.merge('phase' => 'transpile', 'case' => label, 'attempt' => 2), case_dir: case_dir, ledger: ledger, name: 'transpile.two')
+
+      raise CaseFailure, "#{label}: transpile timed out" if first['timeout'] || second['timeout']
+      raise CaseFailure, "#{label}: transpilation failed (exit #{first['exit']}/#{second['exit']}): #{first['stderr'].strip}" unless first['exit'].zero? && second['exit'].zero?
+      raise CaseFailure, "#{label}: transpilation emitted no Go source" unless File.size?(source_one) && File.size?(source_two)
+
+      generated_one = File.binread(source_one)
+      generated_two = File.binread(source_two)
+      raise CaseFailure, "#{label}: generated Go is nondeterministic" unless generated_one == generated_two
+
+      # -- source map is required, schema-checked, and digest-bound
+      map_one = parse_source_map("#{source_one}.map", generated_one, fixture, label)
+      map_two = parse_source_map("#{source_two}.map", generated_two, fixture, label)
+      raise CaseFailure, "#{label}: generated source map is nondeterministic" unless map_one['digest'] == map_two['digest']
+      evidence({ 'phase' => 'source-map', 'case' => label, 'schema' => MAP_SCHEMA,
+                 'origin' => map_one['origin'], 'go_digest' => map_one['go_digest'],
+                 'map_sha256' => map_one['digest'], 'mappings' => map_one['mappings'],
+                 'generated_go_sha256' => Digest::SHA256.hexdigest(generated_one) },
+               case_dir: case_dir, ledger: ledger)
+
+      # -- build, in a directory that is not an execution root
+      build_dir = File.join(case_dir, 'build')
+      FileUtils.mkdir_p(build_dir)
+      File.write(File.join(build_dir, 'go.mod'), go_mod)
+      File.binwrite(File.join(build_dir, 'main.go'), generated_one)
+      built = File.join(build_dir, 'lowered.bin')
+      build = invoke_subprocess(build_env, [go['bin'], 'build', '-o', built, '.'], chdir: build_dir, timeout: [options[:timeout], 300].max)
+      evidence(build.merge('phase' => 'build', 'case' => label, 'generated_go_sha256' => Digest::SHA256.hexdigest(generated_one)), case_dir: case_dir, ledger: ledger, name: 'build')
+      raise CaseFailure, "#{label}: generated Go build timed out" if build['timeout']
+      raise CaseFailure, "#{label}: generated Go did not build: #{build['stderr'].strip}" unless build['exit'].zero? && File.executable?(built)
+
+      typed_profile = nil
+      typed_profile = assert_typed_only!(go, build_env, build_dir, label, case_dir, ledger) if options[:typed_only]
+
+      # -- move the artifact out of the build tree: it must run with no build
+      #    directory, no module, no Go toolchain and (typed-only) no PATH.
+      isolated_dir = File.join(case_dir, 'artifact')
+      FileUtils.mkdir_p(isolated_dir)
+      binary = File.join(isolated_dir, 'lowered.bin')
+      FileUtils.mv(built, binary)
+      binary_sha = Digest::SHA256.file(binary).hexdigest
+
+      # -- two execution roots with identical relative layout
+      interpreted_root = prepare_execution_root(fixture_root, File.join(case_dir, 'run', 'interpreted'))
+      compiled_root = prepare_execution_root(fixture_root, File.join(case_dir, 'run', 'compiled'))
+      FileUtils.rm_f(File.join(compiled_root, fixture))
+      ignored_compiled = compiled_only_ignored_paths(fixture)
+
+      env_interpreted = run_environment(interpreted_root, run_path)
+      env_compiled = run_environment(compiled_root, options[:typed_only] ? '' : run_path)
+      profile_interpreted = environment_profile(env_interpreted, interpreted_root)
+      profile_compiled = environment_profile(env_compiled, compiled_root)
+      declared_divergence = options[:typed_only] ? ['PATH'] : []
+
+      env_diff = (profile_interpreted.keys | profile_compiled.keys).reject do |key|
+        profile_interpreted[key] == profile_compiled[key]
+      end
+      undeclared = env_diff - declared_divergence
+      raise CaseFailure, "#{label}: execution environments diverge on undeclared keys #{undeclared.sort.inspect}" unless undeclared.empty?
+
+      before_interpreted = filesystem_snapshot(interpreted_root)
+      before_compiled = filesystem_snapshot(compiled_root)
+      comparable_before_i = snapshot_reject(before_interpreted, ignored_compiled)
+      comparable_before_c = snapshot_reject(before_compiled, ignored_compiled)
+      raise CaseFailure, "#{label}: execution roots differ before the run: #{snapshot_diff(comparable_before_i, comparable_before_c).inspect}" unless comparable_before_i['entries'] == comparable_before_c['entries']
+
+      interpreted = invoke_subprocess(env_interpreted, [engine_bin, '--bashpp', fixture], chdir: interpreted_root, timeout: options[:timeout])
+      after_interpreted = filesystem_snapshot(interpreted_root)
+      compiled = invoke_subprocess(env_compiled, [binary], chdir: compiled_root, timeout: options[:timeout])
+      after_compiled = filesystem_snapshot(compiled_root)
+      comparable_after_i = snapshot_reject(after_interpreted, ignored_compiled)
+      comparable_after_c = snapshot_reject(after_compiled, ignored_compiled)
+
+      observation = lambda do |result, mode, before, after, env, profile|
+        {
+          'mode' => mode,
+          'status' => { 'exit' => result['exit'], 'timeout' => result['timeout'], 'drain_killed' => result['drain_killed'] },
+          'raw_streams' => { 'schema' => 'lowering.raw-byte-streams.v1',
+                             'stdout_sha256' => result['stdout_sha256'], 'stderr_sha256' => result['stderr_sha256'],
+                             'stdout_bytes' => result['stdout_bytes'], 'stderr_bytes' => result['stderr_bytes'] },
+          'environment' => { 'schema' => 'lowering.controlled-env.v1', 'inherited' => false,
+                             'profile' => profile, 'profile_sha256' => environment_digest(profile),
+                             'declared_divergence' => declared_divergence, 'keys' => env.keys.sort },
+          'effects' => { 'schema' => 'lowering.execution-root-effects.v1',
+                         'method' => 'pre/post sha256 tree snapshot of the execution root',
+                         'syscall_hooks' => false,
+                         'exempt_paths' => mode == 'compiled' ? ignored_compiled : [],
+                         'filesystem_before' => snapshot_public(before), 'filesystem_after' => snapshot_public(after) }
+        }
+      end
+
+      evidence(interpreted.merge('phase' => 'interpreted-run', 'case' => label,
+                                 'observation' => observation.call(interpreted, 'interpreted', before_interpreted, after_interpreted, env_interpreted, profile_interpreted)),
+               case_dir: case_dir, ledger: ledger, name: 'interpreted')
+      evidence(compiled.merge('phase' => 'compiled-run', 'case' => label, 'binary_sha256' => binary_sha,
+                              'typed_only' => typed_profile,
+                              'observation' => observation.call(compiled, 'compiled', before_compiled, after_compiled, env_compiled, profile_compiled)),
+               case_dir: case_dir, ledger: ledger, name: 'compiled')
+
+      problems = []
+      problems << "interpreted run timed out after #{options[:timeout]}s" if interpreted['timeout']
+      problems << "compiled run timed out after #{options[:timeout]}s" if compiled['timeout']
+
+      if interpreted['exit'] != row[:expected_status]
+        problems << "interpreted expected exit #{row[:expected_status]} but got #{interpreted['exit']}"
+      end
+      if compiled['exit'] != row[:expected_status]
+        problems << "compiled expected exit #{row[:expected_status]} but got #{compiled['exit']}"
+      end
+      problems << 'interpreted stdout does not match the manifest' if interpreted['stdout'] != row[:stdout]
+      problems << 'interpreted stderr does not match the manifest' if interpreted['stderr'] != row[:stderr]
+      problems << 'compiled stdout does not match the manifest' if compiled['stdout'] != row[:stdout]
+      problems << 'compiled stderr does not match the manifest' if compiled['stderr'] != row[:stderr]
+      problems << 'interpreted and compiled stdout diverged' if interpreted['stdout'] != compiled['stdout']
+      problems << 'interpreted and compiled stderr diverged' if interpreted['stderr'] != compiled['stderr']
+      problems << "interpreted and compiled exit diverged (#{interpreted['exit']} vs #{compiled['exit']})" if interpreted['exit'] != compiled['exit']
+
+      unless comparable_after_i['entries'] == comparable_after_c['entries']
+        problems << "filesystem effects diverged: #{snapshot_diff(comparable_after_i, comparable_after_c).join('; ')}"
+      end
+
+      raise CaseFailure, "#{label}: #{problems.join('; ')}" unless problems.empty?
+      puts "PARITY PASS #{label}: transpile/map/build/run evidence authenticated"
+    rescue CaseFailure => error
+      failures << error.message
+      warn "PARITY FAIL #{error.message}"
+    rescue StandardError => error
+      failures << "#{label}: unhandled error: #{error.class}: #{error.message}"
+      warn "PARITY FAIL #{label}: unhandled error: #{error.class}: #{error.message}"
+    end
+  end
+
+  if failures.empty?
+    if selected.length == all_cases.length
+      puts "GO-PROFILE PARITY PASS: #{selected.length}/#{all_cases.length} Go-profile lowering cases"
+    else
+      puts "GO-PROFILE PARITY SUBSET PASS: #{selected.length}/#{all_cases.length} selected Go-profile lowering cases"
+    end
+    exit 0
+  end
+
+  warn "GO-PROFILE PARITY FAIL: #{failures.length} failures across #{selected.length} selected cases"
+  exit 1
+rescue PreflightFailure => error
+  fail_closed(error.message)
+end
