@@ -1,0 +1,10 @@
+# Independent Sprint 117 lowering identity manifest. It stores exact ordered identity sets.
+# id	source	kind	count	identities_sha256
+agentic-boundaries	tests/agentic/cases.tsv	agentic-boundary	13	369d3750b65ef8de038389410872b5285a2b7e3a8ff2a0bc3861eea162d50e7c
+bashsharp-families	tests/bashsharp/matrix.tsv	bashsharp-family	5	b2590a5bfb1a1c76db0cf55d8ba28a9baa0d9ee2ca0de113e0cc3c95c3b14b68
+bashsharp-lowering	tests/bashsharp/matrix.tsv	bashsharp-runtime	33	a8bfbba9f7d52b9d05947b9c038a4eb6d4acc88b931242f0f8057a7736d59ded
+certified-startsites	tools/startsites/baseline.tsv	certified-node	205	ac4702e39f42bec5ad1243720d53a9fc05ff84a8d31ab5d95c2f00ac93e3077b
+go-profile-fixtures	tests/manifest.tsv	public-profile	4	bf18a04c50e3d496173ac614b0a27bf67f793fa40fee748ea85babe280b8e5a5
+official-go-corpus	docs/go-corpus/inventory.tsv	public-corpus	3398	cdf2910a0118a596cc820e5269393d949b009cbfadf0596da7de084a852f4590
+public-go-by-example	docs/go-by-example/inventory.tsv	public-corpus	89	bc7a2208b2d90aaa49bd337775bcf21097681cf0a959a9c7d35f206c2c4a7878
+public-go-tour	tests/tour/inventory.tsv	public-corpus	168	31c5877fbb68a54a5daf7aa5c99f45a25316bf7305cb95873672991fb9752e33
