@@ -42,7 +42,9 @@ ruby tools/lowering/go_profile.rb \
 | `--timeout SECONDS` | per-subprocess bound (default 60) |
 | `--go-cache PATH` | `GOCACHE` for the build; defaults to a directory inside `--artifacts` |
 | `--go-mod-cache PATH` | `GOMODCACHE` for the build; same default |
-| `--inventory` | validate every repository manifest and exit |
+| `--phases PATH` | compiler phase contract governing this manifest |
+| `--artifact-only` | custom manifests only: declare every case `artifact-run` |
+| `--inventory` | validate every repository manifest and its phase contract, then exit |
 
 No host path is committed anywhere in this story's files. Binaries and the `sh`
 module are supplied at runtime, by flag or environment variable.
@@ -81,6 +83,107 @@ INVENTORY OK: 120 cases across 2 manifests
 
 Both the `go-profile` and the `profile-additional` manifests are supported by
 the same loader, and together they account for all 120 existing cases.
+
+## Compiler phases
+
+Not every identity in the inventory is contracted to become a native artifact.
+The phase contract, `docs/lowering/go-profile-phases.tsv`, assigns each of the
+120 identities exactly one compiler phase. It is owned by the coverage worker;
+this runner only reads and enforces it.
+
+| Phase | Cases | What the runner does |
+| --- | ---: | --- |
+| `artifact-run` | 105 | Transpile, require a valid map, build with the pinned Go, move the artifact out, run it source-absent, and diff it against the interpreter — every check in the rest of this document. 100 successful runs and 5 runtime errors. |
+| `semantic-reject` | 15 | Require the CLI to *refuse* the statically invalid source with the exact contracted diagnostic. No Go, no map, no build, no artifact. |
+
+The document has five columns:
+
+```
+id	phase	source_sha256	reason	public_test_ref
+```
+
+and is validated before anything runs: exact header, exactly five fields,
+a known phase, a hex `source_sha256`, a non-empty `reason` and
+`public_test_ref`. Bound to the manifest it governs, it must have **exactly one
+entry per identity in both directions** — a missing entry, an entry for an
+identity the manifest does not declare, or a duplicate all fail closed. Each
+row's `source_sha256` must equal the fixture on disk and its `public_test_ref`
+must equal the manifest's, so the metadata cannot drift away from the source or
+the golden it describes. For the default inventory the pinned 105/15 split is
+enforced as well.
+
+### The phase contract cannot be bypassed
+
+* A **default inventory manifest** always carries the full default contract. It
+  cannot be run with `--artifact-only` — that would silently turn the 15
+  `semantic-reject` identities into artifact runs — and it cannot be run at all
+  if the contract file is missing. Supplying `--phases` for a default manifest
+  is allowed but relocates the document only: it is still validated against all
+  120 identities with the pinned split, so it can never weaken the contract.
+* A **custom manifest** must declare its phases explicitly, with either
+  `--phases PATH` or `--artifact-only`. Neither is inferred; running without one
+  is an error. The two are mutually exclusive.
+
+## Semantic rejection
+
+For a `semantic-reject` identity the contract is that the CLI **produces the
+contracted diagnostic**, not merely that it fails. Exiting non-zero is not the
+contract. The runner requires all of:
+
+* both independent transpile attempts exit with the manifest's status and
+  reproduce its full stdout and stderr **bytes**;
+* the diagnostic is a *recognized semantic rejection* (below);
+* neither attempt emits Go or a source map;
+* neither attempt changes its input tree;
+* the two attempts agree — a nondeterministic rejection fails;
+* the interpreter, run independently in its own isolated execution root,
+  reproduces the original status and streams with a `clean` lifecycle;
+* the interpreted run leaves **no filesystem effect at all** — these fixtures
+  are contracted to have no external effect before the designated error.
+
+No artifact is built, and none is claimed.
+
+### What counts as a recognized semantic diagnostic
+
+Every non-empty line must be a rendered Bash++ diagnostic identity,
+`BASHPP-E...`, optionally positioned as `<source>: line N: `. When a line is
+positioned, the path must be the **original fixture path**. The origin is
+deliberately not normalized: normalizing it away would hide a diagnostic
+pointing at the wrong file, and a positioned secondary line is part of the
+contract — `cap-type-neg` requires both its operand-type error and its
+positioned `BASHPP-ESHORT-NONEW` line.
+
+`undefined-receiver-neg` is allowlisted for the exact legacy rendering
+`invalid receiver type Missing (type is not declared in this session)` that its
+public test pins. That allowance is keyed to that identity and those exact
+bytes; the same text under any other identity is rejected.
+
+These are **never** a semantic rejection, however non-zero the status:
+
+* a `LOWER-E*` lowering error, including `LOWER-EUNSUPPORTED` — the transpiler
+  giving up on a construct is not a diagnosis of the program;
+* a raw Go toolchain or type-check error;
+* a bare `line:col:` position from the lowering type checker;
+* any unprefixed error outside the allowlist.
+
+This distinction is the whole point of the phase. A transpiler that exits 2 and
+emits nothing looks identical to a correct rejection until you read the bytes.
+
+## Reporting: artifacts and rejections are counted separately
+
+The two phases are always reported as separate numbers, and the result line
+says so explicitly:
+
+```
+GO-PROFILE PHASE RESULT: 81/105 artifact executions, 0/15 certified semantic
+rejections (120 phase-aware cases selected of 120; artifact executions are the
+only native artifacts, semantic rejections build none)
+```
+
+A certified semantic rejection is **not** a native execution. The totals must
+never be read, or reported, as "120 native artifacts". 120 is the count of
+phase-aware cases; the number of native artifacts is the artifact-execution
+count alone.
 
 ## Toolchain authentication
 
@@ -352,12 +455,35 @@ default `$TMPDIR/s117-runner-correction-cache`). It creates the directory if it
 is missing and never removes it: this suite does not clean up a directory it was
 handed.
 
+## Current status
+
+The core compiled semantic diagnostics are not implemented yet, so the full
+inventory **fails today, by design**. Measured against the current product CLI:
+
+* **81 of 105** `artifact-run` identities execute and match. The 24 failures are
+  13 transpilation refusals, 6 stdout divergences, 4 filesystem-effect
+  divergences and 1 stderr divergence.
+* **0 of 15** `semantic-reject` identities are certified. All 15 exit 2 and emit
+  nothing, but every one produces a `LOWER-E*` error with a bare `line:col`
+  position instead of the contracted `BASHPP-E*` diagnostic.
+
+Those numbers are the honest state of the product, not a defect in the gate.
+The gate is deliberately not weakened to accommodate them: a `LOWER-ETYPE`
+message is not the contracted diagnostic, and accepting it would retire the
+requirement rather than meet it.
+
 ## Known limitations
 
 * Effect detection is snapshot-based; see the list above for what it misses.
 * Parity is asserted per fixture on the host that ran it. Nothing here
   generalizes to fixtures that were not run, and a subset run is reported as a
   subset.
+* A certified semantic rejection asserts the transpiler's diagnostic and the
+  interpreter's observation. It asserts nothing about compiled behaviour,
+  because there is deliberately no compiled artifact.
+* The "no effect before the designated error" assertion for `semantic-reject`
+  identities is a property of these 15 reviewed fixtures, not a general promise
+  that an effectful program can reject early.
 * The `mvdan.cc/sh/v3` requirement in the generated module is satisfied by a
   local directory `replace`; the module's own version graph is not exercised.
 * Timing-dependent or concurrency-dependent fixtures can diverge legitimately;

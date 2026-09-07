@@ -88,6 +88,49 @@ LIFECYCLE_REASONS = {
   LIFECYCLE_UNREAPABLE => 'left a process group that could not be reaped'
 }.freeze
 
+# --- compiler phase contract -------------------------------------------------
+
+# The phase metadata pairs every identity in the default inventory with the
+# compiler phase that identity is contracted to reach. It is owned by the
+# coverage worker; this runner only reads and enforces it.
+EXPECTED_PHASE_HEADER = "id\tphase\tsource_sha256\treason\tpublic_test_ref".freeze
+PHASE_COLUMNS = 5
+
+PHASE_ARTIFACT_RUN = 'artifact-run'.freeze
+PHASE_SEMANTIC_REJECT = 'semantic-reject'.freeze
+KNOWN_PHASES = [PHASE_ARTIFACT_RUN, PHASE_SEMANTIC_REJECT].freeze
+
+# The pinned split of the default 120-case inventory. A changed split is a
+# changed contract and fails closed.
+DEFAULT_PHASE_SPLIT = { PHASE_ARTIFACT_RUN => 105, PHASE_SEMANTIC_REJECT => 15 }.freeze
+
+# A semantic diagnostic is a rendered Bash++ diagnostic identity, optionally
+# positioned by the ORIGINAL source path and line. The path is compared against
+# the real fixture path: a rendering that normalizes the origin away would hide
+# a diagnostic pointing at the wrong file or line, so it is not accepted.
+SEMANTIC_DIAGNOSTIC_LINE = /\A(?:(?<path>[^\s:]+): line (?<line>\d+): )?BASHPP-E[A-Z0-9]+(?:-[A-Z0-9]+)*: \S.*\z/.freeze
+
+# Renderings pinned by a public test that predate the BASHPP- identity scheme.
+# Allowed for these exact identities and these exact bytes only.
+LEGACY_DIAGNOSTIC_ALLOWLIST = {
+  'undefined-receiver-neg' => "invalid receiver type Missing (type is not declared in this session)\n"
+}.freeze
+
+# Shapes that are never a semantic diagnostic, however non-zero the status: an
+# unsupported-construct bail-out, a raw Go type-check failure, or a bare
+# line:col position from the lowering type checker. Accepting any of these as a
+# negative result would let "the transpiler refused, somehow" masquerade as
+# "the transpiler produced the contracted diagnostic".
+NON_SEMANTIC_DIAGNOSTIC_MARKERS = {
+  'a LOWER-E* lowering error' => /\bLOWER-E[A-Z]+/,
+  'a raw Go toolchain error' => /^# command-line-arguments|\.go:\d+:\d+:/,
+  'a bare line:col type-check position' => /^\d+:\d+: /
+}.freeze
+
+# The default phase contract, owned by the coverage worker. A default inventory
+# manifest cannot be run without it.
+DEFAULT_PHASES = File.join(ROOT, 'docs/lowering/go-profile-phases.tsv').freeze
+
 # The repository inventory this runner is contracted to support.
 DEFAULT_INVENTORY = [
   ['docs/lowering/go-profile-cases.tsv', 'tests/lowering/go-profile'],
@@ -461,6 +504,97 @@ def load_cases(manifest_path, fixture_root)
   rows
 end
 
+# Load and validate the phase contract as a standalone document.
+def load_phases(path)
+  rows = {}
+  header_found = false
+  data_lines(path).each_with_index do |line, index|
+    stripped = line.strip
+    next if stripped.empty? || stripped.start_with?('#')
+
+    unless header_found
+      preflight!("#{path}: phase header mismatch, expected #{EXPECTED_PHASE_HEADER.inspect}, got #{line.inspect}") unless line == EXPECTED_PHASE_HEADER
+      header_found = true
+      next
+    end
+
+    fields = line.split("\t", -1)
+    preflight!("#{path}:#{index + 1}: expected #{PHASE_COLUMNS} tab-separated fields, got #{fields.length}") unless fields.length == PHASE_COLUMNS
+    id, phase, source_sha256, reason, public_test_ref = fields
+
+    preflight!("#{path}:#{index + 1}: invalid id #{id.inspect}") unless id.match?(/\A[A-Za-z0-9][A-Za-z0-9_.-]*\z/)
+    preflight!("#{path}:#{index + 1}: unknown phase #{phase.inspect}, expected one of #{KNOWN_PHASES.inspect}") unless KNOWN_PHASES.include?(phase)
+    preflight!("#{path}:#{index + 1}: source_sha256 must be a sha256 hex digest, got #{source_sha256.inspect}") unless source_sha256.match?(/\A[0-9a-f]{64}\z/)
+    preflight!("#{path}:#{index + 1}: reason must be non-empty") if reason.to_s.strip.empty?
+    preflight!("#{path}:#{index + 1}: public_test_ref must be non-empty") if public_test_ref.to_s.strip.empty?
+    preflight!("#{path}:#{index + 1}: public_test_ref must not carry surrounding whitespace") unless public_test_ref == public_test_ref.strip
+    preflight!("#{path}: duplicate phase entry for id #{id.inspect}") if rows.key?(id)
+
+    rows[id] = { id: id, phase: phase, source_sha256: source_sha256, reason: reason, public_test_ref: public_test_ref }
+  end
+
+  preflight!("#{path}: phase contract has no header row") unless header_found
+  preflight!("#{path}: phase contract declares zero identities") if rows.empty?
+  rows
+end
+
+# Bind the phase contract to the manifest it governs: exactly one entry per
+# identity, both ways, with the source bytes and the public reference pinned.
+# Nothing here tolerates an extra, a duplicate, a gap or a drift.
+def bind_phases!(cases, phases, phase_path, manifest_path, enforce_default_split)
+  case_ids = cases.map { |row| row[:id] }
+  missing = (case_ids - phases.keys).sort
+  preflight!("#{phase_path}: no phase declared for #{missing.length} manifest identities: #{missing.first(8).inspect}") unless missing.empty?
+  unknown = (phases.keys - case_ids).sort
+  preflight!("#{phase_path}: phase contract declares #{unknown.length} identities absent from #{manifest_path}: #{unknown.first(8).inspect}") unless unknown.empty?
+
+  cases.each do |row|
+    entry = phases.fetch(row[:id])
+    actual = Digest::SHA256.file(File.join(row[:fixture_root], row[:fixture])).hexdigest
+    preflight!("#{phase_path}: #{row[:id]} source_sha256 #{entry[:source_sha256]} does not match #{row[:fixture]} (#{actual}); the phase contract and the fixture have diverged") unless entry[:source_sha256] == actual
+    preflight!("#{phase_path}: #{row[:id]} public_test_ref #{entry[:public_test_ref].inspect} does not match the manifest reference #{row[:public_test_ref].inspect}") unless entry[:public_test_ref] == row[:public_test_ref]
+    row[:phase] = entry[:phase]
+    row[:phase_reason] = entry[:reason]
+  end
+
+  counts = Hash.new(0)
+  cases.each { |row| counts[row[:phase]] += 1 }
+  if enforce_default_split
+    KNOWN_PHASES.each do |phase|
+      expected = DEFAULT_PHASE_SPLIT.fetch(phase)
+      preflight!("#{phase_path}: default inventory declares #{counts[phase]} #{phase} identities, the pinned contract is #{expected}") unless counts[phase] == expected
+    end
+  end
+  counts
+end
+
+# Is this stderr the contracted semantic diagnostic rendering, rather than some
+# other reason the transpiler happened to exit non-zero?
+def semantic_diagnostic_problems(text, id, fixture)
+  legacy = LEGACY_DIAGNOSTIC_ALLOWLIST[id]
+  return [] if legacy && text == legacy
+
+  problems = []
+  NON_SEMANTIC_DIAGNOSTIC_MARKERS.each do |description, pattern|
+    problems << "the diagnostic is #{description}" if pattern.match?(text)
+  end
+  return problems unless problems.empty?
+
+  return ['the diagnostic is empty'] if text.strip.empty?
+
+  text.split("\n", -1).each_with_index do |line, index|
+    next if line.empty?
+    match = SEMANTIC_DIAGNOSTIC_LINE.match(line)
+    if match.nil?
+      problems << "line #{index + 1} is not a rendered BASHPP diagnostic: #{line.inspect}"
+      next
+    end
+    next if match[:path].nil?
+    problems << "line #{index + 1} is positioned at #{match[:path].inspect}, not at the original source #{fixture.inspect}" unless match[:path] == fixture
+  end
+  problems
+end
+
 # --- filesystem effects -----------------------------------------------------
 
 def copy_tree(source, destination)
@@ -801,6 +935,8 @@ options = {
   timeout: DEFAULT_TIMEOUT,
   go_cache: nil,
   go_mod_cache: nil,
+  phases: nil,
+  artifact_only: false,
   inventory: false
 }
 
@@ -819,7 +955,9 @@ parser = OptionParser.new do |opts|
   opts.on('--timeout SECONDS', Integer) { |value| options[:timeout] = value }
   opts.on('--go-cache PATH', 'GOCACHE for the build (default: inside the artifact directory)') { |value| options[:go_cache] = value }
   opts.on('--go-mod-cache PATH', 'GOMODCACHE for the build (default: inside the artifact directory)') { |value| options[:go_mod_cache] = value }
-  opts.on('--inventory', 'validate every repository manifest and exit') { options[:inventory] = true }
+  opts.on('--phases PATH', 'compiler phase contract for this manifest') { |value| options[:phases] = value }
+  opts.on('--artifact-only', 'custom manifests only: declare every case artifact-run') { options[:artifact_only] = true }
+  opts.on('--inventory', 'validate every repository manifest and its phase contract, then exit') { options[:inventory] = true }
 end
 parser.parse!
 
@@ -832,15 +970,23 @@ begin
   fail_closed("unexpected arguments #{ARGV.inspect}") unless ARGV.empty?
 
   if options[:inventory]
+    phase_path = options[:phases] || DEFAULT_PHASES
+    preflight!("the default phase contract is missing at #{phase_path}; the inventory is not phase-aware without it") unless File.file?(phase_path)
+    phases = load_phases(phase_path)
     total = 0
+    combined = []
     DEFAULT_INVENTORY.each do |manifest_rel, root_rel|
       manifest = File.join(ROOT, manifest_rel)
       root = File.join(ROOT, root_rel)
       cases = load_cases(manifest, root)
       total += cases.length
+      combined.concat(cases)
       puts "INVENTORY #{manifest_rel} #{root_rel} #{cases.length}"
     end
+    counts = bind_phases!(combined, phases, phase_path, 'the default inventory', true)
     puts "INVENTORY OK: #{total} cases across #{DEFAULT_INVENTORY.length} manifests"
+    KNOWN_PHASES.each { |phase| puts "PHASE #{phase} #{counts[phase]}" }
+    puts "PHASE CONTRACT OK: #{total} phase-aware cases = #{counts[PHASE_ARTIFACT_RUN]} #{PHASE_ARTIFACT_RUN} + #{counts[PHASE_SEMANTIC_REJECT]} #{PHASE_SEMANTIC_REJECT}"
     exit 0
   end
 
@@ -869,6 +1015,66 @@ begin
   preflight!('identity manifest rejected the repository state') unless identity['exit'].zero?
 
   all_cases = load_cases(manifest_path, fixture_root)
+
+  # Phase policy. A default manifest always carries the full default phase
+  # contract: it cannot be run with no phase contract, and it cannot be
+  # downgraded to an artifact-only contract, because that would silently turn
+  # the semantic-reject identities into artifact runs.
+  default_manifests = DEFAULT_INVENTORY.map do |manifest_rel, _|
+    begin
+      File.realpath(File.join(ROOT, manifest_rel))
+    rescue StandardError
+      nil
+    end
+  end.compact
+  resolved_manifest = begin
+    File.realpath(manifest_path)
+  rescue StandardError
+    manifest_path
+  end
+  is_default_manifest = default_manifests.include?(resolved_manifest)
+
+  if is_default_manifest
+    preflight!('--artifact-only cannot be used with a default inventory manifest; its phase contract is not optional') if options[:artifact_only]
+    phase_path = options[:phases] || DEFAULT_PHASES
+    unless File.file?(phase_path)
+      preflight!("the default phase contract is missing at #{phase_path}; a default inventory manifest cannot be run without it")
+    end
+    phases = load_phases(phase_path)
+    # The phase document is one contract over the WHOLE default inventory, so it
+    # is validated against all 120 identities -- not just the manifest being
+    # executed -- and the pinned split is enforced every time. An explicitly
+    # supplied phase file is held to that identical contract, so it can relocate
+    # the document but never weaken it.
+    inventory_cases = DEFAULT_INVENTORY.flat_map do |manifest_rel, root_rel|
+      load_cases(File.join(ROOT, manifest_rel), File.join(ROOT, root_rel))
+    end
+    inventory_counts = bind_phases!(inventory_cases, phases, phase_path, 'the default inventory', true)
+    assigned = inventory_cases.each_with_object({}) { |row, acc| acc[row[:id]] = row }
+    all_cases.each do |row|
+      bound = assigned.fetch(row[:id])
+      row[:phase] = bound[:phase]
+      row[:phase_reason] = bound[:phase_reason]
+    end
+    phase_counts = all_cases.each_with_object(Hash.new(0)) { |row, acc| acc[row[:phase]] += 1 }
+    puts "PHASE CONTRACT INVENTORY #{phase_path}: #{inventory_cases.length} identities = " \
+         "#{inventory_counts[PHASE_ARTIFACT_RUN]} #{PHASE_ARTIFACT_RUN} + #{inventory_counts[PHASE_SEMANTIC_REJECT]} #{PHASE_SEMANTIC_REJECT}"
+    warn "NOTE: default phase contract supplied explicitly from #{phase_path}" if options[:phases]
+  elsif options[:artifact_only]
+    preflight!('--artifact-only and --phases are mutually exclusive') if options[:phases]
+    phase_path = '(--artifact-only)'
+    all_cases.each { |row| row[:phase] = PHASE_ARTIFACT_RUN; row[:phase_reason] = 'declared artifact-only by --artifact-only' }
+    phase_counts = { PHASE_ARTIFACT_RUN => all_cases.length, PHASE_SEMANTIC_REJECT => 0 }
+  elsif options[:phases]
+    phase_path = options[:phases]
+    phases = load_phases(phase_path)
+    phase_counts = bind_phases!(all_cases, phases, phase_path, manifest_path, false)
+  else
+    preflight!('a custom manifest must declare its compiler phases with --phases PATH or --artifact-only')
+  end
+
+  puts "PHASE CONTRACT #{phase_path}: #{all_cases.length} cases = #{phase_counts[PHASE_ARTIFACT_RUN].to_i} #{PHASE_ARTIFACT_RUN} + #{phase_counts[PHASE_SEMANTIC_REJECT].to_i} #{PHASE_SEMANTIC_REJECT}"
+
   selected = all_cases.select do |row|
     options[:case_filter].nil? || row[:id] == options[:case_filter] || File.fnmatch?(options[:case_filter], row[:id])
   end
@@ -909,6 +1115,9 @@ begin
     'fixture_root' => fixture_root,
     'cases_declared' => all_cases.length,
     'cases_selected' => selected.length,
+    'phase_contract' => phase_path,
+    'phase_counts_declared' => phase_counts,
+    'phase_counts_selected' => selected.each_with_object(Hash.new(0)) { |row, acc| acc[row[:phase]] += 1 },
     'typed_only' => options[:typed_only],
     'toolchain' => go,
     'module_import' => 'mvdan.cc/sh/v3',
@@ -932,6 +1141,8 @@ begin
 
   go_mod = "module bashylowered\n\ngo 1.27\n\nrequire mvdan.cc/sh/v3 v3.0.0\n\nreplace mvdan.cc/sh/v3 => #{sh_module}\n"
   failures = []
+  artifact_executed = 0
+  semantic_certified = 0
 
   selected.each do |row|
     label = row[:id]
@@ -949,6 +1160,8 @@ begin
       sandbox_two = File.join(case_dir, 'transpile.two')
       copy_tree(fixture_root, sandbox_one)
       copy_tree(fixture_root, sandbox_two)
+      semantic = row[:phase] == PHASE_SEMANTIC_REJECT
+      sandbox_before = semantic ? [filesystem_snapshot(sandbox_one), filesystem_snapshot(sandbox_two)] : nil
 
       transpile_env = { 'LC_ALL' => 'C.UTF-8', 'LANG' => 'C.UTF-8', 'TZ' => 'UTC',
                         'HOME' => build_home, 'TMPDIR' => build_tmp, 'PATH' => run_path }
@@ -961,6 +1174,65 @@ begin
         next if result['lifecycle_clean']
         raise CaseFailure, "#{label}: transpile attempt #{attempt} #{LIFECYCLE_REASONS.fetch(result['lifecycle'], result['lifecycle'])}"
       end
+      if semantic
+        # ---- semantic-reject phase -----------------------------------------
+        # The contract is that the CLI REFUSES this statically invalid source
+        # with the exact diagnostic the interpreter produces. Exiting non-zero
+        # is not the contract; neither is bailing out with LOWER-EUNSUPPORTED
+        # or leaking a raw Go type-check error. No artifact is built.
+        problems = []
+        [[first, 1, source_one, sandbox_one, sandbox_before[0]],
+         [second, 2, source_two, sandbox_two, sandbox_before[1]]].each do |result, attempt, source, sandbox, before|
+          problems << "transpile attempt #{attempt} expected exit #{row[:expected_status]} but got #{result['exit']}" if result['exit'] != row[:expected_status]
+          problems << "transpile attempt #{attempt} stdout does not match the manifest" if result['stdout'] != row[:stdout]
+          problems << "transpile attempt #{attempt} stderr does not match the manifest diagnostic" if result['stderr'] != row[:stderr]
+          semantic_diagnostic_problems(result['stderr'], label, fixture).each do |detail|
+            problems << "transpile attempt #{attempt} did not produce a contracted semantic diagnostic: #{detail}"
+          end
+          problems << "transpile attempt #{attempt} emitted Go for a rejected source" if File.exist?(source)
+          problems << "transpile attempt #{attempt} emitted a source map for a rejected source" if File.exist?("#{source}.map")
+          after = filesystem_snapshot(sandbox)
+          unless after['entries'] == before['entries']
+            problems << "transpile attempt #{attempt} changed its input tree: #{snapshot_diff(before, after).join('; ')}"
+          end
+        end
+        problems << 'the rejection is nondeterministic: the two attempts disagree on stderr' if first['stderr'] != second['stderr']
+        problems << 'the rejection is nondeterministic: the two attempts disagree on exit' if first['exit'] != second['exit']
+
+        # The interpreter is exercised independently and must still produce the
+        # original observation. A truncated lifecycle cannot certify anything.
+        interpreted_root = prepare_execution_root(fixture_root, File.join(case_dir, 'run', 'interpreted'))
+        env_interpreted = run_environment(interpreted_root, run_path)
+        before_interpreted = filesystem_snapshot(interpreted_root)
+        interpreted = invoke_subprocess(env_interpreted, [engine_bin, '--bashpp', fixture], chdir: interpreted_root, timeout: options[:timeout])
+        after_interpreted = filesystem_snapshot(interpreted_root)
+        evidence(interpreted.merge('phase' => 'interpreted-run', 'case' => label, 'compiler_phase' => PHASE_SEMANTIC_REJECT,
+                                   'observation' => { 'mode' => 'interpreted',
+                                                      'status' => { 'exit' => interpreted['exit'], 'timeout' => interpreted['timeout'],
+                                                                    'lifecycle' => interpreted['lifecycle'], 'group_killed' => interpreted['group_killed'] },
+                                                      'raw_streams' => { 'schema' => 'lowering.raw-byte-streams.v1',
+                                                                         'stdout_sha256' => interpreted['stdout_sha256'], 'stderr_sha256' => interpreted['stderr_sha256'] },
+                                                      'effects' => { 'schema' => 'lowering.execution-root-effects.v1', 'syscall_hooks' => false,
+                                                                     'filesystem_before' => snapshot_public(before_interpreted),
+                                                                     'filesystem_after' => snapshot_public(after_interpreted) } }),
+                 case_dir: case_dir, ledger: ledger, name: 'interpreted')
+
+        unless interpreted['lifecycle_clean']
+          problems << "interpreted run #{LIFECYCLE_REASONS.fetch(interpreted['lifecycle'], interpreted['lifecycle'])}"
+        end
+        problems << "interpreted expected exit #{row[:expected_status]} but got #{interpreted['exit']}" if interpreted['exit'] != row[:expected_status]
+        problems << 'interpreted stdout does not match the manifest' if interpreted['stdout'] != row[:stdout]
+        problems << 'interpreted stderr does not match the manifest' if interpreted['stderr'] != row[:stderr]
+        unless after_interpreted['entries'] == before_interpreted['entries']
+          problems << "the interpreted run left an effect before the designated error: #{snapshot_diff(before_interpreted, after_interpreted).join('; ')}"
+        end
+
+        raise CaseFailure, "#{label}: #{problems.join('; ')}" unless problems.empty?
+        semantic_certified += 1
+        puts "PHASE PASS #{label}: semantic-reject certified (diagnostic parity, no artifact built)"
+        next
+      end
+
       raise CaseFailure, "#{label}: transpilation failed (exit #{first['exit']}/#{second['exit']}): #{first['stderr'].strip}" unless first['exit'].zero? && second['exit'].zero?
       raise CaseFailure, "#{label}: transpilation emitted no Go source" unless File.size?(source_one) && File.size?(source_two)
 
@@ -1092,7 +1364,8 @@ begin
       end
 
       raise CaseFailure, "#{label}: #{problems.join('; ')}" unless problems.empty?
-      puts "PARITY PASS #{label}: transpile/map/build/run evidence authenticated"
+      artifact_executed += 1
+      puts "PARITY PASS #{label}: artifact-run authenticated (transpile/map/build/source-absent run)"
     rescue CaseFailure => error
       failures << error.message
       warn "PARITY FAIL #{error.message}"
@@ -1102,16 +1375,25 @@ begin
     end
   end
 
+  # The two phases are counted and reported separately, always. A certified
+  # semantic rejection is not a native execution, and the totals must never be
+  # readable as "N native artifacts".
+  selected_artifact = selected.count { |row| row[:phase] == PHASE_ARTIFACT_RUN }
+  selected_semantic = selected.count { |row| row[:phase] == PHASE_SEMANTIC_REJECT }
+  breakdown = "#{artifact_executed}/#{selected_artifact} artifact executions, " \
+              "#{semantic_certified}/#{selected_semantic} certified semantic rejections"
+
+  puts "GO-PROFILE PHASE RESULT: #{breakdown} " \
+       "(#{selected.length} phase-aware cases selected of #{all_cases.length}; " \
+       "artifact executions are the only native artifacts, semantic rejections build none)"
+
   if failures.empty?
-    if selected.length == all_cases.length
-      puts "GO-PROFILE PARITY PASS: #{selected.length}/#{all_cases.length} Go-profile lowering cases"
-    else
-      puts "GO-PROFILE PARITY SUBSET PASS: #{selected.length}/#{all_cases.length} selected Go-profile lowering cases"
-    end
+    scope = selected.length == all_cases.length ? 'PASS' : 'SUBSET PASS'
+    puts "GO-PROFILE PARITY #{scope}: #{selected.length}/#{all_cases.length} selected — #{breakdown}"
     exit 0
   end
 
-  warn "GO-PROFILE PARITY FAIL: #{failures.length} failures across #{selected.length} selected cases"
+  warn "GO-PROFILE PARITY FAIL: #{failures.length} failures across #{selected.length} selected cases (#{breakdown})"
   exit 1
 rescue PreflightFailure => error
   fail_closed(error.message)

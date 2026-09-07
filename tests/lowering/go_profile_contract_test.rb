@@ -142,11 +142,51 @@ TRANSPILER_TEMPLATE = <<~'TEMPLATE'
   File.binwrite(map_path, JSON.pretty_generate(map)) if map
 TEMPLATE
 
+# A fake CLI that REJECTS its input instead of lowering it: it writes the given
+# streams, exits with the given status, and (unless told otherwise) emits no Go
+# and no source map. Used to drive the semantic-reject phase.
+REJECTING_TRANSPILER_TEMPLATE = <<~'TEMPLATE'
+  #!@@RUBY@@
+  out = nil
+  input = nil
+  argv = ARGV.dup
+  until argv.empty?
+    arg = argv.shift
+    if arg == '-o'
+      out = argv.shift
+    elsif arg == 'transpile' || arg.start_with?('-')
+      next
+    else
+      input = arg
+    end
+  end
+  @@EMIT@@
+  $stdout.write(@@STDOUT@@)
+  $stderr.write(@@STDERR@@)
+  exit @@STATUS@@
+TEMPLATE
+
+MECH_REF = 'sh/interp/bashpp_test.go:TestBashPPMechanism'.freeze
+PHASE_HEADER = "id\tphase\tsource_sha256\treason\tpublic_test_ref".freeze
+
+# Build a phase contract document for a scenario's own manifest.
+def phase_file(path, entries, fixture_root, header: PHASE_HEADER, comment: '# MECHANISM phase contract.')
+  lines = [comment, header]
+  entries.each do |entry|
+    sha = entry[:sha] || Digest::SHA256.file(File.join(fixture_root, entry.fetch(:fixture))).hexdigest
+    lines << [entry.fetch(:id), entry.fetch(:phase), sha,
+              entry[:reason] || 'mechanism scenario', entry[:ref] || MECH_REF].join("\t")
+  end
+  File.write(path, lines.join("\n") + "\n")
+  path
+end
+
 # Every mechanism scenario gets its own directory, its own fake binaries and its
 # own manifest. No environment channel is punched through the runner to steer a
 # fake: the runner's execution environment stays fully controlled.
-def mechanism(name, go_source:, map_hook: '', engine_body:, fixture: 'case.bpp',
-              fixture_body: "echo case\n", extra_files: {}, rows: nil, args: [])
+def mechanism(name, go_source: GO_HELLO, map_hook: '', engine_body:, fixture: 'case.bpp',
+              fixture_body: "echo case\n", extra_files: {}, rows: nil, args: [],
+              reject: nil, phases: nil, phase_file_text: nil, artifact_only: false)
   dir = File.join(WORK, name)
   fixtures = File.join(dir, 'fixtures')
   FileUtils.mkdir_p(fixtures)
@@ -160,14 +200,27 @@ def mechanism(name, go_source:, map_hook: '', engine_body:, fixture: 'case.bpp',
 
   # A Go source is either a literal (same bytes on every attempt) or a Ruby
   # lambda expression, given as a string, that varies with the attempt number.
-  source_expr = go_source.start_with?('->') ? go_source : "->(_attempt) { #{go_source.inspect} }"
   transpiler = File.join(dir, 'fake-transpiler')
   # Block form: a plain replacement string would have `\\` interpreted as a
   # backreference escape and would silently corrupt the embedded Go source.
-  body = TRANSPILER_TEMPLATE
-         .sub('@@RUBY@@') { RUBY }
-         .sub('ATTEMPT_SOURCE') { source_expr }
-         .sub('@@MAP_HOOK@@') { map_hook }
+  body =
+    if reject
+      emit = []
+      emit << %(File.binwrite(out, "package main\\n")) if reject[:emit_go]
+      emit << %(File.binwrite("\#{out}.map", "{}")) if reject[:emit_map]
+      REJECTING_TRANSPILER_TEMPLATE
+        .sub('@@RUBY@@') { RUBY }
+        .sub('@@EMIT@@') { emit.join("\n") }
+        .sub('@@STDOUT@@') { (reject[:stdout] || '').inspect }
+        .sub('@@STDERR@@') { (reject[:stderr] || '').inspect }
+        .sub('@@STATUS@@') { (reject[:status] || 2).to_s }
+    else
+      source_expr = go_source.start_with?('->') ? go_source : "->(_attempt) { #{go_source.inspect} }"
+      TRANSPILER_TEMPLATE
+        .sub('@@RUBY@@') { RUBY }
+        .sub('ATTEMPT_SOURCE') { source_expr }
+        .sub('@@MAP_HOOK@@') { map_hook }
+    end
   File.write(transpiler, body)
   FileUtils.chmod(0o755, transpiler)
 
@@ -182,12 +235,27 @@ def mechanism(name, go_source:, map_hook: '', engine_body:, fixture: 'case.bpp',
     "id\tcategory\tfixture\texpected_status\tstdout\tstderr\tpublic_test_ref"
   ] + rows).join("\n") + "\n")
 
+  phase_args =
+    if phase_file_text
+      path = File.join(dir, 'phases.tsv')
+      File.write(path, phase_file_text)
+      ['--phases', path]
+    elsif phases
+      ['--phases', phase_file(File.join(dir, 'phases.tsv'), phases, fixtures)]
+    elsif artifact_only || !(args.include?('--artifact-only') || args.include?('--phases'))
+      # Scenarios that only exercise artifact-run behaviour declare that
+      # explicitly; a custom manifest is never allowed an implicit phase.
+      ['--artifact-only']
+    else
+      []
+    end
+
   artifacts = File.join(dir, 'artifacts')
   argv = [RUBY, RUNNER,
           '--bashy', transpiler, '--engine', engine, '--go', REAL_GO,
           '--sh-module', REAL_SH_MODULE, '--manifest', manifest,
           '--fixture-root', fixtures, '--artifacts', artifacts,
-          '--run-path', RUN_PATH, '--timeout', '20'] + CACHE_ARGS + args
+          '--run-path', RUN_PATH, '--timeout', '20'] + CACHE_ARGS + phase_args + args
   out, err, status = run({}, *argv)
   { out: out, err: err, status: status, all: out + err, dir: dir, artifacts: artifacts,
     manifest: manifest, fixtures: fixtures }
@@ -340,8 +408,21 @@ check 'unknown positional arguments are rejected' do
   assert_includes(out + err, 'unexpected arguments', 'expected the stray-argument diagnostic')
 end
 
+# The phase contract is owned by the coverage worker. Until it lands in this
+# repository the runner must fail closed, and this suite reads the candidate
+# from S117_PHASES_CANDIDATE so the pairing is still exercised for real.
+def default_phase_contract
+  landed = File.join(ROOT, 'docs/lowering/go-profile-phases.tsv')
+  return landed if File.file?(landed)
+  candidate = ENV['S117_PHASES_CANDIDATE']
+  return candidate if candidate && File.file?(candidate)
+  nil
+end
+
 check 'the repository inventory covers all 120 cases across both manifests' do
-  out, err, status = run({}, RUBY, RUNNER, '--inventory')
+  contract = default_phase_contract
+  raise 'no phase contract available; set S117_PHASES_CANDIDATE' unless contract
+  out, err, status = run({}, RUBY, RUNNER, '--inventory', '--phases', contract)
   assert(status.success?, "inventory failed:\n#{out}#{err}")
   assert_includes(out, 'INVENTORY docs/lowering/go-profile-cases.tsv tests/lowering/go-profile 52', 'go-profile manifest inventory line')
   assert_includes(out, 'INVENTORY docs/lowering/profile-additional.tsv tests/lowering/profile-additional 68', 'profile-additional manifest inventory line')
@@ -356,7 +437,7 @@ check 'a non-pinned Go binary fails toolchain authentication' do
                          '--go', '/bin/echo',
                          '--sh-module', REAL_SH_MODULE,
                          '--manifest', result[:manifest],
-                         '--fixture-root', result[:fixtures],
+                         '--fixture-root', result[:fixtures], '--artifact-only',
                          '--artifacts', File.join(result[:dir], 'artifacts-badgo'))
   assert(!status.success?, 'a non-pinned Go binary was accepted')
   assert(/Go identity|Go binary digest/.match?(out + err), "expected an authentication diagnostic, got:\n#{out}#{err}")
@@ -882,6 +963,372 @@ check 'SOURCE PATH: an interpreted run that deletes its own source fails' do
   assert_includes(result[:all], 'deleted its own source', 'expected the source-deletion diagnostic')
 end
 
+puts 'go-profile contract: compiler phase contract'
+
+SEM_DIAG = "BASHPP-EIF-COND: if condition must be boolean, got Int\n".freeze
+LEGACY_DIAG = "invalid receiver type Missing (type is not declared in this session)\n".freeze
+
+def shell_quote(text)
+  "'" + text.gsub("'", %q('\\'')) + "'"
+end
+
+# A fake engine that reproduces a semantic diagnostic on stderr and exits 2.
+def rejecting_engine(stderr, status: 2, before: nil)
+  body = ''
+  body += before if before
+  body + "printf '%s' #{shell_quote(stderr)} >&2\nexit #{status}\n"
+end
+
+def semantic_rows(id, fixture, stderr, status: 2)
+  ["#{id}\tmech\t#{fixture}\t#{status}\t\"\"\t#{JSON.generate(stderr)}\t#{MECH_REF}"]
+end
+
+# Drive one semantic-reject case end to end.
+def semantic(name, id: 'sem-1', fixture: 'case.bpp', golden: SEM_DIAG, golden_status: 2,
+             cli_stderr: nil, cli_stdout: '', cli_status: 2, emit_go: false, emit_map: false,
+             engine_stderr: nil, engine_status: nil, engine_before: nil, phase: 'semantic-reject')
+  mechanism(name,
+            fixture: fixture,
+            fixture_body: "if 1 { echo x }\n",
+            rows: semantic_rows(id, fixture, golden, status: golden_status),
+            phases: [{ id: id, phase: phase, fixture: fixture }],
+            reject: { status: cli_status, stdout: cli_stdout, stderr: cli_stderr.nil? ? golden : cli_stderr,
+                      emit_go: emit_go, emit_map: emit_map },
+            engine_body: rejecting_engine(engine_stderr.nil? ? golden : engine_stderr,
+                                          status: engine_status || golden_status, before: engine_before))
+end
+
+# --- the phase document itself ---------------------------------------------
+
+PHASE_DOC_CASES = {
+  'an unknown phase name' => {
+    rows: ["sem-1\tlower-only\t%<sha>s\treason\t%<ref>s"], diagnostic: 'unknown phase'
+  },
+  'a phase entry for an identity the manifest does not declare' => {
+    rows: ["case-1\tartifact-run\t%<sha>s\treason\t%<ref>s", "ghost-1\tartifact-run\t%<sha>s\treason\t%<ref>s"],
+    diagnostic: 'identities absent from'
+  },
+  'a duplicate identity' => {
+    rows: ["case-1\tartifact-run\t%<sha>s\treason\t%<ref>s", "case-1\tsemantic-reject\t%<sha>s\treason\t%<ref>s"],
+    diagnostic: 'duplicate phase entry'
+  },
+  'a source hash that no longer matches the fixture' => {
+    rows: ["case-1\tartifact-run\t#{'0' * 64}\treason\t%<ref>s"], diagnostic: 'does not match'
+  },
+  'a public reference that disagrees with the manifest' => {
+    rows: ["case-1\tartifact-run\t%<sha>s\treason\tsh/interp/other_test.go:TestOther"],
+    diagnostic: 'does not match the manifest reference'
+  },
+  'a non-hex source hash' => {
+    rows: ["case-1\tartifact-run\tnot-a-digest\treason\t%<ref>s"], diagnostic: 'must be a sha256 hex digest'
+  },
+  'an empty reason' => {
+    rows: ["case-1\tartifact-run\t%<sha>s\t\t%<ref>s"], diagnostic: 'reason must be non-empty'
+  },
+  'a missing column' => {
+    rows: ["case-1\tartifact-run\t%<sha>s\treason"], diagnostic: 'expected 5 tab-separated fields, got 4'
+  },
+  'an extra column' => {
+    rows: ["case-1\tartifact-run\t%<sha>s\treason\t%<ref>s\textra"], diagnostic: 'expected 5 tab-separated fields, got 6'
+  }
+}.freeze
+
+PHASE_DOC_CASES.each do |name, spec|
+  check "phase contract is rejected: #{name}" do
+    dir = File.join(WORK, "phasedoc-#{name.gsub(/\W+/, '-')[0, 40]}")
+    fixtures = File.join(dir, 'fixtures')
+    FileUtils.mkdir_p(fixtures)
+    File.write(File.join(fixtures, 'case.bpp'), "echo case\n")
+    sha = Digest::SHA256.file(File.join(fixtures, 'case.bpp')).hexdigest
+    manifest = File.join(dir, 'manifest.tsv')
+    File.write(manifest, "id\tcategory\tfixture\texpected_status\tstdout\tstderr\tpublic_test_ref\ncase-1\tmech\tcase.bpp\t0\t\"hello\\n\"\t\"\"\t#{MECH_REF}\n")
+    phases = File.join(dir, 'phases.tsv')
+    body = spec[:rows].map { |row| format(row, sha: sha, ref: MECH_REF) }.join("\n")
+    File.write(phases, "#{PHASE_HEADER}\n#{body}\n")
+    out, err, status = run({}, RUBY, RUNNER,
+                           '--bashy', REAL_BASHY, '--engine', REAL_ENGINE, '--go', REAL_GO,
+                           '--sh-module', REAL_SH_MODULE, '--manifest', manifest,
+                           '--fixture-root', fixtures, '--phases', phases,
+                           '--artifacts', File.join(dir, 'artifacts'), *CACHE_ARGS)
+    assert(!status.success?, "phase contract defect #{name.inspect} was accepted")
+    assert_includes(out + err, spec[:diagnostic], "expected the #{name} diagnostic")
+  end
+end
+
+check 'phase contract is rejected: a wrong header' do
+  result = mechanism('phasedoc-header', engine_body: ENGINE_HELLO,
+                     phase_file_text: "id\tphase\tsha\treason\tref\ncase-1\tartifact-run\t#{'0' * 64}\tr\t#{MECH_REF}\n")
+  assert(!result[:status].success?, 'a wrong phase header was accepted')
+  assert_includes(result[:all], 'phase header mismatch', 'expected the header diagnostic')
+end
+
+check 'phase contract is rejected: a manifest identity with no phase' do
+  rows = (1..2).map { |i| "case-#{i}\tmech\tcase#{i}.bpp\t0\t\"hello\\n\"\t\"\"\t#{MECH_REF}" }
+  result = mechanism('phasedoc-missing', engine_body: ENGINE_HELLO,
+                     fixture: 'case1.bpp', extra_files: { 'case2.bpp' => "echo 2\n" }, rows: rows,
+                     phases: [{ id: 'case-1', phase: 'artifact-run', fixture: 'case1.bpp' }])
+  assert(!result[:status].success?, 'a manifest identity with no phase was accepted')
+  assert_includes(result[:all], 'no phase declared for', 'expected the missing-phase diagnostic')
+end
+
+# --- policy: the default contract cannot be bypassed ------------------------
+
+check 'POLICY: a custom manifest must declare its phases' do
+  dir = File.join(WORK, 'policy-implicit')
+  fixtures = File.join(dir, 'fixtures')
+  FileUtils.mkdir_p(fixtures)
+  File.write(File.join(fixtures, 'case.bpp'), "echo case\n")
+  manifest = File.join(dir, 'manifest.tsv')
+  File.write(manifest, "id\tcategory\tfixture\texpected_status\tstdout\tstderr\tpublic_test_ref\ncase-1\tmech\tcase.bpp\t0\t\"\"\t\"\"\t#{MECH_REF}\n")
+  out, err, status = run({}, RUBY, RUNNER,
+                         '--bashy', REAL_BASHY, '--engine', REAL_ENGINE, '--go', REAL_GO,
+                         '--sh-module', REAL_SH_MODULE, '--manifest', manifest,
+                         '--fixture-root', fixtures, '--artifacts', File.join(dir, 'artifacts'), *CACHE_ARGS)
+  assert(!status.success?, 'a custom manifest ran with no phase declaration')
+  assert_includes(out + err, 'must declare its compiler phases', 'expected the missing-declaration diagnostic')
+end
+
+check 'POLICY: --artifact-only and --phases cannot be combined' do
+  result = mechanism('policy-both', engine_body: ENGINE_HELLO,
+                     phases: [{ id: 'case-1', phase: 'artifact-run', fixture: 'case.bpp' }],
+                     args: ['--artifact-only'])
+  assert(!result[:status].success?, 'both phase declarations were accepted at once')
+  assert_includes(result[:all], 'mutually exclusive', 'expected the exclusivity diagnostic')
+end
+
+check 'POLICY: a default inventory manifest cannot be downgraded to --artifact-only' do
+  # The bypass that would matter: it would silently turn the 15 semantic-reject
+  # identities into artifact runs.
+  out, err, status = run({}, RUBY, RUNNER,
+                         '--bashy', REAL_BASHY, '--engine', REAL_ENGINE, '--go', REAL_GO,
+                         '--sh-module', REAL_SH_MODULE,
+                         '--manifest', File.join(ROOT, 'docs/lowering/go-profile-cases.tsv'),
+                         '--fixture-root', File.join(ROOT, 'tests/lowering/go-profile'),
+                         '--artifact-only', '--artifacts', File.join(WORK, 'policy-default-artifacts'), *CACHE_ARGS)
+  assert(!status.success?, 'a default manifest was downgraded to an artifact-only contract')
+  assert_includes(out + err, 'its phase contract is not optional', 'expected the bypass diagnostic')
+end
+
+check 'POLICY: a default inventory manifest fails closed without its phase contract' do
+  default_phases = File.join(ROOT, 'docs/lowering/go-profile-phases.tsv')
+  out, err, status = run({}, RUBY, RUNNER,
+                         '--bashy', REAL_BASHY, '--engine', REAL_ENGINE, '--go', REAL_GO,
+                         '--sh-module', REAL_SH_MODULE,
+                         '--manifest', File.join(ROOT, 'docs/lowering/go-profile-cases.tsv'),
+                         '--fixture-root', File.join(ROOT, 'tests/lowering/go-profile'),
+                         '--artifacts', File.join(WORK, 'policy-nophase-artifacts'), *CACHE_ARGS)
+  if File.file?(default_phases)
+    # The contract has landed: the run must at least get past phase binding.
+    assert(!(out + err).include?('the default phase contract is missing'), 'the landed default phase contract was not found')
+    assert_includes(out, 'PHASE CONTRACT INVENTORY', 'the default phase contract was not validated against the whole inventory')
+  else
+    assert(!status.success?, 'a default manifest ran with no phase contract present')
+    assert_includes(out + err, 'the default phase contract is missing', 'expected the fail-closed diagnostic')
+  end
+end
+
+check 'POLICY: the default phase contract validates the 120/105/15 split' do
+  candidate = default_phase_contract
+  raise 'no default phase contract available; set S117_PHASES_CANDIDATE' unless candidate
+  out, err, status = run({}, RUBY, RUNNER, '--inventory', '--phases', candidate)
+  assert(status.success?, "the default phase contract did not validate:\n#{out}#{err}")
+  assert_includes(out, 'INVENTORY OK: 120 cases across 2 manifests', 'inventory total')
+  assert_includes(out, 'PHASE artifact-run 105', 'artifact-run count')
+  assert_includes(out, 'PHASE semantic-reject 15', 'semantic-reject count')
+  assert_includes(out, 'PHASE CONTRACT OK: 120 phase-aware cases = 105 artifact-run + 15 semantic-reject', 'combined phase line')
+end
+
+check 'POLICY: a changed split in the default pairing is rejected' do
+  candidate = default_phase_contract
+  raise 'no default phase contract available' unless candidate
+  tampered = File.join(WORK, 'phases-split-tampered.tsv')
+  text = File.read(candidate)
+  # Flip exactly one semantic-reject identity to artifact-run.
+  flipped = text.sub("\tsemantic-reject\t", "\tartifact-run\t")
+  raise 'could not flip a phase for the tamper' if flipped == text
+  File.write(tampered, flipped)
+  out, err, status = run({}, RUBY, RUNNER, '--inventory', '--phases', tampered)
+  assert(!status.success?, 'a changed 105/15 split was accepted')
+  assert_includes(out + err, 'the pinned contract is', 'expected the split diagnostic')
+end
+
+puts 'go-profile contract: semantic-reject phase'
+
+# --- the real positive ------------------------------------------------------
+
+check 'SEMANTIC: an exact diagnostic rejection with no emission is certified' do
+  result = semantic('semantic-positive')
+  assert(result[:status].success?, "a correct semantic rejection was not certified:\n#{result[:all]}")
+  assert_includes(result[:out], 'PHASE PASS sem-1: semantic-reject certified', 'expected the certification line')
+  # Counted as a rejection, never as a native artifact.
+  assert_includes(result[:out], '0/0 artifact executions, 1/1 certified semantic rejections', 'the counts must be reported separately')
+  case_dir = File.join(result[:artifacts], 'mech', 'sem-1')
+  assert(!File.exist?(File.join(case_dir, 'generated.one.go')), 'Go was emitted for a rejected source')
+  assert(!File.exist?(File.join(case_dir, 'build')), 'a build tree was created for a rejected source')
+  assert(!File.exist?(File.join(case_dir, 'artifact')), 'an artifact was produced for a rejected source')
+  assert(File.file?(File.join(case_dir, 'transpile.one.stderr.raw')), 'the rejection diagnostic was not retained')
+  assert(File.binread(File.join(case_dir, 'transpile.one.stderr.raw')) == SEM_DIAG, 'the retained diagnostic bytes are wrong')
+  assert(File.file?(File.join(case_dir, 'interpreted.stderr.raw')), 'the interpreter observation was not retained')
+end
+
+check 'SEMANTIC: the certified rejection is not counted as an artifact execution' do
+  result = semantic('semantic-count')
+  assert(result[:status].success?, "expected success:\n#{result[:all]}")
+  assert(!result[:out].include?('PARITY PASS sem-1'), 'a semantic rejection was reported as an artifact run')
+  assert_includes(result[:out], 'semantic rejections build none', 'the result line must disclaim native artifacts')
+end
+
+# --- the traps --------------------------------------------------------------
+
+check 'SEMANTIC: LOWER-EUNSUPPORTED is not a semantic rejection' do
+  # Status 2, nothing emitted, and completely wrong: the transpiler gave up on
+  # the construct instead of diagnosing the program.
+  result = semantic('semantic-unsupported', cli_stderr: "LOWER-EUNSUPPORTED: construct not supported by the lowering bridge\n")
+  assert(!result[:status].success?, 'LOWER-EUNSUPPORTED was accepted as a semantic rejection')
+  assert_includes(result[:all], 'a LOWER-E* lowering error', 'expected the LOWER-E diagnostic')
+end
+
+check 'SEMANTIC: a bare line:col lowering type error is not a semantic rejection' do
+  result = semantic('semantic-lowertype', cli_stderr: "2:2: LOWER-ETYPE: non-boolean condition in if statement\n")
+  assert(!result[:status].success?, 'a raw LOWER-ETYPE position was accepted as a semantic rejection')
+  assert(/a LOWER-E\* lowering error|bare line:col/.match?(result[:all]), "expected a non-semantic diagnostic reason:\n#{result[:all]}")
+end
+
+check 'SEMANTIC: a raw Go toolchain error is not a semantic rejection' do
+  result = semantic('semantic-rawgo', cli_stderr: "# command-line-arguments\n./main.go:3:2: undefined: x\n")
+  assert(!result[:status].success?, 'a raw Go error was accepted as a semantic rejection')
+  assert_includes(result[:all], 'a raw Go toolchain error', 'expected the raw-Go diagnostic')
+end
+
+check 'SEMANTIC: an unprefixed error is not a semantic rejection outside the allowlist' do
+  result = semantic('semantic-unprefixed', cli_stderr: "something went wrong\n", golden: "something went wrong\n",
+                    engine_stderr: "something went wrong\n")
+  assert(!result[:status].success?, 'an arbitrary unprefixed error was accepted')
+  assert_includes(result[:all], 'is not a rendered BASHPP diagnostic', 'expected the identity diagnostic')
+end
+
+check 'SEMANTIC: the legacy rendering is accepted only for its own identity' do
+  allowed = semantic('semantic-legacy-ok', id: 'undefined-receiver-neg', golden: LEGACY_DIAG)
+  assert(allowed[:status].success?, "the allowlisted legacy rendering was rejected:\n#{allowed[:all]}")
+  other = semantic('semantic-legacy-other', id: 'sem-other', golden: LEGACY_DIAG)
+  assert(!other[:status].success?, 'the legacy rendering was accepted for an identity outside the allowlist')
+  assert_includes(other[:all], 'is not a rendered BASHPP diagnostic', 'expected the identity diagnostic')
+end
+
+check 'SEMANTIC: a diagnostic positioned at the wrong path is rejected' do
+  # "Normalizing" the origin away would hide a diagnostic pointing at the wrong
+  # file, so the positioned path must be the original source.
+  positioned = "generated.go: line 2: BASHPP-EIF-COND: if condition must be boolean, got Int\n"
+  result = semantic('semantic-wrongpath', golden: positioned, engine_stderr: positioned)
+  assert(!result[:status].success?, 'a diagnostic positioned at a generated path was accepted')
+  assert_includes(result[:all], 'not at the original source', 'expected the origin diagnostic')
+end
+
+check 'SEMANTIC: a positioned diagnostic naming the original source is accepted' do
+  positioned = "case.bpp: line 2: BASHPP-ESHORT-NONEW: no new variables on left side of :=\n"
+  result = semantic('semantic-positioned-ok', golden: positioned, engine_stderr: positioned)
+  assert(result[:status].success?, "a correctly positioned diagnostic was rejected:\n#{result[:all]}")
+end
+
+check 'SEMANTIC: a secondary positioned line is part of the contract' do
+  two_line = "BASHPP-EBUILTIN-TYPE: cap argument must be an array or slice\n" \
+             "case.bpp: line 2: BASHPP-ESHORT-NONEW: no new variables on left side of :=\n"
+  ok = semantic('semantic-secondary-ok', golden: two_line, engine_stderr: two_line)
+  assert(ok[:status].success?, "a two-line diagnostic was rejected:\n#{ok[:all]}")
+  # Dropping the secondary line is a different diagnostic and must fail.
+  partial = semantic('semantic-secondary-partial', golden: two_line,
+                     cli_stderr: "BASHPP-EBUILTIN-TYPE: cap argument must be an array or slice\n",
+                     engine_stderr: two_line)
+  assert(!partial[:status].success?, 'a partial diagnostic was accepted')
+  assert_includes(partial[:all], 'stderr does not match the manifest diagnostic', 'expected the byte-mismatch diagnostic')
+end
+
+check 'SEMANTIC: emitting Go while rejecting fails' do
+  result = semantic('semantic-emit-go', emit_go: true)
+  assert(!result[:status].success?, 'a rejection that emitted Go was accepted')
+  assert_includes(result[:all], 'emitted Go for a rejected source', 'expected the emission diagnostic')
+end
+
+check 'SEMANTIC: emitting a source map while rejecting fails' do
+  result = semantic('semantic-emit-map', emit_map: true)
+  assert(!result[:status].success?, 'a rejection that emitted a source map was accepted')
+  assert_includes(result[:all], 'emitted a source map for a rejected source', 'expected the map emission diagnostic')
+end
+
+check 'SEMANTIC: a wrong exit status fails even with the right diagnostic' do
+  result = semantic('semantic-status', cli_status: 1)
+  assert(!result[:status].success?, 'a rejection with the wrong status was accepted')
+  assert_includes(result[:all], 'expected exit 2 but got 1', 'expected the status diagnostic')
+end
+
+check 'SEMANTIC: a nondeterministic rejection fails' do
+  # The rejecting fake writes an attempt-dependent stream.
+  dir = File.join(WORK, 'semantic-nondet')
+  fixtures = File.join(dir, 'fixtures')
+  FileUtils.mkdir_p(fixtures)
+  File.write(File.join(fixtures, 'case.bpp'), "if 1 { echo x }\n")
+  transpiler = File.join(dir, 'fake-transpiler')
+  File.write(transpiler, <<~SH)
+    #!/bin/sh
+    for a in "$@"; do out="$a"; done
+    case "$out" in
+      *two*) printf '%s' 'BASHPP-EIF-COND: if condition must be boolean, got Bool
+    ' >&2 ;;
+      *) printf '%s' #{shell_quote(SEM_DIAG)} >&2 ;;
+    esac
+    exit 2
+  SH
+  FileUtils.chmod(0o755, transpiler)
+  engine = File.join(dir, 'fake-engine')
+  File.write(engine, "#!/bin/sh\n" + rejecting_engine(SEM_DIAG))
+  FileUtils.chmod(0o755, engine)
+  manifest = File.join(dir, 'manifest.tsv')
+  File.write(manifest, "id\tcategory\tfixture\texpected_status\tstdout\tstderr\tpublic_test_ref\n" +
+                       semantic_rows('sem-1', 'case.bpp', SEM_DIAG).first + "\n")
+  phases = phase_file(File.join(dir, 'phases.tsv'), [{ id: 'sem-1', phase: 'semantic-reject', fixture: 'case.bpp' }], fixtures)
+  out, err, status = run({}, RUBY, RUNNER, '--bashy', transpiler, '--engine', engine, '--go', REAL_GO,
+                         '--sh-module', REAL_SH_MODULE, '--manifest', manifest, '--fixture-root', fixtures,
+                         '--phases', phases, '--artifacts', File.join(dir, 'artifacts'),
+                         '--run-path', RUN_PATH, *CACHE_ARGS)
+  assert(!status.success?, 'a nondeterministic rejection was accepted')
+  assert_includes(out + err, 'the rejection is nondeterministic', 'expected the determinism diagnostic')
+end
+
+check 'SEMANTIC: an interpreter effect before the designated error fails' do
+  result = semantic('semantic-effect', engine_before: "printf 'side\\n' > leaked.txt\n")
+  assert(!result[:status].success?, 'an effect before the designated error was accepted')
+  assert_includes(result[:all], 'left an effect before the designated error', 'expected the effect diagnostic')
+  assert_includes(result[:all], 'leaked.txt', 'the diagnostic should name the leaked path')
+end
+
+check 'SEMANTIC: an interpreter that disagrees with the manifest fails' do
+  result = semantic('semantic-interp', engine_stderr: "BASHPP-EIF-COND: different rendering\n")
+  assert(!result[:status].success?, 'a disagreeing interpreter observation was accepted')
+  assert_includes(result[:all], 'interpreted stderr does not match the manifest', 'expected the interpreter diagnostic')
+end
+
+check 'SEMANTIC: a truncated interpreter lifecycle cannot certify a rejection' do
+  engine = "( exec >/dev/null 2>&1; sleep 8 ) &\n" + rejecting_engine(SEM_DIAG)
+  result = mechanism('semantic-lifecycle', fixture: 'case.bpp', fixture_body: "if 1 { echo x }\n",
+                     rows: semantic_rows('sem-1', 'case.bpp', SEM_DIAG),
+                     phases: [{ id: 'sem-1', phase: 'semantic-reject', fixture: 'case.bpp' }],
+                     reject: { status: 2, stdout: '', stderr: SEM_DIAG },
+                     engine_body: engine, args: ['--timeout', '30'])
+  assert(!result[:status].success?, 'a truncated interpreter lifecycle certified a rejection')
+  assert_includes(result[:all], 'left a process alive in its own process group', 'expected the lifecycle diagnostic')
+end
+
+check 'SEMANTIC: an artifact-run identity still builds and runs' do
+  # The other half of the phase policy: declaring a phase does not change what
+  # an artifact-run case has to do.
+  result = mechanism('phase-artifact-run', go_source: GO_HELLO, engine_body: ENGINE_HELLO,
+                     phases: [{ id: 'case-1', phase: 'artifact-run', fixture: 'case.bpp' }])
+  assert(result[:status].success?, "an artifact-run case under an explicit phase failed:\n#{result[:all]}")
+  assert_includes(result[:out], 'PARITY PASS case-1: artifact-run authenticated', 'expected the artifact-run pass line')
+  assert_includes(result[:out], '1/1 artifact executions, 0/0 certified semantic rejections', 'expected the split counts')
+  assert(File.file?(File.join(result[:artifacts], 'mech', 'case-1', 'artifact', 'lowered.bin')), 'no artifact was built')
+end
+
 puts 'go-profile contract: multi-case behaviour'
 
 check 'every selected case runs even when earlier cases fail' do
@@ -900,7 +1347,7 @@ check 'every selected case runs even when earlier cases fail' do
                          '--engine', File.join(result[:dir], 'fake-engine'),
                          '--go', REAL_GO, '--sh-module', REAL_SH_MODULE,
                          '--manifest', result[:manifest], '--fixture-root', result[:fixtures],
-                         '--artifacts', File.join(result[:dir], 'artifacts-all'),
+                         '--artifacts', File.join(result[:dir], 'artifacts-all'), '--artifact-only',
                          '--run-path', RUN_PATH, '--timeout', '20', *CACHE_ARGS)
   assert(!status.success?, 'a run with four failing cases reported success')
   assert_includes(out + err, 'failures across 4 selected cases', 'expected the aggregate failure line')
@@ -946,7 +1393,8 @@ def acceptance(name, args: [])
   out, err, status = run({}, RUBY, RUNNER,
                          '--bashy', REAL_BASHY, '--engine', REAL_ENGINE, '--go', REAL_GO,
                          '--sh-module', REAL_SH_MODULE, '--manifest', manifest,
-                         '--fixture-root', fixtures, '--artifacts', artifacts, *CACHE_ARGS, *args)
+                         '--fixture-root', fixtures, '--artifacts', artifacts,
+                         '--artifact-only', *CACHE_ARGS, *args)
   { out: out, err: err, status: status, all: out + err, artifacts: artifacts }
 end
 
