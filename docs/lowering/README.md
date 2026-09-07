@@ -2,8 +2,8 @@
 
 `identities.tsv` is an independently checked, exact ordered identity manifest.
 It inventories the 62 public AST nodes (all 60 structs in
-`syntax/bashpp_nodes.go`, `BashPPAgenticBlock`, and agentic `FuncDecl`), 41
-significant expression/type/start-site/class variants, three significant field
+`syntax/bashpp_nodes.go`, `BashPPAgenticBlock`, and agentic `FuncDecl`), 42
+significant expression/type/start-site/class variants, four significant field
 edges, the runtime obligation
 inventory, approved corpus/profile identities, five Bash# families, and the
 33 lowering cases. Start-site ownership is deliberately separate: its 205
@@ -25,8 +25,17 @@ Walk visits it instead of visiting the same logical arguments twice. Typed JSON
 retains both fields. Parser bytewise/print/mutation tests and typed JSON round
 trips verify this ownership; the new edge adds no node or expression variant.
 
-Measured totals are 62 nodes, 15 expression variants, 9 type variants, 15
-start-site variants, 2 site-class variants, and 3 field edges: **106 AST
+The directional-channel source repair `d9057f02` makes the existing
+`BashPPChanType` a type-expression variant and adds its significant `Element`
+edge. The node retains `Chan`, `Arrow`, and `Direction`; the structured element
+owns traversal when present, with legacy `Elem` retained as the make-channel
+fallback. This adds one type variant and one field edge, with no new node.
+Bytewise parsing, exact spans, print/parse, and typed JSON tests cover the AST
+contract. Source runtime tests are separate evidence; this inventory does not
+certify a compiled artifact or close all channel-type behavior obligations.
+
+Measured totals are 62 nodes, 15 expression variants, 10 type variants, 15
+start-site variants, 2 site-class variants, and 4 field edges: **108 AST
 identities**. The field-edge inventory is an explicit significant-edge contract,
 not an exhaustive list of every field in every node. These are structural
 obligations; neither parser availability nor this inventory proves lowering,

@@ -79,7 +79,7 @@ AST_NODES = %w[
   BashPPClose BashPPSelect BashPPSelectCase BashPPRange BashPPAgenticBlock FuncDecl[Agentic]
 ].freeze
 EXPR_VARIANTS = %w[BashPPBasicLit BashPPIdent BashPPParenExpr BashPPUnaryExpr BashPPBinaryExpr BashPPConvertExpr BashPPIndexExpr BashPPSliceExpr BashPPSelectorExpr BashPPCompositeLit BashPPAddressExpr BashPPDerefExpr BashPPNewExpr BashPPTypeAssertExpr BashPPCall].freeze
-TYPE_VARIANTS = %w[BashPPFuncType BashPPNamedType BashPPCollectionType BashPPStructType BashPPPointerType BashPPInterfaceType BashPPTypeParamType BashPPUnionType BashPPApproxType].freeze
+TYPE_VARIANTS = %w[BashPPFuncType BashPPChanType BashPPNamedType BashPPCollectionType BashPPStructType BashPPPointerType BashPPInterfaceType BashPPTypeParamType BashPPUnionType BashPPApproxType].freeze
 START_SITE_VARIANTS = %w[none var const type := call if import func defer return funclit go select agentic].freeze
 RUNTIME_OBLIGATIONS = %w[
   status.exit-status types.values-and-zero effects.cwd-env-filesystem
@@ -87,7 +87,7 @@ RUNTIME_OBLIGATIONS = %w[
   concurrency.goroutine-channel-order
 ].freeze
 
-AST_FIELD_EDGES = %w[edge:BashPPReturn:Call edge:BashPPReturn:Expr edge:BashPPCall:ArgExprs].freeze
+AST_FIELD_EDGES = %w[edge:BashPPReturn:Call edge:BashPPReturn:Expr edge:BashPPCall:ArgExprs edge:BashPPChanType:Element].freeze
 
 def ast_api(root, source = File.join(root, 'docs/lowering/ast_api.tsv'))
   rows = data_lines(source).map { |line| line.split("\t", -1) }

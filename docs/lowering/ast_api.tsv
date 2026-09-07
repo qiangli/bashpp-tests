@@ -78,6 +78,7 @@ variant:BashPPExpr:BashPPNewExpr	expr-variant	syntax/bashpp_nodes.go
 variant:BashPPExpr:BashPPTypeAssertExpr	expr-variant	syntax/bashpp_nodes.go
 variant:BashPPExpr:BashPPCall	expr-variant	syntax/bashpp_nodes.go
 variant:BashPPTypeExpr:BashPPFuncType	type-variant	syntax/bashpp_nodes.go
+variant:BashPPTypeExpr:BashPPChanType	type-variant	syntax/bashpp_nodes.go
 variant:BashPPTypeExpr:BashPPNamedType	type-variant	syntax/bashpp_nodes.go
 variant:BashPPTypeExpr:BashPPCollectionType	type-variant	syntax/bashpp_nodes.go
 variant:BashPPTypeExpr:BashPPStructType	type-variant	syntax/bashpp_nodes.go
@@ -106,3 +107,4 @@ variant:SiteClass:E	site-class	syntax/bashpp_nodes.go
 edge:BashPPReturn:Call	field-edge	syntax/bashpp_nodes.go
 edge:BashPPReturn:Expr	field-edge	syntax/bashpp_nodes.go
 edge:BashPPCall:ArgExprs	field-edge	syntax/bashpp_nodes.go
+edge:BashPPChanType:Element	field-edge	syntax/bashpp_nodes.go
