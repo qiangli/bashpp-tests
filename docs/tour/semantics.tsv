@@ -1,0 +1,69 @@
+# Reviewed semantic comparators for the ten declared-volatile tour rows.
+#
+# Sprint 118 / Story #4 / Story-ID 759341a95870.
+#
+# STATUS: THIS TABLE HAS GATE EFFECT. It is the manager-adjudicated resolution
+# of the open item docs/tour/volatility.tsv raised: those ten rows cannot
+# reproduce a byte-exact digest, and the sprint-118 plan §6 allows exactly two
+# outs — a real environment control, or an explicit reviewed semantic
+# comparator that verifies values, ranges, event multiplicity, causal order and
+# timing conditions. This is the second. The upstream sources stay byte-for-byte
+# unchanged (story 2daf permits checked-in adapters and narrow normalizers, not
+# edits to the corpus), and tools/tour/normalize.rb keeps its minimal
+# tour-normalizer/v1 rules: nothing is masked.
+#
+# WHAT A COMPARATOR REPLACES, AND WHAT IT DOES NOT.
+#
+#   Replaced: byte-identity of the STDOUT ELEMENTS named in `volatile_element`.
+#   Untouched: exit status and stderr, which are still compared EXACTLY, and
+#   every other byte of stdout, which is still compared literally by the
+#   comparator's own invariants.
+#
+# HOW THE COMPARISON IS ANCHORED. Not to the historical frozen draw. Each
+# comparator is evaluated against an ORACLE: repeated observations of the
+# native binary freshly built from that row's unchanged upstream source in the
+# same run, bound in the ledger by the binary's digest (tools/tour/executor-runner.rb
+# runs TOUR_ORACLE_REPEATS of them, default 7). Ranges and multiplicities come
+# from those real repeats. Every invariant is applied to every oracle
+# observation too, so a comparator that does not describe the real program
+# fails on the oracle before it can excuse a candidate. The pinned accepted
+# observation in tests/tour/results.tsv is retained for these rows as
+# HISTORICAL evidence of one draw on one day and is no longer a required
+# output; see docs/tour/executor.md, "Semantic migration".
+#
+# COLUMNS
+#   path              inventory row the comparator is bound to
+#   comparator        implementation in tools/tour/semantics.rb
+#   source_sha256     the pinned source digest; the loader refuses to bind a
+#                     comparator to a row whose inventory digest differs, so a
+#                     comparator can never be retargeted at another program
+#   burst_variation   `required` when the volatile element MUST differ across
+#                     the oracle repeats (a PRNG draw, a nanosecond clock, a
+#                     goroutine race). An oracle with one distinct stdout then
+#                     fails: it is evidence the comparator is not needed here.
+#                     `not_required` for elements that legitimately hold still
+#                     inside one burst — the two date/hour branches (the clock
+#                     does not cross a boundary in a few seconds) and the
+#                     two-entry map orders (a seven-run sample can draw one
+#                     order with probability 2^-6).
+#   volatile_element  the element the comparator adjudicates, verbatim from
+#                     docs/tour/volatility.tsv
+#   params            comparator parameters as JSON; pinned expectations taken
+#                     from the upstream source itself
+#
+# NEGATIVE COVERAGE. tools/tour/semantics-selftests.rb drives every comparator
+# with wrong values, wrong counts, wrong sets, wrong order, wrong exit status,
+# wrong stderr and wrong timing, and requires each to be REJECTED; it also
+# proves each comparator rejects the *other* rows' outputs.
+#
+# path	comparator	source_sha256	burst_variation	volatile_element	params
+_content/tour/basics/packages.go	rand_intn_line	c7be4714c613e20f2ea101de9a267aaa542af90e3a92919aa991efed3c10f398	required	rand.Intn draw from the randomly seeded global PRNG	{"prefix":"My favorite number is ","modulus":10}
+_content/tour/concurrency/goroutines.go	say_interleaving	0e82448c75a618ad8ec8a9c4396f14553ac595137754647720c01b53498db0c5	required	unsynchronized interleaving of two goroutines printing to stdout	{"values":["hello","world"],"main":"hello","main_count":5,"goroutine":"world"}
+_content/tour/concurrency/default-selection.go	tick_boom_sequence	609707c5ac8020cb1b2b763eaf9aa65afabcf2897aa5f938a288c1db5b2b463b	required	goroutine/timer interleaving under a 50ms tick and a 100ms boom	{"tick_ms":100,"boom_ms":500,"boom_slack_ms":1000,"default_sleep_ms":50,"rounding_slack_ms":1}
+_content/tour/flowcontrol/switch-evaluation-order.go	weekday_switch	9e94bbb667be85e810c1aff77e343ec9cc5473b24670979d27c03caf0bef21db	not_required	weekday arithmetic against time.Now()	{"prompt":"When's Saturday?","values":["Today.","Tomorrow.","In two days.","Too far away."]}
+_content/tour/flowcontrol/switch-with-no-condition.go	hour_greeting	6eb1d9d6150a37ec43f4825932239b4365e9be3bff5f8619152af0de5c44b247	not_required	time.Now().Hour() greeting branch	{"values":["Good morning!","Good afternoon.","Good evening."],"morning_before":12,"afternoon_before":17}
+_content/tour/methods/errors.go	go_time_error_line	a0825fe6310af87e48e7f46b5290814df190d1e9533d0132fd663d6bb7f3236e	required	time.Now() embedded in the error string	{"prefix":"at ","suffix":", it didn't work"}
+_content/tour/methods/exercise-stringer.go	line_set	b5bd782b7e0e7cd9541df782ccac827e8373a0867011f3fc998b8895fb470efc	not_required	Go's randomized iteration order over a two-entry map	{"lines":["loopback: [127 0 0 1]","googleDNS: [8 8 8 8]"]}
+_content/tour/solutions/stringers.go	line_set	270d781f1e5696bde89be0aa97c7fe86ff832547a94e32cfe571e7acecdec5c0	not_required	Go's randomized iteration order over a two-entry map	{"lines":["loopback: 127.0.0.1","googleDNS: 8.8.8.8"]}
+_content/tour/solutions/webcrawler.go	webcrawler_crawl	490f194b0e0610dde7196a8cb2ebec643586a6f05f94a1aabe7a29fb526b8882	required	concurrent crawl ordering across goroutines	{"bodies":{"https://golang.org/":"The Go Programming Language","https://golang.org/pkg/":"Packages","https://golang.org/pkg/fmt/":"Package fmt","https://golang.org/pkg/os/":"Package os"},"missing":["https://golang.org/cmd/"],"stats_header":["Fetching stats","--------------"],"links":{"https://golang.org/":["https://golang.org/pkg/","https://golang.org/cmd/"],"https://golang.org/pkg/":["https://golang.org/","https://golang.org/cmd/","https://golang.org/pkg/fmt/","https://golang.org/pkg/os/"],"https://golang.org/pkg/fmt/":["https://golang.org/","https://golang.org/pkg/"],"https://golang.org/pkg/os/":["https://golang.org/","https://golang.org/pkg/"]},"root":"https://golang.org/"}
+_content/tour/welcome/sandbox.go	sandbox_time	4eb8090f7e6b57f2e9fec950060721974187c98007124044135c816c24a3ba53	required	time.Now() printed by the playground sandbox	{"greeting":"Welcome to the playground!","prefix":"The time is "}

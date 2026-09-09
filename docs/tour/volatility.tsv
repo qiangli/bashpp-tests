@@ -1,0 +1,73 @@
+# Declared nondeterminism in the pinned tour executable denominator.
+#
+# Sprint 118 / Story #4 / Story-ID 759341a95870.
+#
+# STATUS: MEASUREMENT RECORD. This table records WHAT was measured to be
+# nondeterministic and why. It grants nothing by itself: an annotation carried
+# on an observation is diagnosis, and tools/tour/executor-selftests.rb asserts
+# that a ledger claiming this table has waiver effect is rejected by name
+# (`volatility:claims_gate_effect`).
+#
+# The adjudication that followed lives in docs/tour/semantics.tsv, which binds
+# each of these ten rows to a reviewed comparator in tools/tour/semantics.rb.
+# The two tables must name EXACTLY the same rows: tools/tour/executor-runner.rb
+# and tools/tour/executor-gate.rb both reject a comparator for a row nobody
+# measured, and a measured volatile row left without one. The comparators are
+# anchored to repeated observations of the CURRENT native binary, not to the
+# historical draw recorded in tests/tour/results.tsv.
+#
+# Why it exists: tour-executor/v1 reproduces the accepted observations in
+# tests/tour/results.tsv for 83 of the 93 applicable rows and for all 4
+# build-only rows, and fails on the ten rows below. Those ten are not
+# regressions and not a harness defect: their output depends on the wall clock,
+# the randomly seeded global PRNG, goroutine interleaving or Go's randomized
+# map iteration order, so no byte-exact accepted digest can be reproducible for
+# them. The pinned accepted baseline captured one instance of each.
+#
+# RESOLUTION (sprint-118 plan §6, second option): explicit reviewed semantic
+# comparators — see docs/tour/semantics.tsv. Masking them in
+# tools/tour/normalize.rb was and remains rejected: the normalizer's v1 rules
+# stay minimal, and a mask wide enough to hide a timestamp or a PRNG draw would
+# also hide a real numeric or causal error. The comparators do the opposite of
+# masking — they check the value's support, the event multiplicities, the causal
+# order and the timing conditions, and they compare exit status and stderr
+# byte-exactly.
+#
+# The set was MEASURED, not guessed, in two passes.
+#
+#   Pass 1 — all 93 applicable rows were built with the pinned Go 1.27.0
+#   toolchain and executed SEVEN times each under LC_ALL=C. Seven rows produced
+#   more than one distinct output: basics/packages.go (6 distinct),
+#   concurrency/default-selection.go (7), concurrency/goroutines.go (5),
+#   methods/errors.go (7), solutions/stringers.go (2),
+#   solutions/webcrawler.go (7), welcome/sandbox.go (7).
+#
+#   Pass 2 — the remaining rows whose fresh baseline did not reproduce the
+#   pinned accepted digest. These are stable within one burst but not across
+#   calendar time or process instances: flowcontrol/switch-evaluation-order.go
+#   and flowcontrol/switch-with-no-condition.go branch on the current
+#   weekday/hour, and methods/exercise-stringer.go ranges over a two-entry map
+#   whose iteration order Go randomizes per process.
+#
+# Rows deliberately NOT listed: concurrency/channels.go,
+# concurrency/mutex-counter.go, concurrency/range-and-close.go,
+# concurrency/select.go, solutions/binarytrees.go and
+# solutions/binarytrees_quit.go all use goroutines but were byte-identical
+# across seven runs — they synchronize, so they stay under exact comparison.
+#
+# `comparator_needed` names the control or comparator the row requires. Each is
+# now IMPLEMENTED and bound in docs/tour/semantics.tsv; this column stays as the
+# statement of what the measurement asked for, so the implementation can be read
+# against the requirement.
+#
+# path	volatile_element	comparator_needed
+_content/tour/basics/packages.go	rand.Intn draw from the randomly seeded global PRNG	seeded PRNG control, or range check 0 <= n < 10
+_content/tour/concurrency/goroutines.go	unsynchronized interleaving of two goroutines printing to stdout	event multiplicity per value, not line order
+_content/tour/concurrency/default-selection.go	goroutine/timer interleaving under a 50ms tick and a 100ms boom	event multiplicity and causal order, not byte identity
+_content/tour/flowcontrol/switch-evaluation-order.go	weekday arithmetic against time.Now()	fake clock, or the day-name value set
+_content/tour/flowcontrol/switch-with-no-condition.go	time.Now().Hour() greeting branch	fake clock, or the greeting value set
+_content/tour/methods/errors.go	time.Now() embedded in the error string	fake clock, or timestamp-shaped field comparison
+_content/tour/methods/exercise-stringer.go	Go's randomized iteration order over a two-entry map	line set comparison, not line order
+_content/tour/solutions/stringers.go	Go's randomized iteration order over a two-entry map	line set comparison, not line order
+_content/tour/solutions/webcrawler.go	concurrent crawl ordering across goroutines	crawled-URL set and depth invariants, not line order
+_content/tour/welcome/sandbox.go	time.Now() printed by the playground sandbox	fake clock, or timestamp-shaped field comparison

@@ -1,0 +1,96 @@
+# Tour three-mode executor contract — the single source of truth for the exact
+# argv, stage decomposition and body-execution policy of every (applicability,
+# mode) pair in the pinned tour executable denominator.
+#
+# Sprint 118 / Story #4 / Story-ID 759341a95870.
+#
+# tools/tour/executor.rb builds commands ONLY from these rows and
+# tools/tour/executor-gate.rb re-derives the expected argv from the same rows,
+# so the producer and the offline gate can never drift into checking a
+# different command than the one that actually ran. The contract's SHA-256 is
+# pinned into every produced ledger's manifest.
+#
+# Corrections this contract encodes over the superseded tour-evidence/v2 runner
+# (tools/tour/evidence.rb, retained unchanged with its historical failure
+# evidence in tests/tour/evidence.jsonl):
+#
+#   1. `bashy transpile` invoked WITHOUT `--bashpp` — rejected by
+#      bashy/internal/agentos/transpile.go ("transpile: --bashpp is required").
+#      Both Bash++ modes now carry the explicit Go-source selector
+#      `--source=go` from the sprint-118 plan §2.7, so an original .go file is
+#      ingested as Go and never as shell.
+#   2. Build-only rows were driven with `-n` (parse only) in interpreted mode
+#      and their compiled pipeline unconditionally executed the artifact.
+#      Parsing cannot establish buildability and a `norun` row must not have
+#      its body executed. Interpreted build-only now uses the semantic-check
+#      selector `--check`; compiled build-only stops after `build`.
+#   3. The Go baseline for an applicable row is `go build` + execution of the
+#      NATIVE ARTIFACT, never `go run`. `go run`'s wrapper exit status can
+#      misreport os.Exit and panics, so comparing it against a native product
+#      exit misclassifies those rows (sprint-118 plan §5). This is also the
+#      exact recipe that produced the accepted observations in
+#      tests/tour/results.tsv (tools/tour/run-baseline.sh), so the executor's
+#      fresh baseline and the pinned accepted baseline are comparable.
+#   4. The compiled pipeline records three SEPARATE stages, each with its own
+#      argv, status and declared artifacts (including the transpiler source
+#      map), so a successful transpile can never masquerade as a successful
+#      artifact run.
+#
+# `phase` is the CURRENT executor phase contract. For the applicable class it
+# is identical to the pinned differential-schema token. For the four build-only
+# rows the pinned tokens (`go-test-or-build`, `parse-or-run`,
+# `transpile-build-run`) all contain a `run` the master execution plan forbids
+# for a norun row, so this contract states the honest no-body phase instead and
+# docs/tour/phase-migration.tsv is the checked bridge back to the pinned
+# historical string. The inventory itself is untouched; the gate enforces both
+# ends of that table.
+#
+# Process environment (fixed by tools/tour/executor-runner.rb, recorded per
+# stage): LC_ALL=C — matching tools/tour/run-baseline.sh, which produced the
+# accepted observations; GOTOOLCHAIN=local; GOFLAGS=-mod=mod; GOPROXY=off after
+# helper provisioning; BASHY_HINTS=off; a FRESH HOME and TMPDIR per (row, mode);
+# and a freshly materialized read-only module tree per mode. GOROOT names the
+# pinned SDK and is supplied IDENTICALLY to all three modes: the product's Go
+# import bridge resolves stdlib packages through it, so withholding it from one
+# mode would compare different environments, not different engines.
+#
+# PATH is /usr/bin:/bin for toolchain stages (`{GO}` invocations) and EMPTY for
+# every stage that executes a tested body, so a typed-only tour program cannot
+# reach an external command and no mode can silently acquire shell fallback.
+# A `run` stage additionally executes from a FRESH, EMPTY runtime directory: the
+# compilation inputs are moved to the durable artifact directory first, so the
+# native artifact cannot read its own source out of the cwd. Interpreted mode
+# necessarily keeps its module context, since the source IS its input. This is
+# cwd and command-lookup isolation, NOT an OS-level denial — every stage records
+# that exact scope and the gate rejects a stronger claim.
+#
+# ADJUDICATED (docs/tour/phase-migration.tsv): the build-only rows execute NO
+# body in any mode. The pinned inventory strings are retained unchanged as
+# historical schema and joined through the migration table, which the gate
+# checks against both the inventory and this contract.
+#
+# Placeholders, substituted by the executor:
+#   {GO}       absolute path to the pinned Go 1.27.0 binary (docs/tour/toolchain.tsv)
+#   {BASHY}    absolute path to the candidate bashy launcher (docs/tour/candidate.tsv)
+#   {SRC}      module-relative path of the original, unmodified upstream .go file
+#   {OUT_GO}   transpiled Go artifact, in the per-mode artifact directory
+#   {OUT_MAP}  transpiler source map artifact, in the per-mode artifact directory
+#   {BIN}      built native artifact, in the per-mode artifact directory
+#
+# `produces` names the artifacts a stage must have created for it to count as
+# successful; `-` means the stage produces no file artifact. `execute_body`
+# records whether the stage runs the tested program's body: every `no` stage is
+# a semantic/build obligation and the gate rejects a ledger in which such a
+# stage produced any program output.
+#
+# applicability	mode	phase	stage_index	stage	argv	produces	execute_body
+applicable_go_program	baseline	go-run	0	build	{GO}|build|-o|{BIN}|{SRC}	bin	no
+applicable_go_program	baseline	go-run	1	run	{BIN}	-	yes
+applicable_go_program	interpreted	parse-run	0	run	{BASHY}|--bashpp|--source=go|{SRC}	-	yes
+applicable_go_program	compiled	transpile-build-run	0	transpile	{BASHY}|transpile|--bashpp|--source=go|{SRC}|-o|{OUT_GO}|--map|{OUT_MAP}	go,map	no
+applicable_go_program	compiled	transpile-build-run	1	build	{GO}|build|-o|{BIN}|{OUT_GO}	bin	no
+applicable_go_program	compiled	transpile-build-run	2	run	{BIN}	-	yes
+build_only_go_program	baseline	build-no-run	0	build	{GO}|build|-o|{BIN}|{SRC}	bin	no
+build_only_go_program	interpreted	check-no-run	0	check	{BASHY}|--bashpp|--source=go|--check|{SRC}	-	no
+build_only_go_program	compiled	transpile-build-no-run	0	transpile	{BASHY}|transpile|--bashpp|--source=go|{SRC}|-o|{OUT_GO}|--map|{OUT_MAP}	go,map	no
+build_only_go_program	compiled	transpile-build-no-run	1	build	{GO}|build|-o|{BIN}|{OUT_GO}	bin	no

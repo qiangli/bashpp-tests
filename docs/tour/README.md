@@ -167,9 +167,70 @@ tools/tour/run-baseline.sh                               # explicit baseline exe
 tools/tour/tamper-tests.sh                               # fail-closed self-tests
 tools/tour/corpus-tamper-tests.sh                        # fail-closed corpus self-tests
 tools/tour/refresh.sh                                    # intentional re-pin
+tools/tour/run-executor.sh                               # sprint 118 three-mode executor
+tools/tour/validate-executor.sh                          # sprint 118 offline gate
+tools/tour/executor-selftests.sh                         # sprint 118 gate self-tests
+tools/tour/semantics-selftests.sh                        # sprint 118 comparator self-tests
+tools/tour/executor-tamper-tests.sh                      # sprint 118 real-ledger tamper probes
 ```
 
-## Three-mode JSONL evidence
+## Sprint 118 three-mode executor (`tour-executor/v2`)
+
+Story #4 / Story-ID `759341a95870`. Full documentation:
+[`executor.md`](executor.md). The Sprint 98 `tour-evidence/v2` runner it
+supersedes is documented further down; its ledger `tests/tour/evidence.jsonl`
+is retained unchanged as historical failure evidence.
+
+```sh
+BASHPP_BIN=<candidate bin/bashy> \
+TOUR_CANDIDATE_MANIFEST=<sprint118-evidence/.../candidate.json> \
+  tools/tour/run-executor.sh          # produce the ledger
+tools/tour/validate-executor.sh       # offline gate
+tools/tour/executor-selftests.sh      # gate self-tests on a passing fixture
+tools/tour/semantics-selftests.sh     # comparator negative tests
+tools/tour/executor-tamper-tests.sh   # real-ledger tamper probes
+```
+
+`tests/tour/executor-results.jsonl` records 97 programs x 3 modes = 291
+observations. What changed from `tour-evidence/v2`:
+
+- every command comes from `docs/tour/executor-contract.tsv`, pinned into the
+  ledger; `bashy transpile` now carries the `--bashpp` that `transpile.go`
+  requires, and both Bash++ modes carry the `--source=go` Go-source selector;
+- the four `norun` rows are semantically **checked** (`--check`) instead of
+  parsed with `-n`, and their compiled pipeline stops after `build` — no body
+  execution, enforced by the gate;
+- the Go baseline is `go build` + native artifact, never `go run`, so a
+  wrapper exit cannot misreport `os.Exit`/panic;
+- every subprocess goes through the shared `Corpus.capture` primitive in
+  `tools/corpus/executor.rb`; there is no private capture path and no fallback,
+  and the gate rejects a ledger that claims one;
+- the candidate is authenticated against the **manager-supplied build manifest
+  verbatim** (`Corpus.authenticate_candidate`), binding the launcher and
+  `.real` payload digests and every replaced dependency — `bashy`, `sh`,
+  `coreutils`, `readline` and `filebrowser` — at a clean revision. This
+  replaces both the release-tag-only rule that made Makefile-built candidates
+  untestable and the earlier derived-commit binding, which related the binary
+  to whatever happened to be checked out beside it;
+- the four `norun` rows execute no body in any mode; the pinned historical
+  inventory schema is preserved and joined to the current phase contract by
+  `docs/tour/phase-migration.tsv`, whose *both ends* the gate enforces;
+- the ten measurably nondeterministic rows are adjudicated by reviewed narrow
+  semantic comparators (`docs/tour/semantics.tsv`, `tools/tour/semantics.rb`)
+  against repeated observations of the freshly built native binary, not against
+  the frozen historical draw. Exit status and stderr stay byte-exact; the gate
+  recomputes every comparator verdict itself;
+- each mode gets freshly materialized read-only state and each (row, mode) a
+  fresh `HOME`/`TMPDIR`/artifact/runtime directory; all 97 sources are
+  re-verified after every mode.
+
+**Current result: FAIL, accurately.** Against the manifest-authenticated
+diagnostic candidate (`gosource-v1`), all 97 baselines pass, 23 of 93 rows pass
+interpreted and 54 of 97 pass compiled. The remaining 117 observations are real
+product defects recorded per stage with their real diagnostics. Nothing is
+masked, skipped or marked not-applicable.
+
+## Three-mode JSONL evidence (Sprint 98, superseded)
 
 Sprint 98 / Story #4 records exactly 97 programs by three modes (291
 attempts) in `tests/tour/evidence.jsonl`. Its manifest binds the inventory,

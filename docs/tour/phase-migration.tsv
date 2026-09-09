@@ -1,0 +1,41 @@
+# Phase-contract migration: pinned historical inventory schema -> current
+# executor phase.
+#
+# Sprint 118 / Story #4 / Story-ID 759341a95870.
+#
+# THE PROBLEM. tests/tour/inventory.tsv (frozen by docs/tour/pin.tsv,
+# inventory_data_sha256) spells the compiled mode of a build-only row
+# `bpp_compiled:transpile-build-run`, and its interpreted mode
+# `bpp_interpreted:parse-or-run`. Both strings contain a `run` token. A
+# build-only (`norun`) row must NOT have its body executed: the sprint-118
+# master execution plan §5 says so, and executing it is precisely the defect
+# the superseded tour-evidence/v2 runner had.
+#
+# THE DECISION. The CURRENT MASTER PLAN OUTRANKS THE STALE PINNED STRING.
+# The executor implements no body execution for the four build-only rows. The
+# historical inventory schema is NOT rewritten — it is pinned evidence of what
+# Sprint 98 recorded, tests/tour/inventory.tsv and docs/tour/pin.tsv stay
+# byte-for-byte as they are, and tools/tour/validate.sh keeps deriving its
+# vocabulary from docs/tour/differential-schema.tsv unchanged.
+#
+# THIS TABLE IS THE BRIDGE, AND IT IS CHECKED AT BOTH ENDS.
+# tools/tour/executor-gate.rb requires that
+#
+#   * every executable inventory row still declares exactly the
+#     `historical_token` named here for its (applicability, mode) — so the
+#     historical schema cannot be quietly edited to agree with the new
+#     behaviour, and
+#   * docs/tour/executor-contract.tsv declares exactly the `current_phase` and
+#     the `executes_body` policy named here — so the new behaviour cannot be
+#     quietly widened back into running a `norun` body.
+#
+# A ledger observation carries the current phase; the historical token stays
+# joinable through this table. Nothing is silently reinterpreted.
+#
+# applicability	mode	schema_field	historical_token	current_phase	executes_body	rationale
+applicable_go_program	baseline	baseline	go-run	go-run	yes	unchanged: go build + native artifact execution (never `go run`, whose wrapper status misreports os.Exit)
+applicable_go_program	interpreted	bpp_interpreted	parse-run	parse-run	yes	unchanged: the Go-source selector interprets and runs the body
+applicable_go_program	compiled	bpp_compiled	transpile-build-run	transpile-build-run	yes	unchanged: transpile, real go build, native artifact execution
+build_only_go_program	baseline	baseline	go-test-or-build	build-no-run	no	the pinned token admits a `go test` driver; the four rows in this class are build obligations, so the baseline builds and stops. A test-program recipe would need its own corpus-owned driver, which this executor does not claim to provide.
+build_only_go_program	interpreted	bpp_interpreted	parse-or-run	check-no-run	no	`run` is wrong for a norun row and parsing cannot establish buildability: interpreted mode uses the semantic `--check` selector and executes no body
+build_only_go_program	compiled	bpp_compiled	transpile-build-run	transpile-build-no-run	no	the `run` token contradicts norun: the compiled pipeline stops after `go build` of the transpiled Go, and the gate rejects any output from those stages

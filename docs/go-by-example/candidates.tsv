@@ -1,0 +1,34 @@
+# goos	goarch	manifest_sha256	launcher_sha256	payload_sha256	frontend_version	go_identity	build_recipe	repositories
+# Reviewed Sprint 118 Bash++ candidate manifests.
+#
+# This table replaces the retired Sprint 98 executor.tsv pin. That pin named a
+# single reproducible `go build ./cmd/bash` artifact; the Go-source front end
+# ships as a Makefile tag-enabled build whose launcher and payload are separate
+# files, and whose runtime is a set of replaced sibling modules. A one-artifact
+# digest cannot describe it, and reproducing a manager-supplied diagnostic
+# build twice byte-for-byte is a claim this repository cannot honestly make, so
+# the reproduction script was retired with the pin it served.
+#
+# What replaces it is stricter about the things that can be checked here:
+# gate.rb takes --candidate MANIFEST, and the manifest is only accepted when
+#   * its own bytes hash to manifest_sha256 in this reviewed table,
+#   * Corpus.authenticate_candidate authenticates the launcher and its adjacent
+#     .real payload against these digests,
+#   * every repository in the manifest is at the clean exact commit named in
+#     `repositories` below, untracked files included, with no extra and no
+#     missing runtime dependency, and
+#   * the Go SDK the gate resolves reports go_identity and the digest in
+#     toolchain.tsv.
+# A caller-supplied manifest therefore selects a reviewed candidate; it can
+# never introduce one. tools/go-by-example/validate-candidate.rb re-derives all
+# of the above from this table alone.
+#
+# build_recipe is the recipe the manager asserts produced these bytes. It is
+# recorded and bound, not inferred: nothing here claims to have observed the
+# build. It must pin the toolchain and exactly match the reviewed manifest.
+# Historical tagged diagnostics and newly reviewed default builds are allowed.
+#
+# repositories is `basename=commit` for every repository the manifest declares,
+# in sorted order, and must be complete: the lowering runtime (sh) and every
+# other replaced module the candidate links, filebrowser included.
+darwin	arm64	49e2f1152e2e778ee77903285a272916e146af3bae76248e56e1ca9e5c575163	454c25a8cfb70a45e2bcb4fe57f64e7726164ed1ec8b7e46f3c243f4b87930a4	1126896175a87b47eb8df23d15e839bbca5172b4ce99ea670c46e5d6419aee19	gosource-v1	go version go1.27.0 darwin/arm64	GOTOOLCHAIN=go1.27.0 GOMAXPROCS=3 GOFLAGS=-p=3 make build BASHY_GOSOURCE=1	bashy=92985238a12547b28de74dfcc9bbd5d96abec464;coreutils=ec91ea4560a556c8217117bf7cb24e79f53e54f0;filebrowser=cde1146904add2d78d9846c71597520d34b17f7d;readline=b958823bd7075ed8b9a3aedd351422356a95fe79;sh=9c14f863b1352242a6abfaf2a30cd6ced06751d9

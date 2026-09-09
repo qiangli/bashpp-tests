@@ -171,16 +171,17 @@ reject "inventory order regression" "GBE_INVENTORY=${tmp}/unsorted.tsv" "GBE_PIN
 awk -F '\t' -v OFS='\t' '$1 ~ /^#/ { print; next } $1 == "examples/arrays/arrays.go" { $3 = "map_iteration"; $4 = "wallclock"; $5 = "none" } { print }' "${C}" > "${tmp}/unlic.cls"
 reject "unlicensed normalization on a row" "GBE_CLASSIFICATION=${tmp}/unlic.cls"
 
-# 16. required adapter missing
-awk -F '\t' -v OFS='\t' '$1 ~ /^#/ { print; next } $1 == "examples/epoch/epoch.go" { $5 = "none" } { print }' "${C}" > "${tmp}/noadapter.cls"
+# 16. required adapter missing (line-filters declares stdin, which requires the
+# stdin_fixture adapter; clock rows carry no adapter at all since Sprint 118)
+awk -F '\t' -v OFS='\t' '$1 ~ /^#/ { print; next } $1 == "examples/line-filters/line-filters.go" { $5 = "none" } { print }' "${C}" > "${tmp}/noadapter.cls"
 reject "behavior declared without its required adapter" "GBE_CLASSIFICATION=${tmp}/noadapter.cls"
 
 # 17. adapter not required by any declared behavior
-awk -F '\t' -v OFS='\t' '$1 ~ /^#/ { print; next } $1 == "examples/epoch/epoch.go" { $5 = "fake_clock,stdin_fixture" } { print }' "${C}" > "${tmp}/extraadapter.cls"
+awk -F '\t' -v OFS='\t' '$1 ~ /^#/ { print; next } $1 == "examples/epoch/epoch.go" { $5 = "stdin_fixture" } { print }' "${C}" > "${tmp}/extraadapter.cls"
 reject "unlicensed adapter on a row" "GBE_CLASSIFICATION=${tmp}/extraadapter.cls"
 
 # 18. deterministic combined with another behavior
-awk -F '\t' -v OFS='\t' '$1 ~ /^#/ { print; next } $1 == "examples/arrays/arrays.go" { $3 = "clock,deterministic"; $4 = "wallclock"; $5 = "fake_clock" } { print }' "${C}" > "${tmp}/detmix.cls"
+awk -F '\t' -v OFS='\t' '$1 ~ /^#/ { print; next } $1 == "examples/arrays/arrays.go" { $3 = "clock,deterministic"; $4 = "wallclock"; $5 = "none" } { print }' "${C}" > "${tmp}/detmix.cls"
 reject "deterministic combined with another behavior" "GBE_CLASSIFICATION=${tmp}/detmix.cls"
 
 # 19. deterministic row carrying a normalization

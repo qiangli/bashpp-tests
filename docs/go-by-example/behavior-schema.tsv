@@ -26,17 +26,28 @@ behavior	network_server	loopback_server	ephemeral_port
 behavior	stdin	stdin_fixture	none
 behavior	signals	signal_injector	none
 behavior	process_exec	fixed_env,hermetic_cwd	file_metadata,wallclock
-behavior	process_exit	exit_status_capture	goexit_status,panic_trace
-behavior	clock	fake_clock	wallclock
+behavior	process_exit	exit_status_capture	panic_trace
+behavior	clock	none	wallclock
 behavior	timeout	bounded_wait	duration
-behavior	random	seeded_random	random_stream
+behavior	random	none	random_stream
 behavior	map_iteration	none	map_order
 behavior	concurrency	bounded_wait	interleave_order,throughput_count
 behavior	pointer_identity	none	pointer_address
 behavior	test_harness	go_test_runner	duration
 #
 # adapter — the deterministic environment construction applied BEFORE the run.
-# Adapters make a run hermetic; they never edit the pinned source bytes.
+# Adapters make a run hermetic; they never edit the pinned source bytes. An
+# adapter name is a claim that the gate really performs that construction, so
+# a control the gate cannot perform may not be listed here.
+#
+# Sprint 118 removed `fake_clock` and `seeded_random` for exactly that reason.
+# The pinned programs read the real clock through `time.Now` and draw from the
+# `math/rand/v2` global source, and neither has an injection point: measured
+# against the pinned toolchain, `GODEBUG=randautoseed=0` leaves
+# examples/random-numbers/random-numbers.go producing different values on
+# consecutive runs, because math/rand/v2 is not covered by that setting. Those
+# rows therefore carry adapter `none` and are compared by the `wallclock` and
+# `random_stream` comparators, which is what was actually happening before.
 adapter	none	-	no adapter is needed; the program is hermetic as written
 adapter	argv_fixture	-	invoke the built binary with a fixed argv recorded by the gate
 adapter	fixed_env	-	run under a fully enumerated, fixed environment block (no host inheritance)
@@ -48,10 +59,8 @@ adapter	local_http_origin	-	resolve the program's outbound host to a loopback or
 adapter	loopback_server	-	let the program bind its own port on 127.0.0.1, drive it with a pinned client exchange, then terminate it
 adapter	signal_injector	-	deliver the declared signal once the program has reported readiness
 adapter	exit_status_capture	-	capture the process exit status as a compared channel alongside stdout and stderr
-adapter	seeded_random	-	activate the typed random-stream comparator, retaining every draw while proving arity, type, range, and tail ordering (the pinned program has no seed injection point)
-adapter	fake_clock	-	activate the typed clock comparator, retaining every rendered time and its ordering (the pinned program has no clock injection point)
 adapter	bounded_wait	-	impose a hard deadline so a scheduler stall fails the gate instead of hanging it
-adapter	go_test_runner	-	execute under `go test` rather than `go run`
+adapter	go_test_runner	-	build and execute a test binary: `go test -c` for the oracle, and the unchanged _test.go bytes plus a separately generated testing.Main driver for the product modes
 #
 # normalization — the ONLY licensed post-run rewrites, applied identically to
 # both sides of the differential. Each one must be licensed by a behavior that
@@ -64,7 +73,6 @@ normalization	tmp_path	-	replace host temp directory prefixes and random temp na
 normalization	ephemeral_port	-	replace a rendered bound port number with a stable token
 normalization	wallclock	-	replace rendered absolute dates and times with stable tokens
 normalization	duration	-	replace measured elapsed durations with stable tokens
-normalization	goexit_status	-	compare the `go run` wrapper's "exit status N" line as the process exit code
 normalization	panic_trace	-	compare the panic message line only; goroutine stack frames and addresses are dropped
 normalization	random_stream	-	compare the arity, type and declared range of values drawn from a random source, not their values
 normalization	map_order	-	preserve deterministic prefix/suffix and sort only each map-derived region with exact membership

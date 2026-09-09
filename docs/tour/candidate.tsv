@@ -1,0 +1,57 @@
+# Tour executor candidate-product binding contract.
+#
+# Sprint 118 / Story #4 / Story-ID 759341a95870.
+#
+# WHAT AUTHENTICATES A CANDIDATE. The manager-supplied build manifest, verbatim:
+#
+#   TOUR_CANDIDATE_MANIFEST=<...>/sprint118-evidence/<candidate>/candidate.json
+#
+# tools/tour/executor-runner.rb passes that JSON to Corpus.authenticate_candidate
+# (tools/corpus/executor.rb, W2 / Story-ID e29305614139), which verifies the
+# launcher digest, the adjacent `.real` payload digest, and that EVERY listed
+# repository is at the stated revision with a clean tree including untracked
+# files. Authentication failure aborts the run; it is not a warning.
+#
+# TWO SUPERSEDED RULES.
+#
+#   1. tour-evidence/v2 required a PUBLISHED RELEASE TAG (tools/tour/evidence-runner.rb
+#      aborts unless `bashy --version` reports `-bashy-<tag>`), so a Makefile
+#      build could not be tested without cutting a release. A tag is now
+#      recorded when present but is neither required nor sufficient.
+#   2. The first tour-executor/v1 draft DERIVED each component commit by
+#      resolving sibling worktrees by convention and comparing them to the
+#      commit stamped in `bashy --version`. That relates the binary to whatever
+#      happens to be checked out next to it, which is not a binding at all. The
+#      manifest is the binding; this table only declares WHICH components must
+#      appear in it.
+#
+# THE PAIR. On linux/darwin `make build-bashy` emits two files (bashy/Makefile):
+#   <BIN>       the native siglaunch launcher, compiled from native/siglaunch.c.in
+#   <BIN>.real  the Go payload, `go build -trimpath -ldflags ... ./cmd/bashy`
+# Both digests are in the manifest and both are verified. Binding only the
+# launcher leaves the interpreter unbound; binding only the payload leaves the
+# executed entry point unbound.
+#
+# THE REPLACED DEPENDENCIES. bashy's go.mod replaces its parser, userland,
+# line editor and file-management surface with sibling worktrees whose commits
+# the binary does NOT embed:
+#
+#   replace mvdan.cc/sh/v3                     => ../sh
+#   replace github.com/qiangli/coreutils       => ../coreutils
+#   replace github.com/ergochat/readline       => ../readline
+#   replace github.com/filebrowser/filebrowser/v2 => ../filebrowser
+#
+# All four are listed below and all four must be bound. `filebrowser` is easy to
+# miss because it enters `require` as an indirect dependency and is replaced
+# anyway; an unbound replaced dependency is unauthenticated product code, so the
+# gate additionally rejects any manifest repository that is NOT declared here.
+#
+# `frozen_commit` is empty until the sprint manager freezes the integrated
+# revision set; once filled, the gate enforces equality against the manifest.
+#
+# component	role	go_module_path	replace_directive	frozen_commit
+bashy	product	github.com/qiangli/bashy	main module (cmd/bashy)	
+sh	dependency	mvdan.cc/sh/v3	replace mvdan.cc/sh/v3 => ../sh	
+coreutils	dependency	github.com/qiangli/coreutils	replace github.com/qiangli/coreutils => ../coreutils	
+readline	dependency	github.com/ergochat/readline	replace github.com/ergochat/readline => ../readline	
+filebrowser	dependency	github.com/filebrowser/filebrowser/v2	replace github.com/filebrowser/filebrowser/v2 => ../filebrowser	
