@@ -1,0 +1,100 @@
+{
+  "schema": "sprint118-go-by-example-receipt/v1",
+  "date": "2026-09-09",
+  "candidate": "016",
+  "story": "Sprint118/Story3/fa07603b71dc",
+  "verdict": "fail",
+  "sh_commit": "f80d9e90c6f3c23b9f586bc3fac673a2f46b466b",
+  "bashy_commit": "865240797c3a2cb9740a35f1de40f068fd3c2dbb",
+  "harness_commit": "c0749fef7764ecb9528c44cc252760d748490d42",
+  "candidate_manifest_sha256": "223d69fadad541d931c08c9999e4db24c48f04e855c93fc350cd0036354b2c2f",
+  "launcher_sha256": "454c25a8cfb70a45e2bcb4fe57f64e7726164ed1ec8b7e46f3c243f4b87930a4",
+  "payload_sha256": "cf76edc131e92beecf652a1866217784fcb798a92d1ec1274094af3351e934bb",
+  "raw_ledger_sha256": "331aacd3b72a58690f7e9bb1cd3ca9a773a1880e5b271763a1670eb42fce30ab",
+  "root_digest": "82c9c068d1ce30843421600e9d40d55ac8eb62a3a869c580b2ec158a89036c74",
+  "public_ledger_sha256": "5f6baefe193b0ea4a52174f7fe6683e3bf3a191736b8d676a04fcf6b53d4cd72",
+  "rows": 85,
+  "observations": 255,
+  "executed": 255,
+  "missing_or_unspawned": 0,
+  "mode_results": {
+    "oracle": {
+      "pass": 85
+    },
+    "interpreted": {
+      "fail_mismatch": 29,
+      "pass": 51,
+      "fail_normalization": 5
+    },
+    "compiled": {
+      "pass": 85
+    }
+  },
+  "execution_seconds": 250.506,
+  "source_and_behavior_contracts_unchanged_from013": {
+    "corpus_sha256": {
+      "old": "57712273341a7918cf8ae8829aee43f86c09e04720989592897eb7e40d8060c2",
+      "new": "57712273341a7918cf8ae8829aee43f86c09e04720989592897eb7e40d8060c2",
+      "equal": true
+    },
+    "behavior_schema_sha256": {
+      "old": "2d8c0a55b9d5542b4c058a15a49a59dd5bb483df9524a4143652f26df6380d05",
+      "new": "2d8c0a55b9d5542b4c058a15a49a59dd5bb483df9524a4143652f26df6380d05",
+      "equal": true
+    },
+    "classification_sha256": {
+      "old": "bfe087332a2b4deb702503b39c0e390d84d1b60f0f2716acc8b476bb7b78bad2",
+      "new": "bfe087332a2b4deb702503b39c0e390d84d1b60f0f2716acc8b476bb7b78bad2",
+      "equal": true
+    },
+    "normalizer_sha256": {
+      "old": "b719001e94b92c3c7520f28183bf3f44e508de5022a63eaf58cfe4d8b72cf27e",
+      "new": "b719001e94b92c3c7520f28183bf3f44e508de5022a63eaf58cfe4d8b72cf27e",
+      "equal": true
+    },
+    "toolchain_sha256": {
+      "old": "eeacfc3b3099230756edd4abdfecc416bc19149d3fcb10d8dd0dedcb0ac0dcb6",
+      "new": "eeacfc3b3099230756edd4abdfecc416bc19149d3fcb10d8dd0dedcb0ac0dcb6",
+      "equal": true
+    },
+    "go_sha256": {
+      "old": "a19a71df81715c12d9a7e81bab036c12696fec1ddbd4258b48a2131a9080b267",
+      "new": "a19a71df81715c12d9a7e81bab036c12696fec1ddbd4258b48a2131a9080b267",
+      "equal": true
+    }
+  },
+  "baseline013_ledger_sha256": "b8dcde01e386bfdf634270ab52be1072b1a7c6786598497f8cce3a592b3705aa",
+  "gains": [],
+  "regressions": [
+    {
+      "path": "examples/tickers/tickers.go",
+      "mode": "interpreted",
+      "before": "pass",
+      "after": "fail_normalization",
+      "gain": false,
+      "regression": true
+    }
+  ],
+  "retained_validator": "PASS authenticated FAIL evidence",
+  "retained_tamper_controls": {
+    "total": 5,
+    "rejected": 5
+  },
+  "tcp_server_modes": {
+    "oracle": {
+      "verdict": "pass",
+      "exit": 143
+    },
+    "interpreted": {
+      "verdict": "pass",
+      "exit": 143
+    },
+    "compiled": {
+      "verdict": "pass",
+      "exit": 143
+    }
+  },
+  "story_closure_eligible": false,
+  "sprint_complete": false,
+  "full_go_complete": false
+}
