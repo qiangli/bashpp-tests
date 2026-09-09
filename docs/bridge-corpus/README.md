@@ -292,3 +292,23 @@ Require and retain the relocation manifest and original identity record as
 path provenance. Preserve the historical native summary and commands without
 rewriting their original paths. This is a proposal for the manager-owned
 `tools/go-full` code; the bridge corpus does not edit that runner.
+
+
+## Independent native evidence replay
+
+This validates the complete recorded package and runtime-event ledger without
+running `go test`. It reauthenticates the SDK and fixture trees, hashes both raw
+streams, reconstructs every registration/terminal and package observation, and
+compares the recomputed counts and verdict to the retained summary.
+
+```sh
+ruby tools/bridge-corpus/replay.rb \
+  --native /Users/qiangli/.bashy/sprint118/evidence/bridge-native-002 \
+  --sdk-identity /Users/qiangli/.bashy/sprint118/sources/go-full-sdk-identity-relocated.json
+```
+
+Replay validates evidence integrity; `native_verdict` remains distinct from
+`product_execution_claim=false`. It does not grant product credit or rerun
+any original test bodies. The recorded final skip review contains 2,613
+source-bound skip events: 2,229 BoringSSL unimplemented results, 373 positioned
+upstream skips, two silent `SkipNow` calls, and nine no-test package selections.
