@@ -1,3 +1,7 @@
+// Copyright 2022 The Go Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
 // Sprint: #118; Story: #17; Story-ID: b5d3bd1bd24c
 // Port of src/go/types/commentMap_test.go from the pinned official Go SDK.
 // The ERROR/ERRORx position is the position of the token immediately preceding

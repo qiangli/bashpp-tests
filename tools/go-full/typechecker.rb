@@ -77,7 +77,7 @@ module GoFullTypechecker
   # Builds the positioned matcher from its own immutable sources. This is a
   # separate binary from tools/go-full/diagnostics, whose testdir errorcheck
   # semantics are different and stay untouched.
-  def build_matcher(evidence, sdk_identity)
+  def build_matcher(evidence, sdk_identity, runtime = nil)
     inputs = (Dir[File.join(MATCHER_DIR, '*.go')] + [File.join(MATCHER_DIR, 'go.mod')]).sort
     raise Corpus::ContractError, 'typechecker matcher sources are missing' if inputs.length < 4
     before = inputs.to_h { |path| [path, Corpus.file_record(path)] }
@@ -86,13 +86,14 @@ module GoFullTypechecker
     env = { 'PATH' => '/usr/bin:/bin', 'GOTOOLCHAIN' => 'local', 'GOROOT' => sdk_identity.fetch('root'), 'GOMAXPROCS' => '1',
             'GOPROXY' => 'off', 'GOSUMDB' => 'off', 'GOENV' => 'off', 'GOFLAGS' => '',
             'HOME' => File.join(directory, 'home'), 'TMPDIR' => File.join(directory, 'tmp'), 'GOCACHE' => File.join(directory, 'gocache') }
+    env = GoFullProduct.stage_environment(runtime, directory) if runtime
     %w[HOME TMPDIR GOCACHE].each { |key| FileUtils.mkdir_p(env.fetch(key)) }
     binary = File.join(directory, 'typecheck-diagnostics')
     stage = Corpus.capture([File.join(sdk_identity.fetch('root'), 'bin/go'), 'build', '-p=1', '-trimpath', '-o', binary, '.'],
                            cwd: MATCHER_DIR, log_prefix: File.join(directory, 'build'), env: env, timeout: 180)
     raise Corpus::ContractError, 'typechecker matcher failed to build' unless Corpus.success?(stage) && File.executable?(binary) && File.size?(binary)
     raise Corpus::ContractError, 'typechecker matcher sources changed during build' unless before.all? { |path, record| Corpus.digest(path) == record.fetch('sha256') }
-    { 'binary' => Corpus.file_record(binary), 'sources' => before, 'build_stage' => stage,
+    { 'binary' => Corpus.file_record(binary), 'sources' => before, 'build_stage' => stage, 'runtime' => runtime,
       'semantics' => 'ported from the pinned SDK src/go/types/check_test.go and commentMap_test.go',
       'scope' => 'adjudicates retained product output only; never type-checks and never runs a fixture' }
   end
@@ -105,7 +106,8 @@ module GoFullTypechecker
     end
   end
 
-  def checking_environment(directory, sdk_identity)
+  def checking_environment(directory, sdk_identity, runtime = nil)
+    return GoFullProduct.stage_environment(runtime, directory) if runtime
     { 'PATH' => '/usr/bin:/bin', 'GOROOT' => sdk_identity.fetch('root'), 'GOTOOLCHAIN' => 'local', 'GOPROXY' => 'off', 'GOSUMDB' => 'off', 'GOENV' => 'off',
       'HOME' => File.join(directory, 'home'), 'TMPDIR' => File.join(directory, 'tmp'), 'GOCACHE' => File.join(directory, 'gocache'),
       'GOMAXPROCS' => '2', 'GOFLAGS' => '-p=2', 'LC_ALL' => 'C', 'TZ' => 'UTC', 'BASHY_HINTS' => 'off' }
@@ -116,8 +118,9 @@ module GoFullTypechecker
     FileUtils.mkdir_p(directory)
     payload = File.join(directory, 'match-request.json')
     File.write(payload, Corpus.canonical(request) + "\n")
+    environment = matcher['runtime'] ? GoFullProduct.stage_environment(matcher.fetch('runtime'), directory) : { 'PATH' => '/usr/bin:/bin', 'LC_ALL' => 'C', 'TZ' => 'UTC' }
     stage = Corpus.capture([matcher.fetch('binary').fetch('path')], cwd: directory,
-                           log_prefix: File.join(directory, 'match'), env: { 'PATH' => '/usr/bin:/bin', 'LC_ALL' => 'C', 'TZ' => 'UTC' },
+                           log_prefix: File.join(directory, 'match'), env: environment,
                            timeout: timeout, stdin: payload)
     raise Corpus::ContractError, 'positioned matcher did not terminate' unless stage['spawned'] && stage['state'] == 'exited' && stage['signal'].nil?
     body = File.binread(stage.fetch('stdout').fetch('path'))
@@ -141,15 +144,19 @@ module GoFullTypechecker
       FileUtils.cp(original, copy)
       # The checked input is the complete original file, byte for byte.
       raise Corpus::ContractError, 'fixture copy is not byte-identical' unless Corpus.digest(copy) == record.fetch('sha256') && File.size(copy) == record.fetch('bytes')
+      scaffold = options[:runtime] ? options[:runtime].fetch('module_files') : {}
+      raise Corpus::ContractError, 'scaffold overlaps original fixture' if scaffold.key?(relative)
+      scaffold.each { |name, bytes| File.binwrite(Corpus.safe_path(work, name), bytes) }
       generated = File.join(directory, 'generated.go')
-      env = checking_environment(directory, sdk_identity)
+      env = checking_environment(directory, sdk_identity, options[:runtime])
       %w[HOME TMPDIR GOCACHE].each { |key| FileUtils.mkdir_p(env.fetch(key)) }
       Corpus.authenticate_file(options.fetch(:bashy), candidate.fetch('launcher_sha256'))
       Corpus.authenticate_file(options.fetch(:bashy) + '.real', candidate.fetch('payload_sha256'))
       argv = checking_argv(options.fetch(:bashy), mode, relative, generated)
       stage = Corpus.capture(argv, cwd: work, log_prefix: File.join(directory, 'check'), env: env, timeout: options.fetch(:timeout))
       intact = Corpus.digest(copy) == record.fetch('sha256') && Corpus.digest(original) == record.fetch('sha256')
-      observation = { 'mode' => mode, 'stage_role' => 'checking-phase', 'phases' => PHASES, 'stage' => stage,
+      intact &&= scaffold.all? { |name, bytes| File.binread(Corpus.safe_path(work, name)) == bytes }
+      observation = { 'module_files' => scaffold.transform_values { |bytes| Digest::SHA256.hexdigest(bytes) }, 'mode' => mode, 'stage_role' => 'checking-phase', 'phases' => PHASES, 'stage' => stage,
                       'input_integrity' => intact, 'inputs' => { relative => record }, 'verdict' => 'FAIL' }
       if !intact
         next [mode, observation.merge('reason' => 'fixture bytes changed across the checking phase')]

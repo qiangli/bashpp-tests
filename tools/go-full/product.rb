@@ -10,6 +10,7 @@ require_relative 'native'
 require_relative 'typechecker'
 require_relative 'authentication'
 require_relative 'resume'
+require_relative 'module_context'
 
 module GoFullProduct
   module_function
@@ -102,7 +103,13 @@ module GoFullProduct
       !recipe.key?('timeout_seconds_before_scale') && root.fetch('expected_failure_sets').empty?
   end
 
-  def build_matcher(evidence, sdk_identity)
+  def stage_environment(runtime, directory)
+    environment = runtime.fetch('base_environment').merge('HOME' => File.join(directory, 'home'), 'TMPDIR' => File.join(directory, 'tmp'), 'GOCACHE' => runtime.fetch('cache_path'))
+    %w[HOME TMPDIR GOCACHE].each { |key| FileUtils.mkdir_p(environment.fetch(key)) }
+    environment
+  end
+
+  def build_matcher(evidence, sdk_identity, runtime = nil)
     source = File.join(__dir__, 'diagnostics')
     inputs = Dir[File.join(source, '*.go')] + [File.join(source, 'go.mod')]
     before = inputs.to_h { |path| [path, Corpus.file_record(path)] }
@@ -111,13 +118,14 @@ module GoFullProduct
     env = { 'PATH' => '/usr/bin:/bin', 'GOTOOLCHAIN' => 'local', 'GOROOT' => sdk_identity.fetch('root'), 'GOMAXPROCS' => '1',
             'GOPROXY' => 'off', 'GOSUMDB' => 'off', 'GOENV' => 'off', 'GOFLAGS' => '',
             'HOME' => File.join(directory, 'home'), 'TMPDIR' => File.join(directory, 'tmp'), 'GOCACHE' => File.join(directory, 'gocache') }
+    env = stage_environment(runtime, directory) if runtime
     %w[HOME TMPDIR GOCACHE].each { |key| FileUtils.mkdir_p(env.fetch(key)) }
     binary = File.join(directory, 'diagnostics')
     stage = Corpus.capture([File.join(sdk_identity.fetch('root'), 'bin/go'), 'build', '-p=1', '-trimpath', '-o', binary, '.'],
                            cwd: source, log_prefix: File.join(directory, 'build'), env: env, timeout: 180)
     raise Corpus::ContractError, 'diagnostic matcher failed to build' unless Corpus.success?(stage) && File.executable?(binary) && File.size?(binary)
     raise Corpus::ContractError, 'diagnostic matcher sources changed during build' unless before.all? { |path, record| Corpus.digest(path) == record.fetch('sha256') }
-    { 'binary' => Corpus.file_record(binary), 'sources' => before, 'build_stage' => stage }
+    { 'binary' => Corpus.file_record(binary), 'sources' => before, 'build_stage' => stage, 'runtime' => runtime }
   end
 
   def match_diagnostics(root, modes, matcher, evidence, timeout)
@@ -138,8 +146,9 @@ module GoFullProduct
       File.write(input_path, Corpus.canonical(request) + "\n")
       binary = matcher.fetch('binary')
       Corpus.authenticate_file(binary.fetch('path'), binary.fetch('sha256'))
+      match_env = matcher['runtime'] ? stage_environment(matcher.fetch('runtime'), directory).merge('PATH' => '') : { 'PATH' => '', 'GOMAXPROCS' => '1', 'LC_ALL' => 'C' }
       checked = Corpus.capture([binary.fetch('path')], cwd: directory, log_prefix: File.join(directory, 'match'),
-                               env: { 'PATH' => '', 'GOMAXPROCS' => '1', 'LC_ALL' => 'C' }, timeout: timeout, stdin: input_path)
+                               env: match_env, timeout: timeout, stdin: input_path)
       result = JSON.parse(File.read(checked.fetch('stdout').fetch('path'))) rescue { 'verdict' => 'FAIL', 'reason' => 'matcher did not return JSON' }
       verdict = Corpus.success?(checked) && result['verdict'] == 'PASS' ? 'PASS' : 'FAIL'
       [mode, observation.merge('verdict' => verdict, 'stage_role' => 'semantic-rejection-check', 'reason' => result['reason'],
@@ -172,6 +181,23 @@ module GoFullProduct
       'expected' => expected, 'observed_sha256' => observations.transform_values { |value| Digest::SHA256.hexdigest(value) } }
   end
 
+  def execution_setup(options, evidence, candidate, sdk_identity)
+    sdk = { 'sha256' => sdk_identity.fetch('go').fetch('sha256'),
+            'identity' => "go version #{sdk_identity.fetch('release')} #{sdk_identity.fetch('goos')}/#{sdk_identity.fetch('goarch')}" }
+    raise Corpus::ContractError, 'full product execution requires --module-context' unless options[:module_context]
+    module_context = GoFullModuleContext.load(options.fetch(:module_context), candidate_path: options.fetch(:candidate), sdk_path: options.fetch(:sdk_identity),
+      cache_root: options[:cache_root], bashy: options.fetch(:bashy), expected_sha256: options.fetch(:module_context_sha256, GoFullModuleContext::REVIEWED_SHA256))
+    module_files = module_context.fetch('module_files')
+    if options[:modules]
+      raise Corpus::ContractError, '--modules differs from authenticated scaffold' unless JSON.parse(File.read(options[:modules])) == module_files
+    end
+    execution_environment = { 'PATH' => ENV.fetch('PATH', ''), 'LC_ALL' => 'C', 'TZ' => 'UTC', 'GOTOOLCHAIN' => 'local', 'GOPROXY' => 'off', 'GOSUMDB' => 'off', 'BASHY_HINTS' => 'off', 'GOROOT' => sdk_identity.fetch('root'), 'GOMAXPROCS' => '2' }.merge(module_context.fetch('environment'))
+    go = File.join(sdk_identity.fetch('root'), 'bin/go')
+    executor = Corpus::Executor.new(bashy: options.fetch(:bashy), go: go, evidence_root: File.join(evidence, 'executions'), candidate: candidate,
+      sdk: sdk, timeout: options.fetch(:timeout), env: execution_environment, cache_root: module_context.fetch('cache_root'))
+    { executor: executor, module_context: module_context, runtime: { 'base_environment' => execution_environment, 'cache_path' => executor.provenance.fetch('cache').fetch('path'), 'module_files' => module_files, 'module_context' => module_context.fetch('proof') } }
+  end
+
   def execute(options)
     options = options.merge(bashy: File.realpath(options.fetch(:bashy)))
     dir = File.expand_path(options.fetch(:inventory))
@@ -192,12 +218,12 @@ module GoFullProduct
     candidate = JSON.parse(File.read(options.fetch(:candidate)))
     sdk_identity = JSON.parse(File.read(options.fetch(:sdk_identity)))
     sdk_authentication = verify_sdk_identity(native_summary.fetch('sdk'), sdk_identity, options[:relocation], relocation_sha256: options.fetch(:relocation_sha256, GoFullAuthentication::REVIEWED_RELOCATION_SHA256))
-    sdk = { 'sha256' => sdk_identity.fetch('go').fetch('sha256'),
-            'identity' => "go version #{sdk_identity.fetch('release')} #{sdk_identity.fetch('goos')}/#{sdk_identity.fetch('goarch')}" }
-    module_files = options[:modules] ? JSON.parse(File.read(options[:modules])) : {}
-    go = File.join(sdk_identity.fetch('root'), 'bin/go')
-    executor = Corpus::Executor.new(bashy: options.fetch(:bashy), go: go, evidence_root: File.join(evidence, 'executions'), candidate: candidate,
-                                    sdk: sdk, timeout: options.fetch(:timeout), env: { 'GOROOT' => sdk_identity.fetch('root'), 'GOMAXPROCS' => '2' })
+    setup = execution_setup(options, evidence, candidate, sdk_identity)
+    executor = setup.fetch(:executor)
+    module_context = setup.fetch(:module_context)
+    module_files = module_context.fetch('module_files')
+    execution_environment = setup.fetch(:runtime).fetch('base_environment')
+    options = options.merge(runtime: setup.fetch(:runtime))
     # The archive-backed source/inventory validator is the independent input
     # gate. No expected input set is derived from an execution result.
     _out, err, status = Open3.capture3('python3', File.join(__dir__, 'inventory.py'), 'validate', '--archive', sdk_identity.fetch('source_archive').fetch('path'),
@@ -224,7 +250,7 @@ module GoFullProduct
     all_roots = roots.to_h { |root| [root.fetch('id'), root] }
     checkpoint = GoFullResume.context(roots: roots, inventory: native_summary.fetch('inventory').transform_values { |record| record.fetch('sha256') },
       sdk: sdk_identity, provenance: executor.provenance, modules: module_files, timeout: options.fetch(:timeout),
-      environment: { 'PATH' => ENV.fetch('PATH', ''), 'LC_ALL' => 'C', 'TZ' => 'UTC', 'GOTOOLCHAIN' => 'local', 'GOPROXY' => 'off', 'GOSUMDB' => 'off', 'BASHY_HINTS' => 'off', 'GOROOT' => sdk_identity.fetch('root'), 'GOMAXPROCS' => '2' },
+      environment: execution_environment, module_context: module_context.fetch('proof'),
       native: { 'summary' => Corpus.file_record(File.join(native_dir, 'summary.json')), 'roots' => Corpus.file_record(File.join(native_dir, 'roots.jsonl')), 'stdout' => log, 'stderr' => native_summary.fetch('native_stage').fetch('stderr') })
     resumed = options[:resume] ? GoFullResume.load(options[:resume], context: checkpoint, roots: all_roots, source_root: source_root,
       provenance: executor.provenance, modules: module_files, native: native, catalog: catalog) : { 'reusable' => {}, 'fresh' => {}, 'checkpoint_roots' => 0 }
@@ -239,8 +265,8 @@ module GoFullProduct
     roots = roots.sort_by { |root| resumed.fetch('fresh').key?(root.fetch('id')) ? 1 : 0 }
     FileUtils.mkdir_p(evidence)
     File.write(File.join(evidence, 'context.json'), Corpus.canonical(checkpoint) + "\n", mode: 'wx')
-    matcher = build_matcher(evidence, sdk_identity)
-    typecheck_matcher = GoFullTypechecker.build_matcher(evidence, sdk_identity)
+    matcher = build_matcher(evidence, sdk_identity, options.fetch(:runtime))
+    typecheck_matcher = GoFullTypechecker.build_matcher(evidence, sdk_identity, options.fetch(:runtime))
     File.open(File.join(evidence, 'roots.jsonl'), 'wx') do |stream|
       roots.each do |root|
         id = root.fetch('id')
@@ -318,11 +344,12 @@ module GoFullProduct
     _out, err, integrity_status = Open3.capture3('python3', File.join(__dir__, 'inventory.py'), 'validate', '--archive', sdk_identity.fetch('source_archive').fetch('path'),
                                                '--source-root', source_root, '--output', dir)
     counts = rows.group_by { |r| r['axis'] }.transform_values { |group| group.group_by { |r| r['product_verdict'] }.transform_values(&:length) }
+    module_integrity_after = GoFullModuleContext.load(options.fetch(:module_context), candidate_path: options.fetch(:candidate), sdk_path: options.fetch(:sdk_identity), cache_root: options[:cache_root], bashy: options.fetch(:bashy), expected_sha256: options.fetch(:module_context_sha256, GoFullModuleContext::REVIEWED_SHA256)).fetch('proof') == module_context.fetch('proof')
     summary = { 'schema' => 'go-full-product/v1', 'counts_by_axis' => counts, 'roots' => roots.length,
                 'scope' => options[:phase_shard] ? 'negative-phase-discovery-shard' : 'full-root-accounting',
                 'full_manifest_denominators' => full_manifest_denominators, 'selected_root_denominator' => roots.length,
                 'selection_rule' => options[:phase_shard] ? 'all unflagged negative errorcheck/errorcheckwithauto roots without expected-failure inversion' : 'all independent static axes',
-                'checkpoint' => Corpus.file_record(File.join(evidence, 'context.json')), 'sdk_authentication' => sdk_authentication,
+                'checkpoint' => Corpus.file_record(File.join(evidence, 'context.json')), 'sdk_authentication' => sdk_authentication, 'module_context' => module_context.fetch('proof'), 'module_integrity_after' => module_integrity_after,
                 'resume' => { 'attempt_order' => 'unattempted and authenticated terminals before prior fresh-required adapters; complete selected denominator retained', 'checkpoint_roots' => resumed['checkpoint_roots'], 'reused_roots' => rows.count { |row| resumed['reusable'].key?(row['id']) }, 'fresh_required' => resumed['fresh'] },
                 'typechecker_adapter' => { 'schema' => 'go-full-typechecker-adapter/v1', 'matcher' => typecheck_matcher,
                                            'phases' => GoFullTypechecker::PHASES, 'checking_modes' => GoFullTypechecker::MODES,
@@ -360,6 +387,9 @@ module GoFullProduct
         FileUtils.mkdir_p(File.dirname(copy)); FileUtils.cp(original, copy)
         [relative, Corpus.file_record(original)]
       end
+      scaffold = options[:runtime] ? options[:runtime].fetch('module_files') : {}
+      raise Corpus::ContractError, 'scaffold overlaps original probe input' unless (scaffold.keys & before.keys).empty?
+      scaffold.each { |name, bytes| File.binwrite(Corpus.safe_path(work, name), bytes) }
       generated = File.join(directory, 'generated.go')
       argv = if mode == 'interpreted'
                [options.fetch(:bashy), '--bashpp', '--source=go', '--check', selector]
@@ -368,12 +398,14 @@ module GoFullProduct
              end
       env = { 'PATH' => '/usr/bin:/bin', 'GOROOT' => sdk_identity.fetch('root'), 'GOTOOLCHAIN' => 'local', 'GOPROXY' => 'off', 'GOSUMDB' => 'off', 'GOENV' => 'off',
               'HOME' => File.join(directory, 'home'), 'TMPDIR' => File.join(directory, 'tmp'), 'GOCACHE' => File.join(directory, 'gocache'), 'GOMAXPROCS' => '2', 'LC_ALL' => 'C', 'TZ' => 'UTC', 'BASHY_HINTS' => 'off' }
+      env = stage_environment(options.fetch(:runtime), directory) if options[:runtime]
       %w[HOME TMPDIR GOCACHE].each { |key| FileUtils.mkdir_p(env.fetch(key)) }
       Corpus.authenticate_file(options.fetch(:bashy), candidate.fetch('launcher_sha256'))
       Corpus.authenticate_file(options.fetch(:bashy) + '.real', candidate.fetch('payload_sha256'))
       stage = Corpus.capture(argv, cwd: work, log_prefix: File.join(directory, 'probe'), env: env, timeout: options.fetch(:timeout))
       intact = before.all? { |relative, data| Corpus.digest(File.join(work, relative)) == data.fetch('sha256') && Corpus.digest(data.fetch('path')) == data.fetch('sha256') }
-      [mode, { 'verdict' => 'FAIL', 'stage_role' => 'diagnostic-probe-only', 'stage' => stage,
+      intact &&= scaffold.all? { |name, bytes| File.binread(Corpus.safe_path(work, name)) == bytes }
+      [mode, { 'module_files' => scaffold.transform_values { |bytes| Digest::SHA256.hexdigest(bytes) }, 'verdict' => 'FAIL', 'stage_role' => 'diagnostic-probe-only', 'stage' => stage,
                'input_integrity' => intact, 'inputs' => before, 'reason' => 'Required recipe phases remain unexecuted regardless of probe exit.' }]
     end
   rescue Corpus::ContractError, SystemCallError => error
@@ -384,10 +416,11 @@ end
 if $PROGRAM_NAME == __FILE__
   options = { inventory: File.expand_path('../../docs/go-full', __dir__), timeout: 60 }
   OptionParser.new do |parser|
-    %i[bashy candidate sdk_identity source_root evidence native inventory modules relocation resume].each do |key|
+    %i[bashy candidate sdk_identity source_root evidence native inventory modules relocation resume module_context cache_root].each do |key|
       parser.on("--#{key.to_s.tr('_', '-')} PATH") { |value| options[key] = File.expand_path(value) }
     end
     parser.on('--relocation-sha256 SHA256') { |value| options[:relocation_sha256] = value }
+    parser.on('--module-context-sha256 SHA256') { |value| options[:module_context_sha256] = value }
     parser.on('--phase-shard NAME') { |value| options[:phase_shard] = value }
     parser.on('--timeout N', Integer) { |value| options[:timeout] = value }
   end.parse!

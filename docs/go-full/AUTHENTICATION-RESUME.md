@@ -97,3 +97,60 @@ The checkpoint tests use explicitly authored contract tools with real process
 captures; their PASS is a validator unit result, never a corpus execution result.
 Tamper cases reseal receipts where appropriate so that independent semantic
 checks, rather than only an outer digest mismatch, must reject the mutation.
+
+## Required module and shared-cache contract
+
+Full product execution now requires `--module-context PATH`. The default reviewed
+context digest is `a886a3618bcacccbb5df4030ad9e0f58442f3440a75dab3b6e62e6e0a4550dd6`;
+`--module-context-sha256 SHA256` supplies an explicitly reviewed replacement.
+The existing candidate006 manifest is
+`/Users/qiangli/.bashy/sprint118/sources/go-full-candidate006-modules/manifest.json`.
+Its module-files argument digest is
+`67c580c9ebf262d50db38bc4fe70460dafcf21cf99cbbd0fbcbd11b0e527b376`.
+It binds candidate006, not a later candidate binary or repository revision.
+
+The runner authenticates the manifest before reading its configuration, current
+candidate and SDK bindings, the two scaffold files, all 19 dependency archives
+and module metadata files, and exact membership and bytes of 4,391 extracted
+module files. The scaffold sums must match the declared dependency sums.
+It rechecks these inputs and candidate binaries after execution. Original source
+files remain independent, unchanged inputs. `--modules`, if also provided, must
+contain exactly the authenticated scaffold bytes; it cannot override them.
+
+`GOENV=off`, `GOWORK=off`, `GOFLAGS=-mod=readonly -p=2`, and the authenticated
+`GOMODCACHE` are propagated into the actual executor environment. Network access
+remains disabled. `--cache-root PATH` selects the build-cache parent; it defaults
+to the manifest's declared parent. Its directory is keyed first by module
+manifest digest, then by the shared executor's candidate/SDK/environment digest.
+It cannot overlap the SDK, module cache, or candidate repositories.
+
+Simple and generated-program execution, unsupported-recipe probes, typechecker
+checks, and both diagnostic matcher build/run paths use that same keyed GOCACHE.
+Each process retains its private working, home and temporary directories and
+complete streams. Probe and checker workspaces receive the same scaffold bytes
+as ordinary execution and verify those bytes after the phase. Cache sharing does
+not alter original programs, compiler recipe arguments, phase obligations,
+verdict rules or native delegation policy. No per-root cold GOCACHE is created by
+the full-run configuration.
+
+Checkpoint context now binds the authenticated module proof and exact module
+and environment values. Resume checks those same settings in retained simple
+executions and probes, including scaffold bytes and the original shared cache
+path. The existing diagnostic/checker/generator resume limitations still apply;
+new context is required, and old receipts are never upgraded.
+
+The integration seam is `GoFullProduct.execution_setup`, which constructs the
+executor and `options[:runtime]`. `GoFullProduct.stage_environment(runtime, dir)`
+provides the shared environment/cache with per-process HOME and TMPDIR. Both
+reviewed checker matchers use this seam without changing matching semantics.
+
+```sh
+ruby tests/go-full/module_context_test.rb
+```
+
+This test executes real authored fixture processes through the production setup
+path and checks all three execution modes, probes, and both matcher/checker paths.
+It also tests archive/tree/scaffold/SDK mutation, extra or missing dependency
+files, symlinks, changed candidate/SDK claims, mutable module flags, duplicate
+dependencies, and wrong retained cache/scaffold evidence. Authored fixture output
+is validator evidence only, not official corpus success.

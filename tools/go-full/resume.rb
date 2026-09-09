@@ -14,12 +14,12 @@ module GoFullResume
     copy = Marshal.load(Marshal.dump(value)); copy.fetch('cache').delete('path'); copy
   end
 
-  def context(roots:, inventory:, sdk:, provenance:, native:, modules:, timeout:, environment:)
+  def context(roots:, inventory:, sdk:, provenance:, native:, modules:, timeout:, environment:, module_context: nil)
     raise Corpus::ContractError, 'duplicate context root IDs' unless roots.map { |root| root.fetch('id') }.uniq.length == roots.length
     { 'schema' => CONTEXT_SCHEMA, 'roots' => roots.to_h { |root| [root.fetch('id'), sha(root)] },
       'inventory' => inventory, 'sdk' => sdk, 'provenance' => stable_provenance(provenance),
       'native' => native, 'modules' => modules.transform_values { |bytes| Digest::SHA256.hexdigest(bytes) },
-      'timeout' => timeout, 'execution_environment' => environment,
+      'timeout' => timeout, 'execution_environment' => environment, 'module_context' => module_context,
       'tools' => Dir[File.join(__dir__, '*.{rb,py}'), File.join(__dir__, 'diagnostics/*'), File.join(__dir__, 'typecheck-diagnostics/*'), File.join(__dir__, '../corpus/*.rb')].select { |path| File.file?(path) }.sort.to_h { |path| [path.delete_prefix(__dir__ + '/'), Corpus.digest(path)] } }
   end
 
@@ -158,7 +158,7 @@ module GoFullResume
     observations.uniq.length == 1 ? 'PASS' : 'FAIL'
   end
 
-  def probes!(row, root:, source_root:, provenance:)
+  def probes!(row, root:, source_root:, provenance:, environment: nil, modules: {})
     modes = row.fetch('modes')
     return false unless modes.keys.sort == %w[compiled interpreted] && modes.values.all? { |m| m.key?('stage') }
     selector = root['axis'] == 'package' ? 'src/' + root.fetch('package') : root['directory'] ? root.fetch('directory').fetch('path') : root.fetch('path')
@@ -170,6 +170,11 @@ module GoFullResume
       argv = mode == 'interpreted' ? [provenance.dig('candidate', 'launcher', 'path'), '--bashpp', '--source=go', '--check', selector] : [provenance.dig('candidate', 'launcher', 'path'), 'transpile', '--bashpp', '--source=go', selector, '-o', generated, '--map', generated + '.map']
       expected_environment = { 'PATH' => '/usr/bin:/bin', 'GOROOT' => File.dirname(File.dirname(provenance.dig('sdk', 'binary', 'path'))), 'GOTOOLCHAIN' => 'local', 'GOPROXY' => 'off', 'GOSUMDB' => 'off', 'GOENV' => 'off',
         'HOME' => File.join(directory, 'home'), 'TMPDIR' => File.join(directory, 'tmp'), 'GOCACHE' => File.join(directory, 'gocache'), 'GOMAXPROCS' => '2', 'LC_ALL' => 'C', 'TZ' => 'UTC', 'BASHY_HINTS' => 'off' }
+      if environment
+        expected_environment = environment.merge('HOME' => File.join(directory, 'home'), 'TMPDIR' => File.join(directory, 'tmp'), 'GOCACHE' => provenance.fetch('cache').fetch('path'))
+        raise Corpus::ContractError, 'probe scaffold declaration differs' unless observation.fetch('module_files') == modules.transform_values { |bytes| Digest::SHA256.hexdigest(bytes) }
+        modules.each { |name, bytes| raise Corpus::ContractError, 'probe scaffold bytes differ' unless File.binread(Corpus.safe_path(work, name)) == bytes }
+      end
       raise Corpus::ContractError, 'probe environment differs' unless stage.fetch('environment') == expected_environment
       stage!(stage, argv: argv, cwd: work, source_root: File.dirname(File.dirname(provenance.dig('sdk', 'binary', 'path'))), provenance: provenance)
     end
@@ -210,11 +215,9 @@ module GoFullResume
                    elsif row['product_verdict'] == 'FAIL' && !row.fetch('unfinished_phases').empty?
                      phases = root['axis'] == 'testdir' ? catalog.fetch(root.fetch('recipe').fetch('action'), { 'phase_contract' => ['resolve-build-ignore-before-action'] }).fetch('phase_contract') : root['axis'] == 'typechecker' ? %w[check-original-fixture match-source-positioned-diagnostics] : %w[build-test-harness enumerate-runtime-tests execute-product-test-bodies join-all-runtime-results]
                      raise Corpus::ContractError, 'missing recipe obligations' unless row['unfinished_phases'] == phases && row['modes'].values.all? { |m| m['verdict'] == 'FAIL' && m['stage_role'] == 'diagnostic-probe-only' }
-                     probes!(row, root: root, source_root: source_root, provenance: row.fetch('provenance'))
+                     probes!(row, root: root, source_root: source_root, provenance: row.fetch('provenance'), environment: context['module_context'] ? context.fetch('execution_environment') : nil, modules: modules)
                    elsif root['axis'] == 'typechecker' && row.key?('typechecker_evidence')
-                     # Fail-closed: the check-harness adapter has no independent
-                     # resume validator yet, so its terminals are re-executed
-                     # without credit until one is reviewed.
+                     # The reviewed checker matcher has no resume adapter yet.
                      false
                    else false
                    end
