@@ -6,7 +6,6 @@ seq: 4
 status: blocked
 priority: p1
 created: 2026-09-03T09:57:58.477362Z
-weave: 15
 assignee: sprint118-manager
 sprint: 118
 ---

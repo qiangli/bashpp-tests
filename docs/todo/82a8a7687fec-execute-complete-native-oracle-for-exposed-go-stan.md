@@ -6,7 +6,6 @@ seq: 16
 status: done
 priority: p1
 created: 2026-09-09T04:10:21.936059Z
-weave: 17
 assignee: sprint118-manager
 sprint: 118
 closed: 2026-09-09T08:42:48.67999Z
