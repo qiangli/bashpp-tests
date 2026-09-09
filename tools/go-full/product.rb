@@ -7,6 +7,7 @@ require 'fileutils'
 require 'digest'
 require ENV.fetch('GO_FULL_CORPUS_LIB', File.expand_path('../corpus/executor.rb', __dir__))
 require_relative 'native'
+require_relative 'typechecker'
 require_relative 'authentication'
 require_relative 'resume'
 
@@ -239,6 +240,7 @@ module GoFullProduct
     FileUtils.mkdir_p(evidence)
     File.write(File.join(evidence, 'context.json'), Corpus.canonical(checkpoint) + "\n", mode: 'wx')
     matcher = build_matcher(evidence, sdk_identity)
+    typecheck_matcher = GoFullTypechecker.build_matcher(evidence, sdk_identity)
     File.open(File.join(evidence, 'roots.jsonl'), 'wx') do |stream|
       roots.each do |root|
         id = root.fetch('id')
@@ -280,10 +282,24 @@ module GoFullProduct
           rescue Corpus::ContractError, SystemCallError => error
             row['reason'] = error.message
           end
+        elsif root['axis'] == 'typechecker' && GoFullTypechecker.adaptable?(root, source_root)
+          begin
+            checked = GoFullTypechecker.execute(root: root, options: options, source_root: source_root, evidence: evidence,
+                                                sdk_identity: sdk_identity, candidate: candidate, matcher: typecheck_matcher)
+            row['modes'] = checked.fetch('modes')
+            row['typechecker_evidence'] = checked.fetch('evidence')
+            row['product_verdict'] = oracle['status'] == 'pass' && checked['verdict'] == 'PASS' ? 'PASS' : 'FAIL'
+          rescue Corpus::ContractError, SystemCallError => error
+            row['reason'] = error.message
+          end
         else
           # No success by relabeling a parse probe as errorcheck, asmcheck,
           # directory execution, generated execution, or a testing harness.
           row['reason'] = 'Exact product recipe adapter is not implemented; diagnostic probes cannot complete its phases.'
+          if root['axis'] == 'typechecker'
+            row['unsupported_recipe_options'] = GoFullTypechecker.unsupported_options(root, source_root)
+            row['reason'] = 'Exact check-harness recipe options are not implemented: ' + row['unsupported_recipe_options'].join(', ') + '. Both obligations remain unexecuted.'
+          end
           row['unfinished_phases'] = if root['axis'] == 'testdir'
                                        catalog.fetch(root.fetch('recipe').fetch('action'), { 'phase_contract' => ['resolve-build-ignore-before-action'] }).fetch('phase_contract')
                                      elsif root['axis'] == 'typechecker'
@@ -308,6 +324,12 @@ module GoFullProduct
                 'selection_rule' => options[:phase_shard] ? 'all unflagged negative errorcheck/errorcheckwithauto roots without expected-failure inversion' : 'all independent static axes',
                 'checkpoint' => Corpus.file_record(File.join(evidence, 'context.json')), 'sdk_authentication' => sdk_authentication,
                 'resume' => { 'attempt_order' => 'unattempted and authenticated terminals before prior fresh-required adapters; complete selected denominator retained', 'checkpoint_roots' => resumed['checkpoint_roots'], 'reused_roots' => rows.count { |row| resumed['reusable'].key?(row['id']) }, 'fresh_required' => resumed['fresh'] },
+                'typechecker_adapter' => { 'schema' => 'go-full-typechecker-adapter/v1', 'matcher' => typecheck_matcher,
+                                           'phases' => GoFullTypechecker::PHASES, 'checking_modes' => GoFullTypechecker::MODES,
+                                           'root_denominator' => full_manifest_denominators.fetch('typechecker', 0),
+                                           'adapted' => rows.count { |row| row.key?('typechecker_evidence') },
+                                           'unsupported_recipe_options' => rows.count { |row| row.key?('unsupported_recipe_options') },
+                                           'claim_scope' => 'per-root check obligations only; no whole-axis or whole-corpus PASS is claimed' },
                 'provenance' => executor.provenance, 'diagnostic_matcher' => matcher, 'source_integrity_after' => integrity_status.success?, 'source_integrity_error' => err,
                 'native_summary' => Corpus.file_record(File.join(native_dir, 'summary.json')),
                 'native_roots' => Corpus.file_record(File.join(native_dir, 'roots.jsonl')),

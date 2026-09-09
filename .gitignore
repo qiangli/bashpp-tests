@@ -4,3 +4,6 @@
 
 # Built by tools/go-oracle/run.sh (it normally writes into .cache/go-oracle/).
 tools/go-oracle/go-oracle
+
+# Built by tools/go-full/typechecker.rb into the run evidence directory.
+tools/go-full/typecheck-diagnostics/typecheck-diagnostics

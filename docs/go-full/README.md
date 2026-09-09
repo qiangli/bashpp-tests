@@ -133,6 +133,9 @@ from the authenticated release; run it after generating and before executing.
 The full native oracle and product accounting drivers are separate from the
 inventory. See [SDK relocation and authenticated continuations](AUTHENTICATION-RESUME.md)
 for durable source paths, fail-closed resume rules and the legacy evidence boundary.
+See [the official type-checker recipe adapter](TYPECHECKER-ADAPTER.md) for how the
+743 `go/types`/`types2` check roots execute their two phase obligations, and which
+exact recipe options still fail as unfinished.
 They depend on the shared `tools/corpus/executor.rb` contract.
 `GO_FULL_CORPUS_LIB=/absolute/path/to/executor.rb` supports isolated integration
 before the shared harness commit lands. These drivers have parser/negative
@@ -258,8 +261,15 @@ Run the non-corpus evidence tests with:
 
 ```sh
 ruby tests/go-full/execution_test.rb
+ruby tests/go-full/authentication_test.rb
+ruby tests/go-full/typechecker_test.rb
 GOMAXPROCS=1 GOTOOLCHAIN=local /absolute/pinned/sdk/bin/go -C tools/go-full/diagnostics test -p=1 ./...
+GOMAXPROCS=1 GOTOOLCHAIN=local /absolute/pinned/sdk/bin/go -C tools/go-full/typecheck-diagnostics test -p=1 ./...
 ```
+
+`typechecker_test.rb` includes bounded integration controls that execute the
+frozen candidate against real pinned fixtures; they skip when that candidate or
+the pinned SDK is absent.
 
 They reject terminal-event fabrication by omission/duplication, passed-parent
 substitution, improper generic handling of complex/nested recipes, unsuccessful

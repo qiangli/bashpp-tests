@@ -20,7 +20,7 @@ module GoFullResume
       'inventory' => inventory, 'sdk' => sdk, 'provenance' => stable_provenance(provenance),
       'native' => native, 'modules' => modules.transform_values { |bytes| Digest::SHA256.hexdigest(bytes) },
       'timeout' => timeout, 'execution_environment' => environment,
-      'tools' => Dir[File.join(__dir__, '*.{rb,py}'), File.join(__dir__, 'diagnostics/*'), File.join(__dir__, '../corpus/*.rb')].select { |path| File.file?(path) }.sort.to_h { |path| [path.delete_prefix(__dir__ + '/'), Corpus.digest(path)] } }
+      'tools' => Dir[File.join(__dir__, '*.{rb,py}'), File.join(__dir__, 'diagnostics/*'), File.join(__dir__, 'typecheck-diagnostics/*'), File.join(__dir__, '../corpus/*.rb')].select { |path| File.file?(path) }.sort.to_h { |path| [path.delete_prefix(__dir__ + '/'), Corpus.digest(path)] } }
   end
 
   def inputs(root, source_root)
@@ -211,6 +211,11 @@ module GoFullResume
                      phases = root['axis'] == 'testdir' ? catalog.fetch(root.fetch('recipe').fetch('action'), { 'phase_contract' => ['resolve-build-ignore-before-action'] }).fetch('phase_contract') : root['axis'] == 'typechecker' ? %w[check-original-fixture match-source-positioned-diagnostics] : %w[build-test-harness enumerate-runtime-tests execute-product-test-bodies join-all-runtime-results]
                      raise Corpus::ContractError, 'missing recipe obligations' unless row['unfinished_phases'] == phases && row['modes'].values.all? { |m| m['verdict'] == 'FAIL' && m['stage_role'] == 'diagnostic-probe-only' }
                      probes!(row, root: root, source_root: source_root, provenance: row.fetch('provenance'))
+                   elsif root['axis'] == 'typechecker' && row.key?('typechecker_evidence')
+                     # Fail-closed: the check-harness adapter has no independent
+                     # resume validator yet, so its terminals are re-executed
+                     # without credit until one is reviewed.
+                     false
                    else false
                    end
                  else raise Corpus::ContractError, 'unknown resumed verdict'
