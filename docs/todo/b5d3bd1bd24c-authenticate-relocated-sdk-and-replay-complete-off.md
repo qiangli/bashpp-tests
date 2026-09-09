@@ -3,13 +3,11 @@ id: b5d3bd1bd24c
 kind: task
 title: Authenticate relocated SDK and replay complete official Go obligations
 seq: 17
-status: doing
+status: todo
 priority: p1
 created: 2026-09-09T06:36:02.000807Z
-assignee: s118-native-types
+assignee: qiangli
 sprint: 118
 ---
 
-Sprint118 official Go replay prerequisite and complete execution. Own tools/go-full/product.rb plus tests/go-full and go-full docs only; other workers ownbridge/Tour/GbE. Authenticate relocated SDK against retained native oracle without rewriting raw evidence: product.rb currently wholeJSON SDK equality rejects changed paths. Require exact stable identity fields/archive hashes and new sdk.py full reauthentication; support explicit relocationmanifest /Users/qiangli/.bashy/sprint118/sources/issue8-relocation.json old->new SHA verifiedfiles. Add meaningful negative tests (mutatedgo/archive,wrongmapping,nonpathidentitydiff). Originalnativeevidence /Users/qiangli/.bashy/sprint118/evidence/go-full/native-001; relocatedidentity /Users/qiangli/.bashy/sprint118/sources/go-full-sdk-identity-relocated.json; source /Users/qiangli/.bashy/sprint118/sources/go-full/go; inventorydocs/go-full. Frozenpublishedcandidate /private/tmp/s118-published-002/bashy/bin/bashy manifest /Users/qiangli/.local/state/bashy/sprint118-evidence/published-candidate-002/candidate.json. Afterfixrun complete officialproduct ledger (all3495roots, no cap, no flagshard forclosure); negative521 may run first forfastdiagnostics butreport partialnotfull. GOMAX2 subprocessbounded. Send early cluster diagnostics and exactminimalrepros. Nativepassed roots doNOTgrantproductcredit; no native forwarding originalprogrambody; no changedupstreambytes; no waiver. Commit proper Sprint118 Story-ID trailers, no push/merge/closure/subagents. 30min bounded deliverable is relocationproof +completeattemptledger/missing-phasecounts (allrootcoverage evenifFAIL). Parent6f0c4d9a31be.
-
-Manager assignment correction, 2026-09-09: internal worker Mill (`s118-native-types`) now owns authentication and resume implementation in an isolated checkout. AGY weave19 commit04475f8 is rejected pending review fixes: unauthenticated legacy resume, duplicate IDs, undefined SDK variable, and reliance on reclaimed paths. Original evidence remains preserved; no full official acceptance is claimed.
+Candidate018 replaces stale published-002 references. Frozen read-only root /private/tmp/s118-runtime-018; manifest /Users/qiangli/.local/state/bashy/sprint118-evidence/runtime-integration-018/candidate.json SHA a927efce4f80e392f78c9552e0a0f6f3465f1921d1a8fcc3ae7976e02250fdd2; launcher /private/tmp/s118-runtime-018/bashy/bin/bashy; sh 071f2409490641f3ae64ad45560164ca8f60506d; bashy 118bb3f6841a57a7010b7858bf02564c445416f7. First add exact reviewed candidate binding needed by official product validation without editing the frozen tree. Reuse authenticated relocated Go 1.27 SDK and retained native oracle. Run all 3495 roots with GOMAXPROCS=2 and GOFLAGS=-p=2; if the 30-minute cap ends first, retain a complete-attempt ledger and exact missing phase counts without claiming completion. No original-source rewrite, no native-only product credit, no push/merge/closure. Commit with Sprint: #118, Story: #17, Story-ID: b5d3bd1bd24c.
