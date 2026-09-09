@@ -42,7 +42,7 @@ class GoByExampleGateContractTest < Minitest::Test
       stage = Corpus.capture([RbConfig.ruby, '-e', 'File.write(ARGV.fetch(0), "changed")', path], cwd: @root,
                              env: {}, timeout: 5, log_prefix: File.join(Dir.tmpdir, "gbe-contract-#{Process.pid}-#{name}"))
       assert Corpus.success?(stage)
-      result = GoByExampleInputs.enforce({'state' => 'complete'}, [binding])
+      result = GoByExampleInputs.enforce({'state' => 'complete'}, [binding], [:shared])
       assert_equal 'input_mutation', result.fetch('state')
       File.binwrite(path, before)
       [stage['stdout']['path'], stage['stderr']['path']].each { |log| File.delete(log) }
@@ -56,6 +56,153 @@ class GoByExampleGateContractTest < Minitest::Test
     File.write(File.join(left, 'original.go'), 'changed')
     refute compiled.unchanged?
     assert interpreted.unchanged?
+  end
+
+  # --- Sprint 118 / Story #3: mode-scoped input bindings -------------------
+  #
+  # candidate007 made examples/signals and examples/tcp-server actually reach
+  # their blocking call instead of exiting early with a diagnostic, so for the
+  # first time the interpreted run was terminated by a signal (SIGINT from the
+  # signal_injector adapter; SIGKILL at the run deadline). Killed that way the
+  # interpreter never unlinks the .bashpp-eval-<n>/ scratch directory it creates
+  # BESIDE the source file, so an entry appeared in src/interpreted. That is a
+  # real mutation of a bound tree and the interpreted attempt must fail for it.
+  #
+  # What must NOT happen is what did happen: a single flat binding list meant
+  # the interpreted leftover also made the *compiled* spawn guard false, so the
+  # compiled run never started even though its own inputs were intact and its
+  # native binary had already built. Two attempts were recorded unspawned and
+  # the 255-attempt replay came back incomplete.
+
+  def leftover_interpreter_scratch(dir)
+    scratch = File.join(dir, '.bashpp-eval-1850870387')
+    FileUtils.mkdir_p(scratch)
+    File.write(File.join(scratch, 'bashpp-session-166838444.go'), 'package main')
+    scratch
+  end
+
+  def test_interpreter_scratch_leak_fails_its_own_mode_and_not_the_others
+    trees = %w[interpreted compiled].to_h do |mode|
+      dir = File.join(@root, 'src', mode)
+      FileUtils.mkdir_p(dir)
+      File.write(File.join(dir, 'signals.go'), 'package main')
+      [mode, dir]
+    end
+    corpus = File.join(@root, 'examples', 'signals')
+    FileUtils.mkdir_p(corpus)
+    File.write(File.join(corpus, 'signals.go'), 'package main')
+
+    bindings = [GoByExampleInputs.new(corpus, scope: :shared),
+                GoByExampleInputs.new(trees.fetch('interpreted'), scope: :interpreted),
+                GoByExampleInputs.new(trees.fetch('compiled'), scope: :compiled)]
+
+    # A signal-killed interpreter leaves its scratch directory behind.
+    leftover_interpreter_scratch(trees.fetch('interpreted'))
+
+    # The mode that leaked is charged, and the evidence names the tree.
+    interpreted = GoByExampleInputs.enforce({'state' => 'complete'}, bindings, [:shared, :interpreted])
+    assert_equal 'input_mutation', interpreted.fetch('state')
+    assert_includes interpreted.fetch('detail'), trees.fetch('interpreted')
+    assert_includes interpreted.fetch('detail'), '.bashpp-eval-1850870387'
+    refute GoByExampleInputs.intact?(bindings, [:shared, :interpreted])
+
+    # The modes that did not leak still hold intact inputs and must still run.
+    assert GoByExampleInputs.intact?(bindings, [:shared, :compiled]),
+           'compiled inputs were untouched; its run must not be suppressed'
+    compiled = GoByExampleInputs.enforce({'state' => 'complete'}, bindings, [:shared, :compiled])
+    assert_equal 'complete', compiled.fetch('state')
+    assert_nil compiled['detail']
+  end
+
+  # The same defect driven through the real capture lifecycle: a child that
+  # creates its scratch directory beside the source and then blocks is killed at
+  # the deadline exactly as bashy was on examples/tcp-server, so the cleanup it
+  # would have run on a normal exit never happens.
+  def test_deadline_killed_child_leaks_scratch_and_only_its_own_mode_fails
+    interpreted = File.join(@root, 'src', 'interpreted')
+    compiled = File.join(@root, 'src', 'compiled')
+    [interpreted, compiled].each do |dir|
+      FileUtils.mkdir_p(dir)
+      File.write(File.join(dir, 'tcp-server.go'), 'package main')
+    end
+    bindings = [GoByExampleInputs.new(interpreted, scope: :interpreted),
+                GoByExampleInputs.new(compiled, scope: :compiled)]
+
+    program = <<~RUBY
+      scratch = File.join(ARGV.fetch(0), ".bashpp-eval-343973846")
+      Dir.mkdir(scratch)
+      File.write(File.join(scratch, "bashpp-session-3253152031.go"), "package main")
+      at_exit { FileUtils.rm_rf(scratch) }   # never reached: we are killed
+      sleep 30
+    RUBY
+    stage = Corpus.capture([RbConfig.ruby, '-rfileutils', '-e', program, interpreted],
+                           cwd: @root, env: {}, timeout: 2,
+                           log_prefix: File.join(Dir.tmpdir, "gbe-lifecycle-#{Process.pid}"))
+    refute Corpus.success?(stage), 'the child must have been terminated, not have exited cleanly'
+    assert File.directory?(File.join(interpreted, '.bashpp-eval-343973846')),
+           'the killed child must have left its scratch directory behind'
+
+    result = GoByExampleInputs.enforce({'state' => 'complete'}, bindings, [:shared, :interpreted])
+    assert_equal 'input_mutation', result.fetch('state')
+    assert GoByExampleInputs.intact?(bindings, [:shared, :compiled]),
+           'a leak confined to src/interpreted must not suppress the compiled run'
+    [stage['stdout']['path'], stage['stderr']['path']].each { |log| File.delete(log) if File.exist?(log) }
+  end
+
+  def test_shared_tree_mutation_still_fails_every_mode
+    corpus = File.join(@root, 'examples', 'signals')
+    binaries = File.join(@root, 'bin')
+    [corpus, binaries].each { |dir| FileUtils.mkdir_p(dir) }
+    File.write(File.join(corpus, 'signals.go'), 'package main')
+    File.write(File.join(binaries, 'oracle'), 'ELF')
+    private_tree = File.join(@root, 'src', 'compiled')
+    FileUtils.mkdir_p(private_tree)
+    File.write(File.join(private_tree, 'signals.go'), 'package main')
+
+    bindings = [GoByExampleInputs.new(corpus, scope: :shared),
+                GoByExampleInputs.new(binaries, scope: :shared),
+                GoByExampleInputs.new(private_tree, scope: :compiled)]
+
+    # Tampering with the pinned corpus bytes, or with the binaries every mode
+    # executes, is not attributable to one mode and must fail all of them.
+    File.write(File.join(corpus, 'signals.go'), 'package main // tampered')
+    File.write(File.join(binaries, 'oracle'), 'ELF-tampered')
+    GoByExampleInputs::SCOPES.each do |scope|
+      refute GoByExampleInputs.intact?(bindings, [:shared, scope]),
+             "shared mutation must fail scope #{scope}"
+      result = GoByExampleInputs.enforce({'state' => 'complete'}, bindings, [:shared, scope])
+      assert_equal 'input_mutation', result.fetch('state')
+      assert_includes result.fetch('detail'), corpus
+    end
+  end
+
+  def test_scoping_never_licenses_an_addition_a_binding_did_not_declare
+    dir = File.join(@root, 'src', 'interpreted')
+    FileUtils.mkdir_p(dir)
+    File.write(File.join(dir, 'signals.go'), 'package main')
+    binding = GoByExampleInputs.new(dir, scope: :interpreted)
+    # A dotted scratch directory is still an addition, and additions were not
+    # declared for a product source tree.
+    leftover_interpreter_scratch(dir)
+    refute binding.unchanged?
+    assert(binding.changes.any? { |c| c.start_with?('+') && c.include?('.bashpp-eval') })
+  end
+
+  def test_removing_a_bound_entry_is_a_mutation_even_where_additions_are_allowed
+    dir = File.join(@root, 'build')
+    FileUtils.mkdir_p(dir)
+    File.write(File.join(dir, 'main.go'), 'package main')
+    binding = GoByExampleInputs.new(dir, allow_additions: true, scope: :compiled)
+    File.write(File.join(dir, 'go.sum'), 'metadata')
+    assert binding.unchanged?
+    File.delete(File.join(dir, 'main.go'))
+    refute binding.unchanged?
+    assert(binding.changes.any? { |c| c == '!main.go' })
+  end
+
+  def test_binding_scope_must_be_declared_from_the_known_set
+    FileUtils.mkdir_p(@root)
+    assert_raises(ArgumentError) { GoByExampleInputs.new(@root, scope: :everything) }
   end
 
   def test_build_metadata_additions_do_not_license_input_mutation

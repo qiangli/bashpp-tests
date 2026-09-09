@@ -778,19 +778,21 @@ begin
 
     stages = {"oracle" => [], "interpreted" => [], "compiled" => []}
     binaries = {}
-    input_bindings = [GoByExampleInputs.new(File.dirname(ROOT + "/" + path))]
+    # The pinned corpus directory and work/bin are read by every mode; each
+    # staging tree below is handed to exactly one mode and is scoped to it.
+    input_bindings = [GoByExampleInputs.new(File.dirname(ROOT + "/" + path), scope: :shared)]
 
     # -- oracle: build the pinned bytes natively, then run the binary.
     oracle_src = work + "/src/oracle"
     stage_sources(oracle_src, row, test_row ? "main_test.go" : name)
     File.write(oracle_src + "/go.mod", GO_MOD_ORACLE)
-    input_bindings << GoByExampleInputs.new(oracle_src, allow_additions: true)
+    input_bindings << GoByExampleInputs.new(oracle_src, allow_additions: true, scope: :oracle)
     oracle_bin = work + "/bin/oracle"
     FileUtils.mkdir_p(work + "/bin")
     oracle_build = run(test_row ? [GO, "test", "-c", "-o", oracle_bin, "."] : [GO, "build", "-o", oracle_bin, "."],
                        oracle_src, benv, "", deadline, BUILD_LIMIT, path, [],
                        work + "/stage/oracle-build", work + "/logs/oracle-build")
-    GoByExampleInputs.enforce(oracle_build, input_bindings)
+    GoByExampleInputs.enforce(oracle_build, input_bindings, %i[shared oracle])
     stages["oracle"] << stage_record(test_row ? "oracle-test-build" : "oracle-build", oracle_build, replacements,
                                      "source_sha256" => row[7])
     if stage_ok?(oracle_build) && File.file?(oracle_bin) && File.executable?(oracle_bin) && native?(oracle_bin)
@@ -812,7 +814,7 @@ begin
         inputs << driver
       end
       fatal("staged product source diverged from the pinned bytes: #{path}") unless sha(product_src + "/" + name) == row[7]
-      input_bindings << GoByExampleInputs.new(product_src)
+      input_bindings << GoByExampleInputs.new(product_src, scope: mode.to_sym)
       product_inputs[mode] = inputs.to_h { |file| [file, Corpus.file_record(file)] }
       source_arguments[mode] = inputs.size == 1 ? [inputs.first] : inputs.flat_map { |file| ["--go-file", file] }
     end
@@ -825,7 +827,7 @@ begin
     transpile = run([BASHY, "transpile", "--bashpp", "--source=go", *source_arguments.fetch("compiled"), "-o", generated, "--map", source_map],
                     transpile_dir, benv, "", deadline, TRANSPILE_LIMIT, path, [],
                     work + "/stage/transpile", work + "/logs/transpile")
-    GoByExampleInputs.enforce(transpile, input_bindings)
+    GoByExampleInputs.enforce(transpile, input_bindings, %i[shared compiled])
     stages["compiled"] << stage_record("transpile", transpile, replacements, "source_sha256" => row[7], "input_sha256" => product_inputs.fetch("compiled").transform_values { |r| r.fetch("sha256") })
     lowered_ok = stage_ok?(transpile) && File.size?(generated)
     if lowered_ok
@@ -840,7 +842,7 @@ begin
         stages["compiled"].last["source_map_file"] = Corpus.file_record(source_map)
         stages["compiled"].last["source_inputs"] = product_inputs.fetch("compiled")
         stages["compiled"].last["source_map_sha256"] = sha(source_map)
-        input_bindings << GoByExampleInputs.new(transpile_dir)
+        input_bindings << GoByExampleInputs.new(transpile_dir, scope: :compiled)
       else
         lowered_ok = false
         stages["compiled"].last["state"] = "invalid_source_map"
@@ -852,11 +854,11 @@ begin
       stage_assets(build_dir, row)
       File.write(build_dir + "/go.mod", GO_MOD_LOWERED)
       FileUtils.cp(generated, build_dir + "/main.go")
-      input_bindings << GoByExampleInputs.new(build_dir, allow_additions: true)
+      input_bindings << GoByExampleInputs.new(build_dir, allow_additions: true, scope: :compiled)
       lowered_bin = work + "/bin/lowered"
       build = run([GO, "build", "-o", lowered_bin, "."], build_dir, benv, "", deadline, BUILD_LIMIT, path, [],
                   work + "/stage/build", work + "/logs/build")
-      GoByExampleInputs.enforce(build, input_bindings)
+      GoByExampleInputs.enforce(build, input_bindings, %i[shared compiled])
       stages["compiled"] << stage_record("build", build, replacements, "generated_go_sha256" => sha(generated))
       if stage_ok?(build) && File.file?(lowered_bin) && File.executable?(lowered_bin) && native?(lowered_bin)
         binaries["compiled"] = lowered_bin
@@ -866,7 +868,7 @@ begin
       end
     end
 
-    input_bindings << GoByExampleInputs.new(work + "/bin")
+    input_bindings << GoByExampleInputs.new(work + "/bin", scope: :shared)
 
     # -- three runs, each in its own freshly constructed execution root.
     observations = {}
@@ -887,7 +889,7 @@ begin
       configuration = GoByExampleRuntimeConfig.configure(GO, root, env, deadline: deadline, log_prefix: work + "/logs/config-" + mode)
       before = snapshot(root)
       result =
-        if command && input_bindings.all?(&:unchanged?) && configuration["state"] == "complete"
+        if command && GoByExampleInputs.intact?(input_bindings, [:shared, mode.to_sym]) && configuration["state"] == "complete"
           run(command, root, env, input, deadline, RUN_LIMIT, path, run_adapters, adapter_dir,
               work + "/logs/run-" + mode, launch: true)
         else
@@ -896,7 +898,7 @@ begin
            "command" => [], "detail" => "no runnable artifact: #{missing} did not produce one"}
         end
       result["state"] = "configuration_failure" if configuration["state"] != "complete"
-      GoByExampleInputs.enforce(result, input_bindings)
+      GoByExampleInputs.enforce(result, input_bindings, [:shared, mode.to_sym])
       after = snapshot(root)
       effects = begin
         effect_digest(before, after, normalizations)
