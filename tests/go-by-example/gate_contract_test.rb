@@ -149,6 +149,27 @@ class GoByExampleGateContractTest < Minitest::Test
     [stage['stdout']['path'], stage['stderr']['path']].each { |log| File.delete(log) if File.exist?(log) }
   end
 
+  # gate.rb joins its adapter threads inside an `ensure`. Thread#join re-raises
+  # whatever the adapter raised, so a fixture failure -- examples/tcp-server's
+  # loopback_server peer resetting the connection -- escaped every rescue and
+  # aborted the whole 255-attempt replay. It must be charged to one attempt.
+  def test_adapter_thread_failure_is_recorded_not_propagated
+    result = {'state' => 'complete'}
+    thread = Thread.new { raise Errno::ECONNRESET, 'io_fillbuf - fd:13' }
+    thread.report_on_exception = false
+    joined =
+      begin
+        thread.join(5)
+      rescue StandardError => e
+        result['state'] = 'adapter_error'
+        result['detail'] = "#{e.class}: #{e.message}"
+        :raised
+      end
+    assert_equal :raised, joined, 'Thread#join must be assumed to re-raise'
+    assert_equal 'adapter_error', result.fetch('state')
+    assert_includes result.fetch('detail'), 'ECONNRESET'
+  end
+
   def test_shared_tree_mutation_still_fails_every_mode
     corpus = File.join(@root, 'examples', 'signals')
     binaries = File.join(@root, 'bin')

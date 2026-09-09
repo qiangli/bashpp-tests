@@ -323,6 +323,14 @@ end
 # a readiness line it observed, and what keeps a descendant that escaped into
 # its own session -- invisible to Corpus.capture's kill(0, -pgid) -- reported as
 # a leak rather than a clean exit. Neither needs a second spawn or timer.
+# An adapter failure is surfaced deterministically at join; the interpreter's
+# own stderr dump would only add unattributed noise to the replay log.
+def adapter_thread(&block)
+  thread = Thread.new(&block)
+  thread.report_on_exception = false
+  thread
+end
+
 def run(cmd, cwd, env, input, outer, child_limit, path, adapters, adapter_dir, log_prefix, launch: false)
   result = {"exit" => nil, "state" => "unspawned", "spawned" => false, "stdout" => "", "stderr" => "", "command" => cmd}
   budget = [left(outer), child_limit].min
@@ -361,7 +369,7 @@ def run(cmd, cwd, env, input, outer, child_limit, path, adapters, adapter_dir, l
       result["launch_argv"] = argv
     end
     if adapters.include?("loopback_server")
-      threads << Thread.new do
+      threads << adapter_thread do
         pid = published_pid(pidfile, deadline, stop)
         next if pid.nil?
         drive(path, deadline, stop)
@@ -375,7 +383,7 @@ def run(cmd, cwd, env, input, outer, child_limit, path, adapters, adapter_dir, l
       # disposition, so both sides produced empty output and the example's
       # actual behaviour was never observed. The readiness line is read from the
       # durable stdout log Corpus.capture is writing.
-      threads << Thread.new do
+      threads << adapter_thread do
         pid = published_pid(pidfile, deadline, stop)
         next if pid.nil?
         sig("INT", pid) if await_output(log_prefix + ".stdout", deadline, stop)
@@ -392,17 +400,22 @@ def run(cmd, cwd, env, input, outer, child_limit, path, adapters, adapter_dir, l
   ensure
     stop[0] = true
     threads.each do |thread|
-      unless thread.join(CLEANUP_LIMIT)
-        result["state"] = "cleanup_error"
-        result["detail"] = [result["detail"], "adapter thread did not join within cleanup bound"].compact.join("; ")
-        thread.kill
-        thread.join(CLEANUP_LIMIT)
-      end
+      # Thread#join RE-RAISES whatever the adapter raised, so the rescue has to
+      # wrap the join itself. It used to wrap only the following thread.value,
+      # which join can never reach: a fixture that raised -- a peer resetting
+      # the connection, a bad response line -- escaped from inside this ensure,
+      # past every rescue in `run`, and aborted the whole 255-attempt replay
+      # instead of being recorded against the one attempt it describes.
       begin
-        thread.value
+        unless thread.join(CLEANUP_LIMIT)
+          result["state"] = "cleanup_error"
+          result["detail"] = [result["detail"], "adapter thread did not join within cleanup bound"].compact.join("; ")
+          thread.kill
+          thread.join(CLEANUP_LIMIT)
+        end
       rescue StandardError => e
         result["state"] = "adapter_error"
-        result["detail"] = [result["detail"], e.message].compact.join("; ")
+        result["detail"] = [result["detail"], "#{e.class}: #{e.message}"].compact.join("; ")
       end
     end
     unless !origin || origin.close
