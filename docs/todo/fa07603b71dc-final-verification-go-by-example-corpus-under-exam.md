@@ -3,10 +3,9 @@ id: fa07603b71dc
 kind: task
 title: 'Final verification: Go by Example corpus under examples/'
 seq: 3
-status: assigned
+status: todo
 priority: p1
 created: 2026-09-03T09:45:35.902827Z
-weave: 12
 assignee: qiangli
 sprint: 118
 ---
