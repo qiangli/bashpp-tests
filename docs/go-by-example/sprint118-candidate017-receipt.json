@@ -1,0 +1,121 @@
+{
+  "schema": "sprint118-go-by-example-receipt/v1",
+  "date": "2026-09-09",
+  "candidate": "017",
+  "story": "Sprint118/Story3/fa07603b71dc",
+  "verdict": "fail",
+  "sh_commit": "037aaf8687e0aa049efb4f7a2dceb3a4941e9bbc",
+  "bashy_commit": "fdd3fac99579b9b923c5c6389a943c986f697a80",
+  "harness_commit": "cf3e444cca26c1d42bfd5119aa3901465c80576a",
+  "candidate_manifest_sha256": "bb531a83039cd10679b91a840c9196a64e3f89e449a049f22c216db498c2010e",
+  "launcher_sha256": "454c25a8cfb70a45e2bcb4fe57f64e7726164ed1ec8b7e46f3c243f4b87930a4",
+  "payload_sha256": "e62f337ae8303815a40e3d04bd9f8f3805a12625d4b85ddf08c97fdab6c9e798",
+  "raw_ledger_sha256": "94a917a8397fff8399a5df5c4c78e913b0baa8c41129c76230d86435505bab5a",
+  "root_digest": "0590f81a612ec62a8676497a7f82a1130935187751a1eec14de3b7c89c33db25",
+  "public_ledger_sha256": "827fe71cb2e3378663b887353cd53ab5acf18d95da71c62b49d4e6a0c0e126c2",
+  "rows": 85,
+  "observations": 255,
+  "executed": 255,
+  "missing_or_unspawned": 0,
+  "mode_results": {
+    "oracle": {
+      "pass": 85
+    },
+    "interpreted": {
+      "fail_mismatch": 29,
+      "pass": 52,
+      "fail_normalization": 4
+    },
+    "compiled": {
+      "pass": 85
+    }
+  },
+  "execution_seconds": 256.115,
+  "source_and_behavior_contracts_unchanged_from013": {
+    "corpus_sha256": {
+      "old": "57712273341a7918cf8ae8829aee43f86c09e04720989592897eb7e40d8060c2",
+      "new": "57712273341a7918cf8ae8829aee43f86c09e04720989592897eb7e40d8060c2",
+      "equal": true
+    },
+    "behavior_schema_sha256": {
+      "old": "2d8c0a55b9d5542b4c058a15a49a59dd5bb483df9524a4143652f26df6380d05",
+      "new": "2d8c0a55b9d5542b4c058a15a49a59dd5bb483df9524a4143652f26df6380d05",
+      "equal": true
+    },
+    "classification_sha256": {
+      "old": "bfe087332a2b4deb702503b39c0e390d84d1b60f0f2716acc8b476bb7b78bad2",
+      "new": "bfe087332a2b4deb702503b39c0e390d84d1b60f0f2716acc8b476bb7b78bad2",
+      "equal": true
+    },
+    "normalizer_sha256": {
+      "old": "b719001e94b92c3c7520f28183bf3f44e508de5022a63eaf58cfe4d8b72cf27e",
+      "new": "b719001e94b92c3c7520f28183bf3f44e508de5022a63eaf58cfe4d8b72cf27e",
+      "equal": true
+    },
+    "toolchain_sha256": {
+      "old": "eeacfc3b3099230756edd4abdfecc416bc19149d3fcb10d8dd0dedcb0ac0dcb6",
+      "new": "eeacfc3b3099230756edd4abdfecc416bc19149d3fcb10d8dd0dedcb0ac0dcb6",
+      "equal": true
+    },
+    "go_sha256": {
+      "old": "a19a71df81715c12d9a7e81bab036c12696fec1ddbd4258b48a2131a9080b267",
+      "new": "a19a71df81715c12d9a7e81bab036c12696fec1ddbd4258b48a2131a9080b267",
+      "equal": true
+    }
+  },
+  "source_and_behavior_contracts_unchanged_from016": {
+    "corpus_sha256": {
+      "old": "57712273341a7918cf8ae8829aee43f86c09e04720989592897eb7e40d8060c2",
+      "new": "57712273341a7918cf8ae8829aee43f86c09e04720989592897eb7e40d8060c2",
+      "equal": true
+    },
+    "behavior_schema_sha256": {
+      "old": "2d8c0a55b9d5542b4c058a15a49a59dd5bb483df9524a4143652f26df6380d05",
+      "new": "2d8c0a55b9d5542b4c058a15a49a59dd5bb483df9524a4143652f26df6380d05",
+      "equal": true
+    },
+    "classification_sha256": {
+      "old": "bfe087332a2b4deb702503b39c0e390d84d1b60f0f2716acc8b476bb7b78bad2",
+      "new": "bfe087332a2b4deb702503b39c0e390d84d1b60f0f2716acc8b476bb7b78bad2",
+      "equal": true
+    },
+    "normalizer_sha256": {
+      "old": "b719001e94b92c3c7520f28183bf3f44e508de5022a63eaf58cfe4d8b72cf27e",
+      "new": "b719001e94b92c3c7520f28183bf3f44e508de5022a63eaf58cfe4d8b72cf27e",
+      "equal": true
+    },
+    "toolchain_sha256": {
+      "old": "eeacfc3b3099230756edd4abdfecc416bc19149d3fcb10d8dd0dedcb0ac0dcb6",
+      "new": "eeacfc3b3099230756edd4abdfecc416bc19149d3fcb10d8dd0dedcb0ac0dcb6",
+      "equal": true
+    },
+    "go_sha256": {
+      "old": "a19a71df81715c12d9a7e81bab036c12696fec1ddbd4258b48a2131a9080b267",
+      "new": "a19a71df81715c12d9a7e81bab036c12696fec1ddbd4258b48a2131a9080b267",
+      "equal": true
+    }
+  },
+  "baseline013_ledger_sha256": "b8dcde01e386bfdf634270ab52be1072b1a7c6786598497f8cce3a592b3705aa",
+  "baseline016_ledger_sha256": "331aacd3b72a58690f7e9bb1cd3ca9a773a1880e5b271763a1670eb42fce30ab",
+  "gains_vs013": [],
+  "regressions_vs013": [],
+  "gains_vs016": [
+    {
+      "path": "examples/tickers/tickers.go",
+      "mode": "interpreted",
+      "before": "fail_normalization",
+      "after": "pass",
+      "gain": true,
+      "regression": false
+    }
+  ],
+  "regressions_vs016": [],
+  "retained_validator": "PASS authenticated FAIL evidence",
+  "retained_tamper_controls": {
+    "total": 5,
+    "rejected": 5
+  },
+  "story_closure_eligible": false,
+  "sprint_complete": false,
+  "full_go_complete": false
+}

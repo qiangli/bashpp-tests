@@ -1,0 +1,48 @@
+{
+  "schema": "sprint118-tour-acceptance-receipt/v1",
+  "date": "2026-09-09",
+  "candidate": "017",
+  "sh_commit": "037aaf8687e0aa049efb4f7a2dceb3a4941e9bbc",
+  "bashy_commit": "fdd3fac99579b9b923c5c6389a943c986f697a80",
+  "harness_commit": "d728cdda6de7096c59859e06aebd2366ed55a47d",
+  "candidate_manifest_sha256": "bb531a83039cd10679b91a840c9196a64e3f89e449a049f22c216db498c2010e",
+  "launcher_sha256": "454c25a8cfb70a45e2bcb4fe57f64e7726164ed1ec8b7e46f3c243f4b87930a4",
+  "payload_sha256": "e62f337ae8303815a40e3d04bd9f8f3805a12625d4b85ddf08c97fdab6c9e798",
+  "raw_ledger_sha256": "9f309052cc3c938b08f706a61e165c0bf0a2a8736f44bd844f30f71b9214f342",
+  "root_sha256": "33c8721ec2dcff6804185568f8972088b68615cf76819cb0d103f9f5f3b83079",
+  "inventory_rows": 168,
+  "programs": 97,
+  "runnable_programs": 93,
+  "build_only_programs": 4,
+  "inline_fragments": 62,
+  "explicit_nobuild_programs": 9,
+  "observations": 291,
+  "mode_results": {
+    "baseline": {
+      "PASS": 97
+    },
+    "interpreted": {
+      "PASS": 97
+    },
+    "compiled": {
+      "PASS": 97
+    }
+  },
+  "oracle_rows": 11,
+  "oracle_runs": 77,
+  "completed_stages": 574,
+  "verified_raw_stream_files": 1302,
+  "verified_artifact_references": 388,
+  "verified_source_maps": 97,
+  "unique_verified_files": 1787,
+  "offline_gate": "PASS",
+  "retained_integrity_audit": "PASS",
+  "manager_retained_gate_duration": "457ms",
+  "manager_full_execution_duration": "4m35.871s",
+  "story4_tour_criteria": "MET; no story mutation in this receipt",
+  "story1_tour_parity": "PRESERVED; no new release or sprint-wide certification",
+  "sprint_complete": false,
+  "go_full_complete": false,
+  "ledger_sha256": "d24acf3803147f356a21e863f7130610fa1ba1723972589198527a2a6f666f7e",
+  "inventory_ledger_sha256": "47469757373e044374cb5e252ed236fdf48e6ba48058381eb5ba60d8c8dbc543"
+}
