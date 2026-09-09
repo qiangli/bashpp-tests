@@ -46,8 +46,8 @@ class TypecheckerRecipeOptionsTest < Minitest::Test
       File.write(File.join(dir, 'src/other.go'), "package p\n")
 
       flagged = { 'axis' => 'typechecker', 'input_files' => ['src/flagged.go'], 'build_constraints' => { 'src/flagged.go' => [] } }
-      assert_equal ['harness-flag:-lang'], GoFullTypechecker.unsupported_options(flagged, dir)
-      refute GoFullTypechecker.adaptable?(flagged, dir)
+      assert_empty GoFullTypechecker.unsupported_options(flagged, dir)
+      assert GoFullTypechecker.adaptable?(flagged, dir)
 
       gated = { 'axis' => 'typechecker', 'input_files' => ['src/plain.go'], 'build_constraints' => { 'src/plain.go' => ['//go:build ignore'] } }
       assert_equal ['build-tag-applicability:src/plain.go'], GoFullTypechecker.unsupported_options(gated, dir)
@@ -88,8 +88,8 @@ class TypecheckerRecipeOptionsTest < Minitest::Test
     assert_equal 743, roots.length
     adaptable, unsupported = roots.partition { |root| GoFullTypechecker.adaptable?(root, SOURCE_ROOT) }
     assert_equal 743, adaptable.length + unsupported.length
-    assert_equal 663, adaptable.length
-    assert_equal 80, unsupported.length
+    assert_equal 713, adaptable.length
+    assert_equal 30, unsupported.length
     # Every unsupported root names why, and still owes both obligations.
     unsupported.each do |root|
       refute_empty GoFullTypechecker.unsupported_options(root, SOURCE_ROOT), root.fetch('id')

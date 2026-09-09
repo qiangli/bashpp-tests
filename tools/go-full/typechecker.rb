@@ -19,7 +19,7 @@
 #   * no fixture body is forwarded, rewritten, reformatted or regenerated;
 #   * an exit status alone never establishes a PASS - every observed diagnostic
 #     must consume an annotation and every annotation must be reported;
-#   * exact recipe options this adapter cannot honour (harness flags, build-tag
+#   * exact recipe options this adapter cannot honour (other harness flags, build-tag
 #     gating, multi-file packages) FAIL with their obligations named as
 #     unfinished phases. They are never converted into a new skip.
 require 'json'
@@ -47,6 +47,33 @@ module GoFullTypechecker
     rest[0...stop].split
   end
 
+  # Parse the supported upstream flag without changing any fixture bytes.
+  # Like flag.FlagSet, repeated -lang values use the last value. Everything
+  # else remains an explicit unsupported option, never a silent default.
+  def checker_flags(source)
+    flags = recipe_flags(source)
+    unsupported = []
+    version = nil
+    index = 0
+    while index < flags.length
+      flag = flags[index]
+      if flag == '-lang'
+        index += 1
+        version = flags[index]
+        unsupported << 'harness-flag:-lang:missing-value' unless version
+      elsif flag.start_with?('-lang=')
+        version = flag.delete_prefix('-lang=')
+      else
+        unsupported << "harness-flag:#{flag.split('=', 2).first}"
+      end
+      index += 1
+    end
+    if version && !/\Ago1\.(?:0|[1-9]\d*)(?:\.(?:0|[1-9]\d*))?\z/.match?(version)
+      unsupported << 'harness-flag:-lang:invalid-value'
+    end
+    { 'flags' => flags, 'go_version' => version, 'unsupported' => unsupported.uniq.sort }
+  end
+
   # Every exact recipe option of this root that the adapter cannot execute.
   # An empty list means both phases can be attempted for real.
   def unsupported_options(root, source_root)
@@ -58,9 +85,7 @@ module GoFullTypechecker
     end
     files.each do |relative|
       begin
-        recipe_flags(File.binread(Corpus.safe_path(source_root, relative))).each do |flag|
-          reasons << "harness-flag:#{flag.split('=', 2).first}"
-        end
+        reasons.concat(checker_flags(File.binread(Corpus.safe_path(source_root, relative))).fetch('unsupported'))
       rescue Corpus::ContractError, SystemCallError
         # An unreadable or unparsable recipe header is an unexecutable option,
         # never a reason to abandon the surrounding root accounting.
@@ -98,11 +123,12 @@ module GoFullTypechecker
       'scope' => 'adjudicates retained product output only; never type-checks and never runs a fixture' }
   end
 
-  def checking_argv(bashy, mode, selector, generated)
+  def checking_argv(bashy, mode, selector, generated, go_version = nil)
+    version_flags = go_version ? ["--go-version=#{go_version}"] : []
     if mode == 'interpreted'
-      [bashy, '--bashpp', '--source=go', '--check', selector]
+      [bashy, '--bashpp', '--source=go', '--check', *version_flags, selector]
     else
-      [bashy, 'transpile', '--bashpp', '--source=go', selector, '-o', generated, '--map', generated + '.map']
+      [bashy, 'transpile', '--bashpp', '--source=go', *version_flags, selector, '-o', generated, '--map', generated + '.map']
     end
   end
 
@@ -133,9 +159,12 @@ module GoFullTypechecker
   # Executes both checking phases of one adaptable root against the original,
   # byte-identical fixture and adjudicates each against the source annotations.
   def execute(root:, options:, source_root:, evidence:, sdk_identity:, candidate:, matcher:)
+    unsupported = unsupported_options(root, source_root)
+    raise Corpus::ContractError, "unsupported typechecker recipe: #{unsupported.join(', ')}" unless unsupported.empty?
     relative = root.fetch('input_files').fetch(0)
     original = Corpus.safe_path(source_root, relative)
     record = Corpus.file_record(original)
+    configuration = checker_flags(File.binread(original))
     modes = MODES.to_h do |mode|
       directory = Corpus.safe_path(File.join(evidence, 'typechecker'), root.fetch('id') + '/' + mode)
       work = File.join(directory, 'work')
@@ -152,11 +181,11 @@ module GoFullTypechecker
       %w[HOME TMPDIR GOCACHE].each { |key| FileUtils.mkdir_p(env.fetch(key)) }
       Corpus.authenticate_file(options.fetch(:bashy), candidate.fetch('launcher_sha256'))
       Corpus.authenticate_file(options.fetch(:bashy) + '.real', candidate.fetch('payload_sha256'))
-      argv = checking_argv(options.fetch(:bashy), mode, relative, generated)
+      argv = checking_argv(options.fetch(:bashy), mode, relative, generated, configuration.fetch('go_version'))
       stage = Corpus.capture(argv, cwd: work, log_prefix: File.join(directory, 'check'), env: env, timeout: options.fetch(:timeout))
       intact = Corpus.digest(copy) == record.fetch('sha256') && Corpus.digest(original) == record.fetch('sha256')
       intact &&= scaffold.all? { |name, bytes| File.binread(Corpus.safe_path(work, name)) == bytes }
-      observation = { 'module_files' => scaffold.transform_values { |bytes| Digest::SHA256.hexdigest(bytes) }, 'mode' => mode, 'stage_role' => 'checking-phase', 'phases' => PHASES, 'stage' => stage,
+      observation = { 'checker_configuration' => configuration, 'module_files' => scaffold.transform_values { |bytes| Digest::SHA256.hexdigest(bytes) }, 'mode' => mode, 'stage_role' => 'checking-phase', 'phases' => PHASES, 'stage' => stage,
                       'input_integrity' => intact, 'inputs' => { relative => record }, 'verdict' => 'FAIL' }
       if !intact
         next [mode, observation.merge('reason' => 'fixture bytes changed across the checking phase')]
@@ -178,7 +207,7 @@ module GoFullTypechecker
     # agreeing mode is not a complete recipe.
     complete = modes.keys.sort == MODES.sort && modes.values.all? { |m| m['verdict'] == 'PASS' }
     { 'verdict' => complete ? 'PASS' : 'FAIL', 'modes' => modes,
-      'evidence' => { 'adapter' => 'go-full-typechecker/v1', 'phases' => PHASES, 'checked_fixture' => record,
+      'evidence' => { 'adapter' => 'go-full-typechecker/v1', 'checker_configuration' => configuration, 'phases' => PHASES, 'checked_fixture' => record,
                       'column_tolerance' => root.fetch('column_tolerance'), 'family' => root.fetch('family'),
                       'runner_contract' => root.fetch('runner'), 'runner_sha256' => root.fetch('runner_sha256'),
                       'mode_denominator' => { 'expected' => MODES.length, 'observed' => modes.length },

@@ -154,3 +154,11 @@ It also tests archive/tree/scaffold/SDK mutation, extra or missing dependency
 files, symlinks, changed candidate/SDK claims, mutable module flags, duplicate
 dependencies, and wrong retained cache/scaffold evidence. Authored fixture output
 is validator evidence only, not official corpus success.
+
+## Original typechecker language-version recipes
+
+The pinned SDK `go/types/check_test.go` binds first-line `-lang` to `types.Config.GoVersion` (the types2 runner does the same). The product adapter now maps the exact original `-lang=go1.N` or separated `-lang go1.N` value to `--go-version=go1.N` in both checking modes. Repeated values use the last value, as upstream flag.FlagSet does. Unknown flags, absent/invalid values, multi-file checking and build-constraint applicability remain explicit unsupported obligations. No fixture bytes or diagnostics are rewritten.
+
+The original 743-root typechecker inventory remains fixed. Exactly 50 previously unsupported single-file language-version recipes become adaptable: 713 adaptable and 30 still unsupported, including two native-skipped roots. The 16 other language-version recipes retain their independent build-tag blocker. Adaptability is not PASS; both original checking phases and exact annotation matching must still complete.
+
+Mode evidence records the raw recipe flags and checker version alongside exact argv, immutable source hashes and environment/cache provenance. Tool changes invalidate earlier resume contexts; this does not upgrade any previous candidate006 row. New full runs require new candidate/module-context authentication.
