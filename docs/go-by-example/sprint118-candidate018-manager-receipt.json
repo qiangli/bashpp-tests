@@ -1,0 +1,39 @@
+{
+  "bashy_commit": "118bb3f6841a57a7010b7858bf02564c445416f7",
+  "candidate": "018",
+  "candidate_manifest_sha256": "a927efce4f80e392f78c9552e0a0f6f3465f1921d1a8fcc3ae7976e02250fdd2",
+  "date": "2026-09-09",
+  "executed": 255,
+  "execution_seconds": 276.287,
+  "full_go_complete": false,
+  "harness_revision_at_start": "689ed71",
+  "launcher_sha256": "454c25a8cfb70a45e2bcb4fe57f64e7726164ed1ec8b7e46f3c243f4b87930a4",
+  "missing_or_unspawned": 0,
+  "mode_results": {
+    "compiled": {
+      "pass": 85
+    },
+    "interpreted": {
+      "fail_mismatch": 28,
+      "fail_normalization": 4,
+      "pass": 53
+    },
+    "oracle": {
+      "pass": 85
+    }
+  },
+  "observations": 255,
+  "payload_sha256": "c58b7fe28598c737bccc8f2733071ebf12d4608f03a5cf375c116632b2b61ed1",
+  "public_ledger_sha256": "fbbb860db411d41a4bd681c1b823a1e7804ffe335ecd8dd4516cfaa53b095a34",
+  "raw_ledger_path": "/Users/qiangli/.local/state/bashy/sprint118-evidence/runtime-integration-018/gbe-replay-manager-002/results.jsonl.fail",
+  "raw_ledger_sha256": "7a343becdefd79a24a7806a667c750a7a3ea6dad3fd822346e1ecdb1944b938d",
+  "retained_validator": "PASS authenticated FAIL evidence after reviewed root anchor",
+  "root_digest": "77cece26e03c82ff256571e44a713c52adc29e45847bea4e19b6ba1b1195a119",
+  "rows": 85,
+  "schema": "sprint118-go-by-example-manager-receipt/v1",
+  "sh_commit": "071f2409490641f3ae64ad45560164ca8f60506d",
+  "sprint_complete": false,
+  "story": "Sprint118/Story3/fa07603b71dc",
+  "story_closure_eligible": false,
+  "verdict": "fail"
+}
