@@ -125,6 +125,7 @@ candidate =
 candidate['contract_sha256'] = TourExecutor.sha(File.binread(candidate_path))
 candidate_reasons = TourExecutor.candidate_failures(candidate)
 die "candidate binding is incomplete: #{candidate_reasons.join(', ')}" unless candidate_reasons.empty?
+runtime_dependency = TourExecutor.runtime_dependency(candidate)
 
 # --- work root, durable evidence root ---------------------------------------
 
@@ -147,7 +148,7 @@ TOOLCHAIN_PATH = '/usr/bin:/bin'
 # see the input-absence scope recorded on every body stage.
 def base_env(home:, tmp:, gomodcache:, gocache:, goproxy:, goroot:)
   { 'HOME' => home, 'TMPDIR' => tmp, 'LC_ALL' => 'C',
-    'GOROOT' => goroot, 'GOTOOLCHAIN' => 'local', 'GOFLAGS' => '-mod=mod', 'GOPROXY' => goproxy,
+    'GOMAXPROCS' => '2', 'GOROOT' => goroot, 'GOTOOLCHAIN' => 'local', 'GOFLAGS' => '-mod=mod', 'GOPROXY' => goproxy,
     'GOMODCACHE' => gomodcache, 'GOCACHE' => gocache, 'GOPATH' => File.join(home, 'go'),
     'BASHY_HINTS' => 'off', 'BASHY_AGENTIC' => '' }
 end
@@ -156,9 +157,12 @@ end
 # helper module, the upstream LICENSE (BSD redistribution requires the license
 # to travel with the code), and every pinned source verified byte-for-byte
 # against its inventory row on the way in.
-def materialize(mod_dir, corpus_root:, corpus:, items:, go_version:, helper:)
+def materialize(mod_dir, corpus_root:, corpus:, items:, go_version:, helper:, runtime_dependency:)
   FileUtils.mkdir_p(mod_dir)
-  File.write(File.join(mod_dir, 'go.mod'), "module tour.executor.local\n\ngo #{go_version.delete_prefix('go')}\n\nrequire #{helper[0]} #{helper[1]}\n")
+  module_text = "module tour.executor.local\n\ngo #{go_version.delete_prefix('go')}\n\nrequire #{helper[0]} #{helper[1]}\n"
+  module_text += "require #{runtime_dependency.fetch('module')} #{runtime_dependency.fetch('require_version')}\n"
+  module_text += "replace #{runtime_dependency.fetch('module')} => #{JSON.generate(runtime_dependency.fetch('dir'))}\n"
+  File.write(File.join(mod_dir, 'go.mod'), module_text)
   File.write(File.join(mod_dir, 'go.sum'), "#{helper[0]} #{helper[1]} #{helper[4]}\n#{helper[0]} #{helper[1]}/go.mod #{helper[3]}\n")
   # Bashy predates BASHY_HINTS suppression of its one-time startup
   # advertisement; a deterministic agent-config marker keeps that
@@ -206,7 +210,7 @@ end
 provision_dir = File.join(work, 'provision')
 provision_home = File.join(work, 'provision-home')
 FileUtils.mkdir_p([provision_dir, provision_home, File.join(work, 'provision-tmp')])
-materialize(provision_dir, corpus_root: corpus_root, corpus: corpus, items: items, go_version: tc[2], helper: helper)
+materialize(provision_dir, corpus_root: corpus_root, corpus: corpus, items: items, go_version: tc[2], helper: helper, runtime_dependency: runtime_dependency)
 provision_env = base_env(home: provision_home, tmp: File.join(work, 'provision-tmp'), goroot: goroot,
                          gomodcache: gomodcache, gocache: gocache, goproxy: 'https://proxy.golang.org,direct')
                 .merge('PATH' => TOOLCHAIN_PATH)
@@ -257,6 +261,7 @@ manifest = {
             'goroot' => goroot },
   'helper_module' => helper_provision,
   'candidate' => candidate,
+  'runtime_dependency' => runtime_dependency,
   'candidate_failures' => candidate_reasons,
   'volatility' => { 'path' => 'docs/tour/volatility.tsv', 'gate_effect' => 'measurement-record',
                     'rows' => volatility.length,
@@ -268,7 +273,7 @@ manifest = {
                    'sha256' => TourExecutor.sha(File.binread(semantics_path)) },
   'normalizer' => { 'path' => 'tools/tour/normalize.rb', 'sha256' => TourExecutor.sha(File.binread(normalizer)),
                     'version' => `#{RbConfig.ruby} #{normalizer} --version`.strip },
-  'environment' => { 'toolchain_path' => TOOLCHAIN_PATH, 'body_path' => '', 'lc_all' => 'C',
+  'environment' => { 'toolchain_path' => TOOLCHAIN_PATH, 'body_path' => '', 'lc_all' => 'C', 'gomaxprocs' => 2,
                      'goproxy_during_run' => 'off', 'gomodcache' => gomodcache, 'gocache' => gocache,
                      'goroot_shared_by_all_modes' => goroot,
                      'input_absence_scope' => TourExecutor::INPUT_ABSENCE_SCOPE,
@@ -289,7 +294,7 @@ warn "WARN: TOUR_ONLY=#{only} selects #{selected.length}/#{items.length} rows; t
 module_dirs = {}
 TourExecutor::MODES.each do |mode|
   module_dirs[mode] = File.join(work, 'state', mode, 'module')
-  materialize(module_dirs[mode], corpus_root: corpus_root, corpus: corpus, items: items, go_version: tc[2], helper: helper)
+  materialize(module_dirs[mode], corpus_root: corpus_root, corpus: corpus, items: items, go_version: tc[2], helper: helper, runtime_dependency: runtime_dependency)
 end
 
 def stage_record(spec, argv, raw, subs, normalizer, cwd_label:, path_env:)
@@ -485,6 +490,11 @@ selected.each do |item|
 end
 
 TourExecutor::MODES.each { |mode| verify_sources(module_dirs[mode], corpus_root: corpus_root, items: items) }
+# Reauthenticate the exact launcher/payload/source revision set after execution.
+final_candidate = TourExecutor.authenticate_candidate(bashy_path: bashy, manifest_path: File.expand_path(manifest_path), contract: candidate_contract)
+final_candidate['contract_sha256'] = TourExecutor.sha(File.binread(candidate_path))
+die 'candidate changed while the Tour corpus ran' unless final_candidate == candidate
+
 
 # --- summary, root, verdict -------------------------------------------------
 
@@ -500,7 +510,7 @@ summary = { 'type' => 'summary', 'observations' => observations.length, 'program
             'modes' => TourExecutor::MODES, 'outcomes' => counts, 'by_mode' => by_mode,
             'expected_observations' => TourExecutor::OBSERVATIONS,
             'semantic_rows' => oracles.length, 'oracle_runs' => oracles.sum { |o| o['repeats'] },
-            'sources_unchanged' => true }
+            'sources_unchanged' => true, 'candidate_reauthenticated' => true }
 records << summary
 root = { 'type' => 'root', 'algorithm' => 'sha256-canonical-jsonl', 'sha256' => TourExecutor.ledger_root(records) }
 records << root

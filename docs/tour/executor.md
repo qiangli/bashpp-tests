@@ -397,3 +397,10 @@ Previously captured ledgers lack input-artifact observations and cannot satisfy
 this corrected gate. Their raw observations remain diagnostic history; fresh
 execution is required for acceptance. The checked-in failing ledger is such a
 historical diagnostic, not evidence of passing the corrected rules.
+
+The synthetic compilation module also declares `mvdan.cc/sh/v3`, replaced by
+exactly the authenticated candidate's `sh` directory and revision. This permits
+emitted native artifacts to link their compiler runtime without network lookup.
+The dependency is recorded and checked by the gate; it never changes the
+original Go files. Candidate launcher, payload, manifest, and all repository
+revisions are authenticated again after the complete replay.

@@ -46,7 +46,8 @@
 # ends of that table.
 #
 # Process environment (fixed by tools/tour/executor-runner.rb, recorded per
-# stage): LC_ALL=C — matching tools/tour/run-baseline.sh, which produced the
+# stage): GOMAXPROCS=2 in every mode (including native oracle repeats);
+# LC_ALL=C — matching tools/tour/run-baseline.sh, which produced the
 # accepted observations; GOTOOLCHAIN=local; GOFLAGS=-mod=mod; GOPROXY=off after
 # helper provisioning; BASHY_HINTS=off; a FRESH HOME and TMPDIR per (row, mode);
 # and a freshly materialized read-only module tree per mode. GOROOT names the

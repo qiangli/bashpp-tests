@@ -600,6 +600,15 @@ module TourExecutor
     reasons
   end
 
+  # Generated artifacts may import the compiler's runtime. Bind its build
+  # dependency to the authenticated candidate source, never a registry version.
+  def runtime_dependency(candidate)
+    component = candidate.fetch('components').find { |c| c['component'] == 'sh' }
+    raise Corpus::ContractError, 'candidate lacks sh runtime component' unless component && component['bound']
+    { 'module' => 'mvdan.cc/sh/v3', 'require_version' => 'v3.0.0',
+      'dir' => component.fetch('dir'), 'commit' => component.fetch('commit') }
+  end
+
   # ---------------------------------------------------------------- ledger
 
   def ledger_root(records)

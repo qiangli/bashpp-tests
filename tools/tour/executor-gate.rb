@@ -177,6 +177,13 @@ declared_contract.each do |expected|
   bad("candidate:component_repository:#{expected['component']}") unless component['commit'] == repository['commit'] && component['dir'] == repository['path']
 end
 TourExecutor.candidate_failures(candidate).each { |reason| bad(reason) }
+begin
+  bad('runtime_dependency:candidate_binding') unless manifest['runtime_dependency'] == TourExecutor.runtime_dependency(candidate)
+rescue Corpus::ContractError, KeyError => e
+  bad("runtime_dependency:#{e.message}")
+end
+bad('candidate:not_reauthenticated') unless summary['candidate_reauthenticated'] == true
+
 bad('candidate:runner_hid_failures') unless (manifest['candidate_failures'] || []).sort == TourExecutor.candidate_failures(candidate).sort
 # The honest-scope claim, at manifest level.
 bad('input_absence:os_sandbox_claimed') if manifest.dig('environment', 'os_sandbox')

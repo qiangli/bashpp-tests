@@ -491,6 +491,7 @@ def build_ledger(fixture)
     'helper_module' => { 'module' => 'golang.org/x/tour', 'version' => 'v0.1.0', 'license' => 'BSD-3-Clause', 'go_mod_sum' => 'h1:mod=',
                          'zip_sum' => 'h1:zip=', 'packages' => %w[pic reader tree wc],
                          'materialized_dir' => '/fixture/gomodcache/golang.org/x/tour@v0.1.0' },
+    'runtime_dependency' => TourExecutor.runtime_dependency(candidate),
     'candidate' => candidate, 'candidate_failures' => TourExecutor.candidate_failures(candidate),
     'volatility' => { 'path' => 'docs/tour/volatility.tsv', 'gate_effect' => 'measurement-record', 'rows' => 1,
                       'sha256' => sha_of.call('docs/tour/volatility.tsv') },
@@ -571,7 +572,7 @@ def build_ledger(fixture)
   end
   manifest['run_window'] = { 'from' => run_from - 1, 'to' => CLOCK['now'] + 1, 'utc_offset' => Time.now.utc_offset }
   observations = records.select { |r| r['type'] == 'observation' }
-  records << { 'type' => 'summary', 'observations' => observations.length, 'programs' => fixture_items.length,
+  records << { 'type' => 'summary', 'candidate_reauthenticated' => true, 'observations' => observations.length, 'programs' => fixture_items.length,
                'modes' => TourExecutor::MODES, 'outcomes' => { 'PASS' => observations.length },
                'semantic_rows' => records.count { |r| r['type'] == 'oracle' },
                'expected_observations' => TourExecutor::OBSERVATIONS, 'sources_unchanged' => true }
@@ -631,6 +632,11 @@ Dir.mktmpdir('tour-executor-selftest') do |dir|
   end
 
   cases = [
+    ['gate: generated runtime cannot use another sh revision', 'runtime_dependency:candidate_binding', lambda do |records|
+      records.first['runtime_dependency']['commit'] = 'f' * 40
+      records
+    end],
+
     ['gate: compiled run cannot use the native baseline binary', 'argv_identity:', lambda do |records|
       target = records.find { |r| r['type'] == 'observation' && r['mode'] == 'compiled' && r['applicability'] == 'applicable_go_program' }
       baseline = records.find { |r| r['type'] == 'observation' && r['mode'] == 'baseline' && r['path'] == target['path'] }
