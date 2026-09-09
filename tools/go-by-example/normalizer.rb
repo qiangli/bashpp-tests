@@ -31,7 +31,10 @@ require "time"
 module GoByExampleNormalizer
   # VERSION 6 licenses only the pinned closing-channels program's proven
   # partial order; exact event membership and both streams remain checked.
-  VERSION = 6
+  # VERSION 7 (Sprint 118, Story #18) adds the reviewed json.go stream:
+  # exactly two map-derived JSON objects may vary in key order; the remaining
+  # thirteen lines and the object membership remain observable.
+  VERSION = 7
   NAMES = %w[none argv0_path env_listing file_metadata tmp_path ephemeral_port wallclock duration panic_trace random_stream map_order interleave_order closing_channel_order throughput_count pointer_address].freeze
   STDOUT_NAMES = %w[argv0_path env_listing file_metadata tmp_path ephemeral_port duration random_stream map_order interleave_order closing_channel_order throughput_count pointer_address].freeze
   STDERR_NAMES = %w[panic_trace].freeze
@@ -122,11 +125,23 @@ module GoByExampleNormalizer
         output = JSON.generate({"shape" => ["int<100,int<100", "float[0,1)", "float[5,10),float[5,10)", "seeded-pair", "same-seeded-pair"], "tail" => tail[0]})
       when "map_order"
         lines = output.lines
-        raise "map shape" unless lines.size == 8 && lines[0, 2] == ["sum: 9\n", "index: 1\n"] && lines[6, 2] == ["0 103\n", "1 111\n"]
-        pairs = lines[2, 2]
-        keys = lines[4, 2]
-        raise "map members" unless pairs.sort == ["a -> apple\n", "b -> banana\n"] && keys.sort == ["key: a\n", "key: b\n"]
-        output = (lines[0, 2] + pairs.sort + keys.sort + lines[6, 2]).join
+        if lines.size == 8 && lines[0, 2] == ["sum: 9\n", "index: 1\n"] && lines[6, 2] == ["0 103\n", "1 111\n"]
+          pairs = lines[2, 2]
+          keys = lines[4, 2]
+          raise "map members" unless pairs.sort == ["a -> apple\n", "b -> banana\n"] && keys.sort == ["key: a\n", "key: b\n"]
+          output = (lines[0, 2] + pairs.sort + keys.sort + lines[6, 2]).join
+        elsif lines.size == 15
+          # encoding/json/v2 emits these two map[string]int values in map
+          # iteration order. Every other line is retained byte-for-byte.
+          [5, 13].each do |index|
+            value = lines[index]
+            raise "json map members" unless ["{\"apple\":5,\"lettuce\":7}\n", "{\"lettuce\":7,\"apple\":5}\n"].include?(value)
+            lines[index] = "{\"apple\":5,\"lettuce\":7}\n"
+          end
+          output = lines.join
+        else
+          raise "map shape"
+        end
       when "closing_channel_order"
         # Each log follows its send/receive, not the other goroutine's log.
         # Capacity 5 exceeds the three jobs: no additional buffer-full edge.

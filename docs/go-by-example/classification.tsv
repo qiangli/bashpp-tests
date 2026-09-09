@@ -49,7 +49,7 @@ examples/http-client/http-client.go	program	network_client	none	fixed_env,local_
 examples/http-server/http-server.go	program	network_server	none	loopback_server	none
 examples/if-else/if-else.go	program	deterministic	none	none	none
 examples/interfaces/interfaces.go	program	deterministic	none	none	none
-examples/json/json.go	program	deterministic	none	none	none
+examples/json/json.go	program	map_iteration	map_order	none	none
 examples/line-filters/line-filters.go	program	stdin	none	stdin_fixture	none
 examples/logging/logging.go	program	clock	wallclock	none	none
 examples/maps/maps.go	program	deterministic	none	none	none
