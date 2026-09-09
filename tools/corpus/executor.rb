@@ -290,7 +290,7 @@ module Corpus
     # directory argument for multi-file packages (the CLI must support it).
     def execute(id:, source_root:, sources:, assets: [], phase: 'run', args: [], module_files: {}, runtime_env: {}, package_input: nil)
       verify_tools!
-      raise ContractError, 'unknown phase' unless %w[run build].include?(phase)
+      raise ContractError, 'unknown phase' unless %w[run build compile].include?(phase)
       raise ContractError, 'source list empty or duplicated' if sources.empty? || sources.uniq != sources
       raise ContractError, 'overlapping/duplicate inputs' unless (sources + assets).uniq == sources + assets
       raise ContractError, 'module files overlap immutable input' unless (module_files.keys & (sources + assets)).empty?
@@ -352,10 +352,10 @@ module Corpus
       runtime_before = Corpus.snapshot(runtime)
       generated, map, binary = %w[generated.go generated.go.map program].map { |s| File.join(artifacts, s) }
       commands = case mode
-                 when 'baseline' then [['build', [@go, 'build', '-o', binary, input]]]
-                 when 'interpreted' then [[phase == 'build' ? 'check' : 'run', [@bashy, '--bashpp', '--source=go', *(phase == 'build' ? ['--check'] : []), absolute_input, *args]]]
+                 when 'baseline' then [[phase == 'compile' ? 'compile' : 'build', [@go, 'build', '-o', binary, input]]]
+                 when 'interpreted' then [[%w[build compile].include?(phase) ? 'check' : 'run', [@bashy, '--bashpp', '--source=go', *(%w[build compile].include?(phase) ? ['--check'] : []), absolute_input, *args]]]
                  when 'compiled' then [['transpile', [@bashy, 'transpile', '--bashpp', '--source=go', input, '-o', generated, '--map', map]],
-                                       ['build', [@go, 'build', '-o', binary, generated]]]
+                                       [phase == 'compile' ? 'compile' : 'build', [@go, 'build', '-o', binary, generated]]]
                  end
       result = { 'mode' => mode, 'phase' => phase, 'stages' => [], 'artifacts' => {}, 'state' => 'complete', 'source_directory' => work, 'runtime_directory' => runtime, 'input_checks' => [] }
       commands.each do |stage_name, argv|
@@ -386,8 +386,8 @@ module Corpus
           unless Corpus.valid_source_map?(mapping, result['artifacts']['generated'], inputs.slice(*sources))
             result['state'] = 'invalid_source_map'; break
           end
-        elsif stage_name == 'build'
-          unless File.file?(binary) && File.size?(binary) && (phase == 'build' || Corpus.native_binary?(binary))
+        elsif %w[build compile].include?(stage_name)
+          unless File.file?(binary) && File.size?(binary) && (%w[build compile].include?(phase) || Corpus.native_binary?(binary))
             result['state'] = 'missing_artifact'; break
           end
           result['artifacts']['native'] = Corpus.file_record(binary)
@@ -437,7 +437,7 @@ module Corpus
     def exact_verdict(record)
       modes = record.fetch('modes')
       return 'FAIL' unless modes.keys == MODES && modes.values.all? { |r| r['state'] == 'complete' && r['input_integrity'] }
-      return 'PASS' if record['phase'] == 'build'
+      return 'PASS' if %w[build compile].include?(record['phase'])
       observations = modes.values.map do |mode|
         run = mode['stages'].last
         return 'FAIL' unless run['stage'] == 'run' && run['state'] == 'exited' && run['spawned'] && run['signal'].nil?

@@ -32,7 +32,7 @@ module GoFullProduct
 
   def simple_recipe?(root)
     recipe = root.fetch('recipe')
-    %w[run build buildrun].include?(recipe['action']) && recipe.fetch('flags', []).empty? &&
+    %w[run build buildrun compile].include?(recipe['action']) && recipe.fetch('flags', []).empty? &&
       recipe.fetch('environment_append', []).empty? && !recipe.key?('timeout_seconds_before_scale') &&
       !root.key?('nested_process_obligation') && !root.key?('program_directory_inputs') &&
       !root.key?('generated_program') && !root.key?('directory') && root.fetch('expected_failure_sets').empty?
@@ -297,7 +297,8 @@ module GoFullProduct
           row['reason'] = 'Retained native skip requires manager applicability adjudication; no product execution credited.'
         elsif root['axis'] == 'testdir' && simple_recipe?(root)
           begin
-            phase = root.fetch('recipe').fetch('action') == 'build' ? 'build' : 'run'
+            action = root.fetch('recipe').fetch('action')
+            phase = %w[build compile].include?(action) ? action : 'run'
             record = executor.execute(id: id, source_root: source_root, sources: [root.fetch('path')], phase: phase,
                                       args: root.fetch('recipe').fetch('args'), module_files: module_files)
             row['execution'] = record

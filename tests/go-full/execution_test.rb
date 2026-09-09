@@ -56,7 +56,7 @@ class ProductRecipeTests < Minitest::Test
   def test_complex_and_nested_recipes_never_enter_generic_success_path
     value = root
     assert GoFullProduct.simple_recipe?(value)
-    %w[compile compiledir errorcheck errorcheckandrundir errorcheckwithauto runoutput errorcheckoutput asmcheck runindir skip].each do |action|
+    %w[compiledir errorcheck errorcheckandrundir errorcheckwithauto runoutput errorcheckoutput asmcheck runindir skip].each do |action|
       refute GoFullProduct.simple_recipe?(value.merge('recipe' => value['recipe'].merge('action' => action))), action
     end
     %w[nested_process_obligation program_directory_inputs generated_program directory].each do |key|
