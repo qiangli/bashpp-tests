@@ -1,0 +1,23 @@
+# Bridge corpus provenance pin.
+#
+# The sh side: which checkout the exposed-package derivation read, and
+# the digests of the files whose constants anchor the review.
+# The Go side: the pinned toolchain identity, verified three ways
+# (bin/go digest from sh review table, sum.golang.org module ziphash,
+# src/ tree hash) exactly as sh runtime + generator do.
+#
+# key	value
+sh_commit	156bd4eea1ff695e0df2245fbdb499090699beb2
+sh_go127stdlib_generated	syntax/go127stdlib_generated.go	d5aead16c98af0eb6b37296a52641133476eabd65ae7f5a74d23f1b361d9e514
+sh_gen_go127stdlib	syntax/gen_go127stdlib.go	cf0d711b8e02183b855d5f225956d18640668c5d981b980c337dc534663a0aae
+sh_bashpp_import	interp/bashpp_import.go	c2646ea782aef9362aafb2ebe3b80304cc8480beee831ec3488bce815539d728
+sh_bashpp_eval	interp/bashpp_eval.go	21d0322925ca50cf4ea5d46beeac712f56b9f064c9d70665e67b9693d0c1eb95
+go_release	go1.27.0
+go_module	golang.org/toolchain	v0.0.1-go1.27.0.darwin-arm64	h1:QFUhEu+WNZ4lGI/0ual1EOKBq/Z/df/cL75PkCW8m1k=
+go_bin_sha256	a19a71df81715c12d9a7e81bab036c12696fec1ddbd4258b48a2131a9080b267
+go_src_tree_sha256	636d109763f0fe3e45347b74e07a0e00a1ca6a90b6130564b09ed8a04804d942
+inventory_list_sha256	de444f71390a90f274b5176d8da92480ab72e2992d8885823712cd927e289f6c
+stdlib_inventory_rows	180
+stdlib_inventory	docs/bridge-corpus/stdlib-inventory.tsv	a59a535e4418a4332d0087e3e39878495705aefc7798da0facccb6c1858486c5
+upstream_tests_rows	1135
+upstream_tests	docs/bridge-corpus/upstream-tests.tsv	0ac16a44b4810a3529a56c4cc61ff2ace89f570adfa2db5668f7e087aa41ac87

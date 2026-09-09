@@ -1,0 +1,32 @@
+# Bridge execution obligations for the upstream Go standard-library test
+# corpus of the bridge-exposed package set.
+#
+# WHAT THIS FILE IS. One row per obligation: the set of inventoried upstream
+# *_test.go files a real bridge-execution claim would have to answer for, the
+# mechanical derivation of that set's denominator from stdlib-inventory.tsv
+# and upstream-tests.tsv (re-computed and enforced fail-closed by
+# tools/bridge-corpus/verify.sh), the bridge mode the obligation belongs to,
+# and the concrete thing that must be built to discharge it.
+#
+# WHAT THIS FILE IS NOT. It is not a result table. `executed` is `no` for
+# every row and verify.sh enforces that: this slice inventories and maps, it
+# executes nothing through the bridge and claims no bridge behaviour. No
+# denominator here is a pass count.
+#
+# THE CERTIFICATION BOUNDARY (row O9 makes it enforceable): running the
+# pinned Go toolchain's `go test` natively — outside bashy — certifies the
+# Go toolchain and nothing else. The bridge is exercised only when the
+# dispatch itself goes through bash++ (import resolution, selector/value
+# call marshaling, JSON result ingestion). A native run can never be
+# recorded as bridge evidence.
+#
+# id	scope	denominator	derivation	bridge_mode	obligation	executed
+O1	import smoke per exposed package	178	cap=reviewed-stdlib	interpreted-import-bridge	For every package classifying capReviewedStdlib on the host, one bash++ `import("pkg")` resolving through the runtime's go-list path and one selector call completing through the generated package-main carrier (interp/bashpp_import.go nativeBashPPEvaluator Call). The import smoke is the precondition for everything below; without it no test-file obligation is reachable.	no
+O2	out-of-tree black-box test files	405	cap=reviewed-stdlib & kind=black_box & internal_imports=0	interpreted-import-bridge	Black-box files (package X_test) with no internal imports are the only files that could compile outside the std tree. But a hand-generated testmain faces specific TestMain/fuzz/internal import limitations, even though SDK testing.go:2428 exports testing.Main. The obligation is therefore a toolchain-dispatch carrier: drive `go test`/`go test -c` (which generates _testmain.go itself) through a bash++ selector/exec call, and ingest pass/fail plus `go test -json` records back through the bridge's JSON value path. Exercises bridge dispatch and result ingestion only — never a claim about stdlib semantics.	no
+O3	black-box test files importing internal packages	198	cap=reviewed-stdlib & kind=black_box & internal_imports>0	interpreted-import-bridge	Same testmain-carrier obligation as O2, plus the files MUST be compiled in-tree: Go's internal-package rule refuses the internal imports from any out-of-tree main. The carrier must pin the compile cwd inside the pinned toolchain's authenticated src tree (never a copy), or the obligation is not dischargeable.	no
+O4	in-package test files	529	cap=reviewed-stdlib & kind=in_package	interpreted-import-bridge	In-package files (package X) are not importable packages at all; they compile only as part of the package under test (several rely on export_test.go re-export patterns). The only carrier is in-tree `go test` dispatch through the bridge, as O2, with the package directory as the toolchain's working tree. There is no out-of-tree path, by construction of the Go build rules — that is a derived constraint, not an exclusion.	no
+O5	build-constrained test files	211	cap=reviewed-stdlib & build_constraint=1	any	Files carrying //go:build constraints compile per the toolchain's constraint evaluation for the host, inside the O2/O3/O4 in-tree dispatch. Applicability is host-relative by definition: the denominator is re-derived per host by verify.sh, and a file inert on one host is not excluded — it is counted on the hosts where its constraints hold.	no
+O6	test files of policy-refused cgo packages	1	cap=cgo	none-as-policy-stands	The package classifies capCgo on this host and sh's decision table (bashPPPolicyFor) refuses it: "package requires cgo, which this pure-Go shell does not provide". Recorded with the code-derived refusal, not excluded; discharging it requires an sh policy change, which is outside this slice. Files remain inventoried.	no
+O7	test files of host-unbuildable packages	2	cap=not-buildable	host-gated	syscall/js classifies capNotBuildable on darwin/arm64 ("build constraints exclude all Go files"); its files are inventoried with kind=other because go list cannot name the package on this host. The obligation re-derives on a host/toolchain profile where the package classifies reviewed-stdlib; here it is host-gated with the derived reason.	no
+O8	dual-mode differential for the exposed set	1132	cap=reviewed-stdlib (all kinds)	lowered-transpile	The suite's Layer 2 contract (byte-identical interpreted vs transpiled output) applies to the bridge too: the lowered mode (sh/lower/module_importer.go, go/importer with structural resolver) must type-check the same import surface the interpreted bridge admits. The obligation is a transpile-mode differential over the same selector corpus as O1, not a separate corpus.	no
+O9	certification boundary	1135	all rows of upstream-tests.tsv	any	Every future `executed` flip of O1..O8 must be backed by records whose commands were dispatched through bash++ (bashy --bashpp or bashy transpile), never a bare native `go test` invocation. Native runs of the stdlib suite certify the Go toolchain only. verify.sh enforces executed=no today so that no result table can quietly appear here without this row's rule being revisited in review.	no
