@@ -3,9 +3,10 @@ id: 82a8a7687fec
 kind: task
 title: Execute complete native oracle for exposed Go standard library tests
 seq: 16
-status: todo
+status: assigned
 priority: p1
 created: 2026-09-09T04:10:21.936059Z
+weave: 17
 assignee: qiangli
 sprint: 118
 ---
