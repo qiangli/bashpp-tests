@@ -198,6 +198,23 @@ module GoFullProduct
     { executor: executor, module_context: module_context, runtime: { 'base_environment' => execution_environment, 'cache_path' => executor.provenance.fetch('cache').fetch('path'), 'module_files' => module_files, 'module_context' => module_context.fetch('proof') } }
   end
 
+  # Selection follows complete inventory authentication and native event joins.
+  # It changes only the diagnostic work selected, never the full denominator.
+  def phase_roots(roots, selection)
+    return roots unless selection
+    selected, expected = case selection
+                         when 'negative'
+                           [roots.select { |root| root['axis'] == 'testdir' && diagnostic_recipe?(root) }, 521]
+                         when 'typechecker'
+                           [roots.select { |root| root['axis'] == 'typechecker' }, 743]
+                         else
+                           raise Corpus::ContractError, 'unknown phase shard'
+                         end
+    ids = selected.map { |root| root.fetch('id') }
+    raise Corpus::ContractError, "#{selection} shard denominator drift" unless selected.length == expected && ids.uniq.length == expected
+    selected
+  end
+
   def execute(options)
     options = options.merge(bashy: File.realpath(options.fetch(:bashy)))
     dir = File.expand_path(options.fetch(:inventory))
@@ -255,11 +272,7 @@ module GoFullProduct
     resumed = options[:resume] ? GoFullResume.load(options[:resume], context: checkpoint, roots: all_roots, source_root: source_root,
       provenance: executor.provenance, modules: module_files, native: native, catalog: catalog) : { 'reusable' => {}, 'fresh' => {}, 'checkpoint_roots' => 0 }
 
-    if options[:phase_shard]
-      raise Corpus::ContractError, 'unknown phase shard' unless options[:phase_shard] == 'negative'
-      roots = roots.select { |root| root['axis'] == 'testdir' && diagnostic_recipe?(root) }
-      raise Corpus::ContractError, 'negative shard denominator drift' unless roots.length == 521
-    end
+    roots = phase_roots(roots, options[:phase_shard])
     # Fresh-only adapters from a prior checkpoint must not starve roots that
     # have never been attempted when a manager bounds wall-clock execution.
     roots = roots.sort_by { |root| resumed.fetch('fresh').key?(root.fetch('id')) ? 1 : 0 }
@@ -346,9 +359,9 @@ module GoFullProduct
     counts = rows.group_by { |r| r['axis'] }.transform_values { |group| group.group_by { |r| r['product_verdict'] }.transform_values(&:length) }
     module_integrity_after = GoFullModuleContext.load(options.fetch(:module_context), candidate_path: options.fetch(:candidate), sdk_path: options.fetch(:sdk_identity), cache_root: options[:cache_root], bashy: options.fetch(:bashy), expected_sha256: options.fetch(:module_context_sha256, GoFullModuleContext::REVIEWED_SHA256)).fetch('proof') == module_context.fetch('proof')
     summary = { 'schema' => 'go-full-product/v1', 'counts_by_axis' => counts, 'roots' => roots.length,
-                'scope' => options[:phase_shard] ? 'negative-phase-discovery-shard' : 'full-root-accounting',
+                'scope' => options[:phase_shard] ? "#{options[:phase_shard]}-phase-discovery-shard" : 'full-root-accounting',
                 'full_manifest_denominators' => full_manifest_denominators, 'selected_root_denominator' => roots.length,
-                'selection_rule' => options[:phase_shard] ? 'all unflagged negative errorcheck/errorcheckwithauto roots without expected-failure inversion' : 'all independent static axes',
+                'selection_rule' => options[:phase_shard] == 'typechecker' ? 'all 743 independent typechecker roots, including unsupported recipes and upstream skips' : (options[:phase_shard] ? 'all unflagged negative errorcheck/errorcheckwithauto roots without expected-failure inversion' : 'all independent static axes'),
                 'checkpoint' => Corpus.file_record(File.join(evidence, 'context.json')), 'sdk_authentication' => sdk_authentication, 'module_context' => module_context.fetch('proof'), 'module_integrity_after' => module_integrity_after,
                 'resume' => { 'attempt_order' => 'unattempted and authenticated terminals before prior fresh-required adapters; complete selected denominator retained', 'checkpoint_roots' => resumed['checkpoint_roots'], 'reused_roots' => rows.count { |row| resumed['reusable'].key?(row['id']) }, 'fresh_required' => resumed['fresh'] },
                 'typechecker_adapter' => { 'schema' => 'go-full-typechecker-adapter/v1', 'matcher' => typecheck_matcher,

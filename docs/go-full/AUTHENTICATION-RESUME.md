@@ -162,3 +162,12 @@ The pinned SDK `go/types/check_test.go` binds first-line `-lang` to `types.Confi
 The original 743-root typechecker inventory remains fixed. Exactly 50 previously unsupported single-file language-version recipes become adaptable: 713 adaptable and 30 still unsupported, including two native-skipped roots. The 16 other language-version recipes retain their independent build-tag blocker. Adaptability is not PASS; both original checking phases and exact annotation matching must still complete.
 
 Mode evidence records the raw recipe flags and checker version alongside exact argv, immutable source hashes and environment/cache provenance. Tool changes invalidate earlier resume contexts; this does not upgrade any previous candidate006 row. New full runs require new candidate/module-context authentication.
+
+`product.rb --phase-shard typechecker` runs the complete 743-root typechecker
+axis after authenticating the full 3,495-root inventory and joining every native
+root to its retained event log. The selection includes unsupported recipes and
+native skips; it does not filter for adaptable or passing fixtures. Missing,
+duplicate, or extra selected IDs fail before execution. Results retain the full
+manifest denominator and are labeled `typechecker-phase-discovery-shard`, with
+the existing explicit overall FAIL and incomplete runtime-coverage fields.
+This diagnostic run cannot certify the other axes or close the sprint.
