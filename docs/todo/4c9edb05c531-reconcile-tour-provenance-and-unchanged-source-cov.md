@@ -3,9 +3,11 @@ id: 4c9edb05c531
 kind: task
 title: Reconcile Tour provenance and unchanged-source coverage
 seq: 14
-status: todo
+status: assigned
 priority: p1
 created: 2026-09-09T03:33:39.776216Z
+weave: 10
+assignee: qiangli
 sprint: 118
 ---
 

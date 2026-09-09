@@ -3,9 +3,11 @@ id: e29305614139
 kind: task
 title: Shared three-mode corpus execution and evidence contract
 seq: 11
-status: todo
+status: doing
 priority: p0
 created: 2026-09-09T03:33:39.722255Z
+weave: 7
+assignee: qiangli
 sprint: 118
 ---
 

@@ -3,9 +3,11 @@ id: 2bce26817abb
 kind: task
 title: Enumerate Go bridge standard-library test obligations
 seq: 13
-status: todo
+status: assigned
 priority: p1
 created: 2026-09-09T03:33:39.757644Z
+weave: 9
+assignee: qiangli
 sprint: 118
 ---
 
