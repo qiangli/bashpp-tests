@@ -3,11 +3,11 @@ id: b5d3bd1bd24c
 kind: task
 title: Authenticate relocated SDK and replay complete official Go obligations
 seq: 17
-status: assigned
+status: doing
 priority: p1
 created: 2026-09-09T06:36:02.000807Z
 weave: 18
-assignee: qiangli
+assignee: agy-gemini3.1
 sprint: 118
 ---
 
