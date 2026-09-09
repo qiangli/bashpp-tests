@@ -106,8 +106,8 @@ bridge-execution claim must answer for. Summary of the nine rows:
   limitations, even though SDK `testing.go` (pinned at 2428) exports
   `testing.Main`. Native `go test` dispatch can measure bridge plumbing, but
   does not discharge execution of unchanged test bodies by Bash++. An exact
-  driver contract connecting `testing.Main` to interpreter callbacks remains
-  required under story #16.
+  [driver contract](test-body-driver-contract.md) defines `testing.Main`
+  interpreter callbacks; implementing and executing it remains product work.
 * **O3** — 198 black-box files importing `internal/*`: native Go compilation
   must satisfy internal-package visibility. The interpreter-owned package
   graph and test driver remain to be specified.
@@ -179,7 +179,9 @@ Example invocation, with the matching authenticated SDK identity and cache:
 ```sh
 ruby tools/bridge-corpus/native.rb --inventory docs/bridge-corpus/stdlib-inventory.tsv \
   --sdk-identity /path/to/go-full-sdk-identity.json \
-  --source-cache /path/to/go-full --evidence /path/to/new-evidence-directory
+  --source-cache /path/to/go-full \
+  --fixtures /path/to/bridge-fixtures/manifest.json \
+  --evidence /path/to/new-evidence-directory
 ruby tools/bridge-corpus/native_test.rb
 ```
 
@@ -205,7 +207,88 @@ Any follow-up must authenticate the external fixtures and retain the original
 results and exact resource settings.
 
 All nine package skips report `[no test files]`. The stream also retains
-346 individual test skips and their output; a source-bound review of their
-conditions remains outstanding. Story #16 remains open for that review and
-the exact interpreter-owned test-body driver contract. No rerun is required
-for these documentation and validator changes.
+346 individual test skips and their output. The source-bound review tool
+binds every skip to exact upstream events, source positions or declarations,
+and the native environment. It grants no product execution credit. The
+[driver contract](test-body-driver-contract.md) is now specified separately;
+its implementation remains a parent product obligation. The repaired native
+run described below preserves this initial FAIL evidence.
+
+
+## Authenticated fixtures and repaired native profile
+
+`tools/bridge-corpus/fixtures.py` derives five exact root versions from the
+immutable SDK: Wycheproof, ed25519vectors, BoringSSL, x509-limbo, and x/tools.
+Wycheproof and x/tools also have SDK `go.sum` checksums. The other three have
+SDK version pins but no SDK checksums; their downloads are authenticated by
+Go with `GOSUMDB=sum.golang.org`. The authenticated module graph has 65 modules.
+[`fixture-lock.json`](fixture-lock.json) records all module versions, module
+sums, archive/go.mod SHA-256 hashes, and extracted-file manifest hashes.
+Fixture source files remain outside the SDK and outside this repository.
+
+```sh
+python3 tools/bridge-corpus/fixtures.py provision \
+  --sdk-identity /path/to/go-full-sdk-identity.json --path /path/to/new-fixtures
+python3 tools/bridge-corpus/fixtures.py validate \
+  --sdk-identity /path/to/go-full-sdk-identity.json \
+  --path /path/to/new-fixtures/manifest.json
+python3 tools/bridge-corpus/fixtures_test.py
+python3 tools/bridge-corpus/skips_test.py
+```
+
+Provisioning retains every download command, environment, raw response, and
+checksum check. `--resume` resumes an incomplete attempt and gives subsequent
+command logs distinct names; completed manifests cannot be overwritten.
+Validation checks source/version bindings, exact graph membership, reviewed
+checksums, and all extracted bytes. The native runner requires this manifest
+and authenticates it before and after execution, setting the explicit
+`GOMODCACHE` while keeping `GOPROXY=off` during tests.
+
+The repaired resource profile uses `GOMAXPROCS=4`, the minimum required by the
+unchanged runtime memory-limit tests, `GOFLAGS=-p=1` for nested Go package
+builds, and outer `-p=1 -parallel=2`. The upstream BoringSSL runner's own
+`-num-workers` default remains `runtime.NumCPU()`; it is not silently changed
+by the harness. A separate SDK probe records 12 CPUs and GOMAXPROCS 4 on this
+host. Process/RSS samples retain observed child commands and resource use.
+
+The complete repaired run is retained at
+`/Users/qiangli/.bashy/sprint118/evidence/bridge-native-002`.
+No source files or original tests were rewritten to repair the environment.
+It reports **169 package PASS, 9 SKIP, and zero FAIL**, with **124,873
+runtime starts and 124,873 terminals**, no incomplete events, and intact SDK
+and fixtures afterward. Elapsed native time was 768.705 seconds. The raw
+185,693,750-byte stdout SHA-256 is
+`d728dfa61d3993c4c39d3798ef4e8899e273324a781dabc136414c6316bcde0a`.
+The repaired fixtures enabled 43,610 more dynamically registered tests than
+the first run. Native success still grants no product coverage.
+
+The source-bound skip report is generated with:
+
+```sh
+python3 tools/bridge-corpus/skips.py --native /path/to/native-evidence \
+  --sdk-identity /path/to/go-full-sdk-identity.json --output /path/to/new-review
+```
+
+Every observed skip terminal is retained with raw log positions and source
+hashes. Positioned reasons must resolve to a unique SDK callsite. Silent skips
+retain their original test declaration and context. The 2,229 BoringSSL
+skips additionally bind the SDK result-to-`SkipNow` adapter and the
+authenticated BoringSSL `errUnimplemented`-to-SKIP mapping. Its temporary
+`results.json` was removed by upstream cleanup; the individual skip events
+and mapping source are retained, and that evidence limit is explicit. Package-level no-test
+skips additionally retain actual `go list -json` host selection and original
+source fingerprints. Exact conditions and candidate messages are evidence
+for independent applicability review, never newly invented exclusions.
+
+## SDK relocation boundary for the official product runner
+
+The official full product runner originally compares whole SDK identity JSON,
+including three location fields: `root`, `source_archive.path`, and
+`distribution_archive.path`. Moving an unchanged SDK therefore triggers a
+false identity mismatch. A narrow repair should permit only these three
+location changes, require every other field to remain exactly equal, and
+reauthenticate the complete relocated SDK using `sdk.py` before and after use.
+Require and retain the relocation manifest and original identity record as
+path provenance. Preserve the historical native summary and commands without
+rewriting their original paths. This is a proposal for the manager-owned
+`tools/go-full` code; the bridge corpus does not edit that runner.

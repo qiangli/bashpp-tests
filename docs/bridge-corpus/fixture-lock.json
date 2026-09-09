@@ -1,0 +1,592 @@
+{
+  "authentication": "Go module downloads authenticated with GOSUMDB=sum.golang.org; direct versions derived from immutable SDK; transitive versions from their authenticated go.mod graph",
+  "modules": [
+    {
+      "archive_sha256": "3482a508e5db0f57846ae630d936afcecabc154cdfe3002c13a1e44ec6c72a27",
+      "gomod_sha256": "090739cfb33f40e1b95d57c339bb6f8ccf160957665cb43f712b3c3f8e6ad796",
+      "gomod_sum": "h1:HFLJDX0o/olPwNXz8kT43vVhfkIhudhSni6pNkzZras=",
+      "module": "boringssl.googlesource.com/boringssl.git",
+      "sum": "h1:5nTkKa7uufOW0Ktjz/b+M/w0iCIO3Sycl3f30bwAz1U=",
+      "tree_sha256": "b908ea65c8e1e8ada88cb40b4cd45c0404d8f50c26a932dab33e5157fed871ad",
+      "version": "v0.0.0-20260209204302-2a7ca5404e13"
+    },
+    {
+      "archive_sha256": "3581f64bc604531c5bdd06f3a8eecae66b43deeccf73a2521b07b18c32e058ac",
+      "gomod_sha256": "c0c7b17f056e5877abbcfb06744cf5238cb9a0b0a1a08e1384cf2685a22114d1",
+      "gomod_sum": "h1:hLPLo1W4QUmuYdA72RBX06QTs6MXw941piREPl3Yfiw=",
+      "module": "cel.dev/expr",
+      "sum": "h1:K4KOtPCJQjVggkARsjG9RWXP6O4R73aHeJMa/dmCQQg=",
+      "tree_sha256": "499f2926c209ef3c23deb932601cd4d4cf06b50b75c3050195827976928fee3a",
+      "version": "v0.23.1"
+    },
+    {
+      "archive_sha256": "fb0871210b470b821fcf74777da54c54f8356eb3e55ee1c403deb533471a7c6c",
+      "gomod_sha256": "a8dd1a6cf3b1c16549b71773ad5155af7c4a3e6d027c5fd335ac5e5645f3f914",
+      "gomod_sum": "h1:56Vs7sf/i2jYM6ZL9NYlC82r04PThNcPS5YgFmb0rp8=",
+      "module": "cloud.google.com/go",
+      "sum": "h1:Z+5V7yd383+9617XDCyszmK5E4wJRJL+tquMfDj9hLM=",
+      "tree_sha256": "ad9ab2b66b033cfd52796aff20341f88721159c273781d82f6c787aa734b0889",
+      "version": "v0.120.1"
+    },
+    {
+      "archive_sha256": "4f1e639b7506a95b2d336869118e43b1bc527d954a6b5de87eb456976bcf27e2",
+      "gomod_sha256": "b943cee756b8a2ab0ed81d8ae58df9bc8fdd4dcf5804546b69921336326bb49a",
+      "gomod_sum": "h1:1howDHJ5IETh/LwYs3ZxvlkXF48aSqqJUM+5o02dNOI=",
+      "module": "cloud.google.com/go/auth",
+      "sum": "h1:Pd8P1s9WkcrBE2n/PhAwKsdrR35V3Sg2II9B+ndM3CU=",
+      "tree_sha256": "6664ca5d5824c8631569ce1bc7bccbddfa0a6214baf4112f3eb5f5ea4297b73a",
+      "version": "v0.16.0"
+    },
+    {
+      "archive_sha256": "4cd64264bafc4dd05f645452d6e1485adf92309130bd82b4c595db10cd534963",
+      "gomod_sha256": "17738c6a081204b38fee07bd815473d8d536a703ea78afa01ff63f0973c359d4",
+      "gomod_sum": "h1:XQ9y31RkqZCcwJWNSx2Xvric3RrU88hAYYbjDWYDL+c=",
+      "module": "cloud.google.com/go/auth/oauth2adapt",
+      "sum": "h1:keo8NaayQZ6wimpNSmW5OPc283g65QNIiLpZnkHRbnc=",
+      "tree_sha256": "489a1c58646c9a581c5198609f93c2e6ccccd084a0a4334d27dca76f314b7e16",
+      "version": "v0.2.8"
+    },
+    {
+      "archive_sha256": "45ddcff8fe63fc16b0f0e2fcf8d1e5b3cedf046a76a353ffe7756bea1b1bc9ee",
+      "gomod_sha256": "4f2e741bd6bf9111ede010704069c400bba634312e0521f27e9cf48f49855d1e",
+      "gomod_sum": "h1:FjyFAW1MW0C203CEOMDTu3Dk1FlqW3Rga40jzHL4hfg=",
+      "module": "cloud.google.com/go/compute/metadata",
+      "sum": "h1:A6hENjEsCDtC1k8byVsgwvVcioamEHvZ4j01OwKxG9I=",
+      "tree_sha256": "6192524da380ff517061c29c2e42b85a363d8b91e57047845325687ca76ceb42",
+      "version": "v0.6.0"
+    },
+    {
+      "archive_sha256": "4d0c80cae20005a2beccf5ed7fbe4b938e73927f91ee141ecf11607c3e9d72e0",
+      "gomod_sha256": "7e72ee2e584866f0d70820320b6fcd10c714581d3c33d53004135d6e0d4c70af",
+      "gomod_sum": "h1:U+DOtKQltF/LxPEtcDLoobcsZMilSRwR7mgNL7knOpo=",
+      "module": "cloud.google.com/go/iam",
+      "sum": "h1:QlLcVMhbLGOjRcGe6VTGGTyQib8dRLK2B/kYNV0+2xs=",
+      "tree_sha256": "ea98b6044fa24cbe22523bccc74737c68b3712aefc1a3db4d964b177f2280b1b",
+      "version": "v1.5.0"
+    },
+    {
+      "archive_sha256": "8187ea2307942ad01f82aa8439f51c2ffe1ca586198112329ab84cc2b2fc5221",
+      "gomod_sha256": "868de0dfd140ee586032d7e8e0cfd98a6bbed207262bcc63bfd8adb224857718",
+      "gomod_sum": "h1:Z05d1/vn9NaujqY2voG6pVQXoJGbp+r3laV+LySt9K0=",
+      "module": "cloud.google.com/go/monitoring",
+      "sum": "h1:vKiypZVFD/5a3BbQMvI4gZdl8445ITzXFh257XBgrS0=",
+      "tree_sha256": "fe2799e0407d67aec57f9113895f7bf74e5191ba54989ac8ca718ea62c6dbeab",
+      "version": "v1.24.1"
+    },
+    {
+      "archive_sha256": "65aad2f1c9712b304a63cffa36899ed9af0726d94a645deec16eef2523d4edb2",
+      "gomod_sha256": "9272616a027fbe18133319c4da5edaea5cbaf2b43e241efce5e19aae7624dc62",
+      "gomod_sum": "h1:YEJfu/Ki3i5oHC/7jyTgsGZwdQ8P9hqMqvpi5kRKGgc=",
+      "module": "cloud.google.com/go/storage",
+      "sum": "h1:ZVZ11zCiD7b3k+cH5lQs/qcNaoSz3U9I0jgwVzqDlCw=",
+      "tree_sha256": "8e454c9f4f4e423ab21f45abc5ead83573db825822eb9baac7ba17e8ac52037b",
+      "version": "v1.51.0"
+    },
+    {
+      "archive_sha256": "67d2e9d83ca57d3a8ce1a0e0e626a7c03753b3966b58b41b95e97ca4e7b2c640",
+      "gomod_sha256": "d4c65d7a5f68051187d1385f0de39cc4a7f47a88dc37f45d2dfe494403e25ee2",
+      "gomod_sum": "h1:E/hbnu0NxMFBjpMIE34DRGLWqDy0g5FuKDhCb31ngxA=",
+      "module": "dario.cat/mergo",
+      "sum": "h1:85+piFYR1tMbRrLcDwR18y4UKJ3aH1Tbzi24VRW1TK8=",
+      "tree_sha256": "f958b6f6b7684ca58b23a6554c548fad125a82726eb7cfc71840d70fc3f00cb1",
+      "version": "v1.0.2"
+    },
+    {
+      "archive_sha256": "9ac43a686d06fdebd719f7af3866c87eb069302272dfb131007adf471c308b65",
+      "gomod_sha256": "099556fc4d7e6f5cb135efdd8b6bb4c0932e38ea058c53fc5fa5ce285572fb61",
+      "gomod_sum": "h1:BxyFTGdWcka3PhytdK4V28tE5sGfRvvvRV7EaN4VDT4=",
+      "module": "filippo.io/edwards25519",
+      "sum": "h1:FNf4tywRC1HmFuKW5xopWpigGjJKiJSV0Cqo0cJWDaA=",
+      "tree_sha256": "299bb8a6a14c03e495073d4dc1c9282bdd5346f06d982db721498e8babbf24d4",
+      "version": "v1.1.0"
+    },
+    {
+      "archive_sha256": "82fcdf8dca6ffb3859da44c0af64182a794748598fe7e88faf7bd12637991212",
+      "gomod_sha256": "8f948eeedaca73cc325a589d07750fc54148c62e7bbb3d4c76729615b55c0ba2",
+      "gomod_sum": "h1:UY6GqNmG+coCcFEiqRTkyhS4fiEGWFqGHweHUKcLWfU=",
+      "module": "filippo.io/mostly-harmless/ed25519vectors",
+      "sum": "h1:oHn3iEYQCHVcHLEqtzCSizBZcnOSFk61oo8tKsbNrqI=",
+      "tree_sha256": "5cf74f6f42ccc16679874ce95a297d959fc4b1c303b3d3ea36ca6229233737c9",
+      "version": "v0.0.0-20210322192420-30a2d7243a94"
+    },
+    {
+      "archive_sha256": "6816e444c58fe60ccbd73ae42ce099e04a0e57662c982ab0883bb72924e21ff8",
+      "gomod_sha256": "f6e83877eae4f501e79c1d5b33b0f3dd853c3800021645f93845f8c99718e84b",
+      "gomod_sum": "h1:SlBvWAEOPc2Z3LJJ7q2QhlRZQ3dWCkr1VqjqU1Q4+eQ=",
+      "module": "github.com/C2SP/x509-limbo",
+      "sum": "h1:sfTTfb879EDat/K+arYzIBsUgyVnLKYgXCcs0PC34rM=",
+      "tree_sha256": "ef94aefa59aca138640803ed71aad2c97f185e163cb29511dca508a92a3b760f",
+      "version": "v0.0.0-20260522003327-feb7caccc1af"
+    },
+    {
+      "archive_sha256": "fb5db1323479c768591ac41f364b55ec9c40696d53708e97bd7eba70a8ddd304",
+      "gomod_sha256": "fb21cb7a133ef85f97bb7a9c2146f9755eed919b010c24fb99dadb1ca1c0ddc3",
+      "gomod_sum": "h1:yAZHSGnqScoU556rBOVkwLze6WP5N+U11RHuWaGVxwY=",
+      "module": "github.com/GoogleCloudPlatform/opentelemetry-operations-go/detectors/gcp",
+      "sum": "h1:ErKg/3iS1AKcTkf3yixlZ54f9U1rljCkQyEXWUnIUxc=",
+      "tree_sha256": "a4a115413e27798a2c7bddfa55e1036f99b9e91f4d63265c130b913202b4c393",
+      "version": "v1.27.0"
+    },
+    {
+      "archive_sha256": "fd2beac8357a05c967aeb9523d19084077a075bca69c0dea84293b66acbc1e20",
+      "gomod_sha256": "2692526c2c9df67ec34dc55005acf90c22b8f94c5ecdc7ee914068c7c350148c",
+      "gomod_sum": "h1:BnBReJLvVYx2CS/UHOgVz2BXKXD9wsQPxZug20nZhd0=",
+      "module": "github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/metric",
+      "sum": "h1:fYE9p3esPxA/C0rQ0AHhP0drtPXDRhaWiwg1DPqO7IU=",
+      "tree_sha256": "19df2369a7de37883591917dd3928a6bd74e3dae760be3e549bcdb726551e4a1",
+      "version": "v0.51.0"
+    },
+    {
+      "archive_sha256": "10363070f377d7fa073d5b672c43faa17a603aa0964d0b3f8845776b26f2cca3",
+      "gomod_sha256": "6a446d0bf5004aae13a1a102bf34183a2cd0adbab897f17754ed0228c4bdf536",
+      "gomod_sum": "h1:otE2jQekW/PqXk1Awf5lmfokJx4uwuqcj1ab5SpGeW0=",
+      "module": "github.com/GoogleCloudPlatform/opentelemetry-operations-go/internal/resourcemapping",
+      "sum": "h1:6/0iUd0xrnX7qt+mLNRwg5c0PGv8wpE8K90ryANQwMI=",
+      "tree_sha256": "86de8a48e71c2d8c65328d9140b5a2cfd30e8961d4ce8b7b203f6d1b42a00ff0",
+      "version": "v0.51.0"
+    },
+    {
+      "archive_sha256": "80fee95d3e843e8568c51411300d6fc9148cb4949a37285fc8f8ee04f0b10d98",
+      "gomod_sha256": "8e29ed0d92760c58cbed69d32a5c79f51b4556cacaa56d4a6928dd626362e547",
+      "gomod_sum": "h1:8Q281v0ozTIfvdnbwDoWQDIk0syH6F0Fpoq+Z1cs+rM=",
+      "module": "github.com/atombender/go-jsonschema",
+      "sum": "h1:7H48X5fUccsfsacar5UfP6nnOXuQzmnr6lQmH/Fj2pQ=",
+      "tree_sha256": "6dc53e4bab571b086dd44ff324c5c163d2da15c1d8bd09267d9741a7f784a1cd",
+      "version": "v0.22.0"
+    },
+    {
+      "archive_sha256": "9f94c1ad5c24a94dfda52eba6bf7e89a4e0243afea5e554be3331d41f59d7089",
+      "gomod_sha256": "3e6b2459fa64a7eb4604c49409ef0b3c05ea3f49819ff89ffc3bfe7e61b7dd86",
+      "gomod_sum": "h1:/5JsOpi3fKmnnig5BQ2mz49TNtnrD308VfTVHcbr5x4=",
+      "module": "github.com/c2sp/wycheproof",
+      "sum": "h1:jOCu6erj86P93+eFn8Qxp6XLwftn1nW0C9RUx7xZwZg=",
+      "tree_sha256": "b6b0dc573ff4481ed43dfe5b5e77dcfb2be773bb8027f7ba267d220352b1e084",
+      "version": "v0.0.0-20260625212325-ee7b4f7e6119"
+    },
+    {
+      "archive_sha256": "145a26cdc7c49db566017b807c4989ee7f7ddeb569423e9cb99f995fac3621d3",
+      "gomod_sha256": "a090f8eaaf59cc2adf163299ebefe797e1dca3f6add2c8e88a6a3b90ba538b02",
+      "gomod_sum": "h1:VGX0DQ3Q6kWi7AoAeZDth3/j3BFtOZR5XLFGgcrjCOs=",
+      "module": "github.com/cespare/xxhash/v2",
+      "sum": "h1:UL815xU9SqsFlibzuggzjXhog7bL6oX9BbNZnL2UFvs=",
+      "tree_sha256": "fd0a850587e362e20d8276e72e4daffe16d341246ad13792511278a04e640b48",
+      "version": "v2.3.0"
+    },
+    {
+      "archive_sha256": "7065a27af09ed95a508f83ba57416ced0f0a70db6e0a0eef141d8e9f7725a114",
+      "gomod_sha256": "524700e305a2b2bf75db01766e5e412e42619321d761bc4271635b3ffa7022d4",
+      "gomod_sum": "h1:W+zGtBO5Y1IgJhy4+A9GOqVhqLpfZi+vwmdNXUehLA8=",
+      "module": "github.com/cncf/xds/go",
+      "sum": "h1:C5bqEmzEPLsHm9Mv73lSE9e9bKV23aB1vxOsmZrkl3k=",
+      "tree_sha256": "7127d5c44606cf95a592302db0cbbd84109fabb1e0dbb6307d72d1f37a837d4f",
+      "version": "v0.0.0-20250326154945-ae57f3c0d45f"
+    },
+    {
+      "archive_sha256": "6baebcc1f441672ade0dacb4ca553a3d857f915590ca07bbe79314ddf62e6fae",
+      "gomod_sha256": "c38d747e931c1d062832d1680b77e9d82eddc164adf81271a83debd6cf1587ab",
+      "gomod_sum": "h1:Gzjc5k8JcJswLjAx1Zm+wSYE20UrLtt7JZMWiWQXQEw=",
+      "module": "github.com/envoyproxy/go-control-plane/envoy",
+      "sum": "h1:jb83lalDRZSpPWW2Z7Mck/8kXZ5CQAFYVjQcdVIr83A=",
+      "tree_sha256": "39c052747c8041b58d80eefb2b42b6e140d9eb2622ad0062a54db5ba50585496",
+      "version": "v1.32.4"
+    },
+    {
+      "archive_sha256": "ad9d2639aff17db6be291069c5463c46ed8ac37a0c6c1b57fae5465c5effb567",
+      "gomod_sha256": "c639d0b78633862b3b78f90e77ee5c322b57aa461248e0149f864678e1153317",
+      "gomod_sum": "h1:d/C80l/jxXLdfEIhX1W2TmLfsJ31lvEjwamM4DxlWXU=",
+      "module": "github.com/envoyproxy/protoc-gen-validate",
+      "sum": "h1:DEo3O99U8j4hBFwbJfrz9VtgcDfUKS7KJ7spH3d86P8=",
+      "tree_sha256": "7b04b05002bedff9b5e4003fe6dd3fc069c20fdebbcdfeb6cae1477eafa7737b",
+      "version": "v1.2.1"
+    },
+    {
+      "archive_sha256": "75aa471311265e9860df0e523400b4650ed0c1a33262786a421f07226792e494",
+      "gomod_sha256": "3d0a6d397b775e49388eb75e7903691058d7a8cb7ce4f11637a876f387115bb9",
+      "gomod_sum": "h1:m8KPJKqk1gH5J9DgRY2ASl2lWCfGKXixSwevea8zH2U=",
+      "module": "github.com/felixge/httpsnoop",
+      "sum": "h1:NFTV2Zj1bL4mc9sqWACXbQFVBBg2W3GPvqp8/ESS2Wg=",
+      "tree_sha256": "20e4bfe88d44dd69efb60d5e5fd7f5d7dbcfa58da2805286419fe5bfcaa922b1",
+      "version": "v1.0.4"
+    },
+    {
+      "archive_sha256": "9f8926fda6dee61e68522421963d5804baeb10024aa02b318d9bd50fdcfdd7d1",
+      "gomod_sha256": "c496f30d700f02b49a1b50bc2486a27c2f74df3dce75d9db6d2d43975b381727",
+      "gomod_sum": "h1:9T104GzyrTigFIr8wt5mBrctHMim0Nb2HLGrmQ40KvY=",
+      "module": "github.com/go-logr/logr",
+      "sum": "h1:6pFjapn8bFcIbiKo3XT4j/BhANplGihG6tvd+8rYgrY=",
+      "tree_sha256": "4fe86eb0e6458eea75170fee4ad87f46580ad3cf3a745ba4173de8b09344d90c",
+      "version": "v1.4.2"
+    },
+    {
+      "archive_sha256": "9dd6893bf700198485ae699640b49bc1efbc6c73b37cb5792a0476e1fd8f7fef",
+      "gomod_sha256": "0812160f77474d8dbf692b7caaee7fd5508448c705d9b54b5a3496ac44468c2c",
+      "gomod_sum": "h1:mMo/vtBO5dYbehREoey6XUKy/eSumjCCveDpRre4VKE=",
+      "module": "github.com/go-logr/stdr",
+      "sum": "h1:hSWxHoqTgW2S2qGc0LTAI563KZ5YKYRhT3MFKZMbjag=",
+      "tree_sha256": "f25db67d3fd18352392d1abc55c8e358b1f0db76f5870e491ce72619cd6237a2",
+      "version": "v1.2.2"
+    },
+    {
+      "archive_sha256": "9ea8b466385c1ecf61fa55b68e409ea048b3d7fb1178eba66c1e24a7a30dfffb",
+      "gomod_sha256": "8bfcd303c773142077b4e9bf26b891a8bfbf9f31d8fcb75cbcfab6ea731545a7",
+      "gomod_sum": "h1:XBurs7gK8ATbW4ZPGKgcbrY1Br56PdM69F7LkFRi1kA=",
+      "module": "github.com/goccy/go-yaml",
+      "sum": "h1:PmFC1S6h8ljIz6gMRBopkjP1TVT7xuwrButHID66PoM=",
+      "tree_sha256": "ec832f8d815070fc53a39fac8995a0e56a81b6de0dfab0c6a964ea95bcc68505",
+      "version": "v1.19.2"
+    },
+    {
+      "archive_sha256": "64a9ce046f2c320e3783fba0d1f4a15f8a18f0b009b67bf27f7630919db3f539",
+      "gomod_sha256": "31c874a1d2a18e62b0550f823ce7a575c8dec7f8fd9d4fa1959bb12d7f7c0f14",
+      "gomod_sum": "h1:pXiqmnSA92OHEEa9HXL2W4E7lf9JzCmGVUdgjX3N/iU=",
+      "module": "github.com/google/go-cmp",
+      "sum": "h1:wk8382ETsv4JYUZwIsn6YpYiWiBsYLSJiTsyBybVuN8=",
+      "tree_sha256": "331d2ff564e1b047f24fad38b4ef97f22063f3cbed0b2a061f3d27d396eab4ad",
+      "version": "v0.7.0"
+    },
+    {
+      "archive_sha256": "bf8f4b159d3fc201477822ed2514e4f05f58c764b78ffed73ec0accce5fb7f07",
+      "gomod_sha256": "47d4257200a74c3210f4bf07264f3a27eb39817ff01e24d92cc069dfb421325b",
+      "gomod_sum": "h1:YA0Ei2ZQL3acow2O62kdp9UlnvMmU7kA6Eutn0dXayM=",
+      "module": "github.com/google/s2a-go",
+      "sum": "h1:LGD7gtMgezd8a/Xak7mEWL0PjoTQFvpRudN895yqKW0=",
+      "tree_sha256": "9cf0aecf31a9acda9d6636e7807c1538dd20a6316f064446c1ebb1963ec43249",
+      "version": "v0.1.9"
+    },
+    {
+      "archive_sha256": "d0f02f377217f42702e259684e06441edbf5140dddcc34ba9bea56038b38a6ed",
+      "gomod_sha256": "73da47b6338b00a082fd451aa35a3273d3adc09b8e9bba98dab01091e402af6e",
+      "gomod_sum": "h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=",
+      "module": "github.com/google/uuid",
+      "sum": "h1:NIvaJDMOsjHA8n1jAhLSgzrAzy1Hgr+hNrb57e+94F0=",
+      "tree_sha256": "7e99e3afc895574e81bc010d1079ea0ba30e2c97317802a0458a456681e8f77c",
+      "version": "v1.6.0"
+    },
+    {
+      "archive_sha256": "6c44108f588c97a6a08b5ed907c3cc47dce31913f219a6d02b13e463d355603c",
+      "gomod_sha256": "bf9bd1baeff172cae0cc8043b40ef7153ec98686d73e1cabeedb289d6c049ffa",
+      "gomod_sum": "h1:MkHOF77EYAE7qfSuSS9PU6g4Nt4e11cnsDUowfwewLA=",
+      "module": "github.com/googleapis/enterprise-certificate-proxy",
+      "sum": "h1:GW/XbdyBFQ8Qe+YAmFU9uHLo7OnF5tL52HFAgMmyrf4=",
+      "tree_sha256": "d5261a0f557e03dff295ca93578b144868b63628aa8d335ea50d5f35490652ff",
+      "version": "v0.3.6"
+    },
+    {
+      "archive_sha256": "9f4409b30e8590e75f9669fc4a66f79ac1a06990e12e804e4b2d95cd27226640",
+      "gomod_sha256": "c37f4767b867be99d7011b3f1dd0b9d3e016ed70f561cea24fe5e1f2f88816ab",
+      "gomod_sum": "h1:Hb/NubMaVM88SrNkvl8X/o8XWwDJEPqouaLeN2IUxoA=",
+      "module": "github.com/googleapis/gax-go/v2",
+      "sum": "h1:hb0FFeiPaQskmvakKu5EbCbpntQn48jyHuvrkurSS/Q=",
+      "tree_sha256": "1969c83621645b77de163d39f4b6c9242645bd55e1f21dfe5d19322c50d12ed8",
+      "version": "v2.14.1"
+    },
+    {
+      "archive_sha256": "5dc8756a30269ce16873ef28c8a986205f7e7abacd62d00d3dc86cc65588f559",
+      "gomod_sha256": "bcdba25049b6ec9ffe079321f6cbb91f62e99ed6ce790d435e31d2397268623f",
+      "gomod_sum": "h1:XGsKKeXxeRr95aEOgipvluMPlgjr7dGlk9ZTWOjcUcg=",
+      "module": "github.com/hdevalence/ed25519consensus",
+      "sum": "h1:uUjLpLt6bVvZ72SQc/B4dXcPBw4Vgd7soowdRl52qEM=",
+      "tree_sha256": "f00ceb981e006c2c2a0e647d55f4d3b09f7cdd4f680be531b35167560e700f4e",
+      "version": "v0.0.0-20210204194344-59a8610d2b87"
+    },
+    {
+      "archive_sha256": "a10c3942f09bc5132268d22d4bb9d0c1849122d533fe8cdf65ea69da05cebbaf",
+      "gomod_sha256": "a947dd8b78793dd398ea20adee1f7d33ccf2767dbf8ee6b3cd77b71f19e6fb9b",
+      "gomod_sum": "h1:pSWU5MAI3yDq+fZBTazCSJysOMbxWL1BSow5/V2vxeg=",
+      "module": "github.com/hexops/gotextdiff",
+      "sum": "h1:gitA9+qJrrTCsiCl7+kh75nPqQt1cx4ZkudSTLoUqJM=",
+      "tree_sha256": "56b5679d46797a9bd80f0246ad7545ef0a4da607052ac570dd49437c509ee9a4",
+      "version": "v1.0.3"
+    },
+    {
+      "archive_sha256": "5f96426c4b3b3e90a9b7471568cb1d61d6a306744f5d4765a30fa8a61e1c0b47",
+      "gomod_sha256": "4f2239514c1de72e2f5b0f544b61d8c404eb2f04057d6ba1441875d7ac8311f0",
+      "gomod_sum": "h1:R62XHJLzvMFRBbcrT7m7WgmE1eOyTSsCt+hzestvNj0=",
+      "module": "github.com/mitchellh/go-wordwrap",
+      "sum": "h1:TLuKupo69TCn6TQSyGxwI1EblZZEsQ0vMlAFQflz0v0=",
+      "tree_sha256": "62263d72473bdfc33469e261960db95c2266a95643beddf6b7f2cff9cd7581a0",
+      "version": "v1.0.1"
+    },
+    {
+      "archive_sha256": "6fdbac53c6ace58d732be8ec29c1aae928639eb12960cc4c52a9f7a25395ca05",
+      "gomod_sha256": "e94bb181f3ef78dec16609d3c2d276c75c5668694bdc97b72bac22c84528debb",
+      "gomod_sum": "h1:t/avpk3KcrXxUnYOhZhMXJlSEyie6gQbtLq5NM3loB8=",
+      "module": "github.com/planetscale/vtprotobuf",
+      "sum": "h1:GFCKgmp0tecUJ0sJuv4pzYCqS9+RGSn52M3FUwPs+uo=",
+      "tree_sha256": "ca8c467c05e9b265bc4fdf30032a7085ec1492c610529a0fad1be14a60ca7c4f",
+      "version": "v0.6.1-0.20240319094008-0393e58bdf10"
+    },
+    {
+      "archive_sha256": "4880fcf58f4d2f712273bfd123a14d93161659054685ccb11aba31561e1bb17b",
+      "gomod_sha256": "9202c4b43d62a291b37a6cecab10a3d844767826c22e9af4bea9804667fe060b",
+      "gomod_sum": "h1:9gzJgR2i4ZpjZHsKvUXIRQVk7P+yM3e+jAF7bU2UI5U=",
+      "module": "github.com/sanity-io/litter",
+      "sum": "h1:uM/2lKrWdGbRXDrIq08Lh9XtVYoeGtcQxk9rtQ7+rYg=",
+      "tree_sha256": "08c0c5c8b4de1fdcc5f31bf69cbea5d9005728421d6317ee40ed8be646435309",
+      "version": "v1.5.8"
+    },
+    {
+      "archive_sha256": "8652f1086fd29ca90f42aa367fd6020bc77a4eef14c1a6bb402f071084c0f745",
+      "gomod_sha256": "48f5e138633d4d85be9f6cd447e2db32aabd00e530a00a45985695af5e0372e5",
+      "gomod_sum": "h1:JXeL+ps8p7/KNMjDQk3TCwPpBy0wYklyWTfbkIzdIFU=",
+      "module": "github.com/santhosh-tekuri/jsonschema/v6",
+      "sum": "h1:PKK9DyHxif4LZo+uQSgXNqs0jj5+xZwwfKHgph2lxBw=",
+      "tree_sha256": "8ea61e36e40b846bc428a9b170d17cd2e853e32a201e04989c9c85a6d1a028f5",
+      "version": "v6.0.1"
+    },
+    {
+      "archive_sha256": "16aa29f0ed95d244b97060108c155e07eb1dbe740be1086649694a48e41b16c2",
+      "gomod_sha256": "6df4f89f5af0cb39d757f2456031491ed883c7c3549fd7027370fc0071b34dc0",
+      "gomod_sum": "h1:RQIBBX0+fMLc/D9+Jb/fwvVmo0eZvDDEERAikUR6SDg=",
+      "module": "github.com/sosodev/duration",
+      "sum": "h1:qtHBDMQ6lvMQsL15g4aopM4HEfOaYuhWBw3NPTtlqq4=",
+      "tree_sha256": "309d59aafeed429d536d35e92e70ba9737101eb64fdc529aae066594e19bc6cc",
+      "version": "v1.3.1"
+    },
+    {
+      "archive_sha256": "bb41a602b174345fda392c8ad83fcc93217c285c763699677630be90feb7a5e3",
+      "gomod_sha256": "ee7fe4466203a01d3ac19adc134cdec99bc6de71992c28f3dd9a74480bff0603",
+      "gomod_sum": "h1:6yULJ656Px+3vBD8DxQVa3kxgyrAnzto9xy5taEt/CY=",
+      "module": "github.com/yuin/goldmark",
+      "sum": "h1:fVcFKWvrslecOb/tg+Cc05dkeYx540o0FuFt3nUVDoE=",
+      "tree_sha256": "5208caa0e3f9a1f48f891e85a4fe4cb5bd66592858cdfc81733ab9286e438002",
+      "version": "v1.4.13"
+    },
+    {
+      "archive_sha256": "006d3a5a7292d11f093ce65fcd5a15d15fb7bd11d0e066503f91bd64c4bffe2c",
+      "gomod_sha256": "c1b92e73725a3def3236579bbd728887f617d1ea9b30f403f6e4885c48b1ff3f",
+      "gomod_sum": "h1:3wSPjt5PWp2RhlCcmmOial7AvC4DQqZb7a7wCow3W8A=",
+      "module": "go.opentelemetry.io/auto/sdk",
+      "sum": "h1:cH53jehLUN6UFLY71z+NDOiNJqDdPRaXzTel0sJySYA=",
+      "tree_sha256": "95c418274c515c8aac68aeec4b21ea09bb964c76ee48bb315fb8e3002154fb4b",
+      "version": "v1.1.0"
+    },
+    {
+      "archive_sha256": "47a4cbc7a1a9f3d3f41019309d9eda11b093876c5399c319870e47b81d07add4",
+      "gomod_sha256": "42036e76daf0c9230430101db8696381304250ff9a279e92217e39267fdb7304",
+      "gomod_sum": "h1:qGWP8/+ILwMRIUf9uIVLloR1uo5ZYAslM4O6OqUi1DA=",
+      "module": "go.opentelemetry.io/contrib/detectors/gcp",
+      "sum": "h1:bGvFt68+KTiAKFlacHW6AhA56GF2rS0bdD3aJYEnmzA=",
+      "tree_sha256": "304da2adbd5d67933ca820bd271a442b856d51aa4c3fea723aa8750d280add7a",
+      "version": "v1.35.0"
+    },
+    {
+      "archive_sha256": "98e86c034717a2e69b5137bfb2a7ee213f5b2220ecb28c42c6effd428eac691d",
+      "gomod_sha256": "663adb7c0dbb8fb03eb69aed08275936d328e8b50665b088ae81b3300d58e965",
+      "gomod_sum": "h1:rg+RlpR5dKwaS95IyyZqj5Wd4E13lk/msnTS0Xl9lJM=",
+      "module": "go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc",
+      "sum": "h1:x7wzEgXfnzJcHDwStJT+mxOz4etr2EcexjqhBvmoakw=",
+      "tree_sha256": "d067a01908d849b90127e25c313a548c621265b865822d6009934e1771b770b3",
+      "version": "v0.60.0"
+    },
+    {
+      "archive_sha256": "0192a852a8c6b4fccd55a0400bda162a83a4935102ebdec5fcf56ef1e7d94a51",
+      "gomod_sha256": "62f34a4e0e7bbd72d8e1c7d89a9fd0925a79938f6aeae17daef0148d91c42512",
+      "gomod_sum": "h1:69uWxva0WgAA/4bu2Yy70SLDBwZXuQ6PbBpbsa5iZrQ=",
+      "module": "go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp",
+      "sum": "h1:sbiXRNDSWJOTobXh5HyQKjq6wUC5tNybqjIqDpAY4CU=",
+      "tree_sha256": "866032574494d51681c1f05b89a4be83d1b02b5492f79cc9678e7a9191d4ff5f",
+      "version": "v0.60.0"
+    },
+    {
+      "archive_sha256": "db49129d417338ed3517e7ec6f3e894e6828152488731fe832690041892d341d",
+      "gomod_sha256": "04e6c2e839b364724f78a20224f00d7356569478f725010c40d388e87fec6422",
+      "gomod_sum": "h1:UEqy8Zp11hpkUrL73gSlELM0DupHoiq72dR+Zqel/+Y=",
+      "module": "go.opentelemetry.io/otel",
+      "sum": "h1:xKWKPxrxB6OtMCbmMY021CqC45J+3Onta9MqjhnusiQ=",
+      "tree_sha256": "f50b23fa658092cb1d865f999437f654904871ac94883ee4eaf49ffb97caf56f",
+      "version": "v1.35.0"
+    },
+    {
+      "archive_sha256": "c30a5fadd4eb1a801561199ef7da0012102ac87be12964f708472e919e2ef29c",
+      "gomod_sha256": "b70c93340b0473054b7348870f6a6ec45b49bb45d60bb6cef3dcecd9bba56ba0",
+      "gomod_sum": "h1:nKVFgxBZ2fReX6IlyW28MgZojkoAkJGaE8CpgeAU3oE=",
+      "module": "go.opentelemetry.io/otel/metric",
+      "sum": "h1:0znxYu2SNyuMSQT4Y9WDWej0VpcsxkuklLa4/siN90M=",
+      "tree_sha256": "32f7e148cc900bc7997adc533176d7abdf0cf328b690739640612f65d797031b",
+      "version": "v1.35.0"
+    },
+    {
+      "archive_sha256": "b6915b523a175f1954bcb69e17237852d0b647b4987a0131815b880ac114e812",
+      "gomod_sha256": "874804834806f68285804603f06b06a54f4acd77e5a216edee51e5f5590c704d",
+      "gomod_sum": "h1:+ga1bZliga3DxJ3CQGg3updiaAJoNECOgJREo9KHGQg=",
+      "module": "go.opentelemetry.io/otel/sdk",
+      "sum": "h1:iPctf8iprVySXSKJffSS79eOjl9pvxV9ZqOWT0QejKY=",
+      "tree_sha256": "63d928287053e0aff74e5f2bd833804cbae10234c1b1e87389c9b31f86517c52",
+      "version": "v1.35.0"
+    },
+    {
+      "archive_sha256": "0b006162ef707289019451f941cb34db0cc1e85014c1b832f76e7ca9013d2c9d",
+      "gomod_sha256": "7defa60beefc82093122e861ee5f74792dde3d40b9ebfeafdf9502d4556a431b",
+      "gomod_sum": "h1:is6XYCUMpcKi+ZsOvfluY5YstFnhW0BidkR+gL+qN+w=",
+      "module": "go.opentelemetry.io/otel/sdk/metric",
+      "sum": "h1:1RriWBmCKgkeHEhM7a2uMjMUfP7MsOF5JpUCaEqEI9o=",
+      "tree_sha256": "355b8a7c19ffdcefc11ea7403b5353d22f3e487334d9d7be3f21fee17ac8040c",
+      "version": "v1.35.0"
+    },
+    {
+      "archive_sha256": "24f3abd562a9c2d18208b9716a7ff65d4b56567a13ce7d3a4fe6666251375e6a",
+      "gomod_sha256": "320b017369af1451d0deef6505a62abf467b2d74cac3ab6d11bc033be6f6d71b",
+      "gomod_sum": "h1:WUk7DtFp1Aw2MkvqGdwiXYDZZNvA/1J8o6xRXLrIkyc=",
+      "module": "go.opentelemetry.io/otel/trace",
+      "sum": "h1:dPpEfJu1sDIqruz7BHFG3c7528f6ddfSWfFDVt/xgMs=",
+      "tree_sha256": "6270acb912a16f8e03dbe250b3c4935a98735b0b14648ba0916b03e5fc4a7ed4",
+      "version": "v1.35.0"
+    },
+    {
+      "archive_sha256": "7ce6b2be21be1ce9e04dc784830e08931f09b5903596b8017839322c9e828667",
+      "gomod_sha256": "53a7d23b41aacaadfea2600c047e02eacb90039d4b0cb3d6f98c6cbec776b9a2",
+      "gomod_sum": "h1:vg+k43peMZ0pUMhYmVAWysMK35e6ioLh3wB8ZCAfbVc=",
+      "module": "golang.org/x/crypto",
+      "sum": "h1:kJNSjF/Xp7kU0iB2Z+9viTPMW4EqqsrywMXLJOOsXSE=",
+      "tree_sha256": "ef51e0b84ff59175faa2875a17ec0811cde6d00a6790463c5143241acf488f39",
+      "version": "v0.37.0"
+    },
+    {
+      "archive_sha256": "1a8ef77bb4d41c1a7d3fa5d0caf2fe599f14eac10f473629e31546f12759b89f",
+      "gomod_sha256": "1fb8ad2f7201cd79bf178578b35aaead1720cab2b8cfea35b99b25b60839f1ef",
+      "gomod_sum": "h1:IXM97Txy2VM4PJ3gI61r1YEk/gAj6zAHN3AdZt6S9Ww=",
+      "module": "golang.org/x/mod",
+      "sum": "h1:ZfthKaKaT4NrhGVZHO1/WDTwGES4De8KtWO0SIbNJMU=",
+      "tree_sha256": "1542e5ca90ce980879b4afcbddc51de2a041a5bcb3b8553c41f9c2e5fefe6181",
+      "version": "v0.24.0"
+    },
+    {
+      "archive_sha256": "388e4a624f48990057f1a2a2cc5f3e0f81e41b99dd2036247d98c931c59d44d4",
+      "gomod_sha256": "3258ec9e17abe2bf1053d0b176d3d50367815237a7701eb373c38152bbd6b9a0",
+      "gomod_sum": "h1:y0hY0exeL2Pku80/zKK7tpntoX23cqL3Oa6njdgRtds=",
+      "module": "golang.org/x/net",
+      "sum": "h1:79Xs7wF06Gbdcg4kdCCIQArK11Z1hr5POQ6+fIYHNuY=",
+      "tree_sha256": "b649574925c1253cd960bbc5a4635dfe67c9388bc39fe0d6ebe9259e1e703c84",
+      "version": "v0.40.0"
+    },
+    {
+      "archive_sha256": "26b6ff684037a2135fe12aa23e9b9be662fd5051181accdac05f4d3942d06d67",
+      "gomod_sha256": "892a9c068542f7af1f069126ab28c38cd5fb8faa6daf7733ce2c9cd30840645e",
+      "gomod_sum": "h1:onh5ek6nERTohokkhCD/y2cV4Do3fxFHFuAejCkRWT8=",
+      "module": "golang.org/x/oauth2",
+      "sum": "h1:WdYw2tdTK1S8olAzWHdgeqfy+Mtm9XNhv/xJsY65d98=",
+      "tree_sha256": "8cc828283c4a55655feb0c1dd94d72a1de0f926f621f4b4e0a120ac9b848e642",
+      "version": "v0.29.0"
+    },
+    {
+      "archive_sha256": "8b19a2aa2162ec8fa1cba4762eb06b089ef8d2dbddf4e64ef51334e722b83a7f",
+      "gomod_sha256": "720b98f1bf033d6b64a454ca8c29cdca6e9265ab7d70db3b834dff49560f1587",
+      "gomod_sum": "h1:1dzgHSNfp02xaA81J2MS99Qcpr2w7fw1gpm99rleRqA=",
+      "module": "golang.org/x/sync",
+      "sum": "h1:woo0S4Yywslg6hp4eUFjTVOyKt0RookbpAHG4c1HmhQ=",
+      "tree_sha256": "ac47fe5979d44310348fe992a397d174acb30fe53baedbd5d685a6fce85eeaf7",
+      "version": "v0.14.0"
+    },
+    {
+      "archive_sha256": "182df79c87135f6dbd0d45656b6527e9221e28899ee44cc6cc7e7a396aedaef9",
+      "gomod_sha256": "f67e3e18f4c08e60a7e80726ab36b691fdcea5b81ae1c696ff64caf518bcfe3d",
+      "gomod_sum": "h1:BJP2sWEmIv4KK5OTEluFJCKSidICx8ciO85XgH3Ak8k=",
+      "module": "golang.org/x/sys",
+      "sum": "h1:q3i8TbbEz+JRD9ywIRlyRAQbM0qF7hu24q3teo2hbuw=",
+      "tree_sha256": "4af7541a234cf6bdc674abcfc3030b738b734dce86c39dc45270eba02110d6f0",
+      "version": "v0.33.0"
+    },
+    {
+      "archive_sha256": "8e8649337973d064cc44fa858787db7d0eb90f0806807349766d180ed6889f5c",
+      "gomod_sha256": "b71288c1d03a434f8ea16eda80e4ddb0733cbdd4ed996f4ab6616fd5dbf76ab3",
+      "gomod_sum": "h1:pRgIJT+bRLFKnoM1ldnzKoxTIn14Yxz928LQRYYgIN0=",
+      "module": "golang.org/x/telemetry",
+      "sum": "h1:zf5N6UOrA487eEFacMePxjXAJctxKmyjKUsjA11Uzuk=",
+      "tree_sha256": "3ad056ed58cc6af255525a3fb704f48a5da07082499d8ca1f2d0c13a7d16a08f",
+      "version": "v0.0.0-20240521205824-bda55230c457"
+    },
+    {
+      "archive_sha256": "bdeda753791b44f6815ccf3367ff57ffaca9bb100bfe8ebe112c8da133e78aec",
+      "gomod_sha256": "a2c3e0e3c81403ce6d0fb25fc9f57a22a8fb2265a08955207eeb53d105ac7d20",
+      "gomod_sum": "h1:R4BeIy7D95HzImkxGkTW1UQTtP54tio2RyHz7PwK0aw=",
+      "module": "golang.org/x/term",
+      "sum": "h1:erwDkOK1Msy6offm1mOgvspSkslFnIGsFnxOKoufg3o=",
+      "tree_sha256": "c1e2a6ecc950a9a2569af5eb4d777f09227d4def44c3cf2951f872b67b3d01c9",
+      "version": "v0.31.0"
+    },
+    {
+      "archive_sha256": "f585335a57a6fa5fa0c0bf319b45f0909e5ff1aba91e8567187ba8e423084c00",
+      "gomod_sha256": "5754d96eac79870627edfa319a277ec19caf77597e7e7be08f0fce94bf23a8f3",
+      "gomod_sum": "h1:L8rBsPeo2pSS+xqN0d5u2ikmjtmoJbDBT1b7nHvFCdU=",
+      "module": "golang.org/x/text",
+      "sum": "h1:dd5Bzh4yt5KYA8f9CJHCP4FB4D51c2c6JvN37xJJkJ0=",
+      "tree_sha256": "2d4e305521dc54c3885e25b0a606f21b7437b2b82bb9c596debe976cba742795",
+      "version": "v0.24.0"
+    },
+    {
+      "archive_sha256": "a94a0e3766428c1b0acb6f33d8e97f162403530d993938c1741088f6d2a4cd13",
+      "gomod_sha256": "8f1250ee92293d56330e0f19d72c503bb52ebb71dd754709c89603700427ab09",
+      "gomod_sum": "h1:CDIdPxbZBQxdj6cxyCIdrNogrJKMJ7pr37NYpMcMDSg=",
+      "module": "golang.org/x/time",
+      "sum": "h1:/bpjEDfN9tkoN/ryeYHnv5hcMlc8ncjMcM4XBk5NWV0=",
+      "tree_sha256": "76fe18982f2320c0f6b271d045042737147e26928aee846540d4392dc08ed4f3",
+      "version": "v0.11.0"
+    },
+    {
+      "archive_sha256": "da7a76d9db0956f30dd7f9957eead7aab5aa132dbca78a6d578436f94fdfee84",
+      "gomod_sha256": "428571a10aab7586a67da2c9375e8ae480def8d2fa11de8c6fff28a696b9591f",
+      "gomod_sum": "h1:CIJMaWEY88juyUfo7UbgPqbC8rU2OqfAV1h2Qp0oMYI=",
+      "module": "golang.org/x/tools",
+      "sum": "h1:4qz2S3zmRxbGIhDIAgjxvFutSvH5EfnsYrRBj0UI0bc=",
+      "tree_sha256": "07dfe75b5b0fadf7bed1054a2e70b9a0a17a20994d411ca0183e1d3c0ddffa57",
+      "version": "v0.33.0"
+    },
+    {
+      "archive_sha256": "e25c014ea9488f9149e955865b7ccb7fd08e0789ecf4d76884d5e859acc32ad4",
+      "gomod_sha256": "1c59d756c7b50215c3d5499c9bd4016be12bc267ce227be12c6549bc480d24cd",
+      "gomod_sum": "h1:wyDfmq5g1wYJWn29O22FDWN48P7Xcz0xz+LBpptYvB0=",
+      "module": "google.golang.org/api",
+      "sum": "h1:p98ymMtqeJ5i3lIBMj5MpR9kzIIgzpHHh8vQ+vgAzx8=",
+      "tree_sha256": "9687b2e8d514c2caf90f298f4fc18f59c2965ea1647fe42506f4004e0912b0b7",
+      "version": "v0.229.0"
+    },
+    {
+      "archive_sha256": "a8252225ed52f734ca3e40686657c29ca571140bcfe13f875150a197c4168ea1",
+      "gomod_sha256": "4562b897747ca8f5e70235667d5243e689937e129be04d9cb7f56f618423b84b",
+      "gomod_sum": "h1:TQT1YpH/rlDCS5+EuFaqPIMqDfuNMFR1OI8EcZJGgAk=",
+      "module": "google.golang.org/genproto",
+      "sum": "h1:mYHFv3iX85YMwhGSaZS4xpkM8WQDmJUovz7yqsFrwDk=",
+      "tree_sha256": "47327dcd00c3494db2cd4b793d35a292f9eb44ef25f41d4054876f4b07a6e74c",
+      "version": "v0.0.0-20250414145226-207652e42e2e"
+    },
+    {
+      "archive_sha256": "5648e689f0bc2c62909577e79cf574af13e4b53de25e79222fab763dd81d7331",
+      "gomod_sha256": "b0cd27d1bdb971da4e95e87fdb23139891154e5e8eb9884b647c4b5fc8406891",
+      "gomod_sum": "h1:085qFyf2+XaZlRdCgKNCIZ3afY2p4HHZdoIRpId8F4A=",
+      "module": "google.golang.org/genproto/googleapis/api",
+      "sum": "h1:UdXH7Kzbj+Vzastr5nVfccbmFsmYNygVLSPk1pEfDoY=",
+      "tree_sha256": "b7b377b581d0ee1959ca26b8181bc4314c0e8abbeb4b24af46cb429828f1d1e0",
+      "version": "v0.0.0-20250414145226-207652e42e2e"
+    },
+    {
+      "archive_sha256": "92d5a9785cb563ad180b788e1a12fab83dd3f9a3e7861a5b3d1e8f0dc447e187",
+      "gomod_sha256": "6bb372084395ba4c65ab1ea510ba7ae62dbaba2f36d512013879a051a470392a",
+      "gomod_sum": "h1:qQ0YXyHHx3XkvlzUtpXDkS29lDSafHMZBAZDc03LQ3A=",
+      "module": "google.golang.org/genproto/googleapis/rpc",
+      "sum": "h1:ztQaXfzEXTmCBvbtWYRhJxW+0iJcz2qXfd38/e9l7bA=",
+      "tree_sha256": "68a89d5bf216e88199d88a367922f68541999fa085277400890782d2ae12d16f",
+      "version": "v0.0.0-20250414145226-207652e42e2e"
+    },
+    {
+      "archive_sha256": "92665f5829baf74bebbda3d86634d7a93668ada6e26567755febd62860bddba2",
+      "gomod_sha256": "21e8511c8f92961a7441ba613178ce4e358de408c59e92bc12e41d6ad34eea7b",
+      "gomod_sum": "h1:H0GRtasmQOh9LkFoCPDu3ZrwUtD1YGE+b2vYBYd/8Ec=",
+      "module": "google.golang.org/grpc",
+      "sum": "h1:ffsFWr7ygTUscGPI0KKK6TLrGz0476KUvvsbqWK0rPI=",
+      "tree_sha256": "b75df81b6921f7b9f1faef9a01e1f2b3d1e778001caf33b54f2d9529ecc4908b",
+      "version": "v1.71.1"
+    },
+    {
+      "archive_sha256": "3294ac8ea5089b3c231351afaea4f012e8027a9beeb523bbf31dcb383cc0ab99",
+      "gomod_sha256": "e11082f89ab1be94e778e4bd2c53172f481135604dd9f2d60140e5514bc53623",
+      "gomod_sum": "h1:jduwjTPXsFjZGTmRluh+L6NjiWu7pchiJ2/5YcXBHnY=",
+      "module": "google.golang.org/protobuf",
+      "sum": "h1:z1NpPI8ku2WgiWnf+t9wTPsn6eP1L7ksHUlkfLvd9xY=",
+      "tree_sha256": "343c06f7293140755548ab3ab0c1ff495217df31a2efa2b41c38fe2fbee37bfb",
+      "version": "v1.36.6"
+    }
+  ],
+  "schema": "bridge-fixture-lock/v1",
+  "sdk_manifest_sha256": "156b1e814933aaa55b67745b8f393da53cea1388e511c6dd83568fd74216aabe"
+}

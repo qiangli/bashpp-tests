@@ -1,0 +1,89 @@
+{
+  "applicable_original_in_package_test_files": [],
+  "execution_claim": false,
+  "full_denominator_retained": {
+    "host_exposed_packages": 178,
+    "policy_refusals": 2,
+    "reviewed_packages": 180,
+    "slice_does_not_discharge_other_registrations": true
+  },
+  "imports": [
+    "errors",
+    "fmt",
+    "io/fs",
+    "os",
+    "reflect",
+    "testing",
+    "time"
+  ],
+  "inputs": [
+    {
+      "bytes": 765,
+      "package": "errors_test",
+      "path": "src/errors/errors_test.go",
+      "sha256": "7827d7e3ab7cc317a254ccf76158069b80c5b55b34ca45a3e6d799ad185f70ea"
+    },
+    {
+      "bytes": 5503,
+      "package": "errors_test",
+      "path": "src/errors/example_test.go",
+      "sha256": "db75531e0575928a48a16d2c9769da59e719da091a31a4f03c3d5aeeca6be648"
+    },
+    {
+      "bytes": 1796,
+      "package": "errors_test",
+      "path": "src/errors/join_test.go",
+      "sha256": "09f9cc24acc7749d8f7197c6b90dc43223708c8f6412825e29ea3984bc6afdbc"
+    },
+    {
+      "bytes": 8109,
+      "package": "errors_test",
+      "path": "src/errors/wrap_test.go",
+      "sha256": "a098c0f752095df4614abf02925e52d2d35228e6ac272925dd4d9fd59f7e0cf6"
+    }
+  ],
+  "loading_contract": [
+    "Load the complete selected errors_test package inputs without requiring package main or auto-invoking main.",
+    "Resolve original package globals, initialization, methods and source positions across all companion files.",
+    "Register only the two named callbacks for this discovery slice and retain all other obligations.",
+    "Dispatch each callback body through the interpreter with typed native testing.T handle; multiplex reentrant calls.",
+    "Bind FailNow/SkipNow to the owning interpreter task, run its defers, then signal the native scheduler goroutine."
+  ],
+  "measured_proof": {
+    "candidate_manifest_sha256": "ddf233e89c2839f299c14010c3d2ca8fba4ffb23e8835b86bd5ae0b6811f9aff",
+    "diagnostic": "Go execution requires package main with func main()",
+    "evidence_directory": "/Users/qiangli/.bashy/sprint118/evidence/stdlib-testbody-load-proof-001",
+    "exit": 2,
+    "source_unchanged": true
+  },
+  "native_harness": {
+    "callback_argument": "session-scoped *testing.T capability",
+    "descriptor": "testing.InternalTest",
+    "imports_original_test_bodies": false,
+    "process_lifetime": "dedicated; testing.Main exits process",
+    "scheduler": "testing.Main"
+  },
+  "package_directory": "src/errors",
+  "package_import_path": "errors_test",
+  "registrations": [
+    {
+      "line": 12,
+      "name": "TestNewEqual",
+      "product_execution_status": "FAIL: non-main loader and testing callback adapter unavailable",
+      "required_dispatch": "original interpreter function callback",
+      "signature": "func(*testing.T)",
+      "source": "src/errors/errors_test.go"
+    },
+    {
+      "line": 28,
+      "name": "TestErrorMethod",
+      "product_execution_status": "FAIL: non-main loader and testing callback adapter unavailable",
+      "required_dispatch": "original interpreter function callback",
+      "signature": "func(*testing.T)",
+      "source": "src/errors/errors_test.go"
+    }
+  ],
+  "schema": "bridge-testbody-slice/v1",
+  "slice_id": "errors-original-errors-test-go-two-functions",
+  "tested_package_import_path": "errors"
+}

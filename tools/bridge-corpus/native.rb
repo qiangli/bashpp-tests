@@ -37,6 +37,18 @@ module BridgeCorpus
       'list_sha256' => INVENTORY_LIST_SHA256, 'packages' => packages, 'policy_refusals' => refusals }
   end
 
+  def authenticated_fixtures(options, identity)
+    command = [options.fetch(:python), File.join(__dir__, 'fixtures.py'), 'validate',
+               '--sdk-identity', options.fetch(:sdk_identity), '--path', options.fetch(:fixtures)]
+    out, err, status = Open3.capture3(*command)
+    raise Corpus::ContractError, "fixture authentication failed: #{err}" unless status.success?
+    result = JSON.parse(out)
+    unless result['verified'] == true && result['modules'] == 5 && result['sdk_manifest_sha256'] == identity.fetch('manifest_sha256')
+      raise Corpus::ContractError, 'fixture identity/denominator mismatch'
+    end
+    result
+  end
+
   def native(options)
     inventory_path = File.expand_path(options.fetch(:inventory))
     evidence = File.expand_path(options.fetch(:evidence))
@@ -58,12 +70,13 @@ module BridgeCorpus
     check, err, status = Open3.capture3(*prepare)
     raise Corpus::ContractError, "SDK reauthentication failed: #{err}" unless status.success? && JSON.parse(check) == identity
 
+    fixtures = authenticated_fixtures(options, identity)
     FileUtils.mkdir_p(evidence)
     environment = {
       'PATH' => File.join(sdk, 'bin') + ':/usr/bin:/bin', 'GOROOT' => sdk,
       'HOME' => File.join(evidence, 'home'), 'TMPDIR' => File.join(evidence, 'tmp'),
       'GOCACHE' => File.join(evidence, 'gocache'), 'GOTOOLCHAIN' => 'local', 'GOENV' => 'off',
-      'GOFLAGS' => '', 'GOPROXY' => 'off', 'GOSUMDB' => 'off', 'LC_ALL' => 'C', 'TZ' => 'UTC', 'GOMAXPROCS' => '2'
+      'GOFLAGS' => '-p=1', 'GOWORK' => 'off', 'GOMODCACHE' => fixtures.fetch('gomodcache'), 'GOPROXY' => 'off', 'GOSUMDB' => 'off', 'LC_ALL' => 'C', 'TZ' => 'UTC', 'GOMAXPROCS' => '4'
     }
     %w[HOME TMPDIR GOCACHE].each { |key| FileUtils.mkdir_p(environment.fetch(key)) }
 
@@ -89,12 +102,14 @@ module BridgeCorpus
     sources_intact = Open3.capture3(*prepare)
     integrity = sources_intact[2].success? && JSON.parse(sources_intact[0]) == identity
 
+    fixtures_after = authenticated_fixtures(options, identity)
+    raise Corpus::ContractError, 'fixtures changed during native execution' unless fixtures_after == fixtures
     inventory_after = authenticated_inventory(inventory_path)
     raise Corpus::ContractError, 'inventory changed during native execution' unless inventory_after == inventory
 
     summary = {
       'schema' => 'bridge-native/v1', 'native_only' => true, 'product_execution_claim' => false,
-      'inventory' => inventory, 'sdk' => identity, 'native_stage' => stage, 'parse_error' => parse_error, 'sdk_integrity_after' => integrity,
+      'fixtures' => fixtures, 'fixture_integrity_after' => true, 'inventory' => inventory, 'sdk' => identity, 'native_stage' => stage, 'parse_error' => parse_error, 'sdk_integrity_after' => integrity,
       'events' => events.events, 'runtime_test_starts' => events.started.size,
       'runtime_test_terminals' => events.terminals.keys.count { |_pkg, test| test },
       'incomplete_test_events' => events.incomplete,
@@ -117,6 +132,7 @@ if $PROGRAM_NAME == __FILE__
     parser.on('--sdk-identity PATH') { |v| options[:sdk_identity] = v }
     parser.on('--evidence PATH') { |v| options[:evidence] = v }
     parser.on('--inventory PATH') { |v| options[:inventory] = v }
+    parser.on('--fixtures PATH') { |v| options[:fixtures] = v }
     parser.on('--source-cache PATH') { |v| options[:source_cache] = v }
   end.parse!
   begin

@@ -83,7 +83,9 @@ class BridgeCorpusNativeTest < Minitest::Test
     Open3.stub :capture3, [JSON.generate(@identity), '', Struct.new(:success?).new(true)] do
       Corpus.stub :authenticate_file, true do
         Corpus.stub :capture, stage do
-          capture_io { @result = BridgeCorpus.native(@options) }
+          BridgeCorpus.stub :authenticated_fixtures, { 'gomodcache' => File.join(@tmpdir, 'gomodcache'), 'verified' => true } do
+            capture_io { @result = BridgeCorpus.native(@options) }
+          end
         end
       end
     end
@@ -146,6 +148,14 @@ class BridgeCorpusNativeTest < Minitest::Test
       end
     end
     refute File.exist?(@evidence)
+  end
+
+  def test_fixture_validation_failure_is_fatal
+    @options[:fixtures] = File.join(@tmpdir, 'missing-fixtures.json')
+    Open3.stub :capture3, ['', 'tampered fixtures', Struct.new(:success?).new(false)] do
+      error = assert_raises(Corpus::ContractError) { BridgeCorpus.authenticated_fixtures(@options, @identity) }
+      assert_match(/fixture authentication failed/, error.message)
+    end
   end
 
   def test_native_failures_are_not_reclassified_as_success
