@@ -119,6 +119,22 @@ This is a bounded sample. **No claim is made here about all 743 roots, about the
 `typechecker` axis as a whole, or about the full 3495-root corpus.** The complete
 ledger is produced only by a full `product.rb` run.
 
+## Known limitation: the types2 twins
+
+The two runners share the same fixture files under
+`src/internal/types/testdata`, so a `types2` root and its `go/types` twin are the
+same source checked twice. The candidate has a single Go frontend, so the adapter
+runs the same two checking phases for both and the twins differ only in
+`column_tolerance`. A spot control over the first 12 adaptable `types2` roots
+gave **6 PASS / 6 FAIL**, agreeing with the `go/types` twins.
+
+This means the adapter does **not** model the distinct position behaviour of the
+`cmd/compile` type-checker; it adjudicates the product's own diagnostics against
+each runner's tolerance. Credit still requires the retained native observation
+for that specific root to be `pass`, so a `types2` root cannot be credited from a
+`go/types` result. This is flagged for review rather than claimed as complete
+coverage of the `types2` runner contract.
+
 ## Resume
 
 The adapter is **fail-closed** for resume. `tools/go-full/resume.rb` has no
