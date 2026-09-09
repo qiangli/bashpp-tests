@@ -24,7 +24,9 @@
 # native binary freshly built from that row's unchanged upstream source in the
 # same run, bound in the ledger by the binary's digest (tools/tour/executor-runner.rb
 # runs TOUR_ORACLE_REPEATS of them, default 7). Ranges and multiplicities come
-# from those real repeats. Every invariant is applied to every oracle
+# from those real repeats unless a source-defined support is explicit: the
+# goroutines.go launched-call count is the scheduler-unpromised 0..5 prefix.
+# Every invariant is applied to every oracle
 # observation too, so a comparator that does not describe the real program
 # fails on the oracle before it can excuse a candidate. The pinned accepted
 # observation in tests/tour/results.tsv is retained for these rows as
@@ -61,7 +63,7 @@
 #
 # path	comparator	source_sha256	burst_variation	volatile_element	params
 _content/tour/basics/packages.go	rand_intn_line	c7be4714c613e20f2ea101de9a267aaa542af90e3a92919aa991efed3c10f398	required	rand.Intn draw from the randomly seeded global PRNG	{"prefix":"My favorite number is ","modulus":10}
-_content/tour/concurrency/goroutines.go	say_interleaving	0e82448c75a618ad8ec8a9c4396f14553ac595137754647720c01b53498db0c5	required	unsynchronized interleaving of two goroutines printing to stdout	{"values":["hello","world"],"main":"hello","main_count":5,"goroutine":"world"}
+_content/tour/concurrency/goroutines.go	say_interleaving	0e82448c75a618ad8ec8a9c4396f14553ac595137754647720c01b53498db0c5	not_required	unsynchronized interleaving of two goroutines printing to stdout	{"values":["hello","world"],"main":"hello","main_count":5,"goroutine":"world","goroutine_min":0}
 _content/tour/concurrency/default-selection.go	tick_boom_sequence	609707c5ac8020cb1b2b763eaf9aa65afabcf2897aa5f938a288c1db5b2b463b	required	goroutine/timer interleaving under a 50ms tick and a 100ms boom	{"tick_ms":100,"boom_ms":500,"boom_slack_ms":1000,"default_sleep_ms":50,"rounding_slack_ms":1}
 _content/tour/concurrency/channels.go	channel_sum_order	8c3ce8583c8274e42ee0522989bf4cf2003b6f8045bcb6b16a6a79364f97aa70	not_required	arrival order of two independently computed sums received from one unbuffered channel	{"halves":[17,-5],"sum":12,"outputs":["17 -5 12","-5 17 12"]}
 _content/tour/flowcontrol/switch-evaluation-order.go	weekday_switch	9e94bbb667be85e810c1aff77e343ec9cc5473b24670979d27c03caf0bef21db	not_required	weekday arithmetic against time.Now()	{"prompt":"When's Saturday?","values":["Today.","Tomorrow.","In two days.","Too far away."]}

@@ -416,7 +416,8 @@ module TourExecutor
   # (for a declared-volatile row) and, for the two product modes, the fresh
   # baseline observation of the same source. The gate calls this on ledger data
   # it did not produce, so a hand-edited status cannot survive.
-  def observation_status(observation, recipe:, accepted:, baseline_observation: nil, semantic_row: nil)
+  def observation_status(observation, recipe:, accepted:, baseline_observation: nil, semantic_row: nil,
+                         semantic_version: TourSemantics::VERSION)
     stages = observation['stages'] || []
     expected = recipe['stages']
     return 'FAIL:stage_contract' unless stages.length == expected.length
@@ -439,7 +440,7 @@ module TourExecutor
       # are adjudicated by the reviewed comparator against the fresh native
       # oracle instead.
       return 'FAIL:accepted_mismatch' unless baseline_matches_accepted?(observation, accepted, compare_streams: semantic_row.nil?)
-      return semantic_verdict(observation, semantic_row) if semantic_row
+      return semantic_verdict(observation, semantic_row, version: semantic_version) if semantic_row
       return 'PASS'
     end
 
@@ -447,7 +448,7 @@ module TourExecutor
     # output to compare: succeeding at the declared phase IS the obligation.
     return 'PASS' unless final['execute_body']
 
-    return semantic_verdict(observation, semantic_row) if semantic_row
+    return semantic_verdict(observation, semantic_row, version: semantic_version) if semantic_row
 
     return 'FAIL:no_baseline' if baseline_observation.nil?
     base = baseline_observation['stages'][authoritative_index(baseline_observation['stages'])]
@@ -473,11 +474,11 @@ module TourExecutor
   # gate's job (it recomputes TourSemantics.compare from the stored raw bytes
   # and the stored oracle); here we only refuse to accept one that is absent,
   # is for another comparator or another version, or that failed.
-  def semantic_verdict(observation, semantic_row)
+  def semantic_verdict(observation, semantic_row, version: TourSemantics::VERSION)
     verdict = observation['semantic']
     return 'FAIL:semantic_missing' unless verdict.is_a?(Hash)
     return "FAIL:semantic_comparator:#{verdict['comparator']}" unless verdict['comparator'] == semantic_row['comparator']
-    return "FAIL:semantic_version:#{verdict['version']}" unless verdict['version'] == TourSemantics::VERSION
+    return "FAIL:semantic_version:#{verdict['version']}" unless verdict['version'] == version
     return "FAIL:semantic:#{verdict['findings'].to_a.first}" unless verdict['ok']
     'PASS'
   end

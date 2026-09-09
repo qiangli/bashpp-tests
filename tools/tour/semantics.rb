@@ -28,8 +28,9 @@
 #   * every invariant is also applied to every ORACLE observation, so a
 #     comparator that is too loose to describe the real program, or too tight
 #     to admit it, fails on the oracle before it can excuse a candidate;
-#   * ranges and multiplicities are taken from ACTUAL REPEATED NATIVE
-#     OBSERVATIONS of the freshly built binary for that row, not from a frozen
+#   * sampled ranges are taken from ACTUAL REPEATED NATIVE OBSERVATIONS where
+#     sampling is the contract; source-defined support is used where the source
+#     supplies it (including the goroutines.go prefix bound), never a frozen
 #     historical draw;
 #   * tools/tour/semantics-selftests.rb drives each comparator with wrong
 #     values, wrong counts, wrong order, wrong status and wrong timing and
@@ -52,7 +53,8 @@ require 'json'
 require 'time'
 
 module TourSemantics
-  VERSION = 'tour-semantics/v1'
+  VERSION = 'tour-semantics/v2'
+  LEGACY_VERSION = 'tour-semantics/v1'
 
   # Fewer repeats than this cannot establish a range or a multiplicity, so a
   # thin oracle is a failure rather than a licence.
@@ -114,9 +116,17 @@ module TourSemantics
   # candidate/oracle entries: { 'exit' => Integer|nil, 'stdout' => String,
   #                             'stderr' => String }  (streams already decoded)
   # window: { 'from' => epoch_float, 'to' => epoch_float, 'utc_offset' => secs }
-  def compare(row, candidate:, oracle:, window:)
+  def compare(row, candidate:, oracle:, window:, version: VERSION)
+    raise ArgumentError, "unsupported semantic contract #{version.inspect}" unless [VERSION, LEGACY_VERSION].include?(version)
     comparator = row.fetch('comparator')
     params = row.fetch('params')
+    # v1 had only the upper source bound in facts_say_interleaving; its lower
+    # bound came entirely from reconcile_say_interleaving_v1's oracle sample.
+    fact_params = if version == LEGACY_VERSION && comparator == 'say_interleaving'
+                    params.merge('goroutine_min' => 0)
+                  else
+                    params
+                  end
     findings = []
     findings << "oracle:insufficient_runs:#{oracle.length}<#{MIN_ORACLE_RUNS}" if oracle.length < MIN_ORACLE_RUNS
 
@@ -131,19 +141,19 @@ module TourSemantics
     # 2. the comparator must describe every oracle observation of the real
     #    program, or it is the wrong comparator.
     oracle_facts = oracle.each_with_index.map do |observation, i|
-      facts = facts(comparator, observation['stdout'].to_s, params)
+      facts = facts(comparator, observation['stdout'].to_s, fact_params)
       facts.fetch('findings').each { |f| findings << "oracle:invariant_violation:#{i}:#{f}" }
       facts
     end
 
     # 3. the candidate's own invariants.
-    candidate_facts = facts(comparator, candidate['stdout'].to_s, params)
+    candidate_facts = facts(comparator, candidate['stdout'].to_s, fact_params)
     candidate_facts.fetch('findings').each { |f| findings << "stdout:#{f}" }
 
     # 4. cross-observation reconciliation: support, ranges, multiplicities,
     #    agreement and timing conditions against the native repeats.
     if candidate_facts.fetch('findings').empty? && oracle_facts.all? { |f| f.fetch('findings').empty? }
-      reconcile(comparator, candidate_facts, oracle_facts, params, window).each { |f| findings << f }
+      reconcile(comparator, candidate_facts, oracle_facts, params, window, version: version).each { |f| findings << f }
     end
 
     # 5. a comparator is only warranted where nondeterminism is real. Where the
@@ -152,11 +162,16 @@ module TourSemantics
     #    one single distinct stdout is evidence the comparator is not needed
     #    here and is therefore hiding something.
     distinct = oracle.map { |o| o['stdout'].to_s }.uniq.length
-    if row.fetch('burst_variation') == 'required' && distinct < 2 && oracle.length >= MIN_ORACLE_RUNS
+    variation = if version == LEGACY_VERSION && comparator == 'say_interleaving'
+                  'required'
+                else
+                  row.fetch('burst_variation')
+                end
+    if variation == 'required' && distinct < 2 && oracle.length >= MIN_ORACLE_RUNS
       findings << "oracle:no_variation_observed:#{distinct}"
     end
 
-    { 'comparator' => comparator, 'version' => VERSION, 'ok' => findings.empty?,
+    { 'comparator' => comparator, 'version' => version, 'ok' => findings.empty?,
       'findings' => findings.sort,
       'evidence' => { 'oracle_runs' => oracle.length, 'oracle_distinct_stdout' => distinct,
                       'candidate' => summarize(candidate_facts), 'oracle' => oracle_facts.map { |f| summarize(f) } } }
@@ -238,7 +253,10 @@ module TourSemantics
     result
   end
 
-  def reconcile(comparator, candidate, oracle, params, window)
+  def reconcile(comparator, candidate, oracle, params, window, version: VERSION)
+    if version == LEGACY_VERSION && comparator == 'say_interleaving'
+      return reconcile_say_interleaving_v1(candidate, oracle, params, window)
+    end
     send("reconcile_#{comparator}", candidate, oracle, params, window)
   end
 
@@ -276,9 +294,13 @@ module TourSemantics
   # -- concurrency/goroutines.go: `go say("world"); say("hello")`
   #
   # main prints its own value exactly five times and then returns, killing the
-  # goroutine wherever it got to. So the MAIN multiplicity is exact, the
-  # GOROUTINE multiplicity is a range bounded by the native repeats, the line
-  # vocabulary is closed, and only the interleaving is free.
+  # goroutine wherever it got to. There is no scheduler-progress guarantee for
+  # that launched goroutine, so its observable output is any 0..5 prefix of
+  # the five-line call, not a fresh-sample confidence interval. The closed
+  # vocabulary and the explicit 0..5 source-bound counts reject arbitrary
+  # missing main output or extra goroutine output. Because all emissions within each
+  # call are identical, the count is the complete observable representation of
+  # that call's required order.
   def facts_say_interleaving(lines, params, result)
     values = params.fetch('values')
     counts = Hash.new(0)
@@ -289,11 +311,25 @@ module TourSemantics
     main, expected = params.fetch('main'), params.fetch('main_count')
     result['findings'] << "main_multiplicity:#{counts[main]}!=#{expected}" unless counts[main] == expected
     goroutine = counts[params.fetch('goroutine')]
+    minimum = params.fetch('goroutine_min')
     result['goroutine_count'] = goroutine
-    result['findings'] << "goroutine_multiplicity_outside_bound:#{goroutine}>#{expected}" if goroutine > expected
+    unless goroutine.between?(minimum, expected)
+      result['findings'] << "goroutine_multiplicity_outside_bound:#{goroutine}_not_in_#{minimum}..#{expected}"
+    end
   end
 
-  def reconcile_say_interleaving(candidate, oracle, _params, _window)
+  def reconcile_say_interleaving(_candidate, _oracle, _params, _window)
+    # facts_say_interleaving already enforces the complete source-derived
+    # support. Native repeats establish that this is the volatile row and are
+    # still checked against the same invariants, but a finite burst cannot
+    # manufacture a semantic lower bound for a goroutine cut off by main.
+    []
+  end
+
+  # Exact reproduction of v1 for authenticating retained ledgers before v2
+  # readjudication. New evidence is never produced with this sampled-range
+  # rule.
+  def reconcile_say_interleaving_v1(candidate, oracle, _params, _window)
     range_finding('goroutine_multiplicity', candidate['goroutine_count'], oracle.map { |o| o['goroutine_count'] })
   end
 

@@ -261,6 +261,22 @@ check('audit_normalize: rejects invalid UTF-8 instead of replacing it') do
   expect(TourExecutor.audit_normalize("\xff\xfe".b).nil?, 'expected nil')
 end
 
+# --- semantic contract migration ------------------------------------------
+
+SAY_ROW = { 'comparator' => 'say_interleaving' }.freeze
+V1_SAY_VERDICT = { 'comparator' => 'say_interleaving', 'version' => TourSemantics::LEGACY_VERSION,
+                   'ok' => true, 'findings' => [] }.freeze
+
+check('semantic migration: current adjudication rejects a v1 verdict by default') do
+  got = TourExecutor.semantic_verdict({ 'semantic' => V1_SAY_VERDICT }, SAY_ROW)
+  expect(got.start_with?('FAIL:semantic_version:'), got)
+end
+check('semantic migration: an authenticated v1 replay accepts that same v1 verdict explicitly') do
+  got = TourExecutor.semantic_verdict({ 'semantic' => V1_SAY_VERDICT }, SAY_ROW,
+                                      version: TourSemantics::LEGACY_VERSION)
+  expect(got == 'PASS', got)
+end
+
 # --- candidate authentication ----------------------------------------------
 
 COMPONENTS = TourExecutor.load_candidate_contract(CANDIDATE_PATH).freeze
