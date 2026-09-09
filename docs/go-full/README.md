@@ -1,5 +1,7 @@
 # Full official Go source and recipe inventory
 
+The separate [complete Sprint 118 replay result](SPRINT118-FULL008-RESULT.md) records all 3,495 roots and remains FAIL.
+
 This is an **inventory, not an execution result**. It binds every input to the
 reviewed Go 1.27.0 source archive and retains the complete upstream root sets.
 It does not claim Bash++ parity, native oracle success, or a completed sprint.
