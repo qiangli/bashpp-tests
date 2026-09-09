@@ -1,0 +1,51 @@
+{
+  "schema": "sprint118-tour-acceptance-receipt/v1",
+  "date": "2026-09-09",
+  "candidate": "018",
+  "sh_commit": "071f2409490641f3ae64ad45560164ca8f60506d",
+  "bashy_commit": "118bb3f6841a57a7010b7858bf02564c445416f7",
+  "harness_commit": "d728cdda6de7096c59859e06aebd2366ed55a47d",
+  "candidate_manifest_sha256": "a927efce4f80e392f78c9552e0a0f6f3465f1921d1a8fcc3ae7976e02250fdd2",
+  "launcher_sha256": "454c25a8cfb70a45e2bcb4fe57f64e7726164ed1ec8b7e46f3c243f4b87930a4",
+  "payload_sha256": "c58b7fe28598c737bccc8f2733071ebf12d4608f03a5cf375c116632b2b61ed1",
+  "raw_ledger_sha256": "c639ef4a27c35bdf771862f8a7c88a321fe64d012fb321f3200c68733a47cddb",
+  "root_sha256": "b0f6e0c0585b5d077d182111e402bab60dc65d1b75bce2ddf1400b681be6bf33",
+  "inventory_rows": 168,
+  "programs": 97,
+  "runnable_programs": 93,
+  "build_only_programs": 4,
+  "inline_fragments": 62,
+  "explicit_nobuild_programs": 9,
+  "observations": 291,
+  "mode_results": {
+    "baseline": {
+      "FAIL:semantic:goroutine_multiplicity:5_outside_native_range_4..4": 1,
+      "PASS": 96
+    },
+    "compiled": {
+      "FAIL:semantic:goroutine_multiplicity:5_outside_native_range_4..4": 1,
+      "PASS": 96
+    },
+    "interpreted": {
+      "FAIL:semantic:goroutine_multiplicity:5_outside_native_range_4..4": 1,
+      "PASS": 96
+    }
+  },
+  "oracle_rows": 11,
+  "oracle_runs": 77,
+  "completed_stages": 574,
+  "verified_raw_stream_files": 1302,
+  "verified_artifact_references": 388,
+  "verified_source_maps": 97,
+  "unique_verified_files": 1787,
+  "offline_gate": "FAIL",
+  "retained_integrity_audit": "PASS",
+  "manager_retained_gate_duration": "962ms",
+  "manager_full_execution_duration": "5m18.901s",
+  "story4_tour_criteria": "NOT MET; 3 failing observations preserved",
+  "story1_tour_parity": "REGRESSION PRESERVED; no new release or sprint-wide certification",
+  "sprint_complete": false,
+  "go_full_complete": false,
+  "ledger_sha256": "fd95aae3797da54407e78135e22163a71b0d3afd7de025e62d745ebfd0f15059",
+  "inventory_ledger_sha256": "72f522836a94fb7bb9fd09ea45c7832c6f3ebaa04b80181386a173a583cb72ad"
+}
