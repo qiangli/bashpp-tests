@@ -65,9 +65,17 @@ fixture. Its semantics are ported from the pinned SDK
   expressions, both unquoted with `strconv.Unquote`, exactly as in `testFiles`.
 * When several annotations on a line match, the one with the closest column is
   consumed, and the remaining delta must be within the root's
-  `column_tolerance` — `0` for every `go/types` root, and the family delta
-  (`20`, `50`, `100`, `125`) for the `types2` twins, mirroring each runner's
-  `colDelta`.
+  `column_tolerance`, mirroring each runner's `colDelta`. `src/go/types`
+  pins `const colDelta = 0` for every family; `types2` passes a per-family
+  delta, and `TestLocal` is **not** widened:
+
+  | family | `go/types` | `types2` |
+  | --- | --- | --- |
+  | `TestCheck` | 0 | 50 |
+  | `TestSpec` | 0 | 20 |
+  | `TestExamples` | 0 | 125 |
+  | `TestFixedbugs` | 0 | 100 |
+  | `TestLocal` | 0 | 0 |
 * Secondary clarifications are dropped exactly as `Config.Error` drops them:
   a message containing `": \t"` (for example `p.go:14:2: \tT3 refers to T4`) is
   attached to its primary error and is neither matched nor counted as an
@@ -126,7 +134,12 @@ The two runners share the same fixture files under
 same source checked twice. The candidate has a single Go frontend, so the adapter
 runs the same two checking phases for both and the twins differ only in
 `column_tolerance`. A spot control over the first 12 adaptable `types2` roots
-gave **6 PASS / 6 FAIL**, agreeing with the `go/types` twins.
+gave **6 PASS / 6 FAIL**, agreeing with the `go/types` twins. A wider paired
+control over the first **60** fixtures adaptable under *both* runners gave
+**46 PASS / 46 PASS** with the twin verdicts agreeing **60/60**: the widened
+`types2` tolerance is not currently converting any `go/types` `FAIL` into a
+`types2` `PASS`. That is a measurement of this candidate, not a guarantee — the
+tolerance remains capable of it, which is why the limitation stays flagged.
 
 This means the adapter does **not** model the distinct position behaviour of the
 `cmd/compile` type-checker; it adjudicates the product's own diagnostics against

@@ -116,12 +116,32 @@ class TypecheckerRecipeOptionsTest < Minitest::Test
     assert_includes resume, "typecheck-diagnostics/*"
   end
 
+  # The colDelta each runner passes to testFiles, read from the pinned SDK:
+  # src/go/types/check_test.go pins `const colDelta = 0` for every family, and
+  # src/cmd/compile/internal/types2/check_test.go passes a per-family delta.
+  # Pinning the whole family->tolerance mapping, not just the set of values,
+  # so a mapping shuffled between families cannot silently widen a tolerance.
+  GO_TYPES_COLDELTA = { 'TestCheck' => 0, 'TestSpec' => 0, 'TestExamples' => 0, 'TestFixedbugs' => 0, 'TestLocal' => 0 }.freeze
+  TYPES2_COLDELTA = { 'TestCheck' => 50, 'TestSpec' => 20, 'TestExamples' => 125, 'TestFixedbugs' => 100, 'TestLocal' => 0 }.freeze
+
   def test_column_tolerance_mirrors_each_runner
     skip 'pinned SDK source inventory is unavailable' unless File.directory?(SOURCE_ROOT)
     go_types = roots.select { |root| root.fetch('runner').start_with?('src/go/types/') }
     assert_equal [0], go_types.map { |root| root.fetch('column_tolerance') }.uniq
     types2 = roots.select { |root| root.fetch('runner').start_with?('src/cmd/compile/') }
     assert_equal [0, 20, 50, 100, 125], types2.map { |root| root.fetch('column_tolerance') }.uniq.sort
+
+    # Every root carries exactly the colDelta its own runner and family pin.
+    { go_types => GO_TYPES_COLDELTA, types2 => TYPES2_COLDELTA }.each do |group, expected|
+      observed = group.group_by { |root| root.fetch('family') }.transform_values do |rows|
+        rows.map { |root| root.fetch('column_tolerance') }.uniq
+      end
+      assert_equal expected.keys.sort, observed.keys.sort
+      expected.each { |family, delta| assert_equal [delta], observed.fetch(family), "#{family} column tolerance" }
+    end
+    # types2 TestLocal shares go/types' exact-position requirement: it is 0, not
+    # a widened family delta, so it must never be lumped in with the twins.
+    assert_equal 0, TYPES2_COLDELTA.fetch('TestLocal')
   end
 end
 
