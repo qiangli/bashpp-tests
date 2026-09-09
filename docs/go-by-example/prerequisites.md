@@ -1,7 +1,7 @@
 # Measured product state of the Go by Example gate
 
 > Historical candidate001 report. Superseded by the full
-> [published candidate002 replay](sprint118-candidate002.md). Counts and defect
+> [runtime candidate005 replay](sprint118-candidate005.md). Counts and defect
 > status below describe that earlier candidate only; they are not current
 > acceptance claims. The earlier evidence is retained as diagnostic history.
 
