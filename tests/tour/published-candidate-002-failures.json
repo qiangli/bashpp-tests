@@ -1,0 +1,1212 @@
+{
+  "candidate_manifest_sha256": "ddf233e89c2839f299c14010c3d2ca8fba4ffb23e8835b86bd5ae0b6811f9aff",
+  "payload_sha256": "e9a8a66ca1adbcbc614ab0f0dc9e6ea8d5590cb23e66ce7a8bdc74dab3becce3",
+  "ledger_sha256": "77a6c61ea4b8a9e45667e9ece0be1a0834d7385793553f2d3f98c6a18253f4cc",
+  "summary": {
+    "by_mode": {
+      "baseline": {
+        "PASS": 97
+      },
+      "compiled": {
+        "PASS": 97
+      },
+      "interpreted": {
+        "FAIL:run:exit:1": 27,
+        "FAIL:run:exit:2": 31,
+        "PASS": 39
+      }
+    },
+    "candidate_reauthenticated": true,
+    "expected_observations": 291,
+    "modes": [
+      "baseline",
+      "interpreted",
+      "compiled"
+    ],
+    "observations": 291,
+    "oracle_runs": 70,
+    "outcomes": {
+      "FAIL:run:exit:1": 27,
+      "FAIL:run:exit:2": 31,
+      "PASS": 233
+    },
+    "programs": 97,
+    "semantic_rows": 10,
+    "sources_unchanged": true,
+    "type": "summary"
+  },
+  "family_counts": {
+    "complex-scalars": 1,
+    "channels-and-task-arguments": 5,
+    "types-pointers-interfaces": 20,
+    "functions-callbacks-and-generics": 6,
+    "bridge-values-and-handles": 13,
+    "collections-and-scalar-expressions": 13
+  },
+  "cluster_counts": {
+    "BASHPP-EEXPR-FORM": 4,
+    "BASHPP-EEXPR-OPERAND": 4,
+    "BASHPP-EEXPR-UNDEFINED": 4,
+    "BASHPP-ESELECTOR-UNKNOWN": 4,
+    "unsupported:gosource: unsupported interpreter collection value <nil>": 3,
+    "BASHPP-EASSIGN-TYPE": 2,
+    "BASHPP-ECOLLECTION-ELEMENT": 2,
+    "FAIL:run:exit:1:unregistered bridge type \"IPAddr\"": 2,
+    "FAIL:run:exit:1:unregistered bridge type \"error\"": 2,
+    "FAIL:run:exit:2:gosource: native handle (*tree.Tree) is not scalar": 2,
+    "FAIL:run:exit:2:undefined type: fakeResult": 2,
+    "BASHPP-EASSIGN-CALL": 1,
+    "BASHPP-EASSIGN-MISMATCH": 1,
+    "BASHPP-ECOMPLEX-UNSUPPORTED": 1,
+    "BASHPP-EGENERIC-INFER": 1,
+    "BASHPP-EINTERFACE-VALUE": 1,
+    "BASHPP-ENIL-DEREF": 1,
+    "BASHPP-ENONADDRESSABLE": 1,
+    "BASHPP-ESELECTOR-ROOT": 1,
+    "BASHPP-ESELECTOR-TYPE": 1,
+    "BASHPP-ESTRUCT-UNKNOWN": 1,
+    "BASHPP-ETYPESWITCH-OPERAND": 1,
+    "FAIL:run:exit:1:fibonacci: cannot use \"cap(c)\" as int value for parameter n": 1,
+    "FAIL:run:exit:1:gosource: native handle (func(float64, float64) float64) is not scalar": 1,
+    "FAIL:run:exit:1:integer for uint8": 1,
+    "FAIL:run:exit:1:unregistered bridge type \"Image\"": 1,
+    "FAIL:run:exit:1:unregistered bridge type \"MyReader\"": 1,
+    "FAIL:run:exit:1:unregistered bridge type \"Person\"": 1,
+    "FAIL:run:exit:1:unregistered bridge type \"Vertex\"": 1,
+    "FAIL:run:exit:1:unregistered bridge type \"[]struct{i int;b bool}\"": 1,
+    "FAIL:run:exit:2:assignment mismatch: 2 variable(s) but 1 value(s)": 1,
+    "FAIL:run:exit:2:bash++: cannot send \"sum\" as int channel value": 1,
+    "FAIL:run:exit:2:bash++: cannot send \"x\" as int channel value": 1,
+    "FAIL:run:exit:2:bash++: tick is not a channel in this task group": 1,
+    "FAIL:run:exit:2:undefined type: T": 1,
+    "FAIL:run:exit:2:undefined type: __gosource_import_0_0.Reader": 1,
+    "FAIL:run:exit:2:undefined type: __gosource_import_0_1.Mutex": 1,
+    "FAIL:run:exit:2:undefined type: __gosource_import_0_1.Time": 1
+  },
+  "failures": [
+    {
+      "path": "_content/tour/basics/basic-types.go",
+      "mode": "interpreted",
+      "status": "FAIL:run:exit:2",
+      "stage": "run",
+      "exit": 2,
+      "state": "exited",
+      "source_sha256": "b214090d7339363b9fb71a610c679273a2f75be7b4ea7dad4b1a3316868db4fa",
+      "command": [
+        "/private/tmp/s118-published-002/bashy/bin/bashy",
+        "--bashpp",
+        "--source=go",
+        "_content/tour/basics/basic-types.go"
+      ],
+      "stderr": "_content/tour/basics/basic-types.go:13:9: BASHPP-ECOMPLEX-UNSUPPORTED: complex values are not supported by the Bash++ scalar carrier\n",
+      "stdout": "",
+      "semantic_findings": [],
+      "family": "complex-scalars"
+    },
+    {
+      "path": "_content/tour/concurrency/buffered-channels.go",
+      "mode": "interpreted",
+      "status": "FAIL:run:exit:1",
+      "stage": "run",
+      "exit": 1,
+      "state": "exited",
+      "source_sha256": "985ae9927256e1fcfbb38905536bbfb40394a9ba2f488eab942f94760b4d3375",
+      "command": [
+        "/private/tmp/s118-published-002/bashy/bin/bashy",
+        "--bashpp",
+        "--source=go",
+        "_content/tour/concurrency/buffered-channels.go"
+      ],
+      "stderr": "_content/tour/concurrency/buffered-channels.go:11:14: BASHPP-EEXPR-OPERAND: unsupported unary operator ILLEGAL\n",
+      "stdout": "",
+      "semantic_findings": [],
+      "family": "channels-and-task-arguments"
+    },
+    {
+      "path": "_content/tour/concurrency/channels.go",
+      "mode": "interpreted",
+      "status": "FAIL:run:exit:2",
+      "stage": "run",
+      "exit": 2,
+      "state": "exited",
+      "source_sha256": "8c3ce8583c8274e42ee0522989bf4cf2003b6f8045bcb6b16a6a79364f97aa70",
+      "command": [
+        "/private/tmp/s118-published-002/bashy/bin/bashy",
+        "--bashpp",
+        "--source=go",
+        "_content/tour/concurrency/channels.go"
+      ],
+      "stderr": "bash++: cannot send \"sum\" as int channel value\nbash++: task failed: exit status 2\n",
+      "stdout": "<-c <-c <-c<-c\n",
+      "semantic_findings": [],
+      "family": "channels-and-task-arguments"
+    },
+    {
+      "path": "_content/tour/concurrency/default-selection.go",
+      "mode": "interpreted",
+      "status": "FAIL:run:exit:2",
+      "stage": "run",
+      "exit": 2,
+      "state": "exited",
+      "source_sha256": "609707c5ac8020cb1b2b763eaf9aa65afabcf2897aa5f938a288c1db5b2b463b",
+      "command": [
+        "/private/tmp/s118-published-002/bashy/bin/bashy",
+        "--bashpp",
+        "--source=go",
+        "_content/tour/concurrency/default-selection.go"
+      ],
+      "stderr": "bash++: tick is not a channel in this task group\n",
+      "stdout": "",
+      "semantic_findings": [
+        "status:exit_mismatch:2!=0",
+        "stderr:mismatch",
+        "stdout:no_output"
+      ],
+      "family": "channels-and-task-arguments"
+    },
+    {
+      "path": "_content/tour/concurrency/exercise-web-crawler.go",
+      "mode": "interpreted",
+      "status": "FAIL:run:exit:2",
+      "stage": "run",
+      "exit": 2,
+      "state": "exited",
+      "source_sha256": "bd6226dcae3b663a3aa1cbf502d840357ac0efb6de46e7a66612ca2834cf5e37",
+      "command": [
+        "/private/tmp/s118-published-002/bashy/bin/bashy",
+        "--bashpp",
+        "--source=go",
+        "_content/tour/concurrency/exercise-web-crawler.go"
+      ],
+      "stderr": "_content/tour/concurrency/exercise-web-crawler.go:41:1: undefined type: fakeResult\n",
+      "stdout": "",
+      "semantic_findings": [],
+      "family": "types-pointers-interfaces"
+    },
+    {
+      "path": "_content/tour/concurrency/mutex-counter.go",
+      "mode": "interpreted",
+      "status": "FAIL:run:exit:2",
+      "stage": "run",
+      "exit": 2,
+      "state": "exited",
+      "source_sha256": "74488ecc347a123c8538069175ffeef5ea38577bb37b2c7a9ceb6bba47ab02b4",
+      "command": [
+        "/private/tmp/s118-published-002/bashy/bin/bashy",
+        "--bashpp",
+        "--source=go",
+        "_content/tour/concurrency/mutex-counter.go"
+      ],
+      "stderr": "_content/tour/concurrency/mutex-counter.go:12:1: undefined type: __gosource_import_0_1.Mutex\n",
+      "stdout": "",
+      "semantic_findings": [],
+      "family": "types-pointers-interfaces"
+    },
+    {
+      "path": "_content/tour/concurrency/range-and-close.go",
+      "mode": "interpreted",
+      "status": "FAIL:run:exit:1",
+      "stage": "run",
+      "exit": 1,
+      "state": "exited",
+      "source_sha256": "8979277aa338b1bce2934470910228501057da7be029fae1a2e1f553ea2517aa",
+      "command": [
+        "/private/tmp/s118-published-002/bashy/bin/bashy",
+        "--bashpp",
+        "--source=go",
+        "_content/tour/concurrency/range-and-close.go"
+      ],
+      "stderr": "fibonacci: cannot use \"cap(c)\" as int value for parameter n\nbash++: task failed: exit status 2\n",
+      "stdout": "",
+      "semantic_findings": [],
+      "family": "channels-and-task-arguments"
+    },
+    {
+      "path": "_content/tour/concurrency/select.go",
+      "mode": "interpreted",
+      "status": "FAIL:run:exit:2",
+      "stage": "run",
+      "exit": 2,
+      "state": "exited",
+      "source_sha256": "9853f886f8330b956db3faee4356105674d71cb5c1ab3d4329d9bd8ea7ef13d1",
+      "command": [
+        "/private/tmp/s118-published-002/bashy/bin/bashy",
+        "--bashpp",
+        "--source=go",
+        "_content/tour/concurrency/select.go"
+      ],
+      "stderr": "bash++: cannot send \"x\" as int channel value\nbash++: task failed: exit status 1\n",
+      "stdout": "",
+      "semantic_findings": [],
+      "family": "channels-and-task-arguments"
+    },
+    {
+      "path": "_content/tour/flowcontrol/switch.go",
+      "mode": "interpreted",
+      "status": "FAIL:run:exit:2",
+      "stage": "run",
+      "exit": 2,
+      "state": "exited",
+      "source_sha256": "3d0ac9adffeae7ad793b8168c19f39003877fa1c1574c6cbb6436e54c935b158",
+      "command": [
+        "/private/tmp/s118-published-002/bashy/bin/bashy",
+        "--bashpp",
+        "--source=go",
+        "_content/tour/flowcontrol/switch.go"
+      ],
+      "stderr": "BASHPP-ESELECTOR-ROOT: __gosource_import_0_1 is not a structured value\n",
+      "stdout": "Go runs on ",
+      "semantic_findings": [],
+      "family": "types-pointers-interfaces"
+    },
+    {
+      "path": "_content/tour/generics/index.go",
+      "mode": "interpreted",
+      "status": "FAIL:run:exit:1",
+      "stage": "run",
+      "exit": 1,
+      "state": "exited",
+      "source_sha256": "398dd72a4b01efa279d571667bedbcccd1bbbceaeb77218635db48edf38fd983",
+      "command": [
+        "/private/tmp/s118-published-002/bashy/bin/bashy",
+        "--bashpp",
+        "--source=go",
+        "_content/tour/generics/index.go"
+      ],
+      "stderr": "BASHPP-EGENERIC-INFER: cannot infer type arguments for Index\nBASHPP-EGENERIC-INFER: cannot infer type arguments for Index\n_content/tour/generics/index.go:22:14: BASHPP-EEXPR-UNDEFINED: undefined callable Index\n",
+      "stdout": "",
+      "semantic_findings": [],
+      "family": "functions-callbacks-and-generics"
+    },
+    {
+      "path": "_content/tour/generics/list.go",
+      "mode": "interpreted",
+      "status": "FAIL:run:exit:2",
+      "stage": "run",
+      "exit": 2,
+      "state": "exited",
+      "source_sha256": "ab72fc4fd321f507abde796abe0830876e0f8bcd8661d9ce4ac34c3da2f68060",
+      "command": [
+        "/private/tmp/s118-published-002/bashy/bin/bashy",
+        "--bashpp",
+        "--source=go",
+        "_content/tour/generics/list.go"
+      ],
+      "stderr": "_content/tour/generics/list.go:7:1: undefined type: T\n",
+      "stdout": "",
+      "semantic_findings": [],
+      "family": "functions-callbacks-and-generics"
+    },
+    {
+      "path": "_content/tour/methods/empty-interface.go",
+      "mode": "interpreted",
+      "status": "FAIL:run:exit:2",
+      "stage": "run",
+      "exit": 2,
+      "state": "exited",
+      "source_sha256": "d85f8033bcd5c306b883c2f8b1090950a409f0895a39bfe851a78a4cbd58fe98",
+      "command": [
+        "/private/tmp/s118-published-002/bashy/bin/bashy",
+        "--bashpp",
+        "--source=go",
+        "_content/tour/methods/empty-interface.go"
+      ],
+      "stderr": "_content/tour/methods/empty-interface.go:11:2: BASHPP-EASSIGN-TYPE: untyped result is not assignable to interface\n",
+      "stdout": "(, string)\n",
+      "semantic_findings": [],
+      "family": "types-pointers-interfaces"
+    },
+    {
+      "path": "_content/tour/methods/errors.go",
+      "mode": "interpreted",
+      "status": "FAIL:run:exit:2",
+      "stage": "run",
+      "exit": 2,
+      "state": "exited",
+      "source_sha256": "a0825fe6310af87e48e7f46b5290814df190d1e9533d0132fd663d6bb7f3236e",
+      "command": [
+        "/private/tmp/s118-published-002/bashy/bin/bashy",
+        "--bashpp",
+        "--source=go",
+        "_content/tour/methods/errors.go"
+      ],
+      "stderr": "_content/tour/methods/errors.go:10:1: undefined type: __gosource_import_0_1.Time\n",
+      "stdout": "",
+      "semantic_findings": [
+        "status:exit_mismatch:2!=0",
+        "stderr:mismatch",
+        "stdout:line_count:0!=1"
+      ],
+      "family": "types-pointers-interfaces"
+    },
+    {
+      "path": "_content/tour/methods/exercise-errors.go",
+      "mode": "interpreted",
+      "status": "FAIL:run:exit:1",
+      "stage": "run",
+      "exit": 1,
+      "state": "exited",
+      "source_sha256": "faa69218d18d0b588bea07ccdc1dcbc26667e545ed94f0c4168ad8a4ae7c6c24",
+      "command": [
+        "/private/tmp/s118-published-002/bashy/bin/bashy",
+        "--bashpp",
+        "--source=go",
+        "_content/tour/methods/exercise-errors.go"
+      ],
+      "stderr": "unregistered bridge type \"error\"\n",
+      "stdout": "",
+      "semantic_findings": [],
+      "family": "bridge-values-and-handles"
+    },
+    {
+      "path": "_content/tour/methods/exercise-stringer.go",
+      "mode": "interpreted",
+      "status": "FAIL:run:exit:1",
+      "stage": "run",
+      "exit": 1,
+      "state": "exited",
+      "source_sha256": "b5bd782b7e0e7cd9541df782ccac827e8373a0867011f3fc998b8895fb470efc",
+      "command": [
+        "/private/tmp/s118-published-002/bashy/bin/bashy",
+        "--bashpp",
+        "--source=go",
+        "_content/tour/methods/exercise-stringer.go"
+      ],
+      "stderr": "unregistered bridge type \"IPAddr\"\n",
+      "stdout": "",
+      "semantic_findings": [
+        "status:exit_mismatch:1!=0",
+        "stderr:mismatch",
+        "stdout:line_count:0!=2",
+        "stdout:missing_lines:[\"loopback: [127 0 0 1]\", \"googleDNS: [8 8 8 8]\"]"
+      ],
+      "family": "bridge-values-and-handles"
+    },
+    {
+      "path": "_content/tour/methods/indirection-values.go",
+      "mode": "interpreted",
+      "status": "FAIL:run:exit:1",
+      "stage": "run",
+      "exit": 1,
+      "state": "exited",
+      "source_sha256": "5dfa900c0c4f276ef92a2dc81f7353cee53949d9617e73185910b4335bb71329",
+      "command": [
+        "/private/tmp/s118-published-002/bashy/bin/bashy",
+        "--bashpp",
+        "--source=go",
+        "_content/tour/methods/indirection-values.go"
+      ],
+      "stderr": "_content/tour/methods/indirection-values.go:15:19: BASHPP-ESELECTOR-UNKNOWN: Vertex has no field or method \"X\"\n",
+      "stdout": "",
+      "semantic_findings": [],
+      "family": "types-pointers-interfaces"
+    },
+    {
+      "path": "_content/tour/methods/indirection.go",
+      "mode": "interpreted",
+      "status": "FAIL:run:exit:2",
+      "stage": "run",
+      "exit": 2,
+      "state": "exited",
+      "source_sha256": "e5c7b1c4569c712d707cfd850c0b0cd431e2dca2b691d743aa990cbf51ba7d90",
+      "command": [
+        "/private/tmp/s118-published-002/bashy/bin/bashy",
+        "--bashpp",
+        "--source=go",
+        "_content/tour/methods/indirection.go"
+      ],
+      "stderr": "BASHPP-ESELECTOR-UNKNOWN: Vertex has no field or method \"X\"\n",
+      "stdout": "",
+      "semantic_findings": [],
+      "family": "types-pointers-interfaces"
+    },
+    {
+      "path": "_content/tour/methods/interface-values-with-nil.go",
+      "mode": "interpreted",
+      "status": "FAIL:run:exit:2",
+      "stage": "run",
+      "exit": 2,
+      "state": "exited",
+      "source_sha256": "17037492cd56a27644f2056b86e4e89c30926e51808c9806de37be4f12d287a7",
+      "command": [
+        "/private/tmp/s118-published-002/bashy/bin/bashy",
+        "--bashpp",
+        "--source=go",
+        "_content/tour/methods/interface-values-with-nil.go"
+      ],
+      "stderr": "_content/tour/methods/interface-values-with-nil.go:27:2: BASHPP-EASSIGN-TYPE: cannot assign *T to I\n",
+      "stdout": "",
+      "semantic_findings": [],
+      "family": "types-pointers-interfaces"
+    },
+    {
+      "path": "_content/tour/methods/interface-values.go",
+      "mode": "interpreted",
+      "status": "FAIL:run:exit:2",
+      "stage": "run",
+      "exit": 2,
+      "state": "exited",
+      "source_sha256": "5134a50770b5a809f4dba508ddaedb24aa670556e428a940ccae642423f5cb5e",
+      "command": [
+        "/private/tmp/s118-published-002/bashy/bin/bashy",
+        "--bashpp",
+        "--source=go",
+        "_content/tour/methods/interface-values.go"
+      ],
+      "stderr": "_content/tour/methods/interface-values.go:31:6: _content/tour/methods/interface-values.go:31:6: BASHPP-EEXPR-FORM: unsupported scalar expression *syntax.BashPPAddressExpr\n",
+      "stdout": "",
+      "semantic_findings": [],
+      "family": "types-pointers-interfaces"
+    },
+    {
+      "path": "_content/tour/methods/interfaces-are-satisfied-implicitly.go",
+      "mode": "interpreted",
+      "status": "FAIL:run:exit:2",
+      "stage": "run",
+      "exit": 2,
+      "state": "exited",
+      "source_sha256": "44e0699af42c651abaa67a36b4c48143d33a8651adb0a6bb8e285b65ec058dc2",
+      "command": [
+        "/private/tmp/s118-published-002/bashy/bin/bashy",
+        "--bashpp",
+        "--source=go",
+        "_content/tour/methods/interfaces-are-satisfied-implicitly.go"
+      ],
+      "stderr": "BASHPP-EINTERFACE-VALUE: interface assignment requires a named value\n",
+      "stdout": "",
+      "semantic_findings": [],
+      "family": "types-pointers-interfaces"
+    },
+    {
+      "path": "_content/tour/methods/methods-continued.go",
+      "mode": "interpreted",
+      "status": "FAIL:run:exit:1",
+      "stage": "run",
+      "exit": 1,
+      "state": "exited",
+      "source_sha256": "98d5a7354796ef23f7c85e478fd4024590003eb7a945d9a4b3511a834eab6d72",
+      "command": [
+        "/private/tmp/s118-published-002/bashy/bin/bashy",
+        "--bashpp",
+        "--source=go",
+        "_content/tour/methods/methods-continued.go"
+      ],
+      "stderr": "BASHPP-ESELECTOR-TYPE: local f has no typed selector path\n_content/tour/methods/methods-continued.go:21:14: BASHPP-EEXPR-FORM: unsupported scalar call\n",
+      "stdout": "",
+      "semantic_findings": [],
+      "family": "types-pointers-interfaces"
+    },
+    {
+      "path": "_content/tour/methods/methods-funcs.go",
+      "mode": "interpreted",
+      "status": "FAIL:run:exit:1",
+      "stage": "run",
+      "exit": 1,
+      "state": "exited",
+      "source_sha256": "8bd4fd3afccbebcdbf0f44c5165f99b27f4a0bd6a0734cad74a5660c04248a89",
+      "command": [
+        "/private/tmp/s118-published-002/bashy/bin/bashy",
+        "--bashpp",
+        "--source=go",
+        "_content/tour/methods/methods-funcs.go"
+      ],
+      "stderr": "_content/tour/methods/methods-funcs.go:20:18: BASHPP-EEXPR-OPERAND: v is not a scalar\n",
+      "stdout": "",
+      "semantic_findings": [],
+      "family": "collections-and-scalar-expressions"
+    },
+    {
+      "path": "_content/tour/methods/methods-pointers-explained.go",
+      "mode": "interpreted",
+      "status": "FAIL:run:exit:2",
+      "stage": "run",
+      "exit": 2,
+      "state": "exited",
+      "source_sha256": "eddc74d43e02c068a3d8a3b2425ca18792071ec6fafad70242da499908ef1e3e",
+      "command": [
+        "/private/tmp/s118-published-002/bashy/bin/bashy",
+        "--bashpp",
+        "--source=go",
+        "_content/tour/methods/methods-pointers-explained.go"
+      ],
+      "stderr": "BASHPP-ENIL-DEREF: dereference of nil pointer\n",
+      "stdout": "",
+      "semantic_findings": [],
+      "family": "types-pointers-interfaces"
+    },
+    {
+      "path": "_content/tour/methods/methods-pointers.go",
+      "mode": "interpreted",
+      "status": "FAIL:run:exit:2",
+      "stage": "run",
+      "exit": 2,
+      "state": "exited",
+      "source_sha256": "89165956b72e9a9a2b92bedb481e260e09684cee9a8bed6a63f1b9a9fc23ec9a",
+      "command": [
+        "/private/tmp/s118-published-002/bashy/bin/bashy",
+        "--bashpp",
+        "--source=go",
+        "_content/tour/methods/methods-pointers.go"
+      ],
+      "stderr": "BASHPP-ESELECTOR-UNKNOWN: Vertex has no field or method \"X\"\n",
+      "stdout": "",
+      "semantic_findings": [],
+      "family": "types-pointers-interfaces"
+    },
+    {
+      "path": "_content/tour/methods/methods-with-pointer-receivers.go",
+      "mode": "interpreted",
+      "status": "FAIL:run:exit:2",
+      "stage": "run",
+      "exit": 2,
+      "state": "exited",
+      "source_sha256": "4b18eaff90f92cccaf08a516e840f39805fe7285281592c7afb556c0831bafb6",
+      "command": [
+        "/private/tmp/s118-published-002/bashy/bin/bashy",
+        "--bashpp",
+        "--source=go",
+        "_content/tour/methods/methods-with-pointer-receivers.go"
+      ],
+      "stderr": "BASHPP-ENONADDRESSABLE: operand is not addressable\n",
+      "stdout": "",
+      "semantic_findings": [],
+      "family": "types-pointers-interfaces"
+    },
+    {
+      "path": "_content/tour/methods/methods.go",
+      "mode": "interpreted",
+      "status": "FAIL:run:exit:1",
+      "stage": "run",
+      "exit": 1,
+      "state": "exited",
+      "source_sha256": "b08219899abbce3b140ab63aea2798511e8418581e9bac1309431eae1bfddf5b",
+      "command": [
+        "/private/tmp/s118-published-002/bashy/bin/bashy",
+        "--bashpp",
+        "--source=go",
+        "_content/tour/methods/methods.go"
+      ],
+      "stderr": "_content/tour/methods/methods.go:15:19: BASHPP-ESELECTOR-UNKNOWN: Vertex has no field or method \"X\"\n",
+      "stdout": "",
+      "semantic_findings": [],
+      "family": "types-pointers-interfaces"
+    },
+    {
+      "path": "_content/tour/methods/reader.go",
+      "mode": "interpreted",
+      "status": "FAIL:run:exit:1",
+      "stage": "run",
+      "exit": 1,
+      "state": "exited",
+      "source_sha256": "efe45163df17ea9c24da5ad0ba634265f680165183bb0bc98ed33b171c5164e0",
+      "command": [
+        "/private/tmp/s118-published-002/bashy/bin/bashy",
+        "--bashpp",
+        "--source=go",
+        "_content/tour/methods/reader.go"
+      ],
+      "stderr": "integer for uint8\n",
+      "stdout": "",
+      "semantic_findings": [],
+      "family": "bridge-values-and-handles"
+    },
+    {
+      "path": "_content/tour/methods/stringer.go",
+      "mode": "interpreted",
+      "status": "FAIL:run:exit:1",
+      "stage": "run",
+      "exit": 1,
+      "state": "exited",
+      "source_sha256": "5ec1e0c528bbd763109e2034c0924b42fa257df8881b0f28dc053ab1c3de4c36",
+      "command": [
+        "/private/tmp/s118-published-002/bashy/bin/bashy",
+        "--bashpp",
+        "--source=go",
+        "_content/tour/methods/stringer.go"
+      ],
+      "stderr": "unregistered bridge type \"Person\"\n",
+      "stdout": "",
+      "semantic_findings": [],
+      "family": "bridge-values-and-handles"
+    },
+    {
+      "path": "_content/tour/methods/type-switches.go",
+      "mode": "interpreted",
+      "status": "FAIL:run:exit:2",
+      "stage": "run",
+      "exit": 2,
+      "state": "exited",
+      "source_sha256": "ce4166a505edf4d9963f0ef0ae719cfdfa9c9291e3fd1d446432d61a712dc93a",
+      "command": [
+        "/private/tmp/s118-published-002/bashy/bin/bashy",
+        "--bashpp",
+        "--source=go",
+        "_content/tour/methods/type-switches.go"
+      ],
+      "stderr": "BASHPP-ETYPESWITCH-OPERAND: i is not an interface\n",
+      "stdout": "",
+      "semantic_findings": [],
+      "family": "types-pointers-interfaces"
+    },
+    {
+      "path": "_content/tour/moretypes/append.go",
+      "mode": "interpreted",
+      "status": "FAIL:run:exit:1",
+      "stage": "run",
+      "exit": 1,
+      "state": "exited",
+      "source_sha256": "655ee5085fec61bcb38c9f029741bb1a06a414f94b8b36ed0362055b0d6b10bb",
+      "command": [
+        "/private/tmp/s118-published-002/bashy/bin/bashy",
+        "--bashpp",
+        "--source=go",
+        "_content/tour/moretypes/append.go"
+      ],
+      "stderr": "_content/tour/moretypes/append.go:25:51: gosource: unsupported interpreter collection value <nil>\n",
+      "stdout": "",
+      "semantic_findings": [],
+      "family": "collections-and-scalar-expressions"
+    },
+    {
+      "path": "_content/tour/moretypes/exercise-maps.go",
+      "mode": "interpreted",
+      "status": "FAIL:run:exit:1",
+      "stage": "run",
+      "exit": 1,
+      "state": "exited",
+      "source_sha256": "a520696047b06ca711783426e6c00e9673f8eda06cf3b6180a72a6b8cfc3a362",
+      "command": [
+        "/private/tmp/s118-published-002/bashy/bin/bashy",
+        "--bashpp",
+        "--source=go",
+        "_content/tour/moretypes/exercise-maps.go"
+      ],
+      "stderr": "_content/tour/moretypes/exercise-maps.go:14:10: BASHPP-EEXPR-UNDEFINED: undefined: WordCount\n",
+      "stdout": "",
+      "semantic_findings": [],
+      "family": "functions-callbacks-and-generics"
+    },
+    {
+      "path": "_content/tour/moretypes/function-closures.go",
+      "mode": "interpreted",
+      "status": "FAIL:run:exit:1",
+      "stage": "run",
+      "exit": 1,
+      "state": "exited",
+      "source_sha256": "e8fbd0cecfb7816c426e9ec3065d2fe77a192b592578c2f979eebdfc15e6ea63",
+      "command": [
+        "/private/tmp/s118-published-002/bashy/bin/bashy",
+        "--bashpp",
+        "--source=go",
+        "_content/tour/moretypes/function-closures.go"
+      ],
+      "stderr": "_content/tour/moretypes/function-closures.go:19:4: BASHPP-EEXPR-UNDEFINED: undefined callable pos\n",
+      "stdout": "",
+      "semantic_findings": [],
+      "family": "functions-callbacks-and-generics"
+    },
+    {
+      "path": "_content/tour/moretypes/function-values.go",
+      "mode": "interpreted",
+      "status": "FAIL:run:exit:1",
+      "stage": "run",
+      "exit": 1,
+      "state": "exited",
+      "source_sha256": "ebd880dd3dc47483d0fb2e60139e7562b3e324141a562d46f6f2f09872141e03",
+      "command": [
+        "/private/tmp/s118-published-002/bashy/bin/bashy",
+        "--bashpp",
+        "--source=go",
+        "_content/tour/moretypes/function-values.go"
+      ],
+      "stderr": "_content/tour/moretypes/function-values.go:21:22: gosource: native handle (func(float64, float64) float64) is not scalar\n",
+      "stdout": "13\n5\n",
+      "semantic_findings": [],
+      "family": "bridge-values-and-handles"
+    },
+    {
+      "path": "_content/tour/moretypes/making-slices.go",
+      "mode": "interpreted",
+      "status": "FAIL:run:exit:1",
+      "stage": "run",
+      "exit": 1,
+      "state": "exited",
+      "source_sha256": "a4dbf0f6f266bb68e7da1cdcbdba7c4bb8711a3065c93ad2dffd7fc4f7c09b1d",
+      "command": [
+        "/private/tmp/s118-published-002/bashy/bin/bashy",
+        "--bashpp",
+        "--source=go",
+        "_content/tour/moretypes/making-slices.go"
+      ],
+      "stderr": "_content/tour/moretypes/making-slices.go:23:22: gosource: unsupported interpreter collection value <nil>\n",
+      "stdout": "a len=5 cap=5 [0 0 0 0 0]\nb len=0 cap=5 []\n",
+      "semantic_findings": [],
+      "family": "collections-and-scalar-expressions"
+    },
+    {
+      "path": "_content/tour/moretypes/map-literals-continued.go",
+      "mode": "interpreted",
+      "status": "FAIL:run:exit:2",
+      "stage": "run",
+      "exit": 2,
+      "state": "exited",
+      "source_sha256": "08d059d62b2154f62396758512eee17c321d69a7d58c5f65ef55e2d6ac7681c9",
+      "command": [
+        "/private/tmp/s118-published-002/bashy/bin/bashy",
+        "--bashpp",
+        "--source=go",
+        "_content/tour/moretypes/map-literals-continued.go"
+      ],
+      "stderr": "BASHPP-ECOLLECTION-ELEMENT: cannot use string value as float64\n",
+      "stdout": "",
+      "semantic_findings": [],
+      "family": "collections-and-scalar-expressions"
+    },
+    {
+      "path": "_content/tour/moretypes/map-literals.go",
+      "mode": "interpreted",
+      "status": "FAIL:run:exit:2",
+      "stage": "run",
+      "exit": 2,
+      "state": "exited",
+      "source_sha256": "4c046a6dc458fa624c61e0d0a6d1f21184254c048cb8bec6aa43e88f66f86e91",
+      "command": [
+        "/private/tmp/s118-published-002/bashy/bin/bashy",
+        "--bashpp",
+        "--source=go",
+        "_content/tour/moretypes/map-literals.go"
+      ],
+      "stderr": "BASHPP-ECOLLECTION-ELEMENT: cannot use string value as float64\n",
+      "stdout": "",
+      "semantic_findings": [],
+      "family": "collections-and-scalar-expressions"
+    },
+    {
+      "path": "_content/tour/moretypes/maps.go",
+      "mode": "interpreted",
+      "status": "FAIL:run:exit:2",
+      "stage": "run",
+      "exit": 2,
+      "state": "exited",
+      "source_sha256": "007f3e93922a26b368d17452d4fdae812fde53c59f13e1c391e02c25f4a7dd98",
+      "command": [
+        "/private/tmp/s118-published-002/bashy/bin/bashy",
+        "--bashpp",
+        "--source=go",
+        "_content/tour/moretypes/maps.go"
+      ],
+      "stderr": "_content/tour/moretypes/maps.go:14:6: BASHPP-EASSIGN-CALL: tuple assignment requires a declared result-bearing function\n",
+      "stdout": "",
+      "semantic_findings": [],
+      "family": "collections-and-scalar-expressions"
+    },
+    {
+      "path": "_content/tour/moretypes/mutating-maps.go",
+      "mode": "interpreted",
+      "status": "FAIL:run:exit:2",
+      "stage": "run",
+      "exit": 2,
+      "state": "exited",
+      "source_sha256": "a8f33f1af579189d54372c64e2c9648110b968ea5972e58cc261f7ff9f96a15b",
+      "command": [
+        "/private/tmp/s118-published-002/bashy/bin/bashy",
+        "--bashpp",
+        "--source=go",
+        "_content/tour/moretypes/mutating-maps.go"
+      ],
+      "stderr": "assignment mismatch: 2 variable(s) but 1 value(s)\n",
+      "stdout": "The value: 42\nThe value: 48\nThe value: 0\n",
+      "semantic_findings": [],
+      "family": "collections-and-scalar-expressions"
+    },
+    {
+      "path": "_content/tour/moretypes/nil-slices.go",
+      "mode": "interpreted",
+      "status": "FAIL:run:exit:1",
+      "stage": "run",
+      "exit": 1,
+      "state": "exited",
+      "source_sha256": "73d805ba5558987b2695d6c72ba640a91bc59eade8741a61505f871e665ed1d9",
+      "command": [
+        "/private/tmp/s118-published-002/bashy/bin/bashy",
+        "--bashpp",
+        "--source=go",
+        "_content/tour/moretypes/nil-slices.go"
+      ],
+      "stderr": "_content/tour/moretypes/nil-slices.go:9:14: gosource: unsupported interpreter collection value <nil>\n",
+      "stdout": "",
+      "semantic_findings": [],
+      "family": "collections-and-scalar-expressions"
+    },
+    {
+      "path": "_content/tour/moretypes/pointers.go",
+      "mode": "interpreted",
+      "status": "FAIL:run:exit:2",
+      "stage": "run",
+      "exit": 2,
+      "state": "exited",
+      "source_sha256": "bbc4a25d868979e959aa383f0de7894135e7f8ae4b2d766e653a033178a9a378",
+      "command": [
+        "/private/tmp/s118-published-002/bashy/bin/bashy",
+        "--bashpp",
+        "--source=go",
+        "_content/tour/moretypes/pointers.go"
+      ],
+      "stderr": "_content/tour/moretypes/pointers.go:15:6: _content/tour/moretypes/pointers.go:15:6: BASHPP-EEXPR-FORM: unsupported scalar expression *syntax.BashPPAddressExpr\n",
+      "stdout": "42\n21\n",
+      "semantic_findings": [],
+      "family": "types-pointers-interfaces"
+    },
+    {
+      "path": "_content/tour/moretypes/slice-bounds.go",
+      "mode": "interpreted",
+      "status": "FAIL:run:exit:2",
+      "stage": "run",
+      "exit": 2,
+      "state": "exited",
+      "source_sha256": "1b981b8e3c99c40507901b603eda4e46188777b8cd817288f7afd734bffaa264",
+      "command": [
+        "/private/tmp/s118-published-002/bashy/bin/bashy",
+        "--bashpp",
+        "--source=go",
+        "_content/tour/moretypes/slice-bounds.go"
+      ],
+      "stderr": "_content/tour/moretypes/slice-bounds.go:10:6: _content/tour/moretypes/slice-bounds.go:10:6: BASHPP-EEXPR-FORM: unsupported scalar expression *syntax.BashPPSliceExpr\n",
+      "stdout": "",
+      "semantic_findings": [],
+      "family": "collections-and-scalar-expressions"
+    },
+    {
+      "path": "_content/tour/moretypes/slice-len-cap.go",
+      "mode": "interpreted",
+      "status": "FAIL:run:exit:2",
+      "stage": "run",
+      "exit": 2,
+      "state": "exited",
+      "source_sha256": "b2e5f7a96c8a04998c150ebe6ce344bc198db8b18f4826e6a85ff75ae3033f98",
+      "command": [
+        "/private/tmp/s118-published-002/bashy/bin/bashy",
+        "--bashpp",
+        "--source=go",
+        "_content/tour/moretypes/slice-len-cap.go"
+      ],
+      "stderr": "_content/tour/moretypes/slice-len-cap.go:12:6: _content/tour/moretypes/slice-len-cap.go:12:6: BASHPP-EEXPR-FORM: unsupported scalar expression *syntax.BashPPSliceExpr\n",
+      "stdout": "len=6 cap=6 [2 3 5 7 11 13]\n",
+      "semantic_findings": [],
+      "family": "collections-and-scalar-expressions"
+    },
+    {
+      "path": "_content/tour/moretypes/slice-literals.go",
+      "mode": "interpreted",
+      "status": "FAIL:run:exit:1",
+      "stage": "run",
+      "exit": 1,
+      "state": "exited",
+      "source_sha256": "b085416ef12627bbd6034c78314d61df30a66e4b5d2b3b6cbfebd5befa27c897",
+      "command": [
+        "/private/tmp/s118-published-002/bashy/bin/bashy",
+        "--bashpp",
+        "--source=go",
+        "_content/tour/moretypes/slice-literals.go"
+      ],
+      "stderr": "unregistered bridge type \"[]struct{i int;b bool}\"\n",
+      "stdout": "[2 3 5 7 11 13]\n[true false true true false true]\n",
+      "semantic_findings": [],
+      "family": "bridge-values-and-handles"
+    },
+    {
+      "path": "_content/tour/moretypes/slices-of-slice.go",
+      "mode": "interpreted",
+      "status": "FAIL:run:exit:1",
+      "stage": "run",
+      "exit": 1,
+      "state": "exited",
+      "source_sha256": "545cde9f9bc3ec940adbdcac0a801f5e834b6ee3cd5bf1b780f6f81d556562b3",
+      "command": [
+        "/private/tmp/s118-published-002/bashy/bin/bashy",
+        "--bashpp",
+        "--source=go",
+        "_content/tour/moretypes/slices-of-slice.go"
+      ],
+      "stderr": "_content/tour/moretypes/slices-of-slice.go:26:35: BASHPP-EEXPR-OPERAND: indexed value is not a scalar\n",
+      "stdout": "",
+      "semantic_findings": [],
+      "family": "collections-and-scalar-expressions"
+    },
+    {
+      "path": "_content/tour/moretypes/struct-literals.go",
+      "mode": "interpreted",
+      "status": "FAIL:run:exit:2",
+      "stage": "run",
+      "exit": 2,
+      "state": "exited",
+      "source_sha256": "c54fd1b039d00a926550fd74ac26c6ed6388c8ca6fe043e64ebdaad921ba2761",
+      "command": [
+        "/private/tmp/s118-published-002/bashy/bin/bashy",
+        "--bashpp",
+        "--source=go",
+        "_content/tour/moretypes/struct-literals.go"
+      ],
+      "stderr": "_content/tour/moretypes/struct-literals.go:13:14: BASHPP-ESTRUCT-UNKNOWN: Vertex has no field selector \"X\"\n",
+      "stdout": "",
+      "semantic_findings": [],
+      "family": "types-pointers-interfaces"
+    },
+    {
+      "path": "_content/tour/moretypes/struct-pointers.go",
+      "mode": "interpreted",
+      "status": "FAIL:run:exit:2",
+      "stage": "run",
+      "exit": 2,
+      "state": "exited",
+      "source_sha256": "961b37937f55e07ca6fa25dc6c1d98bb44b442685b6cbedf1b3b05688756c09e",
+      "command": [
+        "/private/tmp/s118-published-002/bashy/bin/bashy",
+        "--bashpp",
+        "--source=go",
+        "_content/tour/moretypes/struct-pointers.go"
+      ],
+      "stderr": "BASHPP-EASSIGN-MISMATCH: BASHPP-ECOLLECTION-ELEMENT: cannot use float64 value as int\n",
+      "stdout": "",
+      "semantic_findings": [],
+      "family": "collections-and-scalar-expressions"
+    },
+    {
+      "path": "_content/tour/moretypes/structs.go",
+      "mode": "interpreted",
+      "status": "FAIL:run:exit:1",
+      "stage": "run",
+      "exit": 1,
+      "state": "exited",
+      "source_sha256": "5d31b8e45b54ec0bceab81f1c5172523b21b5664c822c665501b6466a4e46c64",
+      "command": [
+        "/private/tmp/s118-published-002/bashy/bin/bashy",
+        "--bashpp",
+        "--source=go",
+        "_content/tour/moretypes/structs.go"
+      ],
+      "stderr": "unregistered bridge type \"Vertex\"\n",
+      "stdout": "",
+      "semantic_findings": [],
+      "family": "bridge-values-and-handles"
+    },
+    {
+      "path": "_content/tour/solutions/binarytrees.go",
+      "mode": "interpreted",
+      "status": "FAIL:run:exit:2",
+      "stage": "run",
+      "exit": 2,
+      "state": "exited",
+      "source_sha256": "3276c6628b5a36c2c41683aa4eb28834272f8af6598923ec5d6b908b04e72bb8",
+      "command": [
+        "/private/tmp/s118-published-002/bashy/bin/bashy",
+        "--bashpp",
+        "--source=go",
+        "_content/tour/solutions/binarytrees.go"
+      ],
+      "stderr": "_content/tour/solutions/binarytrees.go:56:10: gosource: native handle (*tree.Tree) is not scalar\n",
+      "stdout": "tree.New(1) == tree.New(1): ",
+      "semantic_findings": [],
+      "family": "bridge-values-and-handles"
+    },
+    {
+      "path": "_content/tour/solutions/binarytrees_quit.go",
+      "mode": "interpreted",
+      "status": "FAIL:run:exit:2",
+      "stage": "run",
+      "exit": 2,
+      "state": "exited",
+      "source_sha256": "25157973b97a82b066516ea92df34bbb6ea26294603a471be5523b2ab19a8f03",
+      "command": [
+        "/private/tmp/s118-published-002/bashy/bin/bashy",
+        "--bashpp",
+        "--source=go",
+        "_content/tour/solutions/binarytrees_quit.go"
+      ],
+      "stderr": "_content/tour/solutions/binarytrees_quit.go:60:10: gosource: native handle (*tree.Tree) is not scalar\n",
+      "stdout": "tree.New(1) == tree.New(1): ",
+      "semantic_findings": [],
+      "family": "bridge-values-and-handles"
+    },
+    {
+      "path": "_content/tour/solutions/errors.go",
+      "mode": "interpreted",
+      "status": "FAIL:run:exit:1",
+      "stage": "run",
+      "exit": 1,
+      "state": "exited",
+      "source_sha256": "d41cb89d4e7c6fc70f8295fa933a95b50b058a6566b7a731f57ca41fb0894418",
+      "command": [
+        "/private/tmp/s118-published-002/bashy/bin/bashy",
+        "--bashpp",
+        "--source=go",
+        "_content/tour/solutions/errors.go"
+      ],
+      "stderr": "unregistered bridge type \"error\"\n",
+      "stdout": "",
+      "semantic_findings": [],
+      "family": "bridge-values-and-handles"
+    },
+    {
+      "path": "_content/tour/solutions/image.go",
+      "mode": "interpreted",
+      "status": "FAIL:run:exit:1",
+      "stage": "run",
+      "exit": 1,
+      "state": "exited",
+      "source_sha256": "d78cda6272212f8a73bd991efa502753b4ff36edcd004b21539c2111b16b547f",
+      "command": [
+        "/private/tmp/s118-published-002/bashy/bin/bashy",
+        "--bashpp",
+        "--source=go",
+        "_content/tour/solutions/image.go"
+      ],
+      "stderr": "unregistered bridge type \"Image\"\n",
+      "stdout": "",
+      "semantic_findings": [],
+      "family": "bridge-values-and-handles"
+    },
+    {
+      "path": "_content/tour/solutions/loops.go",
+      "mode": "interpreted",
+      "status": "FAIL:run:exit:1",
+      "stage": "run",
+      "exit": 1,
+      "state": "exited",
+      "source_sha256": "eb6db8129feb19a3ce8b1aae02b7f579f9ea3b14af233d5a0b37c495a781dc7d",
+      "command": [
+        "/private/tmp/s118-published-002/bashy/bin/bashy",
+        "--bashpp",
+        "--source=go",
+        "_content/tour/solutions/loops.go"
+      ],
+      "stderr": "_content/tour/solutions/loops.go:28:28: BASHPP-EEXPR-OPERAND: operator - not defined on String and String\n",
+      "stdout": "",
+      "semantic_findings": [],
+      "family": "collections-and-scalar-expressions"
+    },
+    {
+      "path": "_content/tour/solutions/maps.go",
+      "mode": "interpreted",
+      "status": "FAIL:run:exit:1",
+      "stage": "run",
+      "exit": 1,
+      "state": "exited",
+      "source_sha256": "2573eaf263713147101f200ec239d1cc7db9657cc95d30667f5c2fb7087ff12c",
+      "command": [
+        "/private/tmp/s118-published-002/bashy/bin/bashy",
+        "--bashpp",
+        "--source=go",
+        "_content/tour/solutions/maps.go"
+      ],
+      "stderr": "_content/tour/solutions/maps.go:24:10: BASHPP-EEXPR-UNDEFINED: undefined: WordCount\n",
+      "stdout": "",
+      "semantic_findings": [],
+      "family": "functions-callbacks-and-generics"
+    },
+    {
+      "path": "_content/tour/solutions/readers.go",
+      "mode": "interpreted",
+      "status": "FAIL:run:exit:1",
+      "stage": "run",
+      "exit": 1,
+      "state": "exited",
+      "source_sha256": "6086e0029480b202ff1d5bc81ac9d6343103f25afd40ac56635d0cf65e41038a",
+      "command": [
+        "/private/tmp/s118-published-002/bashy/bin/bashy",
+        "--bashpp",
+        "--source=go",
+        "_content/tour/solutions/readers.go"
+      ],
+      "stderr": "unregistered bridge type \"MyReader\"\n",
+      "stdout": "",
+      "semantic_findings": [],
+      "family": "bridge-values-and-handles"
+    },
+    {
+      "path": "_content/tour/solutions/rot13.go",
+      "mode": "interpreted",
+      "status": "FAIL:run:exit:2",
+      "stage": "run",
+      "exit": 2,
+      "state": "exited",
+      "source_sha256": "a46d83576a2ef31663d22225a32740c3ab70d3dc11066318ec471c57cd2a854f",
+      "command": [
+        "/private/tmp/s118-published-002/bashy/bin/bashy",
+        "--bashpp",
+        "--source=go",
+        "_content/tour/solutions/rot13.go"
+      ],
+      "stderr": "_content/tour/solutions/rot13.go:28:1: undefined type: __gosource_import_0_0.Reader\n",
+      "stdout": "",
+      "semantic_findings": [],
+      "family": "types-pointers-interfaces"
+    },
+    {
+      "path": "_content/tour/solutions/slices.go",
+      "mode": "interpreted",
+      "status": "FAIL:run:exit:1",
+      "stage": "run",
+      "exit": 1,
+      "state": "exited",
+      "source_sha256": "95119b8cd62eb8b0998ad80be30fe642931f52a06ddf80676c684f4438728d40",
+      "command": [
+        "/private/tmp/s118-published-002/bashy/bin/bashy",
+        "--bashpp",
+        "--source=go",
+        "_content/tour/solutions/slices.go"
+      ],
+      "stderr": "_content/tour/solutions/slices.go:27:11: BASHPP-EEXPR-UNDEFINED: undefined: Pic\n",
+      "stdout": "",
+      "semantic_findings": [],
+      "family": "functions-callbacks-and-generics"
+    },
+    {
+      "path": "_content/tour/solutions/stringers.go",
+      "mode": "interpreted",
+      "status": "FAIL:run:exit:1",
+      "stage": "run",
+      "exit": 1,
+      "state": "exited",
+      "source_sha256": "270d781f1e5696bde89be0aa97c7fe86ff832547a94e32cfe571e7acecdec5c0",
+      "command": [
+        "/private/tmp/s118-published-002/bashy/bin/bashy",
+        "--bashpp",
+        "--source=go",
+        "_content/tour/solutions/stringers.go"
+      ],
+      "stderr": "unregistered bridge type \"IPAddr\"\n",
+      "stdout": "",
+      "semantic_findings": [
+        "status:exit_mismatch:1!=0",
+        "stderr:mismatch",
+        "stdout:line_count:0!=2",
+        "stdout:missing_lines:[\"loopback: 127.0.0.1\", \"googleDNS: 8.8.8.8\"]"
+      ],
+      "family": "bridge-values-and-handles"
+    },
+    {
+      "path": "_content/tour/solutions/webcrawler.go",
+      "mode": "interpreted",
+      "status": "FAIL:run:exit:2",
+      "stage": "run",
+      "exit": 2,
+      "state": "exited",
+      "source_sha256": "490f194b0e0610dde7196a8cb2ebec643586a6f05f94a1aabe7a29fb526b8882",
+      "command": [
+        "/private/tmp/s118-published-002/bashy/bin/bashy",
+        "--bashpp",
+        "--source=go",
+        "_content/tour/solutions/webcrawler.go"
+      ],
+      "stderr": "_content/tour/solutions/webcrawler.go:91:1: undefined type: fakeResult\n",
+      "stdout": "",
+      "semantic_findings": [
+        "status:exit_mismatch:2!=0",
+        "stderr:mismatch",
+        "stdout:stats_header:0"
+      ],
+      "family": "types-pointers-interfaces"
+    }
+  ]
+}
