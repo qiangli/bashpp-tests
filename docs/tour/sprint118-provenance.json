@@ -1,0 +1,25 @@
+{
+  "schema": "sprint118-tour-provenance/v1",
+  "module": "golang.org/x/website@v0.0.0-20260903033311-c4a9d59f9775",
+  "commit": "c4a9d59f9775d994f1700d18fa37414c3c85fa7b",
+  "pinned_module_sum": "h1:sKWEVclFcb47eMWJscLT/RC45vMFwwzgvPlhWHGFXSE=",
+  "verified_module_sum": "h1:sKWEVclFcb47eMWJscLT/RC45vMFwwzgvPlhWHGFXSE=",
+  "archive_sha256": "c4d29c5b2c8d149ff7c20c8cf11f43a113e783a00b6067b65de840ceca166228",
+  "archive_files": 3283,
+  "extractor_argv": [
+    "bash",
+    "tools/tour/refresh.sh",
+    "--inventory-only",
+    "AUTHENTICATED_WEBSITE_MODULE_ROOT"
+  ],
+  "extractor_sha256": "5132b5f004991105fcb4b7dc9e794d5159696b644d16c34da3e0c42fb05c66fc",
+  "inventory_sha256": "1105bfc3f19a44646d0e16d900d579ce6877dc34c165bf30da2976e0b38a458c",
+  "inventory_rows": 168,
+  "verbatim_programs": 97,
+  "runnable": 93,
+  "build_only": 4,
+  "inline_fragments": 62,
+  "explicit_nobuild": 9,
+  "verdict": "PASS",
+  "product_execution_claim": false
+}
