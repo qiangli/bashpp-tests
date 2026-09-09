@@ -12,9 +12,16 @@ class TypecheckerLanguageVersionTest < Minitest::Test
       assert_equal 'go1.12', config.fetch('go_version')
       assert_empty config.fetch('unsupported')
       %w[interpreted compiled].each do |mode|
+        # A single selector may still be passed as a bare String.
         argv = GoFullTypechecker.checking_argv('/candidate/bashy', mode, 'original.go', '/fresh/generated.go', config.fetch('go_version'))
         assert_equal 1, argv.count('--go-version=go1.12')
-        assert_operator argv.index('--go-version=go1.12'), :<, argv.index('original.go')
+        assert_equal 1, argv.count('--go-file=original.go')
+        assert_operator argv.index('--go-version=go1.12'), :<, argv.index('--go-file=original.go')
+        # A multi-file package routes the same version flag once, ahead of every file.
+        joint = GoFullTypechecker.checking_argv('/candidate/bashy', mode, %w[a.go b.go], '/fresh/generated.go', config.fetch('go_version'))
+        assert_equal 1, joint.count('--go-version=go1.12')
+        assert_equal ['--go-file=a.go', '--go-file=b.go'], joint.grep(/\A--go-file=/)
+        assert_operator joint.index('--go-version=go1.12'), :<, joint.index('--go-file=a.go')
       end
     end
   end
@@ -35,7 +42,9 @@ class TypecheckerLanguageVersionTest < Minitest::Test
       File.write(File.join(dir, 'original.go'), "// -lang=go1.12\n//go:build ignore\npackage p\n")
       File.write(File.join(dir, 'other.go'), "package p\n")
       root = { 'axis' => 'typechecker', 'input_files' => %w[original.go other.go], 'build_constraints' => { 'original.go' => ['//go:build ignore'] } }
-      assert_equal ['build-tag-applicability:original.go', 'joint-multi-file-package-check'], GoFullTypechecker.unsupported_options(root, dir)
+      # Joint multi-file packages are executable now, but a build-tag gate on any
+      # file of the package is still an unfinished obligation, never a waiver.
+      assert_equal ['build-tag-applicability:original.go'], GoFullTypechecker.unsupported_options(root, dir)
       refute GoFullTypechecker.adaptable?(root, dir)
     end
   end

@@ -19,9 +19,13 @@
 #   * no fixture body is forwarded, rewritten, reformatted or regenerated;
 #   * an exit status alone never establishes a PASS - every observed diagnostic
 #     must consume an annotation and every annotation must be reported;
-#   * exact recipe options this adapter cannot honour (other harness flags, build-tag
-#     gating, multi-file packages) FAIL with their obligations named as
-#     unfinished phases. They are never converted into a new skip.
+#   * exact recipe options this adapter cannot honour (other harness flags,
+#     build-tag gating) FAIL with their obligations named as unfinished phases.
+#     They are never converted into a new skip.
+#
+# Multi-file roots are checked jointly, as one package, exactly as testPkg does:
+# every file of the root is handed to a single checking phase together, so a
+# definition in one file resolves a reference in another.
 require 'json'
 require 'fileutils'
 require 'digest'
@@ -79,20 +83,43 @@ module GoFullTypechecker
   def unsupported_options(root, source_root)
     reasons = []
     files = root.fetch('input_files')
-    reasons << 'joint-multi-file-package-check' unless files.length == 1
+    reasons << 'empty-input-file-set' if files.empty?
     root.fetch('build_constraints').each do |file, constraints|
       reasons << "build-tag-applicability:#{file}" unless constraints.empty?
     end
-    files.each do |relative|
+    # Every file of the package must be readable: all of them are copied and
+    # handed to the joint checking phase, so a missing one is unexecutable.
+    bodies = files.map do |relative|
       begin
-        reasons.concat(checker_flags(File.binread(Corpus.safe_path(source_root, relative))).fetch('unsupported'))
+        File.binread(Corpus.safe_path(source_root, relative))
       rescue Corpus::ContractError, SystemCallError
-        # An unreadable or unparsable recipe header is an unexecutable option,
-        # never a reason to abandon the surrounding root accounting.
         reasons << "unreadable-recipe-header:#{relative}"
+        nil
+      end
+    end
+    # check_test.go testFiles calls parseFlags(srcs[0], flags): the harness flag
+    # line is read from the FIRST file of the package only, and a flags line in
+    # any later file is ignored outright. Honour that exactly - scanning every
+    # file would reject roots upstream actually runs.
+    unless bodies.empty? || bodies.first.nil?
+      begin
+        reasons.concat(checker_flags(bodies.first).fetch('unsupported'))
+      rescue Corpus::ContractError
+        # An unparsable recipe header is an unexecutable option, never a reason
+        # to abandon the surrounding root accounting.
+        reasons << "unreadable-recipe-header:#{files.first}"
       end
     end
     reasons.uniq.sort
+  end
+
+  # The checker configuration of a package, by the exact upstream rule:
+  # check_test.go testFiles calls parseFlags(srcs[0], flags), so the flags line
+  # of the FIRST file is the whole configuration and a flags line in any later
+  # file of the same package is ignored.
+  def package_configuration(source_root, files)
+    raise Corpus::ContractError, 'a package needs at least one input file' if files.empty?
+    checker_flags(File.binread(Corpus.safe_path(source_root, files.fetch(0))))
   end
 
   def adaptable?(root, source_root)
@@ -123,12 +150,20 @@ module GoFullTypechecker
       'scope' => 'adjudicates retained product output only; never type-checks and never runs a fixture' }
   end
 
-  def checking_argv(bashy, mode, selector, generated, go_version = nil)
+  # Every file of the package is passed as its own --go-file, in the root's own
+  # order, so the frontend checks them jointly as one package. A bare positional
+  # selector checks only the first file and silently drops the rest, which would
+  # report a cross-file definition as undefined. A single String selector stays
+  # accepted so existing single-file callers keep working unchanged.
+  def checking_argv(bashy, mode, selectors, generated, go_version = nil)
+    files = selectors.is_a?(String) ? [selectors] : selectors.to_a
+    raise Corpus::ContractError, 'checking phase needs at least one input file' if files.empty?
     version_flags = go_version ? ["--go-version=#{go_version}"] : []
+    file_flags = files.map { |f| "--go-file=#{f}" }
     if mode == 'interpreted'
-      [bashy, '--bashpp', '--source=go', '--check', *version_flags, selector]
+      [bashy, '--bashpp', '--source=go', '--check', *version_flags, *file_flags]
     else
-      [bashy, 'transpile', '--bashpp', '--source=go', *version_flags, selector, '-o', generated, '--map', generated + '.map']
+      [bashy, 'transpile', '--bashpp', '--source=go', *version_flags, *file_flags, '-o', generated, '--map', generated + '.map']
     end
   end
 
@@ -161,40 +196,67 @@ module GoFullTypechecker
   def execute(root:, options:, source_root:, evidence:, sdk_identity:, candidate:, matcher:)
     unsupported = unsupported_options(root, source_root)
     raise Corpus::ContractError, "unsupported typechecker recipe: #{unsupported.join(', ')}" unless unsupported.empty?
-    relative = root.fetch('input_files').fetch(0)
-    original = Corpus.safe_path(source_root, relative)
-    record = Corpus.file_record(original)
-    configuration = checker_flags(File.binread(original))
+    
+    files = root.fetch('input_files')
+    original_files = files.map { |f| Corpus.safe_path(source_root, f) }
+    records = original_files.map { |f| Corpus.file_record(f) }
+    
+    configuration = package_configuration(source_root, files)
+
     modes = MODES.to_h do |mode|
       directory = Corpus.safe_path(File.join(evidence, 'typechecker'), root.fetch('id') + '/' + mode)
       work = File.join(directory, 'work')
-      copy = Corpus.safe_path(work, relative)
-      FileUtils.mkdir_p(File.dirname(copy))
-      FileUtils.cp(original, copy)
-      # The checked input is the complete original file, byte for byte.
-      raise Corpus::ContractError, 'fixture copy is not byte-identical' unless Corpus.digest(copy) == record.fetch('sha256') && File.size(copy) == record.fetch('bytes')
+      
+      files.zip(original_files, records).each do |relative, original, record|
+        copy = Corpus.safe_path(work, relative)
+        FileUtils.mkdir_p(File.dirname(copy))
+        FileUtils.cp(original, copy)
+        # The checked input is the complete original file, byte for byte.
+        raise Corpus::ContractError, 'fixture copy is not byte-identical' unless Corpus.digest(copy) == record.fetch('sha256') && File.size(copy) == record.fetch('bytes')
+      end
+
       scaffold = options[:runtime] ? options[:runtime].fetch('module_files') : {}
-      raise Corpus::ContractError, 'scaffold overlaps original fixture' if scaffold.key?(relative)
+      files.each do |relative|
+        raise Corpus::ContractError, 'scaffold overlaps original fixture' if scaffold.key?(relative)
+      end
+      
       scaffold.each { |name, bytes| File.binwrite(Corpus.safe_path(work, name), bytes) }
       generated = File.join(directory, 'generated.go')
       env = checking_environment(directory, sdk_identity, options[:runtime])
       %w[HOME TMPDIR GOCACHE].each { |key| FileUtils.mkdir_p(env.fetch(key)) }
       Corpus.authenticate_file(options.fetch(:bashy), candidate.fetch('launcher_sha256'))
       Corpus.authenticate_file(options.fetch(:bashy) + '.real', candidate.fetch('payload_sha256'))
-      argv = checking_argv(options.fetch(:bashy), mode, relative, generated, configuration.fetch('go_version'))
+      
+      argv = checking_argv(options.fetch(:bashy), mode, files, generated, configuration.fetch('go_version'))
       stage = Corpus.capture(argv, cwd: work, log_prefix: File.join(directory, 'check'), env: env, timeout: options.fetch(:timeout))
-      intact = Corpus.digest(copy) == record.fetch('sha256') && Corpus.digest(original) == record.fetch('sha256')
+      
+      intact = true
+      files.zip(original_files, records).each do |relative, original, record|
+        copy = Corpus.safe_path(work, relative)
+        if Corpus.digest(copy) != record.fetch('sha256') || Corpus.digest(original) != record.fetch('sha256')
+          intact = false
+          break
+        end
+      end
       intact &&= scaffold.all? { |name, bytes| File.binread(Corpus.safe_path(work, name)) == bytes }
+      
+      inputs_hash = files.zip(records).to_h { |relative, record| [relative, record] }
       observation = { 'checker_configuration' => configuration, 'module_files' => scaffold.transform_values { |bytes| Digest::SHA256.hexdigest(bytes) }, 'mode' => mode, 'stage_role' => 'checking-phase', 'phases' => PHASES, 'stage' => stage,
-                      'input_integrity' => intact, 'inputs' => { relative => record }, 'verdict' => 'FAIL' }
+                      'input_integrity' => intact, 'inputs' => inputs_hash, 'verdict' => 'FAIL' }
+      
       if !intact
         next [mode, observation.merge('reason' => 'fixture bytes changed across the checking phase')]
       end
       if stage['state'] != 'exited' || !stage['spawned'] || stage['signal']
         next [mode, observation.merge('reason' => "checking phase did not exit normally: #{stage['state']}")]
       end
+      
+      request_sources = files.zip(records).map do |relative, record|
+        { 'path' => Corpus.safe_path(work, relative), 'short' => relative, 'sha256' => record.fetch('sha256') }
+      end
+      
       request = { 'family' => root.fetch('family'), 'mode' => mode, 'column_tolerance' => root.fetch('column_tolerance'),
-                  'sources' => [{ 'path' => copy, 'short' => relative, 'sha256' => record.fetch('sha256') }],
+                  'sources' => request_sources,
                   'stdout' => stage.fetch('stdout').slice('path', 'sha256'), 'stderr' => stage.fetch('stderr').slice('path', 'sha256'),
                   'process' => { 'spawned' => stage.fetch('spawned'), 'state' => stage.fetch('state'), 'exit' => stage.fetch('exit'), 'signal' => stage.fetch('signal') } }
       adjudication = adjudicate(matcher, request, directory, options.fetch(:timeout))
@@ -207,7 +269,8 @@ module GoFullTypechecker
     # agreeing mode is not a complete recipe.
     complete = modes.keys.sort == MODES.sort && modes.values.all? { |m| m['verdict'] == 'PASS' }
     { 'verdict' => complete ? 'PASS' : 'FAIL', 'modes' => modes,
-      'evidence' => { 'adapter' => 'go-full-typechecker/v1', 'checker_configuration' => configuration, 'phases' => PHASES, 'checked_fixture' => record,
+      'evidence' => { 'adapter' => 'go-full-typechecker/v1', 'checker_configuration' => configuration, 'phases' => PHASES, 'checked_fixture' => records.fetch(0), 'checked_fixtures' => records,
+                      'joint_package_files' => files, 'checker_configuration_source' => files.fetch(0),
                       'column_tolerance' => root.fetch('column_tolerance'), 'family' => root.fetch('family'),
                       'runner_contract' => root.fetch('runner'), 'runner_sha256' => root.fetch('runner_sha256'),
                       'mode_denominator' => { 'expected' => MODES.length, 'observed' => modes.length },

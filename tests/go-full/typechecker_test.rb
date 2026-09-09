@@ -53,7 +53,8 @@ class TypecheckerRecipeOptionsTest < Minitest::Test
       assert_equal ['build-tag-applicability:src/plain.go'], GoFullTypechecker.unsupported_options(gated, dir)
 
       joint = { 'axis' => 'typechecker', 'input_files' => ['src/plain.go', 'src/other.go'], 'build_constraints' => {} }
-      assert_equal ['joint-multi-file-package-check'], GoFullTypechecker.unsupported_options(joint, dir)
+      assert_empty GoFullTypechecker.unsupported_options(joint, dir)
+      assert GoFullTypechecker.adaptable?(joint, dir)
 
       plain = { 'axis' => 'typechecker', 'input_files' => ['src/plain.go'], 'build_constraints' => { 'src/plain.go' => [] } }
       assert_empty GoFullTypechecker.unsupported_options(plain, dir)
@@ -88,8 +89,8 @@ class TypecheckerRecipeOptionsTest < Minitest::Test
     assert_equal 743, roots.length
     adaptable, unsupported = roots.partition { |root| GoFullTypechecker.adaptable?(root, SOURCE_ROOT) }
     assert_equal 743, adaptable.length + unsupported.length
-    assert_equal 713, adaptable.length
-    assert_equal 30, unsupported.length
+    assert_equal 721, adaptable.length
+    assert_equal 22, unsupported.length
     # Every unsupported root names why, and still owes both obligations.
     unsupported.each do |root|
       refute_empty GoFullTypechecker.unsupported_options(root, SOURCE_ROOT), root.fetch('id')
@@ -142,6 +143,66 @@ class TypecheckerRecipeOptionsTest < Minitest::Test
     # types2 TestLocal shares go/types' exact-position requirement: it is 0, not
     # a widened family delta, so it must never be lumped in with the twins.
     assert_equal 0, TYPES2_COLDELTA.fetch('TestLocal')
+  end
+
+  # --- joint multi-file package controls (portable: no candidate, no SDK) ---
+
+  # check_test.go testFiles applies parseFlags(srcs[0], flags). The flags line of
+  # the first file is the entire checker configuration; a flags line in a later
+  # file of the same package is ignored by upstream and must be ignored here.
+  # Choosing "the first file that carries flags" instead would apply a -lang that
+  # the native harness never applies.
+  def test_checker_configuration_is_read_from_the_first_file_only
+    Dir.mktmpdir('tc-first-') do |dir|
+      File.write(File.join(dir, 'a.go'), "package p\n")
+      File.write(File.join(dir, 'b.go'), "// -lang=go1.12\npackage p\n")
+      assert_nil GoFullTypechecker.package_configuration(dir, %w[a.go b.go]).fetch('go_version')
+      # Reversing the package order moves the flags line into srcs[0].
+      assert_equal 'go1.12', GoFullTypechecker.package_configuration(dir, %w[b.go a.go]).fetch('go_version')
+      # A later file's unsupported flag is likewise not this root's obligation.
+      File.write(File.join(dir, 'c.go'), "// -fakeImportC\npackage p\n")
+      root = { 'axis' => 'typechecker', 'input_files' => %w[a.go c.go], 'build_constraints' => {} }
+      assert_empty GoFullTypechecker.unsupported_options(root, dir)
+      first = { 'axis' => 'typechecker', 'input_files' => %w[c.go a.go], 'build_constraints' => {} }
+      assert_equal ['harness-flag:-fakeImportC'], GoFullTypechecker.unsupported_options(first, dir)
+    end
+  end
+
+  # Every file of the package is copied and checked, so any file being absent or
+  # carrying an unparsable header is an unexecutable option - never a silent
+  # fallback to checking whichever files happen to be readable.
+  def test_a_missing_or_malformed_second_file_is_an_unsupported_option
+    Dir.mktmpdir('tc-second-') do |dir|
+      File.write(File.join(dir, 'a.go'), "package p\n")
+      File.write(File.join(dir, 'bad.go'), '// -lang=' + ('x' * 300) + "\npackage p\n")
+
+      missing = { 'axis' => 'typechecker', 'input_files' => %w[a.go gone.go], 'build_constraints' => {} }
+      assert_equal ['unreadable-recipe-header:gone.go'], GoFullTypechecker.unsupported_options(missing, dir)
+      refute GoFullTypechecker.adaptable?(missing, dir)
+
+      # An over-long flags line in srcs[0] is the upstream parseFlags error.
+      malformed = { 'axis' => 'typechecker', 'input_files' => %w[bad.go a.go], 'build_constraints' => {} }
+      assert_equal ['unreadable-recipe-header:bad.go'], GoFullTypechecker.unsupported_options(malformed, dir)
+
+      empty = { 'axis' => 'typechecker', 'input_files' => [], 'build_constraints' => {} }
+      assert_equal ['empty-input-file-set'], GoFullTypechecker.unsupported_options(empty, dir)
+      refute GoFullTypechecker.adaptable?(empty, dir)
+    end
+  end
+
+  # A bare positional selector makes the frontend check only the first file and
+  # silently drop the rest, which reports a cross-file definition as undefined.
+  # Every file must therefore arrive as its own --go-file, in the root's order.
+  def test_checking_argv_carries_every_file_exactly_once_in_order
+    %w[interpreted compiled].each do |mode|
+      argv = GoFullTypechecker.checking_argv('/candidate/bashy', mode, %w[a.go b.go c.go], '/fresh/generated.go')
+      assert_equal ['--go-file=a.go', '--go-file=b.go', '--go-file=c.go'], argv.grep(/\A--go-file=/)
+      assert_equal 3, argv.length - argv.reject { |a| a.start_with?('--go-file=') }.length
+      # No file is also passed positionally, which would check it twice.
+      %w[a.go b.go c.go].each { |f| refute_includes argv, f }
+      assert_equal 1, argv.count('--source=go')
+    end
+    assert_raises(Corpus::ContractError) { GoFullTypechecker.checking_argv('/b', 'interpreted', [], '/g.go') }
   end
 end
 
@@ -288,5 +349,241 @@ class TypecheckerIntegrationControlTest < Minitest::Test
     assert_equal 'go-full-typechecker/v1', result.dig('evidence', 'adapter')
     assert_match(/never supplies diagnostics/, result.dig('evidence', 'native_oracle_binding'))
     assert_match(/both checking phases/, result.dig('evidence', 'credit_rule'))
+  end
+end
+
+# Bounded joint multi-file controls against the real frozen candidate012 and the
+# real pinned fixtures. These cover the 8 multi-file roots of the 743-root
+# denominator; nothing here is evidence for the other 735.
+class TypecheckerJointPackageControlTest < Minitest::Test
+  INVENTORY = File.expand_path('../../docs/go-full/typechecker-roots.jsonl', __dir__)
+  SOURCE_ROOT = '/Users/qiangli/.bashy/sprint118/sources/go-full/go'
+  SDK_IDENTITY = '/Users/qiangli/.bashy/sprint118/sources/go-full-sdk-identity-relocated.json'
+  CANDIDATE = '/Users/qiangli/.local/state/bashy/sprint118-evidence/runtime-integration-012/candidate.json'
+  BASHY = '/tmp/s118-runtime-012/bashy/bin/bashy'
+
+  def self.joint_roots
+    @joint_roots ||= File.foreach(INVENTORY).map { |line| JSON.parse(line).merge('axis' => 'typechecker') }
+                         .select { |root| root.fetch('input_files').length > 1 }
+  end
+
+  def available?
+    [SOURCE_ROOT, SDK_IDENTITY, CANDIDATE, BASHY, BASHY + '.real'].all? { |path| File.exist?(path) }
+  end
+
+  def setup
+    skip 'frozen candidate012 or pinned SDK is unavailable' unless available?
+    @tmp = Dir.mktmpdir('tc-joint-')
+    @sdk = JSON.parse(File.read(SDK_IDENTITY))
+    # The real frozen candidate record: both hashes are the recorded ones, and
+    # the adapter authenticates the launcher and its payload against them.
+    @candidate = JSON.parse(File.read(CANDIDATE))
+    @matcher = TypecheckerIntegrationControlTest.shared_matcher(@sdk)
+  end
+
+  def teardown
+    FileUtils.remove_entry(@tmp) if @tmp && File.directory?(@tmp)
+  end
+
+  def execute(root, name, source_root: SOURCE_ROOT)
+    GoFullTypechecker.execute(root: root, options: { bashy: BASHY, timeout: 120 }, source_root: source_root,
+                              evidence: File.join(@tmp, name), sdk_identity: @sdk, candidate: @candidate, matcher: @matcher)
+  end
+
+  # The frozen candidate is authenticated by its real recorded digests: a fixture
+  # bearing any other bytes cannot be checked in the candidate's name.
+  def test_the_frozen_candidate_is_authenticated_by_its_recorded_digests
+    assert_equal Corpus.digest(BASHY), @candidate.fetch('launcher_sha256')
+    assert_equal Corpus.digest(BASHY + '.real'), @candidate.fetch('payload_sha256')
+    imposter = @candidate.merge('payload_sha256' => '0' * 64)
+    root = self.class.joint_roots.fetch(0)
+    assert_raises(Corpus::ContractError) do
+      GoFullTypechecker.execute(root: root, options: { bashy: BASHY, timeout: 120 }, source_root: SOURCE_ROOT,
+                                evidence: File.join(@tmp, 'imposter'), sdk_identity: @sdk, candidate: imposter, matcher: @matcher)
+    end
+  end
+
+  # All 8 multi-file roots of the denominator, executed for real. The verdicts
+  # are recorded as observed; a root that does not satisfy both obligations FAILs
+  # and is reported, never coerced to PASS.
+  def test_every_joint_root_is_checked_as_one_package_in_both_phases
+    roots = self.class.joint_roots
+    assert_equal 8, roots.length
+    observed = roots.to_h do |root|
+      result = execute(root, 'joint/' + root.fetch('id').gsub(%r{[/:]}, '_'))
+      # Every file of the package really was handed to a single checking phase.
+      assert_equal root.fetch('input_files'), result.dig('evidence', 'joint_package_files'), root.fetch('id')
+      assert_equal root.fetch('input_files').fetch(0), result.dig('evidence', 'checker_configuration_source')
+      assert_equal root.fetch('runner_sha256'), result.dig('evidence', 'runner_sha256')
+      assert_equal %w[interpreted compiled], result.fetch('modes').keys
+      result.fetch('modes').each_value do |mode|
+        assert mode.fetch('input_integrity'), root.fetch('id')
+        assert_equal 'exited', mode.dig('stage', 'state')
+        # Exactly one --go-file per file of the package, and no positional copy.
+        assert_equal root.fetch('input_files').map { |f| "--go-file=#{f}" },
+                     mode.dig('stage', 'argv').grep(/\A--go-file=/), root.fetch('id')
+        # Each file's real recorded digest is retained as a checked input.
+        assert_equal root.fetch('input_files').sort, mode.fetch('inputs').keys.sort
+        root.fetch('input_files').each do |relative|
+          assert_equal Corpus.digest(File.join(SOURCE_ROOT, relative)), mode.fetch('inputs').fetch(relative).fetch('sha256')
+        end
+      end
+      [root.fetch('id'), result.fetch('verdict')]
+    end
+    # The real, observed partition of the 8 joint roots against candidate012.
+    # Six satisfy both obligations jointly. The two importdecl0 twins do not,
+    # and are recorded as FAIL rather than coerced into a PASS: see
+    # JOINT_ROOT_GAP below for the exact gap they still owe.
+    assert_equal 8, observed.length
+    assert_equal JOINT_ROOT_GAP.keys.sort, observed.reject { |_, v| v == 'PASS' }.keys.sort, observed.to_s
+    assert_equal 6, observed.count { |_, v| v == 'PASS' }
+  end
+
+  # The two joint roots the frozen candidate does not yet satisfy. Every expected
+  # diagnostic is matched and no observed diagnostic is unaccounted for; what
+  # fails is one line of product output that carries no source position at all,
+  # emitted for a declaration that comes from a dot-imported package. It is a
+  # real product gap, retained here so it cannot be lost or silently waived.
+  JOINT_ROOT_GAP = {
+    'go/types:TestCheck/importdecl0' => "-: \tother declaration of Value",
+    'cmd/compile/internal/types2:TestCheck/importdecl0' => "-: \tother declaration of Value"
+  }.freeze
+
+  def test_the_two_unsatisfied_joint_roots_fail_for_a_named_gap_not_a_skip
+    JOINT_ROOT_GAP.each do |id, unpositioned|
+      root = self.class.joint_roots.find { |candidate| candidate.fetch('id') == id }
+      refute_nil root, id
+      result = execute(root, 'gap/' + id.gsub(%r{[/:]}, '_'))
+      assert_equal 'FAIL', result.fetch('verdict'), id
+      result.fetch('modes').each_value do |mode|
+        match = mode.dig('match', 'response', 'match')
+        # The gap is not a diagnostic mismatch: every annotation is reported and
+        # every reported diagnostic consumes one.
+        assert_equal match.fetch('expected_diagnostics'), match.fetch('matched_diagnostics'), id
+        assert_empty match['unmatched_observed'] || [], id
+        assert_empty match['unmatched_expected'] || [], id
+        # It is one unpositioned continuation line the frontend still emits.
+        assert_equal [unpositioned], mode.dig('match', 'response', 'unparsed_output'), id
+        assert_match(/not positioned diagnostics for the fixture/, mode.fetch('reason'), id)
+      end
+    end
+  end
+
+  # The point of joint checking: a definition in one file resolves a reference in
+  # another. Checked against the real candidate, not asserted from the argv.
+  def test_a_cross_file_definition_resolves_only_when_the_package_is_checked_jointly
+    Dir.mktmpdir('tc-cross-') do |dir|
+      File.write(File.join(dir, 'a.go'), "package p\n\nfunc F() int { return G() }\n")
+      File.write(File.join(dir, 'b.go'), "package p\n\nfunc G() int { return 1 }\n")
+      joint = { 'axis' => 'typechecker', 'id' => 'control:cross-file', 'family' => 'TestCheck',
+                'input_files' => %w[a.go b.go], 'build_constraints' => { 'a.go' => [], 'b.go' => [] },
+                'column_tolerance' => 0, 'runner' => 'src/go/types/check_test.go',
+                'runner_sha256' => Corpus.digest(File.join(SOURCE_ROOT, 'src/go/types/check_test.go')) }
+      result = execute(joint, 'cross-joint', source_root: dir)
+      assert_equal 'PASS', result.fetch('verdict'), result.fetch('modes').to_s[0, 600]
+      result.fetch('modes').each_value { |mode| assert_equal 0, mode.dig('stage', 'exit') }
+
+      # The same file alone must report the reference as undefined, which is what
+      # a positional single-file selector would have silently produced instead.
+      alone = joint.merge('id' => 'control:cross-file-alone', 'input_files' => %w[a.go],
+                          'build_constraints' => { 'a.go' => [] })
+      lone = execute(alone, 'cross-alone', source_root: dir)
+      assert_equal 'FAIL', lone.fetch('verdict')
+      assert_match(/undefined: G/, File.binread(lone.dig('modes', 'interpreted', 'stage', 'stderr', 'path')))
+    end
+  end
+
+  # An annotation no diagnostic covers, and a diagnostic no annotation covers,
+  # each FAIL - in the second file of the package as much as in the first.
+  def test_a_missing_or_unmatched_diagnostic_in_either_file_fails
+    { 'a.go' => 'first', 'b.go' => 'second' }.each do |carrier, label|
+      Dir.mktmpdir('tc-diag-') do |dir|
+        # A well-formed package: neither file has a real type error.
+        File.write(File.join(dir, 'a.go'), "package p\n\nfunc F() int { return G() }\n")
+        File.write(File.join(dir, 'b.go'), "package p\n\nfunc G() int { return 1 }\n")
+        # ...but one file claims an error the checker will never report.
+        body = File.read(File.join(dir, carrier))
+        File.write(File.join(dir, carrier), body + "\nvar _ int /* ERROR \"never reported\" */\n")
+        root = { 'axis' => 'typechecker', 'id' => "control:missing-#{label}", 'family' => 'TestCheck',
+                 'input_files' => %w[a.go b.go], 'build_constraints' => { 'a.go' => [], 'b.go' => [] },
+                 'column_tolerance' => 0, 'runner' => 'src/go/types/check_test.go',
+                 'runner_sha256' => Corpus.digest(File.join(SOURCE_ROOT, 'src/go/types/check_test.go')) }
+        result = execute(root, "missing-#{label}", source_root: dir)
+        assert_equal 'FAIL', result.fetch('verdict'), "an unreported annotation in the #{label} file must FAIL"
+        result.fetch('modes').each_value do |mode|
+          assert_equal 'FAIL', mode.fetch('verdict')
+          # The package really is accepted, so the exit status alone would have
+          # read as a pass; the annotation the checker never reported is what
+          # denies credit, and it is named.
+          assert_equal 0, mode.dig('stage', 'exit')
+          assert mode.dig('match', 'response', 'want_error')
+          assert_match(/exit 0 disagrees with 1 required source annotation/, mode.fetch('reason'))
+        end
+      end
+    end
+  end
+
+  # The other direction: a real diagnostic in the second file that no annotation
+  # covers, and a duplicate annotation only one diagnostic can consume. Neither
+  # may be absorbed by the joint check.
+  def test_an_unmatched_diagnostic_or_a_duplicate_annotation_in_the_second_file_fails
+    Dir.mktmpdir('tc-extra-') do |dir|
+      File.write(File.join(dir, 'a.go'), "package p\n\nfunc F() int { return G() }\n")
+      # A real type error in the second file, with no annotation at all.
+      File.write(File.join(dir, 'b.go'), "package p\n\nfunc G() int { return 1 }\n\nvar _ int = \"s\"\n")
+      root = { 'axis' => 'typechecker', 'id' => 'control:unmatched-second', 'family' => 'TestCheck',
+               'input_files' => %w[a.go b.go], 'build_constraints' => { 'a.go' => [], 'b.go' => [] },
+               'column_tolerance' => 0, 'runner' => 'src/go/types/check_test.go',
+               'runner_sha256' => Corpus.digest(File.join(SOURCE_ROOT, 'src/go/types/check_test.go')) }
+      result = execute(root, 'unmatched-second', source_root: dir)
+      assert_equal 'FAIL', result.fetch('verdict')
+      result.fetch('modes').each_value do |mode|
+        refute_equal 0, mode.dig('stage', 'exit')
+        # The diagnostic is positioned in the second file, which only a joint
+        # check can report, and no annotation covers it.
+        assert_match(/\Ab\.go:5:13: cannot use/, File.binread(mode.dig('stage', 'stderr', 'path')))
+        refute mode.dig('match', 'response', 'want_error')
+        assert_match(/exit 2 disagrees with 0 required source annotation/, mode.fetch('reason'))
+      end
+
+      # Now annotate that error twice on the same line: one annotation is
+      # consumed, the duplicate stays unreported and still denies credit.
+      File.write(File.join(dir, 'b.go'),
+                 "package p\n\nfunc G() int { return 1 }\n\nvar _ int = \"s\" /* ERROR \"cannot use\" */ /* ERROR \"cannot use\" */\n")
+      duplicate = root.merge('id' => 'control:duplicate-second')
+      dup = execute(duplicate, 'duplicate-second', source_root: dir)
+      assert_equal 'FAIL', dup.fetch('verdict'), 'a duplicate annotation must not be satisfied twice'
+      dup.fetch('modes').each_value do |mode|
+        match = mode.dig('match', 'response', 'match')
+        assert_equal 2, match.fetch('expected_diagnostics')
+        assert_equal 1, match.fetch('observed_diagnostics')
+        refute_empty match['unmatched_expected'] || [], 'the duplicate annotation must be named as unreported'
+      end
+    end
+  end
+
+  # Tampering with any original input of the package - not just the first -
+  # breaks the byte-identity obligation and cannot be adjudicated.
+  def test_tampering_with_any_original_input_cannot_be_adjudicated
+    %w[a.go b.go].each do |target|
+      Dir.mktmpdir('tc-tamper-') do |dir|
+        File.write(File.join(dir, 'a.go'), "package p\n\nfunc F() int { return G() }\n")
+        File.write(File.join(dir, 'b.go'), "package p\n\nfunc G() int { return 1 }\n")
+        root = { 'axis' => 'typechecker', 'id' => "control:tamper-#{target}", 'family' => 'TestCheck',
+                 'input_files' => %w[a.go b.go], 'build_constraints' => { 'a.go' => [], 'b.go' => [] },
+                 'column_tolerance' => 0, 'runner' => 'src/go/types/check_test.go',
+                 'runner_sha256' => Corpus.digest(File.join(SOURCE_ROOT, 'src/go/types/check_test.go')) }
+        result = execute(root, "tamper-#{target}", source_root: dir)
+        mode = result.fetch('modes').fetch('interpreted')
+        directory = File.dirname(mode.dig('stage', 'cwd'))
+        # Rewrite the retained copy of this file and re-adjudicate the same request.
+        File.binwrite(File.join(mode.dig('stage', 'cwd'), target), "package p\n")
+        request = JSON.parse(File.read(mode.dig('match', 'request', 'path')))
+        assert_equal %w[a.go b.go], request.fetch('sources').map { |src| src.fetch('short') }
+        tampered = GoFullTypechecker.adjudicate(@matcher, request, File.join(directory, 'retry-' + target), 120)
+        assert_equal 'FAIL', tampered.dig('response', 'verdict'), "tampering with #{target} must not adjudicate"
+        assert_match(/checksum mismatch/, tampered.dig('response', 'reason'))
+      end
+    end
   end
 end
