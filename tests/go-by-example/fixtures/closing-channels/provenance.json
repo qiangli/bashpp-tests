@@ -1,0 +1,203 @@
+{
+  "purpose": "Source-order review; native observations only, not product certification",
+  "source": {
+    "path": "/tmp/s118-closing-channels-harness/examples/closing-channels/closing-channels.go",
+    "bytes": 1698,
+    "sha256": "b2ddb4aa5bce6a532fc9bc29e67800e1a31f8da7fb7131f4ee8bde7eecfbe15c"
+  },
+  "sdk": {
+    "path": "/Users/qiangli/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.27.0.darwin-arm64/bin/go",
+    "bytes": 16071392,
+    "sha256": "a19a71df81715c12d9a7e81bab036c12696fec1ddbd4258b48a2131a9080b267"
+  },
+  "binary": {
+    "path": "/Users/qiangli/.local/state/bashy/sprint118-evidence/closing-channels-order-review/oracle",
+    "bytes": 2429826,
+    "sha256": "a5f58d87f538984c04410936c66e0dba526f9ee8e6a8c111458de084ebfd8538"
+  },
+  "native_runs": 192,
+  "retained_evidence": "/Users/qiangli/.local/state/bashy/sprint118-evidence/closing-channels-order-review/provenance.json",
+  "retained_evidence_sha256": "85c9f349fd60bf1a8dc0ee5cbfd9f940d7ab3c9b4080da09653efa18c05c78ee",
+  "files": [
+    {
+      "file": "native-00.stdout.txt",
+      "sha256": "e3dd6f69fa10aff6a49e77d8c50e8c812eecb2c88dba0be21e938e6c2d72a672",
+      "capture": {
+        "argv": [
+          "/Users/qiangli/.local/state/bashy/sprint118-evidence/closing-channels-order-review/oracle"
+        ],
+        "cwd": "/Users/qiangli/.local/state/bashy/sprint118-evidence/closing-channels-order-review",
+        "environment": {
+          "GOMAXPROCS": "1"
+        },
+        "timeout_seconds": 5,
+        "spawned": true,
+        "state": "exited",
+        "exit": 0,
+        "signal": null,
+        "descendants_survived": false,
+        "duration_seconds": 0.25440699997125193,
+        "stdout": {
+          "path": "/Users/qiangli/.local/state/bashy/sprint118-evidence/closing-channels-order-review/run-000.stdout",
+          "bytes": 136,
+          "sha256": "e3dd6f69fa10aff6a49e77d8c50e8c812eecb2c88dba0be21e938e6c2d72a672"
+        },
+        "stderr": {
+          "path": "/Users/qiangli/.local/state/bashy/sprint118-evidence/closing-channels-order-review/run-000.stderr",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      }
+    },
+    {
+      "file": "native-01.stdout.txt",
+      "sha256": "7d5d7293b68224836dd2f6c99b18a16ee90a043b94db3c3398973494e16bdd73",
+      "capture": {
+        "argv": [
+          "/Users/qiangli/.local/state/bashy/sprint118-evidence/closing-channels-order-review/oracle"
+        ],
+        "cwd": "/Users/qiangli/.local/state/bashy/sprint118-evidence/closing-channels-order-review",
+        "environment": {
+          "GOMAXPROCS": "2"
+        },
+        "timeout_seconds": 5,
+        "spawned": true,
+        "state": "exited",
+        "exit": 0,
+        "signal": null,
+        "descendants_survived": false,
+        "duration_seconds": 0.013957999995909631,
+        "stdout": {
+          "path": "/Users/qiangli/.local/state/bashy/sprint118-evidence/closing-channels-order-review/run-004.stdout",
+          "bytes": 136,
+          "sha256": "7d5d7293b68224836dd2f6c99b18a16ee90a043b94db3c3398973494e16bdd73"
+        },
+        "stderr": {
+          "path": "/Users/qiangli/.local/state/bashy/sprint118-evidence/closing-channels-order-review/run-004.stderr",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      }
+    },
+    {
+      "file": "native-02.stdout.txt",
+      "sha256": "af515852223530d4ab0897abd890cdb897bdd57912c5476febfa5c2c1aae80ca",
+      "capture": {
+        "argv": [
+          "/Users/qiangli/.local/state/bashy/sprint118-evidence/closing-channels-order-review/oracle"
+        ],
+        "cwd": "/Users/qiangli/.local/state/bashy/sprint118-evidence/closing-channels-order-review",
+        "environment": {
+          "GOMAXPROCS": "2"
+        },
+        "timeout_seconds": 5,
+        "spawned": true,
+        "state": "exited",
+        "exit": 0,
+        "signal": null,
+        "descendants_survived": false,
+        "duration_seconds": 0.012682000000495464,
+        "stdout": {
+          "path": "/Users/qiangli/.local/state/bashy/sprint118-evidence/closing-channels-order-review/run-028.stdout",
+          "bytes": 136,
+          "sha256": "af515852223530d4ab0897abd890cdb897bdd57912c5476febfa5c2c1aae80ca"
+        },
+        "stderr": {
+          "path": "/Users/qiangli/.local/state/bashy/sprint118-evidence/closing-channels-order-review/run-028.stderr",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      }
+    },
+    {
+      "file": "native-03.stdout.txt",
+      "sha256": "d5431589cb3bec64b86b3deb7e31bfeb18e04a6d32486ef46fb72eccb64b9f15",
+      "capture": {
+        "argv": [
+          "/Users/qiangli/.local/state/bashy/sprint118-evidence/closing-channels-order-review/oracle"
+        ],
+        "cwd": "/Users/qiangli/.local/state/bashy/sprint118-evidence/closing-channels-order-review",
+        "environment": {
+          "GOMAXPROCS": "4"
+        },
+        "timeout_seconds": 5,
+        "spawned": true,
+        "state": "exited",
+        "exit": 0,
+        "signal": null,
+        "descendants_survived": false,
+        "duration_seconds": 0.012832999986130744,
+        "stdout": {
+          "path": "/Users/qiangli/.local/state/bashy/sprint118-evidence/closing-channels-order-review/run-032.stdout",
+          "bytes": 136,
+          "sha256": "d5431589cb3bec64b86b3deb7e31bfeb18e04a6d32486ef46fb72eccb64b9f15"
+        },
+        "stderr": {
+          "path": "/Users/qiangli/.local/state/bashy/sprint118-evidence/closing-channels-order-review/run-032.stderr",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      }
+    },
+    {
+      "file": "native-04.stdout.txt",
+      "sha256": "c66814f5ab07f19f3d6b33d612df1fe1ea030b15522efd664698f3be9b1987e2",
+      "capture": {
+        "argv": [
+          "/Users/qiangli/.local/state/bashy/sprint118-evidence/closing-channels-order-review/oracle"
+        ],
+        "cwd": "/Users/qiangli/.local/state/bashy/sprint118-evidence/closing-channels-order-review",
+        "environment": {
+          "GOMAXPROCS": "4"
+        },
+        "timeout_seconds": 5,
+        "spawned": true,
+        "state": "exited",
+        "exit": 0,
+        "signal": null,
+        "descendants_survived": false,
+        "duration_seconds": 0.01241600001230836,
+        "stdout": {
+          "path": "/Users/qiangli/.local/state/bashy/sprint118-evidence/closing-channels-order-review/run-050.stdout",
+          "bytes": 136,
+          "sha256": "c66814f5ab07f19f3d6b33d612df1fe1ea030b15522efd664698f3be9b1987e2"
+        },
+        "stderr": {
+          "path": "/Users/qiangli/.local/state/bashy/sprint118-evidence/closing-channels-order-review/run-050.stderr",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      }
+    },
+    {
+      "file": "native-05.stdout.txt",
+      "sha256": "e2fee1beb9397e1f6b09cf25978524ec92bf9c8f7d16ea6205d2814885092412",
+      "capture": {
+        "argv": [
+          "/Users/qiangli/.local/state/bashy/sprint118-evidence/closing-channels-order-review/oracle"
+        ],
+        "cwd": "/Users/qiangli/.local/state/bashy/sprint118-evidence/closing-channels-order-review",
+        "environment": {
+          "GOMAXPROCS": "4"
+        },
+        "timeout_seconds": 5,
+        "spawned": true,
+        "state": "exited",
+        "exit": 0,
+        "signal": null,
+        "descendants_survived": false,
+        "duration_seconds": 0.01295800000661984,
+        "stdout": {
+          "path": "/Users/qiangli/.local/state/bashy/sprint118-evidence/closing-channels-order-review/run-092.stdout",
+          "bytes": 136,
+          "sha256": "e2fee1beb9397e1f6b09cf25978524ec92bf9c8f7d16ea6205d2814885092412"
+        },
+        "stderr": {
+          "path": "/Users/qiangli/.local/state/bashy/sprint118-evidence/closing-channels-order-review/run-092.stderr",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      }
+    }
+  ]
+}

@@ -195,6 +195,12 @@ check_rows() { # <file> <expected-field-count> <label>
         nn = split(normalization, ns, ",")
         for (i = 1; i <= nn; i++) {
           if (ns[i] == "none") continue
+          if (ns[i] == "closing_channel_order") {
+            if ($1 != "examples/closing-channels/closing-channels.go" || normalization != "closing_channel_order")
+              fail("closing_channel_order is bound exclusively to the reviewed closing-channels row")
+            if (NF == 8 && $8 != "b2ddb4aa5bce6a532fc9bc29e67800e1a31f8da7fb7131f4ee8bde7eecfbe15c")
+              fail("closing_channel_order source digest is not the reviewed program")
+          }
           ok = 0
           for (j = 1; j <= nb; j++) if (("," allow[bs[j]] ",") ~ ("," ns[i] ",")) ok = 1
           if (!ok) fail("normalization " ns[i] " is not licensed by any declared behavior on " $1)

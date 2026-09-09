@@ -19,7 +19,7 @@ examples/channel-buffering/channel-buffering.go	program	deterministic	none	none	
 examples/channel-directions/channel-directions.go	program	deterministic	none	none	none
 examples/channel-synchronization/channel-synchronization.go	program	concurrency,timeout	none	bounded_wait	none
 examples/channels/channels.go	program	concurrency	none	bounded_wait	none
-examples/closing-channels/closing-channels.go	program	concurrency	none	bounded_wait	none
+examples/closing-channels/closing-channels.go	program	concurrency	closing_channel_order	bounded_wait	none
 examples/closures/closures.go	program	deterministic	none	none	none
 examples/command-line-arguments/command-line-arguments.go	program	argv	argv0_path	argv_fixture	none
 examples/command-line-flags/command-line-flags.go	program	argv	none	argv_fixture	none

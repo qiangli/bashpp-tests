@@ -29,9 +29,11 @@ require "time"
 # VERSION 4 rejects extra interleaved output and unlicensed worker/job IDs;
 # ordering normalization never licenses discarding additional observable events.
 module GoByExampleNormalizer
-  VERSION = 5
-  NAMES = %w[none argv0_path env_listing file_metadata tmp_path ephemeral_port wallclock duration panic_trace random_stream map_order interleave_order throughput_count pointer_address].freeze
-  STDOUT_NAMES = %w[argv0_path env_listing file_metadata tmp_path ephemeral_port duration random_stream map_order interleave_order throughput_count pointer_address].freeze
+  # VERSION 6 licenses only the pinned closing-channels program's proven
+  # partial order; exact event membership and both streams remain checked.
+  VERSION = 6
+  NAMES = %w[none argv0_path env_listing file_metadata tmp_path ephemeral_port wallclock duration panic_trace random_stream map_order interleave_order closing_channel_order throughput_count pointer_address].freeze
+  STDOUT_NAMES = %w[argv0_path env_listing file_metadata tmp_path ephemeral_port duration random_stream map_order interleave_order closing_channel_order throughput_count pointer_address].freeze
   STDERR_NAMES = %w[panic_trace].freeze
 
   module_function
@@ -125,6 +127,21 @@ module GoByExampleNormalizer
         keys = lines[4, 2]
         raise "map members" unless pairs.sort == ["a -> apple\n", "b -> banana\n"] && keys.sort == ["key: a\n", "key: b\n"]
         output = (lines[0, 2] + pairs.sort + keys.sort + lines[6, 2]).join
+      when "closing_channel_order"
+        # Each log follows its send/receive, not the other goroutine's log.
+        # Capacity 5 exceeds the three jobs: no additional buffer-full edge.
+        producer = ["sent job 1\n", "sent job 2\n", "sent job 3\n", "sent all jobs\n"]
+        consumer = ["received job 1\n", "received job 2\n", "received job 3\n", "received all jobs\n"]
+        final = "received more jobs: false\n"
+        expected = producer + consumer + [final]
+        lines = output.lines
+        raise "closing channel event membership" unless lines.sort == expected.sort
+        positions = lines.each_with_index.to_h
+        edges = producer.each_cons(2).to_a + consumer.each_cons(2).to_a +
+                [[producer[0], consumer[1]], [producer[1], consumer[2]],
+                 [producer[2], consumer[3]], [producer[3], final], [consumer[3], final]]
+        raise "closing channel causal order" unless edges.all? { |a, b| positions[a] < positions[b] }
+        output = expected.join
       when "interleave_order"
         lines = output.lines
         raise "interleave shape" if lines.empty?

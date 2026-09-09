@@ -31,7 +31,7 @@ behavior	clock	none	wallclock
 behavior	timeout	bounded_wait	duration
 behavior	random	none	random_stream
 behavior	map_iteration	none	map_order
-behavior	concurrency	bounded_wait	interleave_order,throughput_count
+behavior	concurrency	bounded_wait	closing_channel_order,interleave_order,throughput_count
 behavior	pointer_identity	none	pointer_address
 behavior	test_harness	go_test_runner	duration
 #
@@ -79,3 +79,4 @@ normalization	map_order	-	preserve deterministic prefix/suffix and sort only eac
 normalization	interleave_order	-	validate per-goroutine and per-job causal subsequences while licensing only cross-chain scheduling order
 normalization	throughput_count	-	compare a throughput counter as a positive integer of the declared label, not its value
 normalization	pointer_address	-	replace rendered pointer addresses with a stable token
+normalization	closing_channel_order	-	only pinned closing-channels SHA b2ddb4aa5bce6a532fc9bc29e67800e1a31f8da7fb7131f4ee8bde7eecfbe15c: exact nine events, producer/consumer chains and send/close/done causal edges; see closing-channels-order.md
