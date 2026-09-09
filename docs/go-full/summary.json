@@ -1,0 +1,97 @@
+{
+  "coverage_note": "Roots, packages, source inputs and generated obligations overlap; do not add them into a single test count. No platform or unsupported-product exclusions were applied.",
+  "denominators": {
+    "archive_regular_files": 15615,
+    "directory_member_references": 679,
+    "directory_package_groups": 607,
+    "directory_recipe_roots": 290,
+    "executed_roots": 0,
+    "generated_programs_observed": 0,
+    "generator_recipe_roots": 26,
+    "historical_action_none": 762,
+    "historical_go_source_files": 3398,
+    "historical_roles": {
+      "directory-input": 669,
+      "outside-testdir-scope": 3,
+      "test-root": 2726
+    },
+    "nested_generated_program_denominator": null,
+    "nested_process_candidate_roots": 26,
+    "program_directory_input_references": 3,
+    "roots_without_valid_action": 1,
+    "runner_action_vocabulary": 17,
+    "runtime_generated_test_cases": null,
+    "scoped_files": 4814,
+    "sidecar_expectations": 1232,
+    "sidecars_present": 99,
+    "test_package_roots": 26,
+    "testdir_actions": {
+      "asmcheck": 87,
+      "build": 33,
+      "builddir": 3,
+      "buildrun": 2,
+      "buildrundir": 4,
+      "compile": 529,
+      "compiledir": 125,
+      "errorcheck": 672,
+      "errorcheckandrundir": 5,
+      "errorcheckdir": 26,
+      "errorcheckoutput": 4,
+      "errorcheckwithauto": 5,
+      "run": 1072,
+      "rundir": 116,
+      "runindir": 11,
+      "runoutput": 22,
+      "skip": 9
+    },
+    "testdir_roots": 2726,
+    "typechecker_distinct_input_files": 378,
+    "typechecker_static_roots": 743
+  },
+  "evidence_kind": "static-inventory",
+  "execution_claim": false,
+  "expected_failure_sets": {
+    "types2Failures": [
+      "shift1.go",
+      "fixedbugs/issue10700.go",
+      "fixedbugs/issue18331.go",
+      "fixedbugs/issue18419.go",
+      "fixedbugs/issue20233.go",
+      "fixedbugs/issue20245.go",
+      "fixedbugs/issue31053.go"
+    ],
+    "types2Failures32Bit": [
+      "printbig.go",
+      "fixedbugs/bug114.go",
+      "fixedbugs/issue23305.go"
+    ]
+  },
+  "pin": {
+    "filename": "go1.27.0.src.tar.gz",
+    "historical_files": 3398,
+    "historical_sha256": "3a2c554f470f2ac1514e766c18c6ed993e12955988b285989acbff36f2353611",
+    "license": "BSD-3-Clause",
+    "release": "go1.27.0",
+    "semantics_path": "src/cmd/internal/testdir/testdir_test.go",
+    "semantics_sha256": "54900709a1fae5f469aa7bf59b22660f6fb9eb169e84f9c0d9760f0fe38444f4",
+    "sha256": "7002403d7cc44529ef6d26f69a44818263395ead7c16c05a5808ae047ebeb0e5",
+    "url": "https://go.dev/dl/go1.27.0.src.tar.gz"
+  },
+  "runner_directories": [
+    ".",
+    "ken",
+    "chan",
+    "interface",
+    "internal/runtime/sys",
+    "syntax",
+    "dwarf",
+    "fixedbugs",
+    "codegen",
+    "abi",
+    "typeparam",
+    "typeparam/mdempsky",
+    "arenas",
+    "simd"
+  ],
+  "schema_version": 1
+}

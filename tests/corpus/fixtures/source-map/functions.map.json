@@ -1,0 +1,67 @@
+{
+  "schema_version": "bashy-transpile-map-v1",
+  "origin": "tour/_content/tour/basics/functions.go",
+  "go_digest": "sha256:84d7007b38d684355a196de2c72b5976090030b320b9d64b19dfb024d93efe29",
+  "mappings": [
+    {
+      "go_line": 7,
+      "go_col": 1,
+      "source_line": 7,
+      "source_col": 1,
+      "source_offset": 45,
+      "node": "BashPPFuncDecl",
+      "source_file": "tour/_content/tour/basics/functions.go",
+      "source_file_offset": 45
+    },
+    {
+      "go_line": 9,
+      "go_col": 2,
+      "source_line": 8,
+      "source_col": 2,
+      "source_offset": 75,
+      "node": "BashPPReturn",
+      "source_file": "tour/_content/tour/basics/functions.go",
+      "source_file_offset": 75
+    },
+    {
+      "go_line": 13,
+      "go_col": 1,
+      "source_line": 11,
+      "source_col": 1,
+      "source_offset": 91,
+      "node": "BashPPFuncDecl",
+      "source_file": "tour/_content/tour/basics/functions.go",
+      "source_file_offset": 91
+    },
+    {
+      "go_line": 15,
+      "go_col": 2,
+      "source_line": 12,
+      "source_col": 2,
+      "source_offset": 106,
+      "node": "BashPPCall",
+      "source_file": "tour/_content/tour/basics/functions.go",
+      "source_file_offset": 106
+    },
+    {
+      "go_line": 19,
+      "go_col": 2,
+      "source_line": 5,
+      "source_col": 1,
+      "source_offset": 31,
+      "node": "BashPPCall",
+      "source_file": "tour/_content/tour/basics/functions.go",
+      "source_file_offset": 31
+    }
+  ],
+  "source_kind": "go",
+  "front_end": "gosource-v1",
+  "sources": [
+    {
+      "name": "tour/_content/tour/basics/functions.go",
+      "sha256": "fc3e2710007330e7a05845fc55b872a4af709b66a5afbdb57e2998ed3661260f",
+      "base": 0,
+      "size": 133
+    }
+  ]
+}

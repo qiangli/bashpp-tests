@@ -1,0 +1,17 @@
+{
+  "record_id": "tour/_content/tour/basics/functions.go",
+  "evidence": "diagnostic-candidate-001 first PASS record; retained validator data, not a new certification",
+  "source_sha256": "fc3e2710007330e7a05845fc55b872a4af709b66a5afbdb57e2998ed3661260f",
+  "generated_sha256": "84d7007b38d684355a196de2c72b5976090030b320b9d64b19dfb024d93efe29",
+  "map_sha256": "bb3caaf10c17ce869fa9630b0e6df8db4be3c4e157b880c46d4cf33e32d71868",
+  "candidate": {
+    "launcher_sha256": "454c25a8cfb70a45e2bcb4fe57f64e7726164ed1ec8b7e46f3c243f4b87930a4",
+    "payload_sha256": "1126896175a87b47eb8df23d15e839bbca5172b4ce99ea670c46e5d6419aee19",
+    "frontend_version": "gosource-v1",
+    "build_recipe": "GOTOOLCHAIN=go1.27.0 GOMAXPROCS=3 GOFLAGS=-p=3 make build BASHY_GOSOURCE=1"
+  },
+  "sdk": {
+    "identity": "go version go1.27.0 darwin/arm64",
+    "sha256": "a19a71df81715c12d9a7e81bab036c12696fec1ddbd4258b48a2131a9080b267"
+  }
+}

@@ -1,0 +1,47 @@
+package main
+
+import (
+	"crypto/sha256"
+	"encoding/json"
+	"fmt"
+	"mvdan.cc/sh/v3/gosource"
+	"mvdan.cc/sh/v3/lower"
+	"os"
+	"path/filepath"
+)
+
+func main() {
+	dir := os.Args[1]
+	sources := []gosource.Source{{Name: "empty-b.go", Data: []byte("package main\n")}, {Name: "empty-a.go", Data: []byte("package main\n")}}
+	p, err := gosource.Load(sources, gosource.Options{})
+	if err != nil {
+		panic(err)
+	}
+	r, err := lower.Compile(p.File, lower.Options{Origin: "empty-a.go"})
+	if err != nil {
+		panic(err)
+	}
+	if len(r.Mappings) != 0 {
+		panic("empty package unexpectedly has mappings")
+	}
+	for _, s := range sources {
+		if err := os.WriteFile(filepath.Join(dir, s.Name), s.Data, 0600); err != nil {
+			panic(err)
+		}
+	}
+	if err := os.WriteFile(filepath.Join(dir, "empty.generated.go.txt"), r.Source, 0600); err != nil {
+		panic(err)
+	}
+	metadata := []any{}
+	for _, s := range p.Sources {
+		metadata = append(metadata, map[string]any{"name": s.Name, "sha256": s.SHA256, "base": s.Base, "size": s.Size})
+	}
+	m := map[string]any{"schema_version": "bashy-transpile-map-v1", "origin": "empty-a.go", "go_digest": fmt.Sprintf("sha256:%x", sha256.Sum256(r.Source)), "source_kind": "go", "front_end": "gosource-v1", "sources": metadata, "mappings": []any{}}
+	data, err := json.MarshalIndent(m, "", "  ")
+	if err != nil {
+		panic(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "empty.map.json"), append(data, '\n'), 0600); err != nil {
+		panic(err)
+	}
+}

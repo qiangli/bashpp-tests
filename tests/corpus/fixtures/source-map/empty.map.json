@@ -1,0 +1,22 @@
+{
+  "front_end": "gosource-v1",
+  "go_digest": "sha256:2253662b4b1c0c324ee6e11487228b7669a5b24dbb8207c0c528870c1edcb5cc",
+  "mappings": [],
+  "origin": "empty-a.go",
+  "schema_version": "bashy-transpile-map-v1",
+  "source_kind": "go",
+  "sources": [
+    {
+      "base": 0,
+      "name": "empty-a.go",
+      "sha256": "df1d036cbbf3df46e2045071e082245ece204c7f53ecf0a4e022bff9bb228f47",
+      "size": 13
+    },
+    {
+      "base": 14,
+      "name": "empty-b.go",
+      "sha256": "df1d036cbbf3df46e2045071e082245ece204c7f53ecf0a4e022bff9bb228f47",
+      "size": 13
+    }
+  ]
+}

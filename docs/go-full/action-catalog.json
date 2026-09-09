@@ -1,0 +1,259 @@
+[
+  {
+    "action": "asmcheck",
+    "consumes_expected_output": false,
+    "directory_recipe": false,
+    "generates_tested_program": false,
+    "implemented_executor": false,
+    "phase_contract": [
+      "compile-assembly",
+      "match-assembly"
+    ],
+    "root_count": 87,
+    "semantics_path": "src/cmd/internal/testdir/testdir_test.go",
+    "semantics_sha256": "54900709a1fae5f469aa7bf59b22660f6fb9eb169e84f9c0d9760f0fe38444f4"
+  },
+  {
+    "action": "build",
+    "consumes_expected_output": false,
+    "directory_recipe": false,
+    "generates_tested_program": false,
+    "implemented_executor": false,
+    "phase_contract": [
+      "build"
+    ],
+    "root_count": 33,
+    "semantics_path": "src/cmd/internal/testdir/testdir_test.go",
+    "semantics_sha256": "54900709a1fae5f469aa7bf59b22660f6fb9eb169e84f9c0d9760f0fe38444f4"
+  },
+  {
+    "action": "builddir",
+    "consumes_expected_output": false,
+    "directory_recipe": true,
+    "generates_tested_program": false,
+    "implemented_executor": false,
+    "phase_contract": [
+      "assemble-symabis-if-present",
+      "compile",
+      "assemble-if-present",
+      "pack",
+      "link"
+    ],
+    "root_count": 3,
+    "semantics_path": "src/cmd/internal/testdir/testdir_test.go",
+    "semantics_sha256": "54900709a1fae5f469aa7bf59b22660f6fb9eb169e84f9c0d9760f0fe38444f4"
+  },
+  {
+    "action": "buildrun",
+    "consumes_expected_output": true,
+    "directory_recipe": false,
+    "generates_tested_program": false,
+    "implemented_executor": false,
+    "phase_contract": [
+      "build",
+      "run",
+      "match-output"
+    ],
+    "root_count": 2,
+    "semantics_path": "src/cmd/internal/testdir/testdir_test.go",
+    "semantics_sha256": "54900709a1fae5f469aa7bf59b22660f6fb9eb169e84f9c0d9760f0fe38444f4"
+  },
+  {
+    "action": "buildrundir",
+    "consumes_expected_output": true,
+    "directory_recipe": true,
+    "generates_tested_program": false,
+    "implemented_executor": false,
+    "phase_contract": [
+      "assemble-symabis-if-present",
+      "compile",
+      "assemble-if-present",
+      "pack",
+      "link",
+      "run",
+      "match-output"
+    ],
+    "root_count": 4,
+    "semantics_path": "src/cmd/internal/testdir/testdir_test.go",
+    "semantics_sha256": "54900709a1fae5f469aa7bf59b22660f6fb9eb169e84f9c0d9760f0fe38444f4"
+  },
+  {
+    "action": "compile",
+    "consumes_expected_output": false,
+    "directory_recipe": false,
+    "generates_tested_program": false,
+    "implemented_executor": false,
+    "phase_contract": [
+      "compile"
+    ],
+    "root_count": 529,
+    "semantics_path": "src/cmd/internal/testdir/testdir_test.go",
+    "semantics_sha256": "54900709a1fae5f469aa7bf59b22660f6fb9eb169e84f9c0d9760f0fe38444f4"
+  },
+  {
+    "action": "compiledir",
+    "consumes_expected_output": false,
+    "directory_recipe": true,
+    "generates_tested_program": false,
+    "implemented_executor": false,
+    "phase_contract": [
+      "compile-packages-in-order"
+    ],
+    "root_count": 125,
+    "semantics_path": "src/cmd/internal/testdir/testdir_test.go",
+    "semantics_sha256": "54900709a1fae5f469aa7bf59b22660f6fb9eb169e84f9c0d9760f0fe38444f4"
+  },
+  {
+    "action": "errorcheck",
+    "consumes_expected_output": false,
+    "directory_recipe": false,
+    "generates_tested_program": false,
+    "implemented_executor": false,
+    "phase_contract": [
+      "compile",
+      "match-diagnostics"
+    ],
+    "root_count": 672,
+    "semantics_path": "src/cmd/internal/testdir/testdir_test.go",
+    "semantics_sha256": "54900709a1fae5f469aa7bf59b22660f6fb9eb169e84f9c0d9760f0fe38444f4"
+  },
+  {
+    "action": "errorcheckandrundir",
+    "consumes_expected_output": true,
+    "directory_recipe": true,
+    "generates_tested_program": false,
+    "implemented_executor": false,
+    "phase_contract": [
+      "compile-packages-in-order",
+      "match-diagnostics",
+      "compile-packages-in-order",
+      "link",
+      "run",
+      "match-output"
+    ],
+    "root_count": 5,
+    "semantics_path": "src/cmd/internal/testdir/testdir_test.go",
+    "semantics_sha256": "54900709a1fae5f469aa7bf59b22660f6fb9eb169e84f9c0d9760f0fe38444f4"
+  },
+  {
+    "action": "errorcheckdir",
+    "consumes_expected_output": false,
+    "directory_recipe": true,
+    "generates_tested_program": false,
+    "implemented_executor": false,
+    "phase_contract": [
+      "compile-packages-in-order",
+      "match-diagnostics"
+    ],
+    "root_count": 26,
+    "semantics_path": "src/cmd/internal/testdir/testdir_test.go",
+    "semantics_sha256": "54900709a1fae5f469aa7bf59b22660f6fb9eb169e84f9c0d9760f0fe38444f4"
+  },
+  {
+    "action": "errorcheckoutput",
+    "consumes_expected_output": false,
+    "directory_recipe": false,
+    "generates_tested_program": true,
+    "implemented_executor": false,
+    "phase_contract": [
+      "run-generator",
+      "capture-generated-source",
+      "compile-generated-source",
+      "match-generated-diagnostics"
+    ],
+    "root_count": 4,
+    "semantics_path": "src/cmd/internal/testdir/testdir_test.go",
+    "semantics_sha256": "54900709a1fae5f469aa7bf59b22660f6fb9eb169e84f9c0d9760f0fe38444f4"
+  },
+  {
+    "action": "errorcheckwithauto",
+    "consumes_expected_output": false,
+    "directory_recipe": false,
+    "generates_tested_program": false,
+    "implemented_executor": false,
+    "phase_contract": [
+      "compile",
+      "match-diagnostics-including-autogenerated"
+    ],
+    "root_count": 5,
+    "semantics_path": "src/cmd/internal/testdir/testdir_test.go",
+    "semantics_sha256": "54900709a1fae5f469aa7bf59b22660f6fb9eb169e84f9c0d9760f0fe38444f4"
+  },
+  {
+    "action": "run",
+    "consumes_expected_output": true,
+    "directory_recipe": false,
+    "generates_tested_program": false,
+    "implemented_executor": false,
+    "phase_contract": [
+      "compile-or-build",
+      "link-if-needed",
+      "run",
+      "match-output"
+    ],
+    "root_count": 1072,
+    "semantics_path": "src/cmd/internal/testdir/testdir_test.go",
+    "semantics_sha256": "54900709a1fae5f469aa7bf59b22660f6fb9eb169e84f9c0d9760f0fe38444f4"
+  },
+  {
+    "action": "rundir",
+    "consumes_expected_output": true,
+    "directory_recipe": true,
+    "generates_tested_program": false,
+    "implemented_executor": false,
+    "phase_contract": [
+      "compile-packages-in-order",
+      "link",
+      "run",
+      "match-output"
+    ],
+    "root_count": 116,
+    "semantics_path": "src/cmd/internal/testdir/testdir_test.go",
+    "semantics_sha256": "54900709a1fae5f469aa7bf59b22660f6fb9eb169e84f9c0d9760f0fe38444f4"
+  },
+  {
+    "action": "runindir",
+    "consumes_expected_output": true,
+    "directory_recipe": true,
+    "generates_tested_program": false,
+    "implemented_executor": false,
+    "phase_contract": [
+      "overlay-directory",
+      "generate-module",
+      "build-and-run-package",
+      "match-output"
+    ],
+    "root_count": 11,
+    "semantics_path": "src/cmd/internal/testdir/testdir_test.go",
+    "semantics_sha256": "54900709a1fae5f469aa7bf59b22660f6fb9eb169e84f9c0d9760f0fe38444f4"
+  },
+  {
+    "action": "runoutput",
+    "consumes_expected_output": true,
+    "directory_recipe": false,
+    "generates_tested_program": true,
+    "implemented_executor": false,
+    "phase_contract": [
+      "run-generator",
+      "capture-generated-source",
+      "build-and-run-generated-source",
+      "match-output"
+    ],
+    "root_count": 22,
+    "semantics_path": "src/cmd/internal/testdir/testdir_test.go",
+    "semantics_sha256": "54900709a1fae5f469aa7bf59b22660f6fb9eb169e84f9c0d9760f0fe38444f4"
+  },
+  {
+    "action": "skip",
+    "consumes_expected_output": false,
+    "directory_recipe": false,
+    "generates_tested_program": false,
+    "implemented_executor": false,
+    "phase_contract": [
+      "upstream-explicit-skip"
+    ],
+    "root_count": 9,
+    "semantics_path": "src/cmd/internal/testdir/testdir_test.go",
+    "semantics_sha256": "54900709a1fae5f469aa7bf59b22660f6fb9eb169e84f9c0d9760f0fe38444f4"
+  }
+]
