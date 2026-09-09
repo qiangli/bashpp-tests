@@ -304,23 +304,120 @@ module Corpus
   # own testdir harness does: `go list -export` publishes the standard library
   # archives once and the resulting packagefile map is handed to the compiler.
   # Nothing here executes an original program body.
-  IMPORTCFG_SCHEMA = 'corpus-importcfg/v1'
+  IMPORTCFG_SCHEMA = 'corpus-importcfg/v2'
   IMPORTCFG_TEMPLATE = '{{if .Export}}packagefile {{.ImportPath}}={{.Export}}{{end}}'
   IMPORTCFG_RECIPE = %w[list -export -f].freeze
   IMPORTCFG_NAME = 'importcfg-std'
   IMPORTCFG_RECEIPT = 'importcfg-std.receipt.json'
+  IMPORTCFG_HOME = 'importcfg-home'
+  IMPORTCFG_TMP = 'importcfg-tmp'
+  IMPORTCFG_LOGS = 'importcfg-logs'
+  IMPORTCFG_LOG = 'list-export'
+
+  # The retained preparation stdout is the only source of package rows:
+  # preparation derives its package set from it and writes the configuration
+  # from that same set. Parsing lives here so authentication re-derives the rows
+  # exactly the way preparation did.
+  def importcfg_rows(bytes)
+    bytes.to_s.lines.map(&:chomp).reject(&:empty?).map do |line|
+      name, separator, archive = line.delete_prefix('packagefile ').partition('=')
+      raise ContractError, "malformed importcfg row: #{line}" unless line.start_with?('packagefile ') && !name.empty? && !separator.empty? && !archive.empty?
+      [name, File.expand_path(archive)]
+    end
+  end
+
+  def importcfg_row(name, archive)
+    "packagefile #{name}=#{archive}"
+  end
+
+  # The pinned toolchain lives at <GOROOT>/bin/go, so the SDK root is derived
+  # from the binary whose digest provenance already authenticates rather than
+  # from anything the receipt claims about itself.
+  def sdk_root(tool_path)
+    File.dirname(File.dirname(tool_path))
+  end
+
+  def sdk_platform(identity)
+    fields = identity.to_s.split(' ')
+    unless fields.length == 4 && fields[0, 2] == %w[go version] && fields[3].match?(%r{\A[^/\s]+/[^/\s]+\z})
+      raise ContractError, "unusable SDK identity: #{identity.inspect}"
+    end
+    fields[3].split('/')
+  end
+
+  def same_path?(one, other)
+    return false unless one.is_a?(String) && other.is_a?(String)
+    return true if File.expand_path(one) == File.expand_path(other)
+    File.realpath(one) == File.realpath(other)
+  rescue SystemCallError
+    false
+  end
+
+  # The preparation environment is a pure function of the known context, so the
+  # captured environment must equal this map key for key. GOENV/GOWORK are
+  # disabled the way the upstream testdir harness does it, GOOS/GOARCH are bound
+  # to the SDK identity and HOME/TMPDIR/GOCACHE to the cache that holds the
+  # configuration; the executor's own GOFLAGS survive, since they carry the
+  # authenticated readonly/parallelism contract.
+  def importcfg_environment(context)
+    cache = context.fetch('cache')
+    context.fetch('environment').merge(
+      'GOROOT' => context.fetch('goroot'), 'GOOS' => context.fetch('goos'), 'GOARCH' => context.fetch('goarch'),
+      'GOENV' => 'off', 'GOWORK' => 'off', 'GOCACHE' => cache,
+      'HOME' => File.join(cache, IMPORTCFG_HOME), 'TMPDIR' => File.join(cache, IMPORTCFG_TMP)
+    ).sort.to_h
+  end
+
+  # The known context is what the preparation environment is judged against, and
+  # it is itself anchored outside the receipt: the SDK root is derived from the
+  # authenticated toolchain binary's own path, the platform from the SDK
+  # identity, and the cache from the directory the configuration actually lives
+  # in. A caller already holding a validated context -- the executor about to
+  # compile, or a manager replaying with provenance in hand -- supplies it, and
+  # every supplied key must match exactly.
+  def authenticate_import_context!(receipt, tool_path, supplied)
+    context = receipt['context']
+    raise ContractError, 'import configuration retains no known context' unless context.is_a?(Hash)
+    (supplied || {}).each do |key, value|
+      next if value.nil?
+      raise ContractError, "import configuration #{key} differs from the validated context: #{context[key].inspect}" unless context[key] == value
+    end
+    root = sdk_root(tool_path)
+    raise ContractError, "import configuration GOROOT is not the pinned SDK root: #{context.fetch('goroot').inspect}" unless same_path?(context.fetch('goroot'), root)
+    goos, goarch = sdk_platform(context.fetch('identity'))
+    unless [context.fetch('goos'), context.fetch('goarch')] == [goos, goarch]
+      raise ContractError, "import configuration platform differs from the SDK identity: #{context.fetch('goos')}/#{context.fetch('goarch')}"
+    end
+    unless same_path?(context.fetch('cache'), File.dirname(receipt.fetch('path')))
+      raise ContractError, "import configuration cache differs from the directory holding it: #{context.fetch('cache').inspect}"
+    end
+    environment = context.fetch('environment')
+    raise ContractError, 'import configuration retains no build environment' unless environment.is_a?(Hash)
+    { 'GOTOOLCHAIN' => 'local', 'GOPROXY' => 'off', 'GOSUMDB' => 'off' }.each do |key, value|
+      raise ContractError, "import configuration build environment #{key} is not #{value.inspect}: #{environment[key].inspect}" unless environment[key] == value
+    end
+    unless environment['GOROOT'].nil? || same_path?(environment['GOROOT'], root)
+      raise ContractError, "import configuration build environment GOROOT is not the pinned SDK root: #{environment['GOROOT'].inspect}"
+    end
+    context
+  end
 
   # An import configuration is usable only when it still authenticates end to
   # end. A shared cache that merely holds a file named importcfg-std proves
   # nothing: the rows name archive paths, and both the archives and the file
   # itself outlive the process that wrote them. Reuse therefore re-checks that
   # the configuration was prepared by this executor's authenticated SDK binary
-  # with the exact upstream recipe, that the preparation was a bounded captured
-  # process with a complete receipt, that the configuration bytes are unchanged,
-  # that its rows still match the retained package set, and that every
-  # packagefile archive still holds the exact bytes hashed at preparation time.
-  # Every failure is named; nothing is silently re-prepared or skipped.
-  def authenticate_import_configuration!(receipt, tool:)
+  # with the exact upstream recipe, in the exact known toolchain environment
+  # anchored to that binary and to the SDK identity, that the preparation was a
+  # bounded captured process with a complete receipt, that the configuration
+  # bytes are unchanged, that the retained package set is exactly what the
+  # retained preparation output published, that its rows still match that set,
+  # and that every packagefile archive still holds the exact bytes hashed at
+  # preparation time. Every failure is named; nothing is silently re-prepared or
+  # skipped. This is the single shared contract: the executor calls it before
+  # every compile that uses a configuration, and validation and resume call it
+  # on every retained compile stage.
+  def authenticate_import_configuration!(receipt, tool:, context: nil)
     raise ContractError, 'missing import configuration receipt' unless receipt.is_a?(Hash)
     raise ContractError, "unknown import configuration schema: #{receipt['schema'].inspect}" unless receipt['schema'] == IMPORTCFG_SCHEMA
 
@@ -335,8 +432,25 @@ module Corpus
     raise ContractError, 'import configuration preparation was not bounded' unless stage['timeout_seconds'].is_a?(Numeric) && stage['timeout_seconds'].positive?
     raise ContractError, "import configuration preparation did not complete: #{stage['state']}" unless success?(stage)
     raise ContractError, 'import configuration preparation leaked a descendant' unless stage['descendants_survived'] == false
+    known = authenticate_import_context!(receipt, prepared_tool.fetch('path'), context)
+    raise ContractError, 'import configuration preparation escaped the local toolchain' unless stage.fetch('environment')['GOTOOLCHAIN'] == 'local'
+    # Checking one variable would let a receipt prepared against another SDK
+    # root, another platform, an inherited go env file or a foreign cache
+    # certify. The whole environment is the contract, so the whole environment
+    # is compared and the offending variables are named.
+    expected_environment = importcfg_environment(known)
+    actual_environment = stage.fetch('environment')
+    unless actual_environment == expected_environment
+      differing = (expected_environment.keys | actual_environment.keys).reject { |key| expected_environment[key] == actual_environment[key] }
+      raise ContractError, "import configuration preparation environment differs: #{differing.sort.join(', ')}"
+    end
+    unless stage.fetch('cwd') == File.join(known.fetch('cache'), IMPORTCFG_HOME)
+      raise ContractError, "import configuration preparation ran outside its cache: #{stage.fetch('cwd')}"
+    end
     %w[stdout stderr].each do |stream|
       observation = stage.fetch(stream)
+      expected_path = File.join(known.fetch('cache'), IMPORTCFG_LOGS, IMPORTCFG_LOG) + '.' + stream
+      raise ContractError, "import configuration preparation #{stream} is not the retained capture: #{observation.fetch('path')}" unless observation.fetch('path') == expected_path
       actual = file_record(observation.fetch('path'))
       raise ContractError, "import configuration preparation #{stream} changed" unless %w[sha256 bytes].all? { |key| observation[key] == actual[key] }
     end
@@ -345,7 +459,6 @@ module Corpus
            argv[4] == IMPORTCFG_TEMPLATE && argv[5] == 'std'
       raise ContractError, "import configuration used a different recipe: #{argv.inspect}"
     end
-    raise ContractError, 'import configuration preparation escaped the local toolchain' unless stage.fetch('environment')['GOTOOLCHAIN'] == 'local'
 
     actual = file_record(receipt.fetch('path'))
     raise ContractError, "import configuration changed since preparation: #{receipt.fetch('path')}" unless %w[sha256 bytes].all? { |key| receipt[key] == actual[key] }
@@ -355,7 +468,19 @@ module Corpus
     names = packages.map { |package| package.fetch('name') }
     raise ContractError, 'import configuration repeats a package' unless names.uniq == names
     raise ContractError, 'import configuration package set changed' unless Digest::SHA256.hexdigest(canonical(packages)) == receipt.fetch('packages_sha256')
-    rows = packages.map { |package| "packagefile #{package.fetch('name')}=#{package.fetch('archive').fetch('path')}" }
+    # The retained stream hash only proves the log still holds the bytes the
+    # receipt claims; it says nothing about whether those bytes are the ones the
+    # package set was built from. A rewritten stdout carrying a self-consistent
+    # hash is caught here, by re-deriving the rows and joining them to the
+    # sealed package set and to the configuration the compiler is handed.
+    published = importcfg_rows(File.binread(stage.fetch('stdout').fetch('path')))
+    raise ContractError, 'import configuration preparation published no packages' if published.empty?
+    retained = packages.map { |package| [package.fetch('name'), package.fetch('archive').fetch('path')] }
+    unless published == retained
+      offending = (published.map(&:first) | retained.map(&:first)).reject { |name| published.assoc(name) == retained.assoc(name) }
+      raise ContractError, "retained packages differ from the preparation output: #{offending.sort.first(3).join(', ')}"
+    end
+    rows = retained.map { |name, archive| importcfg_row(name, archive) }
     raise ContractError, 'import configuration rows differ from the retained package set' unless File.binread(receipt.fetch('path')).split("\n", -1)[0..-2] == rows
 
     packages.each do |package|
@@ -438,19 +563,43 @@ module Corpus
     # toolchain, so it is bounded and captured like every other stage and it
     # leaves the same process receipt. Reuse never trusts a file that merely
     # exists in the cache: the retained receipt is re-authenticated against the
-    # SDK binary, the recipe, the configuration bytes and every archive it
-    # names. A configuration with no receipt is exactly the unauthenticated
-    # reuse this contract exists to refuse, so it fails closed by name.
+    # SDK binary, the recipe, the known toolchain environment, the configuration
+    # bytes and every archive it names. A configuration with no receipt is
+    # exactly the unauthenticated reuse this contract exists to refuse, so it
+    # fails closed by name.
+    #
+    # Nothing is memoised. Authenticating once and then reusing the answer would
+    # certify the state of the archives at first use, not at the use that
+    # actually matters: an archive replaced between two compiles would be
+    # compiled against unnoticed. Every call re-reads the retained receipt from
+    # the cache and re-authenticates it, and callers ask immediately before the
+    # compile they are about to spawn.
     def import_configuration
-      @import_configuration ||= begin
-        path = File.join(@cache, IMPORTCFG_NAME)
-        receipt_path = File.join(@cache, IMPORTCFG_RECEIPT)
-        unless File.exist?(receipt_path)
-          raise ContractError, "stdlib importcfg present without a preparation receipt: #{path}" if File.exist?(path)
-          prepare_import_configuration(path, receipt_path)
-        end
-        Corpus.authenticate_import_configuration!(load_import_receipt(receipt_path), tool: @provenance.dig('sdk', 'binary'))
+      path = File.join(@cache, IMPORTCFG_NAME)
+      receipt_path = File.join(@cache, IMPORTCFG_RECEIPT)
+      unless File.exist?(receipt_path)
+        raise ContractError, "stdlib importcfg present without a preparation receipt: #{path}" if File.exist?(path)
+        prepare_import_configuration(path, receipt_path)
       end
+      Corpus.authenticate_import_configuration!(load_import_receipt(receipt_path), tool: @provenance.dig('sdk', 'binary'),
+                                                context: import_context(@provenance.fetch('sdk').fetch('binary').fetch('path')))
+    end
+
+    # The exact context the preparation is allowed to have run in, derived from
+    # this executor rather than read back out of the receipt: the SDK root comes
+    # from the authenticated toolchain binary's own path, the platform from the
+    # SDK identity this executor verified at construction, and the cache from
+    # the directory this executor owns. A declared GOROOT that disagrees with
+    # the pinned SDK is refused rather than quietly overridden.
+    def import_context(tool_path)
+      identity = @provenance.fetch('sdk').fetch('identity')
+      goos, goarch = Corpus.sdk_platform(identity)
+      root = Corpus.sdk_root(tool_path)
+      unless @env['GOROOT'].nil? || Corpus.same_path?(@env['GOROOT'], root)
+        raise ContractError, "GOROOT is not the pinned SDK root: #{@env['GOROOT'].inspect}"
+      end
+      { 'identity' => identity, 'goroot' => root, 'goos' => goos, 'goarch' => goarch,
+        'cache' => @cache, 'environment' => @env.sort.to_h }
     end
 
     def load_import_receipt(receipt_path)
@@ -466,31 +615,31 @@ module Corpus
     # hashed here so a later substitution cannot pass as the prepared one.
     def prepare_import_configuration(path, receipt_path)
       tool = Corpus.authenticate_file(@go, @provenance.fetch('sdk').fetch('binary').fetch('sha256'))
-      home, tmp, logs = %w[importcfg-home importcfg-tmp importcfg-logs].map { |name| File.join(@cache, name) }
-      [home, tmp, logs].each { |dir| FileUtils.mkdir_p(dir) }
-      # GOENV is disabled the way upstream does it, but the executor's own GOFLAGS
-      # are kept: they carry the authenticated readonly/parallelism contract.
-      env = @env.merge('GOENV' => 'off', 'GOCACHE' => @cache, 'HOME' => home, 'TMPDIR' => tmp)
+      context = import_context(tool.fetch('path'))
+      # The preparation environment is the known context's environment, exactly:
+      # the same map authentication recomputes, so a reviewer never has to trust
+      # a variable the receipt merely reports.
+      env = Corpus.importcfg_environment(context)
+      logs = File.join(@cache, IMPORTCFG_LOGS)
+      [env.fetch('HOME'), env.fetch('TMPDIR'), logs].each { |dir| FileUtils.mkdir_p(dir) }
       stage = Corpus.capture([tool.fetch('path'), *IMPORTCFG_RECIPE, IMPORTCFG_TEMPLATE, 'std'],
-                             cwd: home, log_prefix: File.join(logs, 'list-export'), env: env, timeout: @importcfg_timeout)
+                             cwd: env.fetch('HOME'), log_prefix: File.join(logs, IMPORTCFG_LOG), env: env, timeout: @importcfg_timeout)
       stage['stage'] = 'prepare-importcfg'
       unless Corpus.success?(stage)
         detail = File.binread(stage.fetch('stderr').fetch('path')).to_s.strip.lines.last.to_s.strip
         raise ContractError, "stdlib importcfg unavailable (#{stage['state']}): #{detail}"
       end
-      rows = File.binread(stage.fetch('stdout').fetch('path')).lines.map(&:chomp).reject(&:empty?)
-      raise ContractError, 'stdlib importcfg is empty' if rows.empty?
-      packages = rows.map do |line|
-        name, separator, archive = line.delete_prefix('packagefile ').partition('=')
-        raise ContractError, "malformed importcfg row: #{line}" unless line.start_with?('packagefile ') && !name.empty? && !separator.empty? && !archive.empty?
+      published = Corpus.importcfg_rows(File.binread(stage.fetch('stdout').fetch('path')))
+      raise ContractError, 'stdlib importcfg is empty' if published.empty?
+      packages = published.map do |name, archive|
         raise ContractError, "importcfg archive missing: #{archive}" unless File.file?(archive) && !File.symlink?(archive)
         { 'name' => name, 'archive' => Corpus.file_record(archive) }
       end
       names = packages.map { |package| package.fetch('name') }
       raise ContractError, 'stdlib importcfg repeats a package' unless names.uniq == names
-      publish(path, packages.map { |package| "packagefile #{package.fetch('name')}=#{package.fetch('archive').fetch('path')}" }.join("\n") + "\n")
+      publish(path, packages.map { |package| Corpus.importcfg_row(package.fetch('name'), package.fetch('archive').fetch('path')) }.join("\n") + "\n")
       receipt = Corpus.file_record(path).merge(
-        'schema' => IMPORTCFG_SCHEMA, 'tool' => tool, 'preparation' => stage, 'packages' => packages,
+        'schema' => IMPORTCFG_SCHEMA, 'tool' => tool, 'context' => context, 'preparation' => stage, 'packages' => packages,
         'packages_sha256' => Digest::SHA256.hexdigest(Corpus.canonical(packages))
       )
       publish(receipt_path, Corpus.canonical(receipt) + "\n")
@@ -540,11 +689,24 @@ module Corpus
       raise ContractError, 'runtime GOTOOLCHAIN must remain local' unless run_env['GOTOOLCHAIN'] == 'local'
       runtime_before = Corpus.snapshot(runtime)
       generated, map, binary, object = %w[generated.go generated.go.map program object.o].map { |s| File.join(artifacts, s) }
+      result = { 'mode' => mode, 'phase' => phase, 'stages' => [], 'artifacts' => {}, 'state' => 'complete', 'source_directory' => work, 'runtime_directory' => runtime, 'input_checks' => [] }
       # `compile` is a compile-only obligation: the upstream testdir harness runs
       # `go tool compile -e -p=p -importcfg=<stdlib>` and never links. An ordinary
       # `go build` would reject a valid `package main` that declares no main, so it
       # can never stand in as the compile oracle.
-      compile_argv = lambda { |source| [@go, 'tool', 'compile', '-e', '-p=p', '-importcfg=' + import_configuration.fetch('path'), '-o', object, source] }
+      #
+      # The argv is deferred: the import configuration is authenticated where it
+      # is resolved, immediately before this compile is spawned, and the receipt
+      # retained beside the stage is that same authentication. Resolving it when
+      # the command list was built would certify a configuration as it stood
+      # before an earlier stage in this very mode had run.
+      compile_argv = lambda do |source|
+        lambda do
+          configuration = import_configuration
+          result['import_configuration'] = configuration
+          [@go, 'tool', 'compile', '-e', '-p=p', '-importcfg=' + configuration.fetch('path'), '-o', object, source]
+        end
+      end
       producer = lambda { |source| phase == 'compile' ? ['compile', compile_argv.call(source)] : ['build', [@go, 'build', '-o', binary, source]] }
       commands = case mode
                  when 'baseline' then [producer.call(input)]
@@ -552,14 +714,13 @@ module Corpus
                  when 'compiled' then [['transpile', [@bashy, 'transpile', '--bashpp', '--source=go', input, '-o', generated, '--map', map]],
                                        producer.call(generated)]
                  end
-      result = { 'mode' => mode, 'phase' => phase, 'stages' => [], 'artifacts' => {}, 'state' => 'complete', 'source_directory' => work, 'runtime_directory' => runtime, 'input_checks' => [] }
-      result['import_configuration'] = import_configuration if phase == 'compile' && mode != 'interpreted'
       commands.each do |stage_name, argv|
         intact = verify_inputs(work, inputs, module_files) && verify_assets(runtime, assets, inputs)
         result['input_checks'] << { 'phase' => 'before-' + stage_name, 'valid' => intact }
         unless intact
           result['state'] = 'input_mutation'; break
         end
+        argv = argv.call if argv.is_a?(Proc)
         stage = Corpus.capture(argv, cwd: stage_name == 'run' ? runtime : work, log_prefix: File.join(dir, stage_name), env: stage_name == 'run' ? run_env : environment, timeout: @timeout)
         stage['stage'] = stage_name
         result['stages'] << stage

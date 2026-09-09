@@ -103,10 +103,14 @@ module Corpus
           raise ContractError, 'import configuration retained outside a compile obligation' if result.key?('import_configuration') && !publishes_archives
           if publishes_archives
             # The retained import configuration must still authenticate: same SDK,
-            # same bounded captured recipe, same bytes, same archive contents. A
-            # digest over the config file alone would let a substituted cache or a
-            # changed stdlib archive certify.
-            Corpus.authenticate_import_configuration!(result.fetch('import_configuration'), tool: provenance.dig('sdk', 'binary'))
+            # same bounded captured recipe, same known toolchain environment,
+            # same bytes, same archive contents. A digest over the config file
+            # alone would let a substituted cache or a changed stdlib archive
+            # certify. The context is anchored to this run's own provenance, so a
+            # receipt prepared for another SDK identity or in another cache is
+            # refused rather than merely self-consistent.
+            Corpus.authenticate_import_configuration!(result.fetch('import_configuration'), tool: provenance.dig('sdk', 'binary'),
+                                                      context: { 'identity' => provenance.dig('sdk', 'identity'), 'cache' => provenance.dig('cache', 'path') })
             # Compile-only evidence is an object archive; a linked program would
             # mean the obligation was replaced by a stricter, different recipe.
             object = result.fetch('artifacts').fetch('object')

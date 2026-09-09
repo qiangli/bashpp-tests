@@ -133,6 +133,15 @@ not alter original programs, compiler recipe arguments, phase obligations,
 verdict rules or native delegation policy. No per-root cold GOCACHE is created by
 the full-run configuration.
 
+A retained `compile` stage additionally re-authenticates its import
+configuration, whether that stage succeeded or is the last stage of a justified
+failing prefix: a prefix that cannot say what it compiled against proves
+nothing. Resume anchors the check to the checkpoint's own provenance — the SDK
+binary, the SDK identity and the shared cache path — so a receipt prepared by
+another toolchain, for another platform, or in another cache is refused by name
+rather than merely being self-consistent. Old receipts are not upgraded: a
+configuration retained without a known context is refused.
+
 Checkpoint context now binds the authenticated module proof and exact module
 and environment values. Resume checks those same settings in retained simple
 executions and probes, including scaffold bytes and the original shared cache

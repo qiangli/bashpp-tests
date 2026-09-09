@@ -125,16 +125,86 @@ class CompileAdapterFrozenReplayTest < Minitest::Test
   end
 
   # Every compile mode must name an import configuration that still
-  # authenticates: prepared by this run's SDK with the exact bounded, captured
-  # `go list -export ... std` recipe, and every packagefile archive unchanged.
+  # authenticates: prepared by this run's SDK, in this run's exact known
+  # toolchain environment, with the exact bounded captured `go list -export ...
+  # std` recipe, and every packagefile archive unchanged. The context is the
+  # provenance-anchored one a manager would supply, not whatever the receipt
+  # says about itself.
   def assert_authenticated_import_configuration(result, provenance, label)
     configuration = result.fetch('import_configuration')
-    assert Corpus.authenticate_import_configuration!(configuration, tool: provenance.dig('sdk', 'binary')), label
+    anchor = { 'identity' => provenance.dig('sdk', 'identity'), 'cache' => provenance.dig('cache', 'path') }
+    assert Corpus.authenticate_import_configuration!(configuration, tool: provenance.dig('sdk', 'binary'), context: anchor), label
     preparation = configuration.fetch('preparation')
     assert_equal 'exited', preparation.fetch('state'), label
     assert_equal false, preparation.fetch('descendants_survived'), label
     assert preparation.fetch('timeout_seconds').positive?, label
     assert configuration.fetch('packages').any? { |package| package.fetch('name') == 'fmt' }, label
+
+    # The real preparation ran against the pinned SDK root on the identity's own
+    # platform, with GOENV/GOWORK disabled and the cache bound, not merely with a
+    # local toolchain.
+    context = configuration.fetch('context')
+    assert_equal @sdk_identity.fetch('root'), context.fetch('goroot'), label
+    assert_equal [@sdk_identity.fetch('goos'), @sdk_identity.fetch('goarch')], context.values_at('goos', 'goarch'), label
+    assert_equal Corpus.importcfg_environment(context), preparation.fetch('environment'), label
+    assert_equal %w[off off], preparation.fetch('environment').values_at('GOENV', 'GOWORK'), label
+    assert_equal @sdk_identity.fetch('root'), preparation.fetch('environment').fetch('GOROOT'), label
+    assert_equal provenance.dig('cache', 'path'), preparation.fetch('environment').fetch('GOCACHE'), label
+
+    # The rows the compiler was handed are exactly the rows the retained
+    # preparation output published: a real end-to-end join, not two digests that
+    # merely agree with themselves.
+    published = Corpus.importcfg_rows(File.binread(preparation.fetch('stdout').fetch('path')))
+    retained = configuration.fetch('packages').map { |package| [package.fetch('name'), package.fetch('archive').fetch('path')] }
+    assert_equal published, retained, label
+    assert_equal published.map { |name, archive| Corpus.importcfg_row(name, archive) },
+                 File.binread(configuration.fetch('path')).lines.map(&:chomp), label
+  end
+
+  # A real receipt whose preparation environment is moved off the pinned SDK, or
+  # whose retained output no longer matches the package set the compiler was
+  # handed, must fail closed by name. These forgeries are made on copies of real
+  # evidence; nothing in the shared cache is touched.
+  def assert_named_tamper_refusals(record, provenance)
+    anchor = { 'identity' => provenance.dig('sdk', 'identity'), 'cache' => provenance.dig('cache', 'path') }
+    refuse = lambda do |mutate|
+      configuration = JSON.parse(Corpus.canonical(record.dig('modes', 'baseline', 'import_configuration')))
+      mutate.call(configuration)
+      assert_raises(Corpus::ContractError) do
+        Corpus.authenticate_import_configuration!(configuration, tool: provenance.dig('sdk', 'binary'), context: anchor)
+      end.message
+    end
+
+    assert_match(/preparation environment differs: GOROOT/,
+                 refuse.call(->(c) { c['preparation']['environment']['GOROOT'] = File.join(@tmp, 'another-sdk') }))
+    assert_match(/preparation environment differs: GOENV/,
+                 refuse.call(->(c) { c['preparation']['environment']['GOENV'] = File.join(@tmp, 'go/env') }))
+    assert_match(/GOROOT is not the pinned SDK root/, refuse.call(lambda do |c|
+      c['context']['goroot'] = File.join(@tmp, 'another-sdk')
+      c['preparation']['environment'] = Corpus.importcfg_environment(c['context'])
+    end))
+    assert_match(/platform differs from the SDK identity/, refuse.call(lambda do |c|
+      c['context']['goarch'] = 'otherarch'
+      c['preparation']['environment'] = Corpus.importcfg_environment(c['context'])
+    end))
+
+    # The package set must still be the one the retained preparation output
+    # published. Re-sealing the forgery only moves the failure to the join, and
+    # the offending package is named. The retained stream itself is left exactly
+    # where the real preparation wrote it, so nothing in the shared cache is
+    # touched to prove this.
+    assert_match(/retained packages differ from the preparation output/, refuse.call(lambda do |c|
+      c['packages'].first['name'] = 'smuggled/pkg'
+      c['packages_sha256'] = Digest::SHA256.hexdigest(Corpus.canonical(c['packages']))
+    end))
+
+    # And a preparation stream relocated away from the capture the receipt owns
+    # is refused before its bytes are even weighed.
+    assert_match(/preparation stdout is not the retained capture/, refuse.call(lambda do |c|
+      forged = File.join(@tmp, 'forged-list-export.stdout')
+      FileUtils.cp(c['preparation']['stdout']['path'], forged)
+      c['preparation']['stdout'] = Corpus.file_record(forged)
+    end))
   end
 
   def test_frozen_candidate_compiles_every_plain_upstream_compile_shape
@@ -167,6 +237,7 @@ class CompileAdapterFrozenReplayTest < Minitest::Test
       record
     end
 
+    assert_named_tamper_refusals(records.first, instance.provenance)
     expected = records.to_h { |record| [record.fetch('id'), obligation(record)] }
     assert Corpus::Validation.validate!(records, expected: expected, provenance: instance.provenance)
     records.each { |record| assert File.file?(File.join(@receipts, 'plain-compile-shapes', record.fetch('id'), 'result.json')) }

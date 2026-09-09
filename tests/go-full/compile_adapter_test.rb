@@ -114,13 +114,14 @@ class CompileAdapterContractTest < Minitest::Test
 
   # A fake `bashy` that answers `--check` and emits a marker-free generated file
   # with the exact source map the executor requires.
-  def fake_bashy(check_exit: 0)
+  def fake_bashy(check_exit: 0, tamper_archive: nil)
     tool('bashy', <<~SCRIPT)
       require 'json'
       require 'digest'
       if ARGV.include?('--check')
         exit #{check_exit}
       elsif ARGV.first == 'transpile'
+        #{tamper_archive ? "File.binwrite(#{tamper_archive.inspect}, 'swapped between transpile and compile')" : ''}
         source = ARGV[ARGV.index('--source=go') + 1]
         generated = ARGV[ARGV.index('-o') + 1]
         map = ARGV[ARGV.index('--map') + 1]
@@ -138,19 +139,36 @@ class CompileAdapterContractTest < Minitest::Test
     File.realpath(File.join(@tmp, 'bashy'))
   end
 
+  # A fake toolchain identity in the shape `go version` prints. Nothing here is a
+  # real SDK, so the platform is deliberately unlike any host: the contract under
+  # test is that the preparation environment is bound to whatever identity
+  # provenance carries, not that it matches this machine.
+  IDENTITY = 'go version gofake1.0 testos/testarch'
+
+  # The executor build environment a real Executor#initialize always establishes.
+  BUILD_ENVIRONMENT = { 'PATH' => '/usr/bin:/bin', 'LC_ALL' => 'C', 'TZ' => 'UTC', 'GOTOOLCHAIN' => 'local',
+                        'GOPROXY' => 'off', 'GOSUMDB' => 'off', 'GOFLAGS' => '-mod=readonly -p=2' }.freeze
+
   # Only the toolchain identity and the shared cache are injected. The import
   # configuration is prepared by the executor's own code path under test.
-  def executor(go:, bashy: '/certainly/not/a/bashy', importcfg_timeout: 60)
+  def executor(go:, bashy: '/certainly/not/a/bashy', importcfg_timeout: 60, env: {})
     instance = Corpus::Executor.allocate
     instance.instance_variable_set(:@go, go)
     instance.instance_variable_set(:@bashy, bashy)
-    instance.instance_variable_set(:@env, { 'PATH' => '/usr/bin:/bin', 'GOTOOLCHAIN' => 'local' })
+    instance.instance_variable_set(:@env, BUILD_ENVIRONMENT.merge(env))
     instance.instance_variable_set(:@cache, @cache)
     instance.instance_variable_set(:@timeout, 30)
     instance.instance_variable_set(:@importcfg_timeout, importcfg_timeout)
     # Modes that never reach the toolchain are given a deliberately absent one.
-    instance.instance_variable_set(:@provenance, 'sdk' => { 'binary' => File.file?(go) ? Corpus.file_record(go) : { 'path' => go, 'sha256' => nil } })
+    instance.instance_variable_set(:@provenance, 'sdk' => { 'identity' => IDENTITY,
+                                                            'binary' => File.file?(go) ? Corpus.file_record(go) : { 'path' => go, 'sha256' => nil } })
     instance
+  end
+
+  # The context a receipt prepared by this fake toolchain must carry.
+  def context_of(go, env: {})
+    { 'identity' => IDENTITY, 'goroot' => File.dirname(File.dirname(go)), 'goos' => 'testos', 'goarch' => 'testarch',
+      'cache' => @cache, 'environment' => BUILD_ENVIRONMENT.merge(env).sort.to_h }
   end
 
   def sdk_of(go)
@@ -207,7 +225,20 @@ class CompileAdapterContractTest < Minitest::Test
       record = preparation.fetch(stream)
       assert_equal record.fetch('sha256'), Corpus.digest(record.fetch('path')), stream
     end
+    # The preparation ran in the exact known context, not merely with a local
+    # toolchain: the pinned SDK root, the identity's platform, GOENV and GOWORK
+    # disabled, and HOME/TMPDIR/GOCACHE bound to the cache holding the receipt.
+    assert_equal context_of(go), receipt.fetch('context')
+    assert_equal Corpus.importcfg_environment(context_of(go)), preparation.fetch('environment')
     assert_equal 'local', preparation.fetch('environment').fetch('GOTOOLCHAIN')
+    assert_equal File.dirname(File.dirname(go)), preparation.fetch('environment').fetch('GOROOT')
+    assert_equal %w[off off], preparation.fetch('environment').values_at('GOENV', 'GOWORK')
+    assert_equal %w[testos testarch], preparation.fetch('environment').values_at('GOOS', 'GOARCH')
+    assert_equal @cache, preparation.fetch('environment').fetch('GOCACHE')
+    assert_equal File.join(@cache, Corpus::IMPORTCFG_HOME), preparation.fetch('environment').fetch('HOME')
+    assert_equal File.join(@cache, Corpus::IMPORTCFG_TMP), preparation.fetch('environment').fetch('TMPDIR')
+    assert_equal File.join(@cache, Corpus::IMPORTCFG_HOME), preparation.fetch('cwd')
+    assert_equal '-mod=readonly -p=2', preparation.fetch('environment').fetch('GOFLAGS'), 'the executor GOFLAGS contract survives preparation'
 
     # Every published archive is hashed, and the retained rows are exactly the
     # retained package set.
@@ -347,6 +378,162 @@ class CompileAdapterContractTest < Minitest::Test
       Corpus.authenticate_import_configuration!(receipt, tool: sdk_of(go))
     end
     assert_match(/preparation stdout changed/, error.message)
+  end
+
+  # ---- named tamper negatives --------------------------------------------
+
+  # The retained stream hash proves only that the log still holds the bytes the
+  # receipt claims. An attacker who rewrites the preparation output and refreshes
+  # that hash leaves a wholly self-consistent receipt, so the rows have to be
+  # re-derived from the stream and joined to the package set and the
+  # configuration the compiler is actually handed.
+  def test_altered_preparation_output_with_a_self_consistent_stream_hash_is_refused
+    go, = fake_go
+    prepared(go)
+    stdout = JSON.parse(File.read(receipt_path)).fetch('preparation').fetch('stdout').fetch('path')
+    smuggled = File.join(@tmp, 'smuggled.a')
+    File.binwrite(smuggled, 'a package the toolchain never exported')
+    File.binwrite(stdout, "packagefile errors=#{archive_path('errors')}\npackagefile fmt=#{smuggled}\n")
+    # Self-consistent: the receipt now names exactly the bytes on disk.
+    receipt = rewrite_receipt { |r| r['preparation']['stdout'] = Corpus.file_record(stdout) }
+    assert_equal Corpus.digest(stdout), receipt.fetch('preparation').fetch('stdout').fetch('sha256')
+
+    error = assert_raises(Corpus::ContractError) { executor(go: go).send(:import_configuration) }
+    assert_match(/retained packages differ from the preparation output: fmt/, error.message)
+
+    # Dropping a row entirely is caught the same way, and names the package.
+    File.binwrite(stdout, "packagefile errors=#{archive_path('errors')}\n")
+    rewrite_receipt { |r| r['preparation']['stdout'] = Corpus.file_record(stdout) }
+    error = assert_raises(Corpus::ContractError) { executor(go: go).send(:import_configuration) }
+    assert_match(/retained packages differ from the preparation output: fmt/, error.message)
+
+    # An emptied stream cannot publish anything at all.
+    File.binwrite(stdout, '')
+    rewrite_receipt { |r| r['preparation']['stdout'] = Corpus.file_record(stdout) }
+    error = assert_raises(Corpus::ContractError) { executor(go: go).send(:import_configuration) }
+    assert_match(/published no packages/, error.message)
+  end
+
+  # Relocating the stream sidesteps the join by pointing the receipt at a log the
+  # cache does not own, so the capture path is part of the contract.
+  def test_a_preparation_stream_relocated_out_of_the_cache_is_refused
+    go, = fake_go
+    prepared(go)
+    %w[stdout stderr].each do |stream|
+      receipt = JSON.parse(File.read(receipt_path))
+      forged = File.join(@tmp, 'forged-' + stream)
+      FileUtils.cp(receipt.fetch('preparation').fetch(stream).fetch('path'), forged)
+      receipt['preparation'][stream] = Corpus.file_record(forged)
+      error = assert_raises(Corpus::ContractError) { Corpus.authenticate_import_configuration!(receipt, tool: sdk_of(go)) }
+      assert_match(/preparation #{stream} is not the retained capture/, error.message)
+    end
+  end
+
+  # A receipt that certifies only GOTOOLCHAIN=local would let a preparation run
+  # against another SDK root, another platform, an inherited go env or workspace
+  # file, or a foreign cache certify a compile. Every one of those is named.
+  def test_a_preparation_environment_outside_the_known_context_is_refused
+    go, = fake_go
+    prepared(go)
+    elsewhere = File.join(@tmp, 'another-sdk')
+    {
+      'GOROOT' => elsewhere, 'GOENV' => File.join(@tmp, 'go/env'), 'GOWORK' => File.join(@tmp, 'go.work'),
+      'GOOS' => 'otheros', 'GOARCH' => 'otherarch', 'GOCACHE' => elsewhere,
+      'HOME' => elsewhere, 'TMPDIR' => elsewhere, 'GOFLAGS' => '-mod=mod'
+    }.each do |key, value|
+      receipt = JSON.parse(File.read(receipt_path))
+      receipt['preparation']['environment'][key] = value
+      error = assert_raises(Corpus::ContractError, key) do
+        Corpus.authenticate_import_configuration!(receipt, tool: sdk_of(go))
+      end
+      assert_match(/preparation environment differs: #{key}/, error.message, key)
+    end
+
+    # A variable removed outright is a difference too, not an absence to ignore.
+    receipt = JSON.parse(File.read(receipt_path))
+    receipt['preparation']['environment'].delete('GOENV')
+    assert_match(/preparation environment differs: GOENV/,
+                 assert_raises(Corpus::ContractError) { Corpus.authenticate_import_configuration!(receipt, tool: sdk_of(go)) }.message)
+
+    # And the preparation must have run inside the cache it claims.
+    receipt = JSON.parse(File.read(receipt_path))
+    receipt['preparation']['cwd'] = @tmp
+    assert_match(/ran outside its cache/,
+                 assert_raises(Corpus::ContractError) { Corpus.authenticate_import_configuration!(receipt, tool: sdk_of(go)) }.message)
+  end
+
+  # Rewriting the environment alone is caught above, so the interesting forgery
+  # rewrites the retained context to match it. The context is not self-sealing:
+  # it is anchored to the authenticated toolchain binary's own path, to the SDK
+  # identity, and to the directory the configuration actually lives in.
+  def test_a_context_rewritten_to_match_a_wrong_environment_is_still_refused
+    go, = fake_go
+    prepared(go)
+    forge = lambda do |mutate|
+      receipt = JSON.parse(File.read(receipt_path))
+      mutate.call(receipt['context'])
+      receipt['preparation']['environment'] = Corpus.importcfg_environment(receipt['context'])
+      assert_raises(Corpus::ContractError) { Corpus.authenticate_import_configuration!(receipt, tool: sdk_of(go)) }.message
+    end
+
+    assert_match(/GOROOT is not the pinned SDK root/, forge.call(->(c) { c['goroot'] = File.join(@tmp, 'another-sdk') }))
+    assert_match(/platform differs from the SDK identity/, forge.call(->(c) { c['goos'] = 'otheros' }))
+    assert_match(/platform differs from the SDK identity/, forge.call(->(c) { c['identity'] = 'go version gofake1.0 otheros/testarch' }))
+    assert_match(/unusable SDK identity/, forge.call(->(c) { c['identity'] = 'gofake1.0' }))
+    assert_match(/cache differs from the directory holding it/, forge.call(->(c) { c['cache'] = File.join(@tmp, 'another-cache') }))
+    assert_match(/build environment GOTOOLCHAIN is not "local"/, forge.call(->(c) { c['environment']['GOTOOLCHAIN'] = 'auto' }))
+    assert_match(/build environment GOPROXY is not "off"/, forge.call(->(c) { c['environment']['GOPROXY'] = 'https://proxy.example' }))
+    assert_match(/build environment GOROOT is not the pinned SDK root/, forge.call(->(c) { c['environment']['GOROOT'] = File.join(@tmp, 'another-sdk') }))
+  end
+
+  # A caller that already holds a validated context supplies it, and every
+  # supplied key must match exactly. This is what makes an executor refuse a
+  # cached configuration prepared for a different build environment.
+  def test_a_configuration_prepared_for_a_different_validated_context_is_refused
+    go, = fake_go
+    prepared(go)
+    error = assert_raises(Corpus::ContractError) do
+      executor(go: go, env: { 'GOFLAGS' => '-mod=mod' }).send(:import_configuration)
+    end
+    assert_match(/environment differs from the validated context/, error.message)
+
+    receipt = JSON.parse(File.read(receipt_path))
+    error = assert_raises(Corpus::ContractError) do
+      Corpus.authenticate_import_configuration!(receipt, tool: sdk_of(go), context: { 'cache' => File.join(@tmp, 'another-cache') })
+    end
+    assert_match(/cache differs from the validated context/, error.message)
+
+    # A receipt with no context at all is refused by name rather than adopted.
+    receipt = rewrite_receipt { |r| r.delete('context') }
+    assert_match(/retains no known context/,
+                 assert_raises(Corpus::ContractError) { Corpus.authenticate_import_configuration!(receipt, tool: sdk_of(go)) }.message)
+  end
+
+  # Authenticating once and reusing the answer would certify the archives as they
+  # stood at the first compile, not at the compile that actually used them. The
+  # same executor instance must refuse the second compile.
+  def test_an_archive_changed_after_a_first_successful_compile_is_refused_on_reuse
+    go, = fake_go('behaviour' => 'object')
+    inputs, sources = source
+    instance = executor(go: go, bashy: fake_bashy)
+    assert_equal 'complete', run_mode(instance, 'baseline', inputs, sources)['state']
+
+    File.binwrite(archive_path('fmt'), 'a different archive after the first compile')
+    error = assert_raises(Corpus::ContractError) { run_mode(instance, 'compiled', inputs, sources) }
+    assert_match(/stdlib archive changed since preparation: fmt/, error.message)
+    refute File.exist?(File.join(@tmp, 'case/compiled/artifacts/object.o')), 'no compile may proceed against a changed archive'
+  end
+
+  # The configuration is resolved where it is used, so an archive swapped by an
+  # earlier stage of the very same mode is caught before the compile spawns.
+  def test_an_archive_changed_between_transpile_and_compile_is_refused
+    go, = fake_go('behaviour' => 'object')
+    prepared(go)
+    inputs, sources = source
+    instance = executor(go: go, bashy: fake_bashy(tamper_archive: archive_path('errors')))
+    error = assert_raises(Corpus::ContractError) { run_mode(instance, 'compiled', inputs, sources) }
+    assert_match(/stdlib archive changed since preparation: errors/, error.message)
+    refute File.exist?(File.join(@tmp, 'case/compiled/artifacts/object.o')), 'the compile must never spawn'
   end
 
   def test_a_failed_or_hung_preparation_never_yields_a_configuration

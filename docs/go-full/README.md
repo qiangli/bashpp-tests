@@ -224,7 +224,7 @@ baseline compiles the unchanged original source, the interpreted mode runs the
 candidate's own `--check` over that same source, and the compiled mode
 transpiles it and compiles the generated program.
 
-The import configuration is prepared once per executor with
+The import configuration is prepared once per cache with
 `go list -export ... std` from the pinned SDK. That preparation is a real
 subprocess against the authenticated toolchain, so it is bounded and captured
 through `Corpus.capture` like every other stage — a declared deadline, a
@@ -233,21 +233,56 @@ check — and it publishes only archives that already belong to that toolchain,
 never crediting an original runtime body. What is retained per mode as
 `import_configuration` is the whole receipt, not a digest of the config file:
 the authenticated SDK binary that prepared it, the exact `list -export -f <tmpl>
-std` argv, the preparation environment and process outcome, and a `path`,
-`bytes` and `sha256` for *every* packagefile archive it publishes, sealed by a
-`packages_sha256` over that package set. Both the configuration and its receipt
-are written read-only, so what a later run reads is what a manager reviews.
+std` argv, the known context and full preparation environment, the process
+outcome, and a `path`, `bytes` and `sha256` for *every* packagefile archive it
+publishes, sealed by a `packages_sha256` over that package set. Both the
+configuration and its receipt are written read-only, so what a later run reads
+is what a manager reviews.
+
+The preparation environment is the whole contract, not one variable. A receipt
+that proved only `GOTOOLCHAIN=local` would let a preparation against a different
+SDK root, a different `GOOS`/`GOARCH`, an inherited `go env` file or workspace
+file, or a foreign build cache certify a compile. The retained `context` names
+the SDK identity, the SDK root, the platform, the cache and the executor build
+environment, and the captured environment must equal the map that context
+derives — `GOROOT` at the pinned root, `GOOS`/`GOARCH` from the identity,
+`GOENV=off`, `GOWORK=off`, and `GOCACHE`/`HOME`/`TMPDIR` bound to the cache
+holding the configuration, with the executor's own `GOFLAGS` preserved. That
+context is not self-sealing: the root is derived from the authenticated
+toolchain binary's own path, the platform from the SDK identity, and the cache
+from the directory the configuration actually lives in, so rewriting the context
+to match a forged environment is refused by the anchor. A caller already holding
+a validated context — the executor about to compile, or a manager replaying with
+provenance in hand — supplies it, and every supplied key must match exactly.
+
+The retained package set must be exactly what the retained preparation output
+published. A stream hash proves only that the log still holds the bytes the
+receipt claims; it says nothing about whether those bytes are the ones the
+package set was built from, so a rewritten stdout carrying a self-consistent
+hash would otherwise pass. Authentication therefore re-derives the rows from the
+retained stdout and joins them to the sealed package set and to the
+configuration file the compiler is handed, naming the offending package on any
+disagreement, and it refuses a preparation stream relocated away from the
+capture the cache owns.
 
 Reuse never trusts a file that merely exists in the shared cache. A
 configuration with no receipt beside it is refused by name rather than adopted,
 and a receipt is re-authenticated on every use: same SDK binary, same recipe,
-same bounded captured preparation, unchanged configuration bytes, rows still
-matching the sealed package set, and every archive still holding the bytes
-hashed at preparation time. A substituted toolchain, an edited configuration, a
-swapped archive path and a changed or vanished stdlib archive each fail closed
-with the offending package named; nothing is silently re-prepared. `validate.rb`
-and the resume replay enforce that same contract on real compile stages, and a
-compile stage in a justified failing prefix must still name a configuration that
+same known context and environment, same bounded captured preparation, unchanged
+configuration bytes, rows still matching both the sealed package set and the
+preparation output, and every archive still holding the bytes hashed at
+preparation time. Nothing is memoised — authenticating once and reusing the
+answer would certify the archives as they stood at the first compile rather than
+at the compile that used them, so the executor re-reads and re-authenticates the
+retained receipt immediately before every compile it spawns, including the
+second and later uses within one run and the stage after an earlier stage of the
+same mode has run. A substituted toolchain, an edited configuration, a swapped
+archive path, an altered preparation output, a wrong `GOROOT` or `GOENV`, and a
+stdlib archive changed after a first successful compile each fail closed with
+the offending package or variable named; nothing is silently re-prepared.
+`validate.rb` and the resume replay enforce that same contract on real compile
+stages, anchoring the context to the run's own provenance, and a compile stage
+in a justified failing prefix must still name a configuration that
 authenticates — a prefix that cannot say what it compiled against proves
 nothing.
 
@@ -334,7 +369,14 @@ GOMAXPROCS=1 GOTOOLCHAIN=local /absolute/pinned/sdk/bin/go -C tools/go-full/type
 creates, so it proves harness behaviour and never skips itself into credit. Its
 fake toolchain drives the real stdlib export preparation — nothing injects a
 ready-made import configuration — so the preparation, its reuse authentication
-and every substitution negative are exercised rather than bypassed.
+and every substitution negative are exercised rather than bypassed. The named
+tamper negatives are there in full: a preparation output altered and re-hashed
+so the receipt stays self-consistent, a stream relocated out of the cache, a
+wrong `GOROOT`/`GOENV`/`GOWORK`/`GOOS`/`GOARCH`/`GOCACHE`/`GOFLAGS` preparation
+environment, a retained context rewritten to match such an environment, a
+configuration prepared for a different validated context, an archive changed
+after a first successful compile, and an archive swapped between a mode's
+transpile and its compile.
 
 The real replay against the frozen candidate and the pinned SDK is separate. It
 carries no host paths: every location is supplied explicitly, and it fails,

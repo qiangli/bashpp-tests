@@ -138,7 +138,10 @@ module GoFullResume
         # A compile stage authenticates its import configuration whether or not
         # it succeeded: a justified failing prefix must still name the exact
         # configuration it compiled against, or the prefix proves nothing.
-        Corpus.authenticate_import_configuration!(result.fetch('import_configuration'), tool: provenance.dig('sdk', 'binary')) if stage['stage'] == 'compile'
+        if stage['stage'] == 'compile'
+          Corpus.authenticate_import_configuration!(result.fetch('import_configuration'), tool: provenance.dig('sdk', 'binary'),
+                                                    context: { 'identity' => provenance.dig('sdk', 'identity'), 'cache' => provenance.dig('cache', 'path') })
+        end
         if Corpus.success?(stage) && stage['stage'] == 'transpile'
           generated = result.fetch('artifacts').fetch('generated')
           mapping = JSON.parse(File.read(result.fetch('artifacts').fetch('source_map').fetch('path')))
