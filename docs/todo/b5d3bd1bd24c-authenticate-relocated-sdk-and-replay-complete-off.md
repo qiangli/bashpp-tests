@@ -6,7 +6,7 @@ seq: 17
 status: doing
 priority: p1
 created: 2026-09-09T06:36:02.000807Z
-assignee: s118-official-runner
+assignee: s118-native-types
 sprint: 118
 ---
 

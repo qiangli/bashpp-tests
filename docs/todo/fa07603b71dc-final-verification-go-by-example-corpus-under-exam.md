@@ -6,7 +6,7 @@ seq: 3
 status: doing
 priority: p1
 created: 2026-09-03T09:45:35.902827Z
-assignee: sprint118-manager
+assignee: s118-gbe-lifecycle
 sprint: 118
 ---
 
