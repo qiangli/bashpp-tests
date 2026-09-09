@@ -69,6 +69,41 @@ module Corpus
     end
   end
 
+  ARCHIVE_HEADER = "!<arch>\n".b.freeze
+  ARCHIVE_ENTRY_BYTES = 60
+  GO_OBJECT_HEADER = 'go object '.b.freeze
+  GO_OBJECT_MEMBERS = %w[__.PKGDEF _go_.o].freeze
+
+  # A compile-only obligation retains a real Go object archive, never merely a
+  # nonempty file. The ar container must parse exactly to its own length, carry
+  # the package export member and the compiled object member, and the object
+  # member must hold the toolchain's own goobj magic.
+  def go_object_archive?(path)
+    return false unless File.file?(path) && !File.symlink?(path)
+    bytes = File.binread(path)
+    return false unless bytes.start_with?(ARCHIVE_HEADER)
+    members = {}
+    offset = ARCHIVE_HEADER.bytesize
+    while offset < bytes.bytesize
+      header = bytes.byteslice(offset, ARCHIVE_ENTRY_BYTES)
+      return false unless header && header.bytesize == ARCHIVE_ENTRY_BYTES && header.byteslice(58, 2) == "`\n".b
+      size = header.byteslice(48, 10).to_s.strip
+      return false unless size.match?(/\A\d+\z/)
+      size = Integer(size, 10)
+      body = bytes.byteslice(offset + ARCHIVE_ENTRY_BYTES, size)
+      return false unless body && body.bytesize == size
+      name = header.byteslice(0, 16).to_s.rstrip
+      return false if name.empty? || members.key?(name)
+      members[name] = body
+      offset += ARCHIVE_ENTRY_BYTES + size + (size.odd? ? 1 : 0)
+    end
+    return false unless offset == bytes.bytesize
+    return false unless GO_OBJECT_MEMBERS.all? { |name| members[name]&.start_with?(GO_OBJECT_HEADER) }
+    members.fetch('_go_.o').match?(/\x00go\d+ld/n)
+  rescue SystemCallError
+    false
+  end
+
   def valid_source_map?(mapping, generated_record, source_records = {})
     return false unless mapping.is_a?(Hash) && mapping['schema_version'] == 'bashy-transpile-map-v1'
     return false unless mapping['origin'].is_a?(String) && !mapping['origin'].empty?
@@ -318,6 +353,42 @@ module Corpus
 
     private
 
+    # Compile-only phases resolve their imports exactly the way the pinned SDK's
+    # own testdir harness does: `go list -export` prepares the standard library
+    # archives once and the resulting packagefile map is handed to the compiler.
+    # Nothing here executes an original program body; it only publishes archives
+    # that already belong to the authenticated toolchain.
+    IMPORTCFG_TEMPLATE = '{{if .Export}}packagefile {{.ImportPath}}={{.Export}}{{end}}'
+
+    def importcfg
+      @importcfg ||= begin
+        path = File.join(@cache, 'importcfg-std')
+        write_importcfg(path) unless File.file?(path)
+        raise ContractError, 'stdlib importcfg is not a regular file' unless File.file?(path) && !File.symlink?(path)
+        path
+      end
+    end
+
+    def write_importcfg(path)
+      home, tmp = %w[importcfg-home importcfg-tmp].map { |name| File.join(@cache, name) }
+      [home, tmp].each { |dir| FileUtils.mkdir_p(dir) }
+      # GOENV is disabled the way upstream does it, but the executor's own GOFLAGS
+      # are kept: they carry the authenticated readonly/parallelism contract.
+      env = @env.merge('GOENV' => 'off', 'GOCACHE' => @cache, 'HOME' => home, 'TMPDIR' => tmp)
+      out, err, status = Open3.capture3(env, @go, 'list', '-export', '-f', IMPORTCFG_TEMPLATE, 'std', unsetenv_others: true)
+      raise ContractError, "stdlib importcfg unavailable: #{err.strip}" unless status.success?
+      lines = out.lines.map(&:chomp).reject(&:empty?)
+      raise ContractError, 'stdlib importcfg is empty' if lines.empty?
+      lines.each do |line|
+        name, _, archive = line.delete_prefix('packagefile ').partition('=')
+        raise ContractError, "malformed importcfg row: #{line}" unless line.start_with?('packagefile ') && !name.empty? && !archive.empty?
+        raise ContractError, "importcfg archive missing: #{archive}" unless File.file?(archive) && !File.symlink?(archive)
+      end
+      scratch = path + ".#{Process.pid}.tmp"
+      File.write(scratch, lines.join("\n") + "\n")
+      File.rename(scratch, path)
+    end
+
     def verify_tools!
       [@provenance.dig('candidate', 'launcher'), @provenance.dig('candidate', 'payload'), @provenance.dig('sdk', 'binary')].each do |file|
         Corpus.authenticate_file(file.fetch('path'), file.fetch('sha256'))
@@ -350,14 +421,21 @@ module Corpus
       run_env = environment.merge('PATH' => empty_path).merge(runtime_env)
       raise ContractError, 'runtime GOTOOLCHAIN must remain local' unless run_env['GOTOOLCHAIN'] == 'local'
       runtime_before = Corpus.snapshot(runtime)
-      generated, map, binary = %w[generated.go generated.go.map program].map { |s| File.join(artifacts, s) }
+      generated, map, binary, object = %w[generated.go generated.go.map program object.o].map { |s| File.join(artifacts, s) }
+      # `compile` is a compile-only obligation: the upstream testdir harness runs
+      # `go tool compile -e -p=p -importcfg=<stdlib>` and never links. An ordinary
+      # `go build` would reject a valid `package main` that declares no main, so it
+      # can never stand in as the compile oracle.
+      compile_argv = lambda { |source| [@go, 'tool', 'compile', '-e', '-p=p', '-importcfg=' + importcfg, '-o', object, source] }
+      producer = lambda { |source| phase == 'compile' ? ['compile', compile_argv.call(source)] : ['build', [@go, 'build', '-o', binary, source]] }
       commands = case mode
-                 when 'baseline' then [[phase == 'compile' ? 'compile' : 'build', [@go, 'build', '-o', binary, input]]]
+                 when 'baseline' then [producer.call(input)]
                  when 'interpreted' then [[%w[build compile].include?(phase) ? 'check' : 'run', [@bashy, '--bashpp', '--source=go', *(%w[build compile].include?(phase) ? ['--check'] : []), absolute_input, *args]]]
                  when 'compiled' then [['transpile', [@bashy, 'transpile', '--bashpp', '--source=go', input, '-o', generated, '--map', map]],
-                                       [phase == 'compile' ? 'compile' : 'build', [@go, 'build', '-o', binary, generated]]]
+                                       producer.call(generated)]
                  end
       result = { 'mode' => mode, 'phase' => phase, 'stages' => [], 'artifacts' => {}, 'state' => 'complete', 'source_directory' => work, 'runtime_directory' => runtime, 'input_checks' => [] }
+      result['import_configuration'] = Corpus.file_record(importcfg) if phase == 'compile' && mode != 'interpreted'
       commands.each do |stage_name, argv|
         intact = verify_inputs(work, inputs, module_files) && verify_assets(runtime, assets, inputs)
         result['input_checks'] << { 'phase' => 'before-' + stage_name, 'valid' => intact }
@@ -386,8 +464,18 @@ module Corpus
           unless Corpus.valid_source_map?(mapping, result['artifacts']['generated'], inputs.slice(*sources))
             result['state'] = 'invalid_source_map'; break
           end
-        elsif %w[build compile].include?(stage_name)
-          unless File.file?(binary) && File.size?(binary) && (%w[build compile].include?(phase) || Corpus.native_binary?(binary))
+        elsif stage_name == 'compile'
+          # Compile-only credit requires the toolchain's own object archive; any
+          # other nonempty output is a missing artifact, not a compiled package.
+          unless Corpus.go_object_archive?(object)
+            result['state'] = 'missing_artifact'; break
+          end
+          result['artifacts']['object'] = Corpus.file_record(object)
+        elsif stage_name == 'build'
+          # `go build` links a native program for main packages and writes a Go
+          # archive for non-main ones; neither may degrade to an arbitrary file.
+          linked = Corpus.native_binary?(binary)
+          unless File.file?(binary) && File.size?(binary) && (linked || (phase == 'build' && Corpus.go_object_archive?(binary)))
             result['state'] = 'missing_artifact'; break
           end
           result['artifacts']['native'] = Corpus.file_record(binary)

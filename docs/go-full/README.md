@@ -196,14 +196,48 @@ shared executor requires. Original corpus files are always the source inputs.
 The driver replays the retained native event log, checks all native root IDs
 against independent inventories, and binds both runs to the same SDK/inventory.
 
-Only straightforward `run`, `build`, and `buildrun` recipes without special
-flags, environment changes, nested tools, or directory/generator requirements
-enter the shared executor. Their original source executes in all three modes;
+Only straightforward `run`, `build`, `buildrun`, and `compile` recipes without
+special flags, environment changes, nested tools, or directory/generator
+requirements enter the shared executor. Their original source executes in all three modes;
 upstream output is checked in addition to differential observations. Testdir
 requires a successful runtime exit. Its combined stdout/stderr expectations
 cannot be reconstructed when both separately captured streams are nonempty;
 such a case fails with a concrete capture-adapter gap instead of guessing an
 ordering.
+
+### Compile-only single-file roots
+
+501 of the 529 `compile` roots are plain unflagged single-file recipes, and they
+are a *compile-only* obligation: upstream's own `testdir` harness runs
+
+```
+go tool compile -e -p=p -importcfg=<stdlib importcfg> <file>
+```
+
+and never links. An ordinary `go build` is not that contract — it links, so it
+rejects an unchanged upstream root such as `test/fixedbugs/issue17111.go`, a
+valid `package main` that deliberately declares no `main`. A link-required
+`go build` can therefore never serve as the compile oracle.
+
+The `compile` phase runs the exact upstream recipe in all three modes: the
+baseline compiles the unchanged original source, the interpreted mode runs the
+candidate's own `--check` over that same source, and the compiled mode
+transpiles it and compiles the generated program. The import configuration is
+prepared once per executor with `go list -export ... std` from the pinned SDK
+and retained per mode as `import_configuration`; it publishes only archives that
+already belong to the authenticated toolchain and never credits an original
+runtime body. Compile-only credit requires a real Go object archive — the ar
+container must parse exactly, carry `__.PKGDEF` and `_go_.o`, and the object
+member must hold the toolchain's own goobj magic — so a nonempty file, a
+truncated archive or a foreign object is a `missing_artifact`, not a pass. A
+compile-only mode never retains a linked program, and `go build`'s own artifact
+is likewise held to a native program or a Go archive.
+
+Sources are never wrapped or edited, so roots the candidate cannot lower keep
+failing: `test/fixedbugs/issue17270.go` (`import "unsafe"`) still fails in the
+compiled mode and is retained as a FAIL with no partial artifact credit. The
+remaining 28 flagged/expected-failure `compile` roots and every `compiledir`
+root stay unimplemented in the full inventory.
 
 Another 521 unflagged negative `errorcheck`/`errorcheckwithauto` roots use the
 source-positioned diagnostic adapter. Both product processes must actually
@@ -265,8 +299,19 @@ Run the non-corpus evidence tests with:
 ruby tests/go-full/execution_test.rb
 ruby tests/go-full/authentication_test.rb
 ruby tests/go-full/typechecker_test.rb
+ruby tests/go-full/compile_adapter_test.rb
+ruby tests/corpus/executor_test.rb
 GOMAXPROCS=1 GOTOOLCHAIN=local /absolute/pinned/sdk/bin/go -C tools/go-full/diagnostics test -p=1 ./...
 GOMAXPROCS=1 GOTOOLCHAIN=local /absolute/pinned/sdk/bin/go -C tools/go-full/typecheck-diagnostics test -p=1 ./...
+```
+
+`compile_adapter_test.rb` is hermetic: every process it runs is a fake tool it
+creates, so it proves harness behaviour and never skips itself into credit. The
+real replay of the compile adapter against the frozen candidate and the pinned
+SDK is separate and fails, rather than skips, when an input is missing:
+
+```sh
+GOMAXPROCS=2 GOFLAGS=-p=2 ruby tests/go-full/compile_adapter_proof_test.rb
 ```
 
 `typechecker_test.rb` includes bounded integration controls that execute the

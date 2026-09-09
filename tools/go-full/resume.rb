@@ -86,7 +86,8 @@ module GoFullResume
   # Authenticate complete process attempts, including a justified failing prefix.
   # A prefix never acquires PASS: later unexecuted phases remain failures.
   def execution!(record, root:, source_root:, provenance:, modules:, environment:)
-    expected = { 'phase' => root.fetch('recipe').fetch('action') == 'build' ? 'build' : 'run',
+    action = root.fetch('recipe').fetch('action')
+    expected = { 'phase' => %w[build compile].include?(action) ? action : 'run',
       'sources' => [root.fetch('path')], 'assets' => [], 'inputs' => [root.fetch('path')].to_h { |p| [p, Corpus.file_record(Corpus.safe_path(source_root, p))] },
       'args' => root.fetch('recipe').fetch('args'), 'module_files' => modules.transform_values { |b| Digest::SHA256.hexdigest(b) }, 'package_input' => nil, 'runtime_environment' => {} }
     raise Corpus::ContractError, 'execution identity/provenance differs' unless record['schema'] == Corpus::SCHEMA && record['id'] == root['id'] && record['provenance'] == provenance
@@ -97,7 +98,8 @@ module GoFullResume
     raise Corpus::ContractError, 'incomplete execution modes' unless modes.keys.sort == Corpus::MODES.sort
     modes.each do |mode, result|
       raise Corpus::ContractError, 'mode identity/source integrity differs' unless result['mode'] == mode && result['phase'] == expected['phase'] && result['input_integrity'] == true
-      wanted = mode == 'baseline' ? ['build'] : mode == 'compiled' ? %w[transpile build] : [expected['phase'] == 'run' ? 'run' : 'check']
+      producer = expected['phase'] == 'compile' ? 'compile' : 'build'
+      wanted = mode == 'baseline' ? [producer] : mode == 'compiled' ? ['transpile', producer] : [expected['phase'] == 'run' ? 'run' : 'check']
       wanted += ['run'] if expected['phase'] == 'run' && mode != 'interpreted'
       stages = result.fetch('stages')
       actual = stages.map { |stage| stage.fetch('stage') }
@@ -122,6 +124,9 @@ module GoFullResume
         argv = case stage.fetch('stage')
                when 'transpile' then [provenance.dig('candidate', 'launcher', 'path'), 'transpile', '--bashpp', '--source=go', input, '-o', File.join(File.dirname(result.fetch('source_directory')), 'artifacts/generated.go'), '--map', File.join(File.dirname(result.fetch('source_directory')), 'artifacts/generated.go.map')]
                when 'build' then [provenance.dig('sdk', 'binary', 'path'), 'build', '-o', File.join(File.dirname(result.fetch('source_directory')), 'artifacts/program'), mode == 'baseline' ? input : File.join(File.dirname(result.fetch('source_directory')), 'artifacts/generated.go')]
+               when 'compile' then [provenance.dig('sdk', 'binary', 'path'), 'tool', 'compile', '-e', '-p=p', '-importcfg=' + result.fetch('import_configuration').fetch('path'),
+                                    '-o', File.join(File.dirname(result.fetch('source_directory')), 'artifacts/object.o'),
+                                    mode == 'baseline' ? input : File.join(File.dirname(result.fetch('source_directory')), 'artifacts/generated.go')]
                when 'check', 'run'
                  mode == 'interpreted' ? [provenance.dig('candidate', 'launcher', 'path'), '--bashpp', '--source=go', *(stage['stage'] == 'check' ? ['--check'] : []), File.expand_path(input, result.fetch('source_directory')), *expected.fetch('args')] : [result.dig('artifacts', 'native', 'path'), *expected.fetch('args')]
                end
@@ -136,7 +141,13 @@ module GoFullResume
           raise Corpus::ContractError, 'retained source map differs' unless Corpus.valid_source_map?(mapping, generated, expected.fetch('inputs'))
         elsif Corpus.success?(stage) && stage['stage'] == 'build'
           binary = result.fetch('artifacts').fetch('native')
-          raise Corpus::ContractError, 'retained native artifact invalid' unless binary.fetch('bytes').positive? && (expected['phase'] == 'build' || Corpus.native_binary?(binary.fetch('path')))
+          raise Corpus::ContractError, 'retained native artifact invalid' unless binary.fetch('bytes').positive? &&
+            (Corpus.native_binary?(binary.fetch('path')) || (expected['phase'] == 'build' && Corpus.go_object_archive?(binary.fetch('path'))))
+        elsif Corpus.success?(stage) && stage['stage'] == 'compile'
+          Corpus::Validation.file!(result.fetch('import_configuration'))
+          object = result.fetch('artifacts').fetch('object')
+          raise Corpus::ContractError, 'retained compile artifact is not a Go object archive' unless object.fetch('bytes').positive? && Corpus.go_object_archive?(object.fetch('path'))
+          raise Corpus::ContractError, 'compile-only phase retained a linked program' if result.fetch('artifacts').key?('native')
         end
         stage!(stage, argv: argv, cwd: stage['stage'] == 'run' ? result.fetch('runtime_directory') : result.fetch('source_directory'), source_root: File.dirname(File.dirname(provenance.dig('sdk', 'binary', 'path'))), provenance: provenance)
       end
@@ -149,7 +160,7 @@ module GoFullResume
   def execution_verdict(record)
     modes = record.fetch('modes')
     return 'FAIL' unless modes.values.all? { |result| result['state'] == 'complete' && result['input_integrity'] }
-    return 'PASS' if record['phase'] == 'build'
+    return 'PASS' if %w[build compile].include?(record['phase'])
     observations = modes.values.map do |result|
       run = result.fetch('stages').last
       return 'FAIL' unless run['stage'] == 'run' && run['state'] == 'exited' && run['spawned'] && run['signal'].nil?

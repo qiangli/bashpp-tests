@@ -227,7 +227,14 @@ class AuthenticatedResumeTest < Minitest::Test
           'sources' => [{ 'name' => source, 'sha256' => Digest::SHA256.file(source).hexdigest, 'size' => File.size(source), 'base' => 0 }] }
         File.write(ARGV[ARGV.index('--map') + 1], JSON.generate(map))
       elsif ARGV[0] == 'build'
-        File.write(ARGV[ARGV.index('-o') + 1], 'authored build artifact')
+        # A real Go archive: an arbitrary nonempty file is not a build artifact.
+        members = { '__.PKGDEF' => "go object authored\n\n!\n", '_go_.o' => "go object authored\n\n!\n\x00go120ld" }
+        archive = "!<arch>\n"
+        members.each do |name, bytes|
+          archive << format('%-16s%-12d%-6d%-6d%-8o%-10d`', name, 0, 0, 0, 0o644, bytes.bytesize) << "\n" << bytes
+          archive << "\n" if bytes.bytesize.odd?
+        end
+        File.binwrite(ARGV[ARGV.index('-o') + 1], archive)
       end
     RUBY
     [@go, @bashy, @bashy + '.real'].each { |path| File.write(path, tool) }

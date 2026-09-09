@@ -34,10 +34,11 @@ module Corpus
         observations = []
         modes.each do |mode, result|
           raise ContractError, 'incomplete/failed mode' unless result['state'] == 'complete' && result['input_integrity'] == true && result['mode'] == mode && result['phase'] == record['phase']
+          producer = record['phase'] == 'compile' ? 'compile' : 'build'
           wanted = case mode
-                   when 'baseline' then ['build']
-                   when 'interpreted' then [record['phase'] == 'build' ? 'check' : 'run']
-                   when 'compiled' then %w[transpile build]
+                   when 'baseline' then [producer]
+                   when 'interpreted' then [%w[build compile].include?(record['phase']) ? 'check' : 'run']
+                   when 'compiled' then ['transpile', producer]
                    end
           wanted += ['run'] if record['phase'] == 'run' && mode != 'interpreted'
           checks = result.fetch('input_checks')
@@ -66,7 +67,7 @@ module Corpus
             raise ContractError, 'cache configuration differs' unless stage.fetch('environment')['GOCACHE'] == expected_cache
             raise ContractError, 'empty command/cwd/environment' unless argv.is_a?(Array) && !argv.empty? && stage['cwd'].is_a?(String) && stage['environment'].is_a?(Hash)
             expected_tool = case stage['stage']
-                            when 'build' then provenance.dig('sdk', 'binary', 'path')
+                            when 'build', 'compile' then provenance.dig('sdk', 'binary', 'path')
                             when 'transpile', 'check' then provenance.dig('candidate', 'launcher', 'path')
                             when 'run' then mode == 'interpreted' ? provenance.dig('candidate', 'launcher', 'path') : result.dig('artifacts', 'native', 'path')
                             end
@@ -77,15 +78,20 @@ module Corpus
                     when 'check' then [argv.first, '--bashpp', '--source=go', '--check', absolute_input, *record.fetch('args')]
                     when 'transpile' then [argv.first, 'transpile', '--bashpp', '--source=go', input, '-o', result.dig('artifacts', 'generated', 'path'), '--map', result.dig('artifacts', 'source_map', 'path')]
                     when 'build' then [argv.first, 'build', '-o', result.dig('artifacts', 'native', 'path'), mode == 'baseline' ? input : result.dig('artifacts', 'generated', 'path')]
+                    when 'compile' then [argv.first, 'tool', 'compile', '-e', '-p=p', '-importcfg=' + result.fetch('import_configuration').fetch('path'),
+                                         '-o', result.dig('artifacts', 'object', 'path'), mode == 'baseline' ? input : result.dig('artifacts', 'generated', 'path')]
                     when 'run' then mode == 'interpreted' ? [argv.first, '--bashpp', '--source=go', absolute_input, *record.fetch('args')] : [argv.first, *record.fetch('args')]
                     end
+            # Name the substitution before the generic mismatch: a linking `go build`
+            # standing in for `go tool compile` is the failure mode worth reporting.
+            raise ContractError, 'a link-required build cannot substitute for compile' if stage['stage'] == 'compile' && argv[1, 2] != %w[tool compile]
+            raise ContractError, 'go run cannot substitute for build' if stage['stage'] == 'build' && (argv[1] != 'build' || !argv.include?('-o'))
             raise ContractError, 'argv differs from required recipe' unless argv == exact
             if %w[transpile check].include?(stage['stage']) || mode == 'interpreted'
               raise ContractError, 'missing Go-source mode flags' unless argv.include?('--bashpp') && argv.include?('--source=go')
             end
             raise ContractError, 'semantic check absent' if stage['stage'] == 'check' && !argv.include?('--check')
             raise ContractError, 'unexpected check during run' if stage['stage'] == 'run' && argv.include?('--check')
-            raise ContractError, 'go run cannot substitute for build' if stage['stage'] == 'build' && (argv[1] != 'build' || !argv.include?('-o'))
           end
           result.fetch('artifacts').each_value { |f| file!(f) }
           if mode == 'compiled'
@@ -93,10 +99,19 @@ module Corpus
             map = JSON.parse(File.read(result.fetch('artifacts').fetch('source_map').fetch('path')))
             raise ContractError, 'source map digest mismatch' unless Corpus.valid_source_map?(map, generated, record.fetch('inputs').slice(*record.fetch('sources')))
           end
-          if mode != 'interpreted'
+          if mode != 'interpreted' && record['phase'] == 'compile'
+            # Compile-only evidence is an object archive; a linked program would
+            # mean the obligation was replaced by a stricter, different recipe.
+            file!(result.fetch('import_configuration'))
+            object = result.fetch('artifacts').fetch('object')
+            raise ContractError, 'empty compile artifact' unless object.fetch('bytes').positive?
+            raise ContractError, 'compile artifact is not a Go object archive' unless Corpus.go_object_archive?(object.fetch('path'))
+            raise ContractError, 'compile phase must not retain a linked program' if result.fetch('artifacts').key?('native')
+          elsif mode != 'interpreted'
             native = result.fetch('artifacts').fetch('native')
             raise ContractError, 'empty native artifact' unless native.fetch('bytes').positive?
             raise ContractError, 'native not executable' if record['phase'] == 'run' && !Corpus.native_binary?(native.fetch('path'))
+            raise ContractError, 'build artifact is neither a program nor a Go archive' unless Corpus.native_binary?(native.fetch('path')) || Corpus.go_object_archive?(native.fetch('path'))
           end
           if record['phase'] == 'run'
             run = stages.last
