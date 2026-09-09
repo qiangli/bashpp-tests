@@ -1,9 +1,9 @@
-# Reviewed semantic comparators for the ten declared-volatile tour rows.
+# Reviewed semantic comparators for the eleven declared-volatile tour rows.
 #
 # Sprint 118 / Story #4 / Story-ID 759341a95870.
 #
 # STATUS: THIS TABLE HAS GATE EFFECT. It is the manager-adjudicated resolution
-# of the open item docs/tour/volatility.tsv raised: those ten rows cannot
+# of the open item docs/tour/volatility.tsv raised: those rows cannot
 # reproduce a byte-exact digest, and the sprint-118 plan §6 allows exactly two
 # outs — a real environment control, or an explicit reviewed semantic
 # comparator that verifies values, ranges, event multiplicity, causal order and
@@ -43,9 +43,12 @@
 #                     fails: it is evidence the comparator is not needed here.
 #                     `not_required` for elements that legitimately hold still
 #                     inside one burst — the two date/hour branches (the clock
-#                     does not cross a boundary in a few seconds) and the
+#                     does not cross a boundary in a few seconds), the
 #                     two-entry map orders (a seven-run sample can draw one
-#                     order with probability 2^-6).
+#                     order with probability 2^-6) and the channel arrival
+#                     order of concurrency/channels.go (measured flip rate
+#                     about 1/400 under GOMAXPROCS=2, so a seven-run burst
+#                     legitimately drew one single order 7/7).
 #   volatile_element  the element the comparator adjudicates, verbatim from
 #                     docs/tour/volatility.tsv
 #   params            comparator parameters as JSON; pinned expectations taken
@@ -60,6 +63,7 @@
 _content/tour/basics/packages.go	rand_intn_line	c7be4714c613e20f2ea101de9a267aaa542af90e3a92919aa991efed3c10f398	required	rand.Intn draw from the randomly seeded global PRNG	{"prefix":"My favorite number is ","modulus":10}
 _content/tour/concurrency/goroutines.go	say_interleaving	0e82448c75a618ad8ec8a9c4396f14553ac595137754647720c01b53498db0c5	required	unsynchronized interleaving of two goroutines printing to stdout	{"values":["hello","world"],"main":"hello","main_count":5,"goroutine":"world"}
 _content/tour/concurrency/default-selection.go	tick_boom_sequence	609707c5ac8020cb1b2b763eaf9aa65afabcf2897aa5f938a288c1db5b2b463b	required	goroutine/timer interleaving under a 50ms tick and a 100ms boom	{"tick_ms":100,"boom_ms":500,"boom_slack_ms":1000,"default_sleep_ms":50,"rounding_slack_ms":1}
+_content/tour/concurrency/channels.go	channel_sum_order	8c3ce8583c8274e42ee0522989bf4cf2003b6f8045bcb6b16a6a79364f97aa70	not_required	arrival order of two independently computed sums received from one unbuffered channel	{"halves":[17,-5],"sum":12,"outputs":["17 -5 12","-5 17 12"]}
 _content/tour/flowcontrol/switch-evaluation-order.go	weekday_switch	9e94bbb667be85e810c1aff77e343ec9cc5473b24670979d27c03caf0bef21db	not_required	weekday arithmetic against time.Now()	{"prompt":"When's Saturday?","values":["Today.","Tomorrow.","In two days.","Too far away."]}
 _content/tour/flowcontrol/switch-with-no-condition.go	hour_greeting	6eb1d9d6150a37ec43f4825932239b4365e9be3bff5f8619152af0de5c44b247	not_required	time.Now().Hour() greeting branch	{"values":["Good morning!","Good afternoon.","Good evening."],"morning_before":12,"afternoon_before":17}
 _content/tour/methods/errors.go	go_time_error_line	a0825fe6310af87e48e7f46b5290814df190d1e9533d0132fd663d6bb7f3236e	required	time.Now() embedded in the error string	{"prefix":"at ","suffix":", it didn't work"}

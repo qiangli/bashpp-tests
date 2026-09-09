@@ -9,7 +9,7 @@
 # (`volatility:claims_gate_effect`).
 #
 # The adjudication that followed lives in docs/tour/semantics.tsv, which binds
-# each of these ten rows to a reviewed comparator in tools/tour/semantics.rb.
+# each of these eleven rows to a reviewed comparator in tools/tour/semantics.rb.
 # The two tables must name EXACTLY the same rows: tools/tour/executor-runner.rb
 # and tools/tour/executor-gate.rb both reject a comparator for a row nobody
 # measured, and a measured volatile row left without one. The comparators are
@@ -18,7 +18,7 @@
 #
 # Why it exists: tour-executor/v1 reproduces the accepted observations in
 # tests/tour/results.tsv for 83 of the 93 applicable rows and for all 4
-# build-only rows, and fails on the ten rows below. Those ten are not
+# build-only rows, and fails on the rows below. Those are not
 # regressions and not a harness defect: their output depends on the wall clock,
 # the randomly seeded global PRNG, goroutine interleaving or Go's randomized
 # map iteration order, so no byte-exact accepted digest can be reproducible for
@@ -49,11 +49,28 @@
 #   weekday/hour, and methods/exercise-stringer.go ranges over a two-entry map
 #   whose iteration order Go randomizes per process.
 #
-# Rows deliberately NOT listed: concurrency/channels.go,
-# concurrency/mutex-counter.go, concurrency/range-and-close.go,
-# concurrency/select.go, solutions/binarytrees.go and
-# solutions/binarytrees_quit.go all use goroutines but were byte-identical
-# across seven runs — they synchronize, so they stay under exact comparison.
+#   Pass 3 — Sprint 118 story 4 re-review of concurrency/channels.go
+#   (759341a95870). Pass 1 had classified it byte-identical because one
+#   seven-run burst drew one order; that classification was WRONG. The program
+#   launches two INDEPENDENT sums on one unbuffered channel and receives two
+#   values in arrival order: the synchronization guarantees both values and
+#   the printed sum, but nothing orders which sender wins. A bounded
+#   experiment on the native binary freshly built from the byte-identical
+#   source with the pinned go1.27.0 (LC_ALL=C, empty PATH, fresh cwd per run;
+#   raw commands/status/streams retained under
+#   /Users/qiangli/.local/state/bashy/sprint118-evidence/tour-channel-order-review)
+#   witnessed BOTH legal orders under GOMAXPROCS 1/2/4: "-5 17 12" in
+#   1204/1207 runs, "17 -5 12" in 3/1207 (GOMAXPROCS=2: 1/400; GOMAXPROCS=4:
+#   2/400; GOMAXPROCS=1: 0/400), every run exit 0 with stdout exactly 9 bytes
+#   and empty stderr. A seven-run GOMAXPROCS=2 burst — the oracle shape —
+#   still drew one single order 7/7, which is exactly why pass 1 measured it
+#   as stable. The support is exactly two whole outputs.
+#
+# Rows deliberately NOT listed: concurrency/mutex-counter.go,
+# concurrency/range-and-close.go, concurrency/select.go,
+# solutions/binarytrees.go and solutions/binarytrees_quit.go all use
+# goroutines but were byte-identical across seven runs — they synchronize, so
+# they stay under exact comparison.
 #
 # `comparator_needed` names the control or comparator the row requires. Each is
 # now IMPLEMENTED and bound in docs/tour/semantics.tsv; this column stays as the
@@ -64,6 +81,7 @@
 _content/tour/basics/packages.go	rand.Intn draw from the randomly seeded global PRNG	seeded PRNG control, or range check 0 <= n < 10
 _content/tour/concurrency/goroutines.go	unsynchronized interleaving of two goroutines printing to stdout	event multiplicity per value, not line order
 _content/tour/concurrency/default-selection.go	goroutine/timer interleaving under a 50ms tick and a 100ms boom	event multiplicity and causal order, not byte identity
+_content/tour/concurrency/channels.go	arrival order of two independently computed sums received from one unbuffered channel	exact two-member output-set comparison: the whole triple must be one of the two legal arrival orders, with the exact sum, exit 0 and empty stderr
 _content/tour/flowcontrol/switch-evaluation-order.go	weekday arithmetic against time.Now()	fake clock, or the day-name value set
 _content/tour/flowcontrol/switch-with-no-condition.go	time.Now().Hour() greeting branch	fake clock, or the greeting value set
 _content/tour/methods/errors.go	time.Now() embedded in the error string	fake clock, or timestamp-shaped field comparison

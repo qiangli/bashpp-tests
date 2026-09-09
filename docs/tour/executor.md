@@ -37,7 +37,7 @@ What that says:
    `BASHPP-EEXPR-FORM: unsupported scalar call` for `rand.Intn(10)` used as a
    call argument in interpreted mode (the same row's compiled mode passes).
    Nothing here converts a defect into a pass, a skip or a not-applicable.
-3. **The baseline is green across all 97 rows**, including the ten
+3. **The baseline is green across all 97 rows**, including the eleven
    nondeterministic ones, which are now adjudicated by reviewed semantic
    comparators against a fresh native oracle rather than against a frozen draw.
 
@@ -85,7 +85,7 @@ bash tools/tour/executor-tamper-tests.sh
 | `docs/tour/phase-migration.tsv` | the checked bridge from the pinned historical inventory schema to the current executor phase contract |
 | `docs/tour/candidate.tsv` | which components the build manifest must bind, and how the launcher/payload pair is digested |
 | `docs/tour/volatility.tsv` | the measured nondeterminism record |
-| `docs/tour/semantics.tsv` | the reviewed comparator bound to each of those ten rows |
+| `docs/tour/semantics.tsv` | the reviewed comparator bound to each of those eleven rows |
 | `tools/tour/semantics.rb` | the comparators themselves |
 | `tools/tour/executor.rb` | contract, scoring, candidate authentication, normalization audit, and the thin adapter over the shared capture primitive |
 | `tools/tour/executor-runner.rb` | produces `tests/tour/executor-results.jsonl` |
@@ -163,19 +163,19 @@ The diagnostic candidate used for the run above is
 `filebrowser cde11469…`. Its manifest records `status: diagnostic tag-enabled
 build; not final default candidate`, and the ledger carries that string.
 
-## Semantic comparators for the ten volatile rows
+## Semantic comparators for the eleven volatile rows
 
-Ten rows of the denominator cannot reproduce a byte-exact digest. They are
+Eleven rows of the denominator cannot reproduce a byte-exact digest. They are
 measured in `docs/tour/volatility.tsv` and adjudicated by
 `docs/tour/semantics.tsv` + `tools/tour/semantics.rb`.
 
 **The anchor is a fresh native oracle, not the frozen baseline.** For each of
-the ten rows the runner executes the very native binary the baseline stage just
+them the runner executes the very native binary the baseline stage just
 built `TOUR_ORACLE_REPEATS` more times (default 7) and records every run — exit,
 signal, raw streams, timestamps — as an `oracle` ledger record bound to that
 binary's digest. All three modes are then compared against those repeats. The
 pinned observation in `tests/tour/results.tsv` is **retained as historical**: for
-these ten rows its exit statuses and stage shape are still enforced, its stream
+these rows its exit statuses and stage shape are still enforced, its stream
 digests are recorded as `historical_accepted` and are no longer a required
 output, because they record one draw of a nondeterministic program on one day.
 
@@ -189,6 +189,7 @@ easier program.
 | `basics/packages.go` | `rand_intn_line` | exactly one line, exact surrounding text, value in the declared support `0…9` |
 | `concurrency/goroutines.go` | `say_interleaving` | closed line vocabulary, main's multiplicity exactly 5, the goroutine's multiplicity inside the natively observed range; only the interleaving is free |
 | `concurrency/default-selection.go` | `tick_boom_sequence` | line grammar, exactly one BOOM and it is terminal, elapsed never decreases, the i-th tick cannot precede *i*×100 ms, BOOM cannot precede 500 ms, tick count inside the native range, at least one default selection |
+| `concurrency/channels.go` | `channel_sum_order` | exactly one terminated line; the whole triple must be exactly one of the two legal arrival orders `17 -5 12` / `-5 17 12` (pinned to the source's own halves 7+2+8 and -9+4+0 and their sum); wrong values, wrong sum, wrong multiplicity or additional bytes are rejected; exit 0 and empty stderr exact. Admitted after the story-4 bounded GOMAXPROCS 1/2/4 experiment witnessed both orders from the unchanged native binary (`burst_variation: not_required` — a seven-run burst legitimately drew one order 7/7; measured flip rate ≈1/400) |
 | `flowcontrol/switch-evaluation-order.go` | `weekday_switch` | exact prompt, closed value set, and the answer **computed from the recorded run window** — a set member that disagrees with the clock the run actually had is rejected |
 | `flowcontrol/switch-with-no-condition.go` | `hour_greeting` | closed value set plus the same clock derivation |
 | `methods/errors.go` | `go_time_error_line` | every byte but the timestamp is exact; the timestamp must be a Go `time.Time` rendering, carry a plausible monotonic reading, and fall inside the run window |
@@ -197,7 +198,7 @@ easier program.
 | `welcome/sandbox.go` | `sandbox_time` | fixed greeting exact, timestamp shape + monotonic + run window |
 
 **What is never semantic.** Exit status and stderr are compared **exactly**
-against the oracle for every one of the ten rows. Only stdout is adjudicated,
+against the oracle for every one of the eleven rows. Only stdout is adjudicated,
 and only for the element `volatile_element` names.
 
 **The comparators check themselves.** Every invariant is applied to every
@@ -223,7 +224,7 @@ and requires it to sit inside the manifest's run window
 `tools/tour/semantics-selftests.rb` drives every comparator with wrong values,
 wrong counts, wrong sets, wrong order, wrong exit status, wrong stderr, wrong
 timing, degenerate oracles and **every other row's output**, and requires
-rejection: 145 checks.
+rejection: 185 checks.
 
 ## Semantic migration: the pinned phase string and the current contract
 

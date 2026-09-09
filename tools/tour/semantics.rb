@@ -5,11 +5,12 @@
 #
 # Sprint 118 / Story #4 / Story-ID 759341a95870.
 #
-# WHAT THIS IS. Ten rows of the pinned tour executable denominator cannot
+# WHAT THIS IS. Eleven rows of the pinned tour executable denominator cannot
 # reproduce a byte-exact digest because their output depends on the wall clock,
 # the randomly seeded global PRNG, goroutine interleaving or Go's randomized
 # map iteration order (docs/tour/volatility.tsv, measured over seven runs per
-# row). The sprint-118 plan §6 allows exactly two ways out: a real environment
+# row, plus concurrency/channels.go added by the Sprint 118 story-4 channel
+# arrival-order review after a bounded GOMAXPROCS 1/2/4 experiment). The sprint-118 plan §6 allows exactly two ways out: a real environment
 # control, or an EXPLICIT, REVIEWED SEMANTIC COMPARATOR that verifies values,
 # ranges, event multiplicity, causal order and timing conditions. The original
 # story (2daf) permits checked-in deterministic adapters or narrow normalizers
@@ -39,7 +40,7 @@
 # baseline stage executed, bound by digest in the ledger. The historical
 # accepted digest in tests/tour/results.tsv stays in evidence as HISTORICAL: it
 # records one draw of a nondeterministic program on one day and is no longer
-# treated as a required output for these ten rows.
+# treated as a required output for these rows.
 #
 # THE WINDOW. Clock-dependent rows are adjudicated against the wall-clock
 # interval in which the observations were actually taken, recorded in the
@@ -66,7 +67,7 @@ module TourSemantics
   # Slack around the recorded window for a wall-clock comparison.
   CLOCK_SLACK_SECONDS = 120.0
 
-  COMPARATORS = %w[rand_intn_line say_interleaving tick_boom_sequence weekday_switch
+  COMPARATORS = %w[rand_intn_line say_interleaving channel_sum_order tick_boom_sequence weekday_switch
                    hour_greeting go_time_error_line line_set webcrawler_crawl sandbox_time].freeze
   BURST_VARIATION = %w[required not_required].freeze
 
@@ -294,6 +295,60 @@ module TourSemantics
 
   def reconcile_say_interleaving(candidate, oracle, _params, _window)
     range_finding('goroutine_multiplicity', candidate['goroutine_count'], oracle.map { |o| o['goroutine_count'] })
+  end
+
+  # -- concurrency/channels.go: two independent sums sent on ONE unbuffered
+  #    channel and received in arrival order (`x, y := <-c, <-c`).
+  #
+  # The synchronization guarantees that BOTH values arrive and that the third
+  # printed value is their sum; it does NOT order which sender's value arrives
+  # first, and nothing else may be printed. The support is therefore EXACTLY
+  # TWO whole outputs — "17 -5 12" or "-5 17 12" — and the comparator admits
+  # nothing else: wrong values, a wrong sum (re-derived from the source's own
+  # halves 7+2+8 = 17 and -9+4+0 = -5), wrong multiplicity, additional bytes
+  # or an unterminated line are all findings. This is NOT sorting or set
+  # comparison of arbitrary output: the two-element output set is pinned to
+  # the source's own arithmetic, and every other byte of stdout, plus exit
+  # status and stderr, stays exact.
+  #
+  # Measured (Sprint 118 story 4, evidence
+  # /Users/qiangli/.local/state/bashy/sprint118-evidence/tour-channel-order-review):
+  # the native binary built from the byte-identical source with the pinned
+  # go1.27.0 printed "-5 17 12" 1204/1207 runs and "17 -5 12" 3/1207
+  # (GOMAXPROCS=2: 1/400, GOMAXPROCS=4: 2/400, GOMAXPROCS=1: 0/400), every
+  # run exit 0, stdout exactly 9 bytes, stderr empty. A seven-run
+  # GOMAXPROCS=2 burst — the executor oracle shape — drew one single order
+  # 7/7, so the element legitimately holds still inside one burst and its
+  # burst_variation is `not_required`.
+  def facts_channel_sum_order(lines, params, result)
+    halves = params.fetch('halves')
+    if lines.length != 1
+      result['findings'] << "line_count:#{lines.length}!=1"
+      return
+    end
+    tokens = lines[0].split(' ')
+    unless tokens.length == 3 && tokens.all? { |t| t.match?(/\A-?\d+\z/) }
+      result['findings'] << "shape:#{lines[0].inspect}"
+      return
+    end
+    values = tokens.map { |t| Integer(t, 10) }
+    result['values'] = values
+    result['findings'] << "sum:#{values[0]}+#{values[1]}!=#{values[2]}" unless values[0] + values[1] == values[2]
+    result['findings'] << "sum:#{values[2]}!=#{params.fetch('sum')}" unless values[2] == params.fetch('sum')
+    result['findings'] << "halves:#{values[0, 2].sort.inspect}!=#{halves.sort.inspect}" unless values[0, 2].sort == halves.sort
+    result['output'] = lines[0]
+    result['findings'] << "output_not_in_declared_set:#{lines[0].inspect}" unless params.fetch('outputs').include?(lines[0])
+  end
+
+  def reconcile_channel_sum_order(_candidate, _oracle, _params, _window)
+    # The declared SUPPORT — exactly the two legal whole outputs — is the
+    # contract, exactly as for rand_intn_line: an arrival order the oracle's
+    # seven-run burst happened not to draw is still a legal draw (measured
+    # flip rate about 1/400 under GOMAXPROCS=2, 0/400 under GOMAXPROCS=1).
+    # What the oracle must still establish is checked generically in compare:
+    # enough runs, one stable exit status, one stable stderr, and every
+    # oracle observation inside the declared support.
+    []
   end
 
   # -- concurrency/default-selection.go: a 100ms tick, a 500ms boom, a default

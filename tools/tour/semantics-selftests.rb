@@ -147,6 +147,46 @@ rejects('say_interleaving: rejects a wrong exit status', GOROUTINES,
         say(%w[hello world hello world hello world hello world hello]).merge('exit' => 2),
         GOROUTINES_ORACLE, 'status:exit_mismatch')
 
+# ============================================================== channels =====
+
+CHANNELS = '_content/tour/concurrency/channels.go'
+def channels_line(order)
+  observation("#{order}\n")
+end
+MINUS_FIRST = channels_line('-5 17 12') # the dominant native draw (1204/1207)
+SEVENTEEN_FIRST = channels_line('17 -5 12') # the rare legal draw (3/1207)
+CHANNELS_ORACLE = [MINUS_FIRST, MINUS_FIRST, MINUS_FIRST, SEVENTEEN_FIRST,
+                   MINUS_FIRST, MINUS_FIRST, MINUS_FIRST].freeze
+
+accepts('channel_sum_order: accepts the dominant arrival order', CHANNELS, MINUS_FIRST, CHANNELS_ORACLE)
+accepts('channel_sum_order: accepts the OTHER legal arrival order', CHANNELS, SEVENTEEN_FIRST, CHANNELS_ORACLE)
+accepts('channel_sum_order: an order the oracle never drew is still legal (declared support)', CHANNELS,
+        SEVENTEEN_FIRST, Array.new(7) { MINUS_FIRST })
+accepts('channel_sum_order: a one-order burst is LEGAL here — not_required, measured flip rate ~1/400', CHANNELS,
+        MINUS_FIRST, Array.new(7) { MINUS_FIRST })
+rejects('channel_sum_order: rejects a WRONG SUM', CHANNELS, channels_line('-5 17 13'), CHANNELS_ORACLE, 'sum:')
+rejects('channel_sum_order: rejects values that are not the two computed halves', CHANNELS,
+        channels_line('-17 5 -12'), CHANNELS_ORACLE, 'halves:')
+rejects('channel_sum_order: rejects wrong multiplicity — the line twice', CHANNELS,
+        observation("17 -5 12\n17 -5 12\n"), CHANNELS_ORACLE, 'line_count')
+rejects('channel_sum_order: rejects an extra trailing line', CHANNELS,
+        observation("17 -5 12\nextra\n"), CHANNELS_ORACLE, 'line_count')
+rejects('channel_sum_order: rejects empty output', CHANNELS, observation(''), CHANNELS_ORACLE, 'line_count')
+rejects('channel_sum_order: rejects missing trailing bytes (unterminated line)', CHANNELS,
+        observation('17 -5 12'), CHANNELS_ORACLE, 'unterminated_output')
+rejects('channel_sum_order: rejects ADDITIONAL BYTES between the values', CHANNELS,
+        channels_line('-5  17 12'), CHANNELS_ORACLE, 'output_not_in_declared_set')
+rejects('channel_sum_order: rejects a non-numeric rendering', CHANNELS,
+        channels_line('seventeen minus five twelve'), CHANNELS_ORACLE, 'shape')
+rejects('channel_sum_order: STATUS is never semantic — a nonzero exit fails', CHANNELS,
+        MINUS_FIRST.merge('exit' => 2), CHANNELS_ORACLE, 'status:exit_mismatch')
+rejects('channel_sum_order: STDERR is never semantic — unexpected stderr fails', CHANNELS,
+        MINUS_FIRST.merge('stderr' => "warning\n"), CHANNELS_ORACLE, 'stderr:mismatch')
+rejects('channel_sum_order: a too-thin oracle cannot establish anything', CHANNELS,
+        MINUS_FIRST, CHANNELS_ORACLE.first(3), 'oracle:insufficient_runs')
+rejects('channel_sum_order: an oracle observation with a wrong sum fails the comparator itself', CHANNELS,
+        MINUS_FIRST, CHANNELS_ORACLE[0..5] + [channels_line('-5 17 13')], 'oracle:invariant_violation')
+
 # ==================================================== default-selection =====
 
 SELECT = '_content/tour/concurrency/default-selection.go'
@@ -405,6 +445,7 @@ rejects('crawler: rejects duplicate already-fetched event', CRAWLER,
 SAMPLES = {
   PACKAGES => packages_line(3),
   GOROUTINES => say(%w[hello world hello world hello world hello world hello]),
+  CHANNELS => channels_line('-5 17 12'),
   SELECT => tick_run(SELECT_GOOD),
   WEEKDAY => weekday('Too far away.'),
   GREETING => greeting('Good evening.'),
@@ -415,8 +456,8 @@ SAMPLES = {
 }.freeze
 
 ORACLES = {
-  PACKAGES => PACKAGES_ORACLE, GOROUTINES => GOROUTINES_ORACLE, SELECT => SELECT_ORACLE,
-  WEEKDAY => WEEKDAY_ORACLE, GREETING => GREETING_ORACLE, ERRORS => ERRORS_ORACLE,
+  PACKAGES => PACKAGES_ORACLE, GOROUTINES => GOROUTINES_ORACLE, CHANNELS => CHANNELS_ORACLE,
+  SELECT => SELECT_ORACLE, WEEKDAY => WEEKDAY_ORACLE, GREETING => GREETING_ORACLE, ERRORS => ERRORS_ORACLE,
   STRINGER => STRINGER_ORACLE, CRAWLER => CRAWL_ORACLE, SANDBOX => SANDBOX_ORACLE
 }.freeze
 
@@ -433,7 +474,7 @@ end
 # ========================================================= table binding ====
 
 check('table: every declared-volatile row has exactly one comparator') do
-  expect(TABLE.length == 10, "#{TABLE.length} rows")
+  expect(TABLE.length == 11, "#{TABLE.length} rows")
 end
 
 check('table: a comparator cannot be bound to a row whose pinned digest differs') do
