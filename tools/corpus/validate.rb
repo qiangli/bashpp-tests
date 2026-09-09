@@ -110,7 +110,7 @@ module Corpus
             # receipt prepared for another SDK identity or in another cache is
             # refused rather than merely self-consistent.
             Corpus.authenticate_import_configuration!(result.fetch('import_configuration'), tool: provenance.dig('sdk', 'binary'),
-                                                      context: { 'identity' => provenance.dig('sdk', 'identity'), 'cache' => provenance.dig('cache', 'path') })
+                                                      context: Corpus.importcfg_provenance_context!(result.fetch('import_configuration'), provenance))
             # Compile-only evidence is an object archive; a linked program would
             # mean the obligation was replaced by a stricter, different recipe.
             object = result.fetch('artifacts').fetch('object')

@@ -132,7 +132,7 @@ class CompileAdapterFrozenReplayTest < Minitest::Test
   # says about itself.
   def assert_authenticated_import_configuration(result, provenance, label)
     configuration = result.fetch('import_configuration')
-    anchor = { 'identity' => provenance.dig('sdk', 'identity'), 'cache' => provenance.dig('cache', 'path') }
+    anchor = Corpus.importcfg_provenance_context!(configuration, provenance)
     assert Corpus.authenticate_import_configuration!(configuration, tool: provenance.dig('sdk', 'binary'), context: anchor), label
     preparation = configuration.fetch('preparation')
     assert_equal 'exited', preparation.fetch('state'), label
@@ -166,7 +166,7 @@ class CompileAdapterFrozenReplayTest < Minitest::Test
   # handed, must fail closed by name. These forgeries are made on copies of real
   # evidence; nothing in the shared cache is touched.
   def assert_named_tamper_refusals(record, provenance)
-    anchor = { 'identity' => provenance.dig('sdk', 'identity'), 'cache' => provenance.dig('cache', 'path') }
+    anchor = Corpus.importcfg_provenance_context!(record.dig('modes', 'baseline', 'import_configuration'), provenance)
     refuse = lambda do |mutate|
       configuration = JSON.parse(Corpus.canonical(record.dig('modes', 'baseline', 'import_configuration')))
       mutate.call(configuration)

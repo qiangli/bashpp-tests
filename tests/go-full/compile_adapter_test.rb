@@ -34,6 +34,17 @@ class CompileAdapterContractTest < Minitest::Test
     FileUtils.rm_rf(@tmp)
   end
 
+  def test_retained_context_cannot_self_seal_a_different_build_environment
+    provenance = { 'sdk' => { 'identity' => IDENTITY }, 'executor_sha256' => 'unit-harness-only' }
+    key = Digest::SHA256.hexdigest(Corpus.canonical(provenance.merge('build_environment' => BUILD_ENVIRONMENT)))
+    provenance['cache'] = { 'path' => File.join(@cache, key), 'key' => key }
+    receipt = { 'context' => { 'environment' => BUILD_ENVIRONMENT.dup } }
+    assert_equal BUILD_ENVIRONMENT, Corpus.importcfg_provenance_context!(receipt, provenance).fetch('environment')
+    receipt['context']['environment']['GOFLAGS'] = '-mod=mod -tags=forged'
+    error = assert_raises(Corpus::ContractError) { Corpus.importcfg_provenance_context!(receipt, provenance) }
+    assert_match(/build environment differs from the provenance cache key/, error.message)
+  end
+
   def importcfg_path
     File.join(@cache, Corpus::IMPORTCFG_NAME)
   end

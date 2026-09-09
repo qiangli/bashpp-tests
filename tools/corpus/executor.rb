@@ -368,6 +368,23 @@ module Corpus
     ).sort.to_h
   end
 
+  # Reconstruct the executor's cache key using the independently supplied run
+  # provenance. A receipt and preparation can agree about a forged GOFLAGS;
+  # their environment must also produce the cache identity sealed by the run.
+  def importcfg_provenance_context!(receipt, provenance)
+    environment = receipt.fetch('context').fetch('environment')
+    raise ContractError, 'import configuration retains no build environment' unless environment.is_a?(Hash)
+    cache = provenance.fetch('cache')
+    before_cache = provenance.reject { |key, _| key == 'cache' }
+    expected_key = Digest::SHA256.hexdigest(canonical(before_cache.merge('build_environment' => environment)))
+    unless cache.fetch('key') == expected_key && File.basename(cache.fetch('path')) == expected_key
+      raise ContractError, 'import configuration build environment differs from the provenance cache key'
+    end
+    { 'identity' => provenance.fetch('sdk').fetch('identity'), 'cache' => cache.fetch('path'), 'environment' => environment }
+  rescue KeyError, TypeError => error
+    raise ContractError, "malformed import configuration provenance: #{error.message}"
+  end
+
   # The known context is what the preparation environment is judged against, and
   # it is itself anchored outside the receipt: the SDK root is derived from the
   # authenticated toolchain binary's own path, the platform from the SDK

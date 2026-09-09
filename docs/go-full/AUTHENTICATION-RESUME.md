@@ -180,3 +180,21 @@ duplicate, or extra selected IDs fail before execution. Results retain the full
 manifest denominator and are labeled `typechecker-phase-discovery-shard`, with
 the existing explicit overall FAIL and incomplete runtime-coverage fields.
 This diagnostic run cannot certify the other axes or close the sprint.
+
+Retained compile import configurations also re-derive the executor cache key
+from the independently supplied run provenance (excluding its cache descriptor)
+and the receipt's claimed build environment. Merely matching identity/cache path
+and making `context.environment` agree with the preparation environment is not
+sufficient: both could claim different `GOFLAGS` while the actual compile
+capture remains unchanged. The derived key must match both provenance's key and
+its cache directory name. Resume additionally supplies the checkpoint execution
+environment. This check preserves existing v2 receipts whose environment matches
+their original key; it never repairs or re-prepares tampered evidence.
+
+`tests/go-full/compile_adapter_retained_test.rb` audits an explicitly selected
+real compile record with `GO_FULL_RETAINED_COMPILE_RECORD` and its independently
+pinned `GO_FULL_RETAINED_COMPILE_SHA256`. It checks the original positive shared
+validation and negative self-consistent preparation forgeries through both
+shared validation and resume. This is retained-evidence authentication, not a new
+corpus execution or native coverage claim. Standalone adapter receipts without
+an explicit GOROOT are not claimed to be complete GoFull resume checkpoints.

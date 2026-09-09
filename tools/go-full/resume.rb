@@ -140,7 +140,7 @@ module GoFullResume
         # configuration it compiled against, or the prefix proves nothing.
         if stage['stage'] == 'compile'
           Corpus.authenticate_import_configuration!(result.fetch('import_configuration'), tool: provenance.dig('sdk', 'binary'),
-                                                    context: { 'identity' => provenance.dig('sdk', 'identity'), 'cache' => provenance.dig('cache', 'path') })
+                                                    context: Corpus.importcfg_provenance_context!(result.fetch('import_configuration'), provenance).merge('environment' => environment))
         end
         if Corpus.success?(stage) && stage['stage'] == 'transpile'
           generated = result.fetch('artifacts').fetch('generated')
