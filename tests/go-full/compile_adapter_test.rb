@@ -4,6 +4,10 @@
 # here is a fake tool created by the test, so these tests are hermetic and prove
 # harness behaviour only; they are never corpus certification. The real frozen
 # candidate/SDK replay lives in compile_adapter_proof_test.rb.
+#
+# The fake tools drive the real stdlib export preparation: nothing here injects a
+# ready-made @import_configuration, because the preparation and its reuse
+# authentication are the code under test.
 require 'minitest/autorun'
 require 'tmpdir'
 require 'fileutils'
@@ -15,16 +19,31 @@ require_relative '../../tools/go-full/product'
 
 class CompileAdapterContractTest < Minitest::Test
   GO_OBJECT_MAGIC = "\x00go120ld"
+  # What the fake `go list -export ... std` publishes. Contents stand in for real
+  # export archives; only their bytes and their stability matter to the contract.
+  STDLIB_PACKAGES = { 'errors' => "fake errors export\n", 'fmt' => "fake fmt export\n" }.freeze
 
   def setup
     @tmp = Dir.mktmpdir('compile-adapter-')
-    @importcfg = File.join(@tmp, 'importcfg-std')
-    File.write(@importcfg, "packagefile fmt=#{File.join(@tmp, 'fmt.a')}\n")
-    FileUtils.touch(File.join(@tmp, 'fmt.a'))
+    @cache = File.join(@tmp, 'cache')
+    @stdlib = File.join(@tmp, 'stdlib')
+    [@cache, @stdlib].each { |dir| FileUtils.mkdir_p(dir) }
   end
 
   def teardown
     FileUtils.rm_rf(@tmp)
+  end
+
+  def importcfg_path
+    File.join(@cache, Corpus::IMPORTCFG_NAME)
+  end
+
+  def receipt_path
+    File.join(@cache, Corpus::IMPORTCFG_RECEIPT)
+  end
+
+  def archive_path(name)
+    File.join(@stdlib, name + '.a')
   end
 
   # An ar container carrying the two members and the goobj magic that the pinned
@@ -50,14 +69,32 @@ class CompileAdapterContractTest < Minitest::Test
   end
 
   # A fake `go` that records its argv and then produces exactly what the plan
-  # asks for. `plan` is baked into the script: the executor clears the
-  # environment, so no variable can smuggle the plan in.
-  def fake_go(plan)
-    log = File.join(@tmp, 'go-argv.jsonl')
-    tool('go', <<~SCRIPT)
+  # asks for, for both `list -export ... std` and `tool compile`. `plan` is baked
+  # into the script: the executor clears the environment, so no variable can
+  # smuggle the plan in. `name` lets a test build a second, differently-digested
+  # toolchain for the cache-substitution negatives.
+  def fake_go(plan = {}, name: 'go')
+    log = File.join(@tmp, name + '-argv.jsonl')
+    baked = plan.merge('log' => log, 'stdlib' => @stdlib, 'packages' => STDLIB_PACKAGES,
+                       'identity' => name, 'archive' => object_archive_bytes.unpack1('H*'))
+    tool(name, <<~SCRIPT)
       require 'json'
-      plan = #{plan.merge('log' => log, 'archive' => object_archive_bytes.unpack1('H*')).inspect}
+      require 'fileutils'
+      plan = #{baked.inspect}
       File.open(plan['log'], 'a') { |f| f.puts(JSON.generate(ARGV)) }
+      if ARGV.first == 'list'
+        sleep(plan['list_sleep']) if plan['list_sleep']
+        FileUtils.mkdir_p(plan['stdlib'])
+        rows = plan['packages'].map do |package, body|
+          archive = File.join(plan['stdlib'], package + '.a')
+          File.binwrite(archive, body) unless File.file?(archive)
+          'packagefile ' + package + '=' + archive
+        end
+        rows = plan['list_rows'] if plan['list_rows']
+        warn(plan['list_stderr']) if plan['list_stderr']
+        puts(rows) unless plan['list_silent']
+        exit(plan['list_exit'] || 0)
+      end
       out = ARGV[ARGV.index('-o') + 1] if ARGV.include?('-o')
       case plan['behaviour']
       when 'object' then File.binwrite(out, [plan['archive']].pack('H*'))
@@ -72,7 +109,7 @@ class CompileAdapterContractTest < Minitest::Test
       end
       exit 0
     SCRIPT
-    [File.realpath(File.join(@tmp, 'go')), log]
+    [File.realpath(File.join(@tmp, name)), log]
   end
 
   # A fake `bashy` that answers `--check` and emits a marker-free generated file
@@ -101,15 +138,23 @@ class CompileAdapterContractTest < Minitest::Test
     File.realpath(File.join(@tmp, 'bashy'))
   end
 
-  def executor(go:, bashy: '/certainly/not/a/bashy')
+  # Only the toolchain identity and the shared cache are injected. The import
+  # configuration is prepared by the executor's own code path under test.
+  def executor(go:, bashy: '/certainly/not/a/bashy', importcfg_timeout: 60)
     instance = Corpus::Executor.allocate
     instance.instance_variable_set(:@go, go)
     instance.instance_variable_set(:@bashy, bashy)
     instance.instance_variable_set(:@env, { 'PATH' => '/usr/bin:/bin', 'GOTOOLCHAIN' => 'local' })
-    instance.instance_variable_set(:@cache, File.join(@tmp, 'cache'))
+    instance.instance_variable_set(:@cache, @cache)
     instance.instance_variable_set(:@timeout, 30)
-    instance.instance_variable_set(:@importcfg, @importcfg)
+    instance.instance_variable_set(:@importcfg_timeout, importcfg_timeout)
+    # Modes that never reach the toolchain are given a deliberately absent one.
+    instance.instance_variable_set(:@provenance, 'sdk' => { 'binary' => File.file?(go) ? Corpus.file_record(go) : { 'path' => go, 'sha256' => nil } })
     instance
+  end
+
+  def sdk_of(go)
+    { 'path' => go, 'sha256' => Corpus.digest(go) }
   end
 
   def source(body = "package main\n\nfunc f() {}\n", name = 'main-without-main.go')
@@ -124,6 +169,233 @@ class CompileAdapterContractTest < Minitest::Test
     instance.send(:execute_mode, case_dir, mode, inputs, sources, [], {}, phase, [], {}, nil)
   end
 
+  def prepared(go = nil)
+    go ||= fake_go.first
+    executor(go: go).send(:import_configuration)
+  end
+
+  def rewrite_receipt
+    receipt = JSON.parse(File.read(receipt_path))
+    yield receipt
+    File.chmod(0o644, receipt_path)
+    File.write(receipt_path, Corpus.canonical(receipt) + "\n")
+    receipt
+  end
+
+  # ---- stdlib export preparation -----------------------------------------
+
+  def test_import_configuration_is_prepared_by_a_bounded_captured_authenticated_process
+    go, log = fake_go
+    receipt = prepared(go)
+
+    assert_equal Corpus::IMPORTCFG_SCHEMA, receipt.fetch('schema')
+    assert_equal importcfg_path, receipt.fetch('path')
+    assert_equal sdk_of(go), receipt.fetch('tool').slice('path', 'sha256')
+
+    preparation = receipt.fetch('preparation')
+    assert_equal [go, 'list', '-export', '-f', Corpus::IMPORTCFG_TEMPLATE, 'std'], preparation.fetch('argv')
+    assert_equal [JSON.parse(File.readlines(log).first)], [preparation.fetch('argv').drop(1)]
+    # Bounded and captured exactly like every other stage: a deadline, a real
+    # process receipt, file-backed streams and no surviving descendant.
+    assert_equal 60, preparation.fetch('timeout_seconds')
+    assert_equal 'exited', preparation.fetch('state')
+    assert_equal 0, preparation.fetch('exit')
+    assert_nil preparation.fetch('signal')
+    assert_equal false, preparation.fetch('descendants_survived')
+    assert preparation.fetch('duration_seconds') <= 60
+    %w[stdout stderr].each do |stream|
+      record = preparation.fetch(stream)
+      assert_equal record.fetch('sha256'), Corpus.digest(record.fetch('path')), stream
+    end
+    assert_equal 'local', preparation.fetch('environment').fetch('GOTOOLCHAIN')
+
+    # Every published archive is hashed, and the retained rows are exactly the
+    # retained package set.
+    assert_equal STDLIB_PACKAGES.keys.sort, receipt.fetch('packages').map { |p| p.fetch('name') }.sort
+    receipt.fetch('packages').each do |package|
+      archive = package.fetch('archive')
+      assert_equal archive_path(package.fetch('name')), archive.fetch('path')
+      assert_equal Corpus.digest(archive.fetch('path')), archive.fetch('sha256')
+      assert_equal File.size(archive.fetch('path')), archive.fetch('bytes')
+    end
+    assert_equal receipt.fetch('packages').map { |p| "packagefile #{p.fetch('name')}=#{p.fetch('archive').fetch('path')}" },
+                 File.read(importcfg_path).lines.map(&:chomp)
+  end
+
+  def test_the_retained_configuration_and_receipt_are_immutable
+    prepared
+    [importcfg_path, receipt_path].each do |path|
+      assert_equal 0o444, File.stat(path).mode & 0o777, path
+    end
+  end
+
+  def test_preparation_happens_once_and_reuse_reauthenticates
+    go, log = fake_go
+    first = executor(go: go).send(:import_configuration)
+    # A separate executor sharing the cache reuses the retained configuration
+    # rather than re-running the toolchain, and still authenticates it.
+    second = executor(go: go).send(:import_configuration)
+    assert_equal first, second
+    assert_equal 1, File.readlines(log).length, 'the stdlib export must be prepared once per cache'
+  end
+
+  def test_a_configuration_present_without_a_receipt_is_refused
+    go, log = fake_go
+    File.write(importcfg_path, "packagefile fmt=#{archive_path('fmt')}\n")
+    File.binwrite(archive_path('fmt'), STDLIB_PACKAGES.fetch('fmt'))
+    error = assert_raises(Corpus::ContractError) { executor(go: go).send(:import_configuration) }
+    assert_match(/without a preparation receipt/, error.message)
+    refute File.exist?(log), 'an unauthenticated configuration must not be adopted'
+  end
+
+  def test_a_changed_stdlib_archive_invalidates_the_configuration
+    go, = fake_go
+    prepared(go)
+    File.binwrite(archive_path('fmt'), 'a different archive with the same name')
+    error = assert_raises(Corpus::ContractError) { executor(go: go).send(:import_configuration) }
+    assert_match(/stdlib archive changed since preparation: fmt/, error.message)
+  end
+
+  def test_a_missing_stdlib_archive_is_named_rather_than_silently_reprepared
+    go, log = fake_go
+    prepared(go)
+    FileUtils.rm_f(archive_path('errors'))
+    error = assert_raises(Corpus::ContractError) { executor(go: go).send(:import_configuration) }
+    assert_match(/stdlib archive is missing: errors/, error.message)
+    assert_equal 1, File.readlines(log).length, 'a lost archive must not silently re-prepare'
+  end
+
+  def test_a_configuration_edited_after_preparation_is_refused
+    go, = fake_go
+    prepared(go)
+    File.chmod(0o644, importcfg_path)
+    File.write(importcfg_path, File.read(importcfg_path) + "packagefile smuggled=#{archive_path('fmt')}\n")
+    error = assert_raises(Corpus::ContractError) { executor(go: go).send(:import_configuration) }
+    assert_match(/changed since preparation/, error.message)
+  end
+
+  def test_an_archive_path_substituted_in_the_retained_rows_is_refused
+    go, = fake_go
+    receipt = prepared(go)
+    File.binwrite(File.join(@tmp, 'substitute.a'), STDLIB_PACKAGES.fetch('fmt'))
+    rows = receipt.fetch('packages').map do |package|
+      archive = package.fetch('name') == 'fmt' ? File.join(@tmp, 'substitute.a') : package.fetch('archive').fetch('path')
+      "packagefile #{package.fetch('name')}=#{archive}"
+    end
+    File.chmod(0o644, importcfg_path)
+    File.write(importcfg_path, rows.join("\n") + "\n")
+    # The bytes of the configuration are re-hashed first, so the substitution is
+    # caught even though the substitute archive has identical contents.
+    error = assert_raises(Corpus::ContractError) { executor(go: go).send(:import_configuration) }
+    assert_match(/changed since preparation/, error.message)
+
+    # And with the file record refreshed, the rows themselves no longer match the
+    # retained package set.
+    rewrite_receipt { |r| r.merge!(Corpus.file_record(importcfg_path)) }
+    error = assert_raises(Corpus::ContractError) { executor(go: go).send(:import_configuration) }
+    assert_match(/rows differ from the retained package set/, error.message)
+  end
+
+  def test_a_configuration_prepared_by_a_different_toolchain_is_refused
+    first, = fake_go
+    prepared(first)
+    other, = fake_go({ 'behaviour' => 'object' }, name: 'go-other')
+    refute_equal Corpus.digest(first), Corpus.digest(other)
+    error = assert_raises(Corpus::ContractError) { executor(go: other).send(:import_configuration) }
+    assert_match(/prepared by a different toolchain/, error.message)
+  end
+
+  def test_a_replaced_toolchain_binary_invalidates_the_configuration
+    go, = fake_go
+    receipt = prepared(go)
+    File.chmod(0o755, go)
+    File.write(go, File.read(go) + "\n# a different toolchain at the same path\n")
+    error = assert_raises(Corpus::ContractError) do
+      Corpus.authenticate_import_configuration!(receipt, tool: nil)
+    end
+    assert_match(/digest mismatch/, error.message)
+  end
+
+  def test_an_unbounded_or_uncaptured_preparation_receipt_is_refused
+    go, = fake_go
+    prepared(go)
+    {
+      /not bounded/ => ->(r) { r['preparation']['timeout_seconds'] = nil },
+      /not a captured process receipt/ => ->(r) { r['preparation'].delete('stdout') },
+      /did not complete/ => ->(r) { r['preparation']['state'] = 'deadline' },
+      /leaked a descendant/ => ->(r) { r['preparation']['descendants_survived'] = true },
+      /different recipe/ => ->(r) { r['preparation']['argv'] = [go, 'build', 'std'] },
+      /escaped the local toolchain/ => ->(r) { r['preparation']['environment']['GOTOOLCHAIN'] = 'auto' },
+      /package set changed/ => ->(r) { r['packages_sha256'] = Digest::SHA256.hexdigest('nope') },
+      /unknown import configuration schema/ => ->(r) { r['schema'] = 'corpus-importcfg/v0' }
+    }.each do |pattern, mutate|
+      receipt = JSON.parse(File.read(receipt_path))
+      mutate.call(receipt)
+      error = assert_raises(Corpus::ContractError, pattern.source) do
+        Corpus.authenticate_import_configuration!(receipt, tool: sdk_of(go))
+      end
+      assert_match(pattern, error.message)
+    end
+  end
+
+  def test_a_preparation_stream_deleted_after_the_fact_is_refused
+    go, = fake_go
+    receipt = prepared(go)
+    stdout = receipt.fetch('preparation').fetch('stdout').fetch('path')
+    File.binwrite(stdout, File.binread(stdout) + "packagefile smuggled=/dev/null\n")
+    error = assert_raises(Corpus::ContractError) do
+      Corpus.authenticate_import_configuration!(receipt, tool: sdk_of(go))
+    end
+    assert_match(/preparation stdout changed/, error.message)
+  end
+
+  def test_a_failed_or_hung_preparation_never_yields_a_configuration
+    go, = fake_go('list_exit' => 3, 'list_stderr' => 'go: cannot load standard library')
+    error = assert_raises(Corpus::ContractError) { executor(go: go).send(:import_configuration) }
+    assert_match(/stdlib importcfg unavailable \(exited\): go: cannot load standard library/, error.message)
+    refute File.exist?(importcfg_path)
+    refute File.exist?(receipt_path)
+
+    FileUtils.rm_rf(@cache)
+    FileUtils.mkdir_p(@cache)
+    hung, = fake_go({ 'list_sleep' => 30 }, name: 'go-hung')
+    error = assert_raises(Corpus::ContractError) do
+      executor(go: hung, importcfg_timeout: 1).send(:import_configuration)
+    end
+    assert_match(/stdlib importcfg unavailable \(deadline\)/, error.message)
+    refute File.exist?(receipt_path), 'a deadline must not publish a configuration'
+  end
+
+  def test_an_empty_or_malformed_export_listing_is_refused
+    go, = fake_go('list_silent' => true)
+    error = assert_raises(Corpus::ContractError) { executor(go: go).send(:import_configuration) }
+    assert_match(/stdlib importcfg is empty/, error.message)
+
+    FileUtils.rm_rf(@cache); FileUtils.mkdir_p(@cache)
+    go, = fake_go({ 'list_rows' => ['packagefile fmt='] }, name: 'go-empty-archive')
+    assert_match(/malformed importcfg row/, assert_raises(Corpus::ContractError) { executor(go: go).send(:import_configuration) }.message)
+
+    FileUtils.rm_rf(@cache); FileUtils.mkdir_p(@cache)
+    go, = fake_go({ 'list_rows' => ['packagefile fmt=/certainly/not/an/archive.a'] }, name: 'go-absent-archive')
+    assert_match(%r{importcfg archive missing: /certainly/not/an/archive\.a}, assert_raises(Corpus::ContractError) { executor(go: go).send(:import_configuration) }.message)
+
+    FileUtils.rm_rf(@cache); FileUtils.mkdir_p(@cache)
+    duplicate = "packagefile fmt=#{archive_path('fmt')}"
+    File.binwrite(archive_path('fmt'), STDLIB_PACKAGES.fetch('fmt'))
+    go, = fake_go({ 'list_rows' => [duplicate, duplicate] }, name: 'go-duplicate')
+    assert_match(/repeats a package/, assert_raises(Corpus::ContractError) { executor(go: go).send(:import_configuration) }.message)
+  end
+
+  def test_an_unbounded_preparation_deadline_is_rejected_at_construction
+    error = assert_raises(Corpus::ContractError) do
+      Corpus::Executor.new(bashy: '/certainly/not/a/bashy', go: fake_go.first, evidence_root: @tmp,
+                           candidate: {}, sdk: {}, importcfg_timeout: 0)
+    end
+    assert_equal 'importcfg preparation must be bounded', error.message
+  end
+
+  # ---- compile phases -----------------------------------------------------
+
   def test_compile_baseline_uses_the_upstream_compile_recipe_and_never_links
     go, log = fake_go('behaviour' => 'object')
     inputs, sources = source
@@ -133,13 +405,18 @@ class CompileAdapterContractTest < Minitest::Test
     assert_equal ['compile'], result['stages'].map { |stage| stage['stage'] }
     argv = result['stages'].fetch(0).fetch('argv')
     object = result.fetch('artifacts').fetch('object').fetch('path')
-    assert_equal [go, 'tool', 'compile', '-e', '-p=p', '-importcfg=' + @importcfg, '-o', object, sources.fetch(0)], argv
+    assert_equal [go, 'tool', 'compile', '-e', '-p=p', '-importcfg=' + importcfg_path, '-o', object, sources.fetch(0)], argv
     # An ordinary `go build` links, so it rejects a valid `package main` that
     # declares no `main`. It can never stand in as the compile oracle.
     refute_includes argv, 'build'
     refute result.fetch('artifacts').key?('native'), 'compile-only phase must not retain a linked program'
-    assert_equal @importcfg, result.fetch('import_configuration').fetch('path')
-    assert_equal [argv], File.readlines(log).map { |line| JSON.parse(line).unshift(go) }
+
+    configuration = result.fetch('import_configuration')
+    assert_equal importcfg_path, configuration.fetch('path')
+    # The retained configuration is the authenticated receipt, not a bare digest.
+    assert Corpus.authenticate_import_configuration!(configuration, tool: sdk_of(go))
+    assert_equal [%w[list -export], %w[tool compile]],
+                 File.readlines(log).map { |line| JSON.parse(line).first(2) }
   end
 
   def test_compile_interpreted_mode_checks_the_original_source_and_never_runs_it
@@ -154,6 +431,10 @@ class CompileAdapterContractTest < Minitest::Test
     %w[--bashpp --source=go --check].each { |flag| assert_includes argv, flag }
     assert_empty result.fetch('artifacts')
     refute result.key?('effects'), 'a compile-only obligation never observes runtime effects'
+    # The interpreted mode publishes no stdlib archives, so it retains no
+    # configuration and never triggers preparation.
+    refute result.key?('import_configuration')
+    refute File.exist?(receipt_path)
   end
 
   def test_compile_interpreted_check_failure_is_not_credited
@@ -174,6 +455,14 @@ class CompileAdapterContractTest < Minitest::Test
     assert_equal %w[generated object source_map], artifacts.keys.sort
     assert_equal artifacts.fetch('generated').fetch('path'), result['stages'].fetch(1).fetch('argv').last
     assert Corpus.go_object_archive?(artifacts.fetch('object').fetch('path'))
+    assert Corpus.authenticate_import_configuration!(result.fetch('import_configuration'), tool: sdk_of(go))
+  end
+
+  def test_a_compile_phase_cannot_run_without_a_usable_import_configuration
+    go, = fake_go('behaviour' => 'object', 'list_exit' => 1)
+    inputs, sources = source
+    assert_raises(Corpus::ContractError) { run_mode(executor(go: go), 'baseline', inputs, sources) }
+    refute File.exist?(File.join(@tmp, 'case/baseline/artifacts/object.o')), 'no compile may start without an authenticated configuration'
   end
 
   def test_successful_compile_without_an_object_fails_closed

@@ -99,10 +99,16 @@ module Corpus
             map = JSON.parse(File.read(result.fetch('artifacts').fetch('source_map').fetch('path')))
             raise ContractError, 'source map digest mismatch' unless Corpus.valid_source_map?(map, generated, record.fetch('inputs').slice(*record.fetch('sources')))
           end
-          if mode != 'interpreted' && record['phase'] == 'compile'
+          publishes_archives = mode != 'interpreted' && record['phase'] == 'compile'
+          raise ContractError, 'import configuration retained outside a compile obligation' if result.key?('import_configuration') && !publishes_archives
+          if publishes_archives
+            # The retained import configuration must still authenticate: same SDK,
+            # same bounded captured recipe, same bytes, same archive contents. A
+            # digest over the config file alone would let a substituted cache or a
+            # changed stdlib archive certify.
+            Corpus.authenticate_import_configuration!(result.fetch('import_configuration'), tool: provenance.dig('sdk', 'binary'))
             # Compile-only evidence is an object archive; a linked program would
             # mean the obligation was replaced by a stricter, different recipe.
-            file!(result.fetch('import_configuration'))
             object = result.fetch('artifacts').fetch('object')
             raise ContractError, 'empty compile artifact' unless object.fetch('bytes').positive?
             raise ContractError, 'compile artifact is not a Go object archive' unless Corpus.go_object_archive?(object.fetch('path'))

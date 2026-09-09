@@ -222,11 +222,36 @@ valid `package main` that deliberately declares no `main`. A link-required
 The `compile` phase runs the exact upstream recipe in all three modes: the
 baseline compiles the unchanged original source, the interpreted mode runs the
 candidate's own `--check` over that same source, and the compiled mode
-transpiles it and compiles the generated program. The import configuration is
-prepared once per executor with `go list -export ... std` from the pinned SDK
-and retained per mode as `import_configuration`; it publishes only archives that
-already belong to the authenticated toolchain and never credits an original
-runtime body. Compile-only credit requires a real Go object archive — the ar
+transpiles it and compiles the generated program.
+
+The import configuration is prepared once per executor with
+`go list -export ... std` from the pinned SDK. That preparation is a real
+subprocess against the authenticated toolchain, so it is bounded and captured
+through `Corpus.capture` like every other stage — a declared deadline, a
+file-backed stdout/stderr pair, an exit/signal receipt and a process-group leak
+check — and it publishes only archives that already belong to that toolchain,
+never crediting an original runtime body. What is retained per mode as
+`import_configuration` is the whole receipt, not a digest of the config file:
+the authenticated SDK binary that prepared it, the exact `list -export -f <tmpl>
+std` argv, the preparation environment and process outcome, and a `path`,
+`bytes` and `sha256` for *every* packagefile archive it publishes, sealed by a
+`packages_sha256` over that package set. Both the configuration and its receipt
+are written read-only, so what a later run reads is what a manager reviews.
+
+Reuse never trusts a file that merely exists in the shared cache. A
+configuration with no receipt beside it is refused by name rather than adopted,
+and a receipt is re-authenticated on every use: same SDK binary, same recipe,
+same bounded captured preparation, unchanged configuration bytes, rows still
+matching the sealed package set, and every archive still holding the bytes
+hashed at preparation time. A substituted toolchain, an edited configuration, a
+swapped archive path and a changed or vanished stdlib archive each fail closed
+with the offending package named; nothing is silently re-prepared. `validate.rb`
+and the resume replay enforce that same contract on real compile stages, and a
+compile stage in a justified failing prefix must still name a configuration that
+authenticates — a prefix that cannot say what it compiled against proves
+nothing.
+
+Compile-only credit requires a real Go object archive — the ar
 container must parse exactly, carry `__.PKGDEF` and `_go_.o`, and the object
 member must hold the toolchain's own goobj magic — so a nonempty file, a
 truncated archive or a foreign object is a `missing_artifact`, not a pass. A
@@ -306,13 +331,27 @@ GOMAXPROCS=1 GOTOOLCHAIN=local /absolute/pinned/sdk/bin/go -C tools/go-full/type
 ```
 
 `compile_adapter_test.rb` is hermetic: every process it runs is a fake tool it
-creates, so it proves harness behaviour and never skips itself into credit. The
-real replay of the compile adapter against the frozen candidate and the pinned
-SDK is separate and fails, rather than skips, when an input is missing:
+creates, so it proves harness behaviour and never skips itself into credit. Its
+fake toolchain drives the real stdlib export preparation — nothing injects a
+ready-made import configuration — so the preparation, its reuse authentication
+and every substitution negative are exercised rather than bypassed.
+
+The real replay against the frozen candidate and the pinned SDK is separate. It
+carries no host paths: every location is supplied explicitly, and it fails,
+rather than skips, when the configuration or an input is missing.
 
 ```sh
-GOMAXPROCS=2 GOFLAGS=-p=2 ruby tests/go-full/compile_adapter_proof_test.rb
+GO_FULL_PROOF_CONFIG=<config.json> GOMAXPROCS=2 GOFLAGS=-p=2 \
+  ruby tests/go-full/compile_adapter_proof_test.rb
 ```
+
+The config is a JSON object holding `source_root`, `sdk_identity`, `candidate`,
+`bashy`, a required `receipts` directory and an optional `cache_root`; each key
+may also be given as the matching `GO_FULL_*` environment variable, which wins
+over the file. The raw execution records are written under `receipts` — one
+directory per run, indexed by a `receipts.json` — and are never deleted by the
+test, since they are the manager-reviewable evidence of the replay. Only scratch
+is cleaned up.
 
 `typechecker_test.rb` includes bounded integration controls that execute the
 frozen candidate against real pinned fixtures; they skip when that candidate or

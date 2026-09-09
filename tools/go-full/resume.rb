@@ -135,6 +135,10 @@ module GoFullResume
         expected_environment['PATH'] = File.join(mode_dir, 'empty-path') if stage['stage'] == 'run'
         raise Corpus::ContractError, 'capture environment differs' unless stage.fetch('environment') == expected_environment
         raise Corpus::ContractError, 'capture cache differs' unless stage.fetch('environment')['GOCACHE'] == provenance.dig('cache', 'path')
+        # A compile stage authenticates its import configuration whether or not
+        # it succeeded: a justified failing prefix must still name the exact
+        # configuration it compiled against, or the prefix proves nothing.
+        Corpus.authenticate_import_configuration!(result.fetch('import_configuration'), tool: provenance.dig('sdk', 'binary')) if stage['stage'] == 'compile'
         if Corpus.success?(stage) && stage['stage'] == 'transpile'
           generated = result.fetch('artifacts').fetch('generated')
           mapping = JSON.parse(File.read(result.fetch('artifacts').fetch('source_map').fetch('path')))
@@ -144,7 +148,6 @@ module GoFullResume
           raise Corpus::ContractError, 'retained native artifact invalid' unless binary.fetch('bytes').positive? &&
             (Corpus.native_binary?(binary.fetch('path')) || (expected['phase'] == 'build' && Corpus.go_object_archive?(binary.fetch('path'))))
         elsif Corpus.success?(stage) && stage['stage'] == 'compile'
-          Corpus::Validation.file!(result.fetch('import_configuration'))
           object = result.fetch('artifacts').fetch('object')
           raise Corpus::ContractError, 'retained compile artifact is not a Go object archive' unless object.fetch('bytes').positive? && Corpus.go_object_archive?(object.fetch('path'))
           raise Corpus::ContractError, 'compile-only phase retained a linked program' if result.fetch('artifacts').key?('native')
