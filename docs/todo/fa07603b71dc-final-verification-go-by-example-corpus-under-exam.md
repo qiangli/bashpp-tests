@@ -6,6 +6,7 @@ seq: 3
 status: doing
 priority: p1
 created: 2026-09-03T09:45:35.902827Z
+weave: 44
 assignee: qiangli
 sprint: 118
 ---
@@ -21,3 +22,5 @@ Candidate022 is NOT an unambiguous advance. Interpreted rose 57 -> 59 (enums, sl
 2. Corpus classification defect, no schema decision taken here. examples/json/json.go is classified deterministic/none/none, but both of its map-encoding lines are emitted in Go map iteration order by encoding/json/v2 in the ORACLE itself (40 runs each: 35/5 and 34/6 splits). Every verdict this row has produced in any anchored chain has been a coin flip; candidate021's compiled pass and candidate022's compiled mismatch are both luck. The row needs behavior map_iteration with the licensed map_order normalization, as examples/range-over-built-in-types already has. Making that change re-baselines classification_sha256 and corpus_sha256 and invalidates every anchored root including 021 and 022, so it must be decided deliberately rather than absorbed into a candidate comparison.
 
 Next: land the new-of-value guard in sh, decide the json classification, then freeze and authenticate Candidate023 and rerun all 85 rows and 255 observations with port 8090 exclusively owned. Retain every failure. This story stays open until all applicable interpreted rows pass and the compiled column is back at 85.
+
+Manager update 2026-09-09 22:13 UTC: the new-of-value guard is pushed in sh 70ec295a837dbe9feb6dde193d5517c95032fda0 and pinned by bashy e723079e208b103dd06617c4473f6c50c7649ed7. Story #18 deliberately landed the JSON map_iteration/map_order rebaseline in bashpp-tests b68504d7f89d32591fbb2273b6f56027be705231 without rewriting Candidate021/022. Run 44 owns the serialized Candidate023 freeze and complete GbE/Tour replay; port 8090 was free at assignment.
