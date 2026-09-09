@@ -94,7 +94,18 @@ def main():
 
     evidence = pathlib.Path(args.evidence)
     attempted = {}
-    for row in read_rows(evidence / 'roots.jsonl'):
+    truncated_tail = None
+    lines = [line for line in (evidence / 'roots.jsonl').read_text().splitlines() if line.strip()]
+    for index, line in enumerate(lines):
+        try:
+            row = json.loads(line)
+        except json.JSONDecodeError:
+            # A run stopped mid-write can leave one partial final row. Any
+            # earlier bad line is corruption, not a cap, and is fatal.
+            if index != len(lines) - 1:
+                raise SystemExit('malformed retained row at line %d' % (index + 1))
+            truncated_tail = len(line)
+            break
         rid = row['id']
         if rid in attempted:
             raise SystemExit('duplicate retained row id: ' + rid)
@@ -154,6 +165,7 @@ def main():
         'driver_exit_code': args.exit_code,
         'inventory_roots': len(inventory),
         'attempted_roots': len(attempted),
+        'discarded_truncated_final_row_bytes': truncated_tail,
         'not_attempted_roots': len(inventory) - len(attempted),
         'full_manifest_denominators': dict(sorted(denominators.items())),
         'attempted_by_axis': dict(sorted(attempted_by_axis.items())),

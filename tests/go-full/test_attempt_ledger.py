@@ -105,6 +105,25 @@ class AttemptLedgerTests(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertIn('duplicate retained row id', result.stderr)
 
+    def test_truncated_final_row_from_a_kill_is_discarded_not_counted(self):
+        good = json.dumps(row('testdir:a', 'PASS', execution={'verdict': 'PASS'}))
+        partial = json.dumps(row('testdir:b', 'FAIL'))[:20]
+        (self.evidence / 'roots.jsonl').write_text(good + '\n' + partial)
+        result, out = self.run_tool()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        report = json.loads((out / 'attempt-attempt.json').read_text())
+        self.assertEqual(report['attempted_roots'], 1)
+        self.assertEqual(report['discarded_truncated_final_row_bytes'], len(partial))
+        # The half-written root is charged as unreached, never as a verdict.
+        self.assertEqual(report['not_attempted_roots'], 4)
+
+    def test_malformed_row_before_the_end_is_fatal(self):
+        good = json.dumps(row('testdir:a', 'PASS', execution={'verdict': 'PASS'}))
+        (self.evidence / 'roots.jsonl').write_text('{broken\n' + good + '\n')
+        result, _out = self.run_tool()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('malformed retained row at line 1', result.stderr)
+
     def test_row_outside_immutable_inventory_rejected(self):
         self.retain([row('testdir:a', 'PASS'), row('testdir:invented', 'PASS')])
         result, _out = self.run_tool()
