@@ -1,0 +1,7 @@
+src/internal/types/testdata/fixedbugs/issue70150.go:9:5: cannot use values (variable of type []int) as string value in argument to vf
+src/internal/types/testdata/fixedbugs/issue70150.go:10:14: not enough arguments in call to vf
+	have ([]int...)
+	want (string, ...int)
+src/internal/types/testdata/fixedbugs/issue70150.go:11:17: too many arguments in call to vf
+	have (string, string, []int...)
+	want (string, ...int)

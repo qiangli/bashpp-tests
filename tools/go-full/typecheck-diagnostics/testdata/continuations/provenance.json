@@ -1,0 +1,26 @@
+{
+  "source_archive_sha256": "7002403d7cc44529ef6d26f69a44818263395ead7c16c05a5808ae047ebeb0e5",
+  "claim": "Original upstream source and captured candidate006 diagnostics, copied without changes. Matcher regression only; no native or product test body runs.",
+  "files": {
+    "issue49005.go.txt": {
+      "path": "/Users/qiangli/.bashy/sprint118/sources/go-full/go/src/internal/types/testdata/fixedbugs/issue49005.go",
+      "sha256": "c4ffb5cf92d7628eeb6b2558db434ec1a8ddda45daf9e62b89cdcf2a3120faae",
+      "bytes": 699
+    },
+    "issue49005.stderr": {
+      "path": "/Users/qiangli/.bashy/sprint118/evidence/go-full/product-all-008/typechecker/go/types:TestFixedbugs/issue49005.go/interpreted/check.stderr",
+      "sha256": "0f03a01d3d8c13748ec1e92633865ef24eae0e058dfc45d28de26b7da1232250",
+      "bytes": 461
+    },
+    "issue70150.go.txt": {
+      "path": "/Users/qiangli/.bashy/sprint118/sources/go-full/go/src/internal/types/testdata/fixedbugs/issue70150.go",
+      "sha256": "efdcb6e8f301d254b0c38860d20a9ec8d5c67486af3fb5a789b2d91aefe4782e",
+      "bytes": 481
+    },
+    "issue70150.stderr": {
+      "path": "/Users/qiangli/.bashy/sprint118/evidence/go-full/product-all-008/typechecker/go/types:TestFixedbugs/issue70150.go/interpreted/check.stderr",
+      "sha256": "916182c9bf6549330bf4f75a014b9fb1ecde7766f7a57c3a222ff80926b4d32b",
+      "bytes": 416
+    }
+  }
+}

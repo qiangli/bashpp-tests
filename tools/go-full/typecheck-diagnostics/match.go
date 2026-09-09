@@ -35,12 +35,15 @@ var positionRx = regexp.MustCompile(`^(.*?):(\d+):(\d+): (.*)$`)
 const secondaryMarker = ": \t"
 
 // parseDiagnostics splits one captured stream into positioned diagnostics.
-// A line starting with a tab continues the previous message, and a positioned
-// line whose message itself begins with a tab is an upstream secondary
-// clarification. Any other line that is not a positioned diagnostic for a known
+// A line starting with a tab continues the previous Error.Msg, including its
+// newline and indentation. A positioned line whose message itself begins with
+// a tab is a separate upstream secondary error; it and its continuations are
+// retained but never joined into a matchable primary message. Any other line
+// that is not a positioned diagnostic for a known
 // fixture file is reported as unparsed: the caller must never treat unexplained
 // output as a pass.
 func parseDiagnostics(stream, text string, known map[string]bool) (found []diagnostic, unparsed []string) {
+	positionedSecondary := false
 	for _, raw := range strings.Split(text, "\n") {
 		line := strings.TrimSuffix(raw, "\r")
 		if strings.HasPrefix(line, "\t") {
@@ -49,6 +52,12 @@ func parseDiagnostics(stream, text string, known map[string]bool) (found []diagn
 				continue
 			}
 			found[len(found)-1].Secondary = append(found[len(found)-1].Secondary, line)
+			if !positionedSecondary {
+				// An unpositioned continuation belongs to the same Error.Msg.
+				// Upstream unpackError returns that complete message, including
+				// literal newlines and tabs used by ERROR/ERRORx annotations.
+				found[len(found)-1].Msg += "\n" + line
+			}
 			continue
 		}
 		if strings.TrimSpace(line) == "" {
@@ -72,9 +81,11 @@ func parseDiagnostics(stream, text string, known map[string]bool) (found []diagn
 				continue
 			}
 			found[len(found)-1].Secondary = append(found[len(found)-1].Secondary, line)
+			positionedSecondary = true
 			continue
 		}
 		found = append(found, diagnostic{File: filepath.Clean(m[1]), Line: row, Col: col, Msg: m[4], Stream: stream})
+		positionedSecondary = false
 	}
 	return found, unparsed
 }
@@ -102,13 +113,13 @@ type mismatch struct {
 }
 
 type matchResult struct {
-	Expected          int          `json:"expected_diagnostics"`
-	Observed          int          `json:"observed_diagnostics"`
-	Matched           int          `json:"matched_diagnostics"`
-	UnmatchedObserved []diagnostic `json:"unmatched_observed"`
+	Expected          int           `json:"expected_diagnostics"`
+	Observed          int           `json:"observed_diagnostics"`
+	Matched           int           `json:"matched_diagnostics"`
+	UnmatchedObserved []diagnostic  `json:"unmatched_observed"`
 	UnmatchedExpected []expectation `json:"unmatched_expected"`
-	ColumnMismatches  []mismatch   `json:"column_mismatches"`
-	InvalidPatterns   []string     `json:"invalid_patterns"`
+	ColumnMismatches  []mismatch    `json:"column_mismatches"`
+	InvalidPatterns   []string      `json:"invalid_patterns"`
 }
 
 // matchOne reports whether gotMsg satisfies one ERROR/ERRORx annotation.
