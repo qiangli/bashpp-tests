@@ -43,7 +43,7 @@ examples/http-client/http-client.go	program	network_client	none	fixed_env,local_
 examples/http-server/http-server.go	program	network_server	none	loopback_server	none	1473	836772974848e6e2e156599b41dfb4bdf6106a88ed8c3b57629ba67950a94d00
 examples/if-else/if-else.go	program	deterministic	none	none	none	897	6e98f481b15b40c64986eb884145bc400995d40d9ed156bce02b9cf8a6063408
 examples/interfaces/interfaces.go	program	deterministic	none	none	none	1697	87e2b22c1f64bf33ac25a8ae109769745d9153a666d7ae2a8a7c1dcc43cef8a4
-examples/json/json.go	program	deterministic	none	none	none	3910	2fc7c85f636a5f22d5480a7bc36262db6891d56890ea257470a8789afdb460a7
+examples/json/json.go	program	map_iteration	map_order	none	none	3910	2fc7c85f636a5f22d5480a7bc36262db6891d56890ea257470a8789afdb460a7
 examples/line-filters/line-filters.go	program	stdin	none	stdin_fixture	none	1067	1f8b858817d3bdda938b6b6dc7ef217963d0d0eed9afb7080edb448188998617
 examples/logging/logging.go	program	clock	wallclock	none	none	2320	a7c2043beb550a5a070019455a28de8bbaf92ab90455643a620837fe93aea446
 examples/maps/maps.go	program	deterministic	none	none	none	1830	b5f6887155dfba0a2d017049b6c3d73a4eb2c347d17b38503b5c83a3f31e1138

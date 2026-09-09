@@ -85,10 +85,13 @@ typed semantic comparators that validate and retain observed values, ranges,
 arity, and order. Normalization is stream-aware; a stdout-only rule is an exact
 no-op for stderr, including an empty stderr stream.
 
-`map_iteration` is declared in the schema and used by exactly one row
-(`range-over-built-in-types`, which prints `for k, v := range kvs`). It is not
-used more widely because `fmt` prints maps in sorted key order, so `maps`,
-`mutexes` and `url-parsing` are genuinely deterministic despite holding maps.
+`map_iteration` is declared in the schema and used by two rows:
+`range-over-built-in-types` prints `for k, v := range kvs`, while `json` uses
+`encoding/json/v2` to emit two `map[string]int` values. Its `map_order` rule
+preserves the other thirteen output lines and canonicalizes only those two
+map-derived JSON objects with exact key/value membership. It is not used more
+widely because `fmt` prints maps in sorted key order, so `maps`, `mutexes` and
+`url-parsing` are genuinely deterministic despite holding maps.
 
 ### There is no N/A
 
