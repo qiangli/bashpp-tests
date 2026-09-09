@@ -131,21 +131,38 @@ GOROUTINES_ORACLE = [
   say(%w[world world hello hello hello world world hello hello])
 ].freeze
 
-accepts('say_interleaving: any interleaving with the right multiplicities', GOROUTINES,
-        say(%w[world hello world hello hello world hello world hello]), GOROUTINES_ORACLE)
-rejects('say_interleaving: rejects too FEW main lines', GOROUTINES,
-        say(%w[hello world hello world hello world hello world]), GOROUTINES_ORACLE, 'main_multiplicity')
+# Negative first: establish the closed line language, exact synchronous call,
+# prefix ceiling and line boundaries before demonstrating accepted schedules.
+rejects('say_interleaving: rejects missing hello even with a complete world call', GOROUTINES,
+        say(%w[hello hello hello hello world world world world world]), GOROUTINES_ORACLE, 'main_multiplicity')
 rejects('say_interleaving: rejects too MANY main lines', GOROUTINES,
         say(%w[hello] * 6 + %w[world] * 4), GOROUTINES_ORACLE, 'main_multiplicity')
 rejects('say_interleaving: rejects a goroutine count above its own bound', GOROUTINES,
         say(%w[hello] * 5 + %w[world] * 6), GOROUTINES_ORACLE, 'goroutine_multiplicity_outside_bound')
-rejects('say_interleaving: rejects a goroutine count outside the NATIVE observed range', GOROUTINES,
-        say(%w[hello] * 5), GOROUTINES_ORACLE, 'outside_native_range')
 rejects('say_interleaving: rejects an unknown line', GOROUTINES,
         say(%w[hello world hola hello world hello world hello world hello]), GOROUTINES_ORACLE, 'unknown_line')
+rejects('say_interleaving: rejects joined events instead of treating them as ordered lines', GOROUTINES,
+        observation("helloworld\nhello\nhello\nhello\nhello\n"), GOROUTINES_ORACLE, 'unknown_line')
+rejects('say_interleaving: rejects an unterminated final event', GOROUTINES,
+        observation("hello\nworld\nhello\nworld\nhello\nworld\nhello\nhello"), GOROUTINES_ORACLE, 'unterminated_output')
 rejects('say_interleaving: rejects a wrong exit status', GOROUTINES,
         say(%w[hello world hello world hello world hello world hello]).merge('exit' => 2),
         GOROUTINES_ORACLE, 'status:exit_mismatch')
+check('say_interleaving v1: authenticates the historical sampled-range rejection') do
+  all_five = Array.new(7) { say(%w[hello world hello world hello world hello world hello world]) }
+  verdict = TourSemantics.compare(TABLE.fetch(GOROUTINES),
+                                  candidate: say(%w[hello world hello world hello world hello world hello]),
+                                  oracle: all_five, window: WINDOW,
+                                  version: TourSemantics::LEGACY_VERSION)
+  expect(!verdict['ok'] && verdict['findings'].any? { |f| f.include?('outside_native_range_5..5') }, verdict.inspect)
+end
+accepts('say_interleaving: any interleaving with the right source-derived prefixes', GOROUTINES,
+        say(%w[world hello world hello hello world hello world hello]), GOROUTINES_ORACLE)
+accepts('say_interleaving: zero world lines are legal without a scheduler-progress guarantee', GOROUTINES,
+        say(%w[hello hello hello hello hello]), GOROUTINES_ORACLE)
+accepts('say_interleaving: four world lines remain legal when a seven-run burst happens to show five', GOROUTINES,
+        say(%w[hello world hello world hello world hello world hello]),
+        Array.new(7) { say(%w[hello world hello world hello world hello world hello world]) })
 
 # ============================================================== channels =====
 

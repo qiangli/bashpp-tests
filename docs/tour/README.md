@@ -191,6 +191,10 @@ tools/tour/semantics-selftests.sh     # comparator negative tests
 tools/tour/executor-tamper-tests.sh   # real-ledger tamper probes
 ```
 
+The `say_interleaving` v2 anti-flake decision and the exact authentication-then-
+readjudication rule for retained v1 ledgers are documented in
+[`sprint118-story19-goroutine-contract.md`](sprint118-story19-goroutine-contract.md).
+
 `tests/tour/executor-results.jsonl` records 97 programs x 3 modes = 291
 observations. What changed from `tour-evidence/v2`:
 

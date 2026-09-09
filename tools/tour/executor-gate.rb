@@ -47,6 +47,16 @@ NORMALIZER = ENV.fetch('TOUR_NORMALIZER', File.join(REFS, 'tools/tour/normalize.
 # unbounded window would be an escape hatch: a run that "took eleven hours"
 # could admit any hour-of-day greeting.
 MAX_WINDOW_SECONDS = 900.0
+# The retained Candidate018/021/022/023 ledgers were sealed with v1. Keep the
+# exact digest as an authentication key: v1 is replayed only for checking what
+# those ledgers originally claimed, then their immutable raw bytes are
+# readjudicated with the current source-bound contract.
+LEGACY_SEMANTICS_LIBRARIES = {
+  TourSemantics::LEGACY_VERSION => '18bbf973a54ce0dd5ef1c62d564e31eac25bb9c2655658cd8f3c420d78240dce'
+}.freeze
+LEGACY_SEMANTICS_TABLES = {
+  TourSemantics::LEGACY_VERSION => '4039f378a63ebaf50b28fabb488a9c5be2cb2f2e77d43b8dde2cbcd8b11d9015'
+}.freeze
 
 FAILURES = []
 def bad(reason)
@@ -72,7 +82,6 @@ abort 'FATAL: malformed ledger envelope' unless summary['type'] == 'summary' && 
 {
   'contract' => 'docs/tour/executor-contract.tsv',
   'phase_migration' => 'docs/tour/phase-migration.tsv',
-  'semantics' => 'docs/tour/semantics.tsv',
   'inventory' => 'tests/tour/inventory.tsv',
   'accepted_baseline' => 'tests/tour/results.tsv',
   'source_pin' => 'docs/tour/pin.tsv',
@@ -92,9 +101,27 @@ bad('binding:volatility:sha256') unless manifest.dig('volatility', 'sha256') ==
 # measurement table itself excuses a mismatch — is rejected by name.
 bad('volatility:claims_gate_effect') unless manifest.dig('volatility', 'gate_effect') == 'measurement-record'
 bad('semantics:gate_effect') unless manifest.dig('semantics', 'gate_effect') == 'semantic-comparator'
-bad('semantics:version') unless manifest.dig('semantics', 'version') == TourSemantics::VERSION
-bad('semantics:library_sha256') unless manifest.dig('semantics', 'library_sha256') ==
-                                       TourExecutor.sha(File.binread(File.join(REFS, 'tools/tour/semantics.rb')))
+ledger_semantics_version = manifest.dig('semantics', 'version')
+supported_semantics = [TourSemantics::VERSION, TourSemantics::LEGACY_VERSION]
+bad('semantics:version') unless supported_semantics.include?(ledger_semantics_version)
+ledger_comparison_version = supported_semantics.include?(ledger_semantics_version) ? ledger_semantics_version : TourSemantics::VERSION
+bad('binding:semantics:path') unless manifest.dig('semantics', 'path') == 'docs/tour/semantics.tsv'
+expected_semantics_table =
+  if ledger_semantics_version == TourSemantics::VERSION
+    TourExecutor.sha(File.binread(File.join(REFS, 'docs/tour/semantics.tsv')))
+  else
+    LEGACY_SEMANTICS_TABLES[ledger_semantics_version]
+  end
+bad('binding:semantics:sha256') unless expected_semantics_table &&
+                                         manifest.dig('semantics', 'sha256') == expected_semantics_table
+expected_semantics_library =
+  if ledger_semantics_version == TourSemantics::VERSION
+    TourExecutor.sha(File.binread(File.join(REFS, 'tools/tour/semantics.rb')))
+  else
+    LEGACY_SEMANTICS_LIBRARIES[ledger_semantics_version]
+  end
+bad('semantics:library_sha256') unless expected_semantics_library &&
+                                       manifest.dig('semantics', 'library_sha256') == expected_semantics_library
 bad('binding:baseline_pin') unless manifest.dig('accepted_baseline', 'pin_sha256') ==
                                   TourExecutor.sha(File.binread(File.join(REFS, 'docs/tour/baseline-pin.tsv')))
 bad('binding:normalizer_version') unless manifest.dig('normalizer', 'version') == 'tour-normalizer/v1'
@@ -234,6 +261,7 @@ end
 bad("observations=#{observations.length}") unless observations.length == TourExecutor::OBSERVATIONS
 
 baselines = seen.select { |(_, mode), _| mode == 'baseline' }.to_h { |(path, _), o| [path, o] }
+effective_statuses = []
 
 observations.each do |observation|
   path, mode = observation['path'], observation['mode']
@@ -376,6 +404,7 @@ observations.each do |observation|
   # -- the semantic verdict, recomputed independently from the stored raw
   #    bytes and the stored oracle. A hand-written `ok` cannot survive this.
   semantic_row = semantics[path]
+  current_semantic = nil
   if observation['semantic'] && semantic_row.nil?
     bad("semantic_undeclared:#{tag}")
   elsif semantic_row
@@ -407,10 +436,17 @@ observations.each do |observation|
         'stdout' => Base64.decode64(final.dig('raw', 'stdout_base64').to_s).force_encoding('UTF-8'),
         'stderr' => Base64.decode64(final.dig('raw', 'stderr_base64').to_s).force_encoding('UTF-8')
       }
+      # First authenticate the immutable verdict under the exact contract that
+      # produced it. Then independently apply v2 to the same raw streams. This
+      # is a contract migration, not an evidence rewrite or a trust in a
+      # hand-edited status.
       recomputed = TourSemantics.compare(semantic_row, candidate: candidate_streams,
-                                         oracle: decoded_oracle, window: window)
+                                         oracle: decoded_oracle, window: window,
+                                         version: ledger_comparison_version)
       recorded = (observation['semantic'] || {}).reject { |k, _| k == 'stage' }
       bad("semantic_forged:#{tag}") unless recorded == recomputed
+      current_semantic = TourSemantics.compare(semantic_row, candidate: candidate_streams,
+                                               oracle: decoded_oracle, window: window)
     end
   end
 
@@ -418,10 +454,17 @@ observations.each do |observation|
   recomputed = TourExecutor.observation_status(
     observation, recipe: recipe, accepted: accepted[path],
     baseline_observation: mode == 'baseline' ? nil : baselines[path],
-    semantic_row: semantic_row
+    semantic_row: semantic_row, semantic_version: ledger_comparison_version
   )
   bad("status_forged:#{tag}:recorded=#{status} recomputed=#{recomputed}") unless status == recomputed
-  bad("not_pass:#{tag}:#{recomputed}") unless recomputed == 'PASS'
+  effective_observation = current_semantic ? observation.merge('semantic' => current_semantic) : observation
+  effective = TourExecutor.observation_status(
+    effective_observation, recipe: recipe, accepted: accepted[path],
+    baseline_observation: mode == 'baseline' ? nil : baselines[path],
+    semantic_row: semantic_row
+  )
+  effective_statuses << effective
+  bad("not_pass:#{tag}:#{effective}") unless effective == 'PASS'
 end
 
 # --- 8. summary, root and verdict recomputed -------------------------------
@@ -432,9 +475,15 @@ bad('summary:observations') unless summary['observations'] == observations.lengt
 bad('summary:semantic_rows') unless summary['semantic_rows'] == oracles.length
 bad('root:tampered') unless root['sha256'] == TourExecutor.ledger_root(records[0..-3])
 bad('verdict:root_binding') unless verdict['root_sha256'] == root['sha256']
-should_pass = FAILURES.empty?
-bad("verdict:forged (claims #{verdict['value']})") if verdict['value'] == 'PASS' && !should_pass
-bad("verdict:not_pass (#{verdict['value']})") unless verdict['value'] == 'PASS'
+recorded_verdict = observations.all? { |o| o['status'] == 'PASS' } ? 'PASS' : 'FAIL'
+bad("verdict:forged (claims #{verdict['value']})") unless verdict['value'] == recorded_verdict
+# A v1 FAIL remains an authenticated historical fact. It may validate now only
+# when every raw observation passes v2; current ledgers must still say PASS.
+if ledger_semantics_version == TourSemantics::VERSION
+  bad("verdict:not_pass (#{verdict['value']})") unless verdict['value'] == 'PASS'
+else
+  bad('verdict:readjudication_not_pass') unless effective_statuses.all? { |status| status == 'PASS' }
+end
 
 # --- report ----------------------------------------------------------------
 
