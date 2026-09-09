@@ -1,0 +1,46 @@
+{
+  "schema": "sprint118-tour-acceptance-receipt/v1",
+  "date": "2026-09-09",
+  "candidate": "015",
+  "sh_commit": "e8d7e1e0778518668089f62b9ab13aa1116cfd33",
+  "bashy_commit": "865240797c3a2cb9740a35f1de40f068fd3c2dbb",
+  "harness_commit": "d728cdda6de7096c59859e06aebd2366ed55a47d",
+  "candidate_manifest_sha256": "9bcfc9c20fb2fec4e2dbe2210b520b4b8436e219dcd75c5eb6668352e83131ba",
+  "launcher_sha256": "454c25a8cfb70a45e2bcb4fe57f64e7726164ed1ec8b7e46f3c243f4b87930a4",
+  "payload_sha256": "d705bd80f7d050ba118ab1978cf065baeda259facafae6d4db90e68d6c94719c",
+  "raw_ledger_sha256": "096a395261c962325da7fc0466ccb897f5b795a8dd8e9db7507b0fb438b99143",
+  "root_sha256": "4ec30667bda86f79f12fe2d2c151fe42e0ccfaa216419a94a301446ca253a91c",
+  "inventory_rows": 168,
+  "programs": 97,
+  "runnable_programs": 93,
+  "build_only_programs": 4,
+  "inline_fragments": 62,
+  "explicit_nobuild_programs": 9,
+  "observations": 291,
+  "mode_results": {
+    "baseline": {
+      "PASS": 97
+    },
+    "interpreted": {
+      "PASS": 97
+    },
+    "compiled": {
+      "PASS": 97
+    }
+  },
+  "oracle_rows": 11,
+  "oracle_runs": 77,
+  "completed_stages": 574,
+  "verified_raw_stream_files": 1302,
+  "verified_artifact_references": 388,
+  "verified_source_maps": 97,
+  "unique_verified_files": 1787,
+  "offline_gate": "PASS",
+  "retained_integrity_audit": "PASS",
+  "story4_tour_criteria": "MET",
+  "story1_eligibility": "PENDING successor regression gates; candidate015 sh-short gate failed",
+  "sprint_complete": false,
+  "go_full_complete": false,
+  "ledger_sha256": "d24acf3803147f356a21e863f7130610fa1ba1723972589198527a2a6f666f7e",
+  "inventory_ledger_sha256": "47469757373e044374cb5e252ed236fdf48e6ba48058381eb5ba60d8c8dbc543"
+}
