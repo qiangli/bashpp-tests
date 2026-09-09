@@ -137,7 +137,10 @@ class ModuleContextTests < Minitest::Test
     matcher = GoFullProduct.build_matcher(evidence, sdk, runtime)
     matched = GoFullProduct.match_diagnostics(root, probes, matcher, evidence, 2)
     type_matcher = GoFullTypechecker.build_matcher(evidence, sdk, runtime)
-    type_root = root.merge('axis' => 'typechecker', 'family' => 'fixedbugs', 'column_tolerance' => 0, 'runner' => 'authored-contract', 'runner_sha256' => 'fixture')
+    # Every one of the 743 real typechecker roots carries build_constraints;
+    # the joint-package adapter reads them to decide recipe applicability.
+    type_root = root.merge('axis' => 'typechecker', 'family' => 'fixedbugs', 'column_tolerance' => 0, 'runner' => 'authored-contract',
+                           'runner_sha256' => 'fixture', 'build_constraints' => { 'case.go' => [] })
     typechecked = GoFullTypechecker.execute(root: type_root, options: { bashy: bashy, timeout: 2, runtime: runtime }, source_root: source, evidence: evidence, sdk_identity: sdk, candidate: candidate, matcher: type_matcher)
     stages = execution['modes'].values.flat_map { |mode| mode['stages'] } + probes.values.map { |mode| mode.fetch('stage') } + [matcher.fetch('build_stage')] + matched.values.map { |mode| mode.fetch('diagnostic_stage') }
     stages += [type_matcher.fetch('build_stage')] + typechecked.fetch('modes').values.flat_map { |mode| [mode.fetch('stage'), mode.fetch('match').fetch('stage')] }
