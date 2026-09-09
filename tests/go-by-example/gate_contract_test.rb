@@ -6,6 +6,7 @@ require 'tmpdir'
 require_relative '../../tools/go-by-example/inputs'
 require_relative '../../tools/go-by-example/normalizer'
 require_relative '../../tools/go-by-example/candidate'
+require_relative '../../tools/go-by-example/runtime-config'
 
 class GoByExampleGateContractTest < Minitest::Test
   def setup
@@ -82,4 +83,66 @@ class GoByExampleGateContractTest < Minitest::Test
     error = assert_raises(GoByExampleCandidate::Error) { GoByExampleCandidate.authenticate(path, '/missing/product', reviewed, {'identity' => reviewed.fetch('go_identity')}) }
     assert_match 'build_recipe differs', error.message
   end
+  def test_reviewed_candidate_history_uses_exact_manifest_identity
+    rows = GoByExampleCandidate.table.select { |row| row[0, 2] == GoByExampleCandidate.host }
+    assert_operator rows.size, :>=, 2
+    rows.each do |row|
+      assert_equal row[2], GoByExampleCandidate.reviewed(manifest_sha256: row[2]).fetch('manifest_sha256')
+    end
+    assert_raises(GoByExampleCandidate::Error) { GoByExampleCandidate.reviewed(manifest_sha256: 'f' * 64) }
+  end
+
+  def test_real_sdk_telemetry_configuration_precedes_effect_baseline
+    go = ENV.fetch('CORPUS_TEST_GO') { ENV.fetch('PATH').split(':').map { |dir| File.join(dir, 'go') }.find { |path| File.executable?(path) } }
+    skip 'Go SDK not available' unless go
+    home = File.join(@root, 'home'); FileUtils.mkdir_p(home)
+    env = {'HOME' => home, 'PATH' => '', 'GOTOOLCHAIN' => 'local', 'OTEL_TRACES_EXPORTER' => 'none'}
+    record = GoByExampleRuntimeConfig.configure(File.realpath(go), @root, env,
+      deadline: Process.clock_gettime(Process::CLOCK_MONOTONIC) + 20, log_prefix: File.join(@root, 'setup-log'))
+    assert_equal 'complete', record['state'], record.inspect
+    assert_equal 'off', record['go_mode']
+    assert_equal Corpus.file_record(record['mode_file']['path']), record['mode_file']
+    baseline = Corpus.snapshot(home)
+    stage = Corpus.capture([File.realpath(go), 'env', 'GOTELEMETRY'], cwd: @root, env: env, timeout: 10, log_prefix: File.join(@root, 'check-log'))
+    assert Corpus.success?(stage)
+    assert_equal "off\n", File.read(stage['stdout']['path'])
+    assert_equal baseline, Corpus.snapshot(home), 'disabled Go telemetry created new runtime HOME effects'
+  end
+
+  def observation(name, mode, stream = 'stdout')
+    File.binread(File.join(__dir__, 'fixtures/observations', "#{name}.#{mode}.#{stream}.txt"))
+  end
+
+  def test_real_volatile_observations_preserve_declared_invariants
+    {'time' => 'wallclock', 'stateful-goroutines' => 'throughput_count', 'execing-processes' => 'file_metadata'}.each do |name, normalization|
+      assert_equal GoByExampleNormalizer.normalize(observation(name, 'oracle'), [normalization], :stdout),
+                   GoByExampleNormalizer.normalize(observation(name, 'compiled'), [normalization], :stdout), name
+    end
+    lines = observation('time', 'oracle').lines
+    lines[18] = (Integer(lines[18]) + 1).to_s + "\n"
+    assert_raises(RuntimeError) { GoByExampleNormalizer.normalize(lines.join, ['wallclock'], :stdout) }
+    lines = observation('time', 'oracle').lines
+    lines[2] = "2010\n"
+    assert_raises(RuntimeError) { GoByExampleNormalizer.normalize(lines.join, ['wallclock'], :stdout) }
+    good = observation('stateful-goroutines', 'oracle')
+    assert_raises(RuntimeError) { GoByExampleNormalizer.normalize(good + "readOps: 1\n", ['throughput_count'], :stdout) }
+    assert_raises(RuntimeError) { GoByExampleNormalizer.normalize(good.sub(/readOps: \d+/, 'readOps: 0'), ['throughput_count'], :stdout) }
+    listing = observation('execing-processes', 'oracle')
+    refute_equal GoByExampleNormalizer.normalize(listing, ['file_metadata'], :stdout),
+                 GoByExampleNormalizer.normalize(listing.sub(' home', ' unexpected'), ['file_metadata'], :stdout)
+  end
+
+  def test_logging_clocks_normalize_but_source_positions_remain_observable
+    native = observation('logging', 'oracle', 'stderr')
+    shifted = native.gsub('2026/09/09', '2026/09/10').gsub('2026-09-09', '2026-09-10')
+    assert_equal GoByExampleNormalizer.normalize(native, ['wallclock'], :stderr), GoByExampleNormalizer.normalize(shifted, ['wallclock'], :stderr)
+    refute_equal GoByExampleNormalizer.normalize(native, ['wallclock'], :stderr), GoByExampleNormalizer.normalize(observation('logging', 'compiled', 'stderr'), ['wallclock'], :stderr)
+  end
+
+  def test_retained_observation_provenance_matches_real_bytes
+    dir = File.join(__dir__, 'fixtures/observations')
+    provenance = JSON.parse(File.read(File.join(dir, 'provenance.json')))
+    provenance.fetch('files').each { |file| assert_equal file.fetch('sha256'), Corpus.digest(File.join(dir, file.fetch('file'))) }
+  end
+
 end

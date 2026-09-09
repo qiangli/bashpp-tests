@@ -45,9 +45,12 @@ module GoByExampleCandidate
 
   # The reviewed row for this host, as a field hash. Malformed rows are a
   # repository defect, not something to fall back from.
-  def reviewed(path = DOCS + "/candidates.tsv")
+  def reviewed(path = DOCS + "/candidates.tsv", manifest_sha256: nil)
     os, arch = host
-    row = table(path).find { |r| r[0] == os && r[1] == arch }
+    rows = table(path).select { |r| r[0] == os && r[1] == arch }
+    raise Error, "duplicate reviewed candidate identity" unless rows.map { |r| r[2] }.uniq.size == rows.size
+    row = manifest_sha256 ? rows.find { |r| r[2] == manifest_sha256 } : rows.last
+    raise Error, "candidate manifest is not the repository-reviewed manifest (#{manifest_sha256})" if !row && manifest_sha256
     raise Error, "no repository-reviewed Bash++ candidate for #{os}/#{arch}" unless row
     raise Error, "reviewed candidate row is malformed" unless row.size == 9
     fields = FIELDS.zip(row[2..]).to_h
@@ -59,7 +62,11 @@ module GoByExampleCandidate
     # Historical diagnostic builds used an optional tag. Final default builds
     # are equally admissible only when their exact recipe and all bytes match
     # the separately reviewed candidate row and manifest.
-    raise Error, "reviewed build recipe does not pin the Go toolchain: #{fields['build_recipe'].inspect}" unless fields["build_recipe"].include?("GOTOOLCHAIN=go1.27.")
+    version = fields["go_identity"].to_s.split[2]
+    recipe = fields["build_recipe"].to_s
+    explicit_release = version && recipe.include?("GOTOOLCHAIN=#{version}")
+    pinned_sdk_path = version && recipe.include?("GOTOOLCHAIN=local") && recipe.match?(%r{(?:\A|\s)PATH=/[^\s:]+/golang\.org/toolchain@v0\.0\.1-#{Regexp.escape(version)}\.#{Regexp.escape(os)}-#{Regexp.escape(arch)}/bin(?::|\s|\z)})
+    raise Error, "reviewed build recipe does not pin the Go toolchain: #{recipe.inspect}" unless explicit_release || pinned_sdk_path
     fields["repositories"] = parse_repositories(fields["repositories"])
     fields
   end
@@ -95,7 +102,7 @@ module GoByExampleCandidate
   # Authenticate a supplied manifest against the reviewed table and the bytes on
   # disk. Returns the provenance the gate records; raises on any divergence.
   def authenticate(manifest_path, bashy, reviewed_row = nil, toolchain_row = nil)
-    row = reviewed_row || reviewed
+    row = reviewed_row || reviewed(manifest_sha256: Corpus.digest(manifest_path))
     tool = toolchain_row || toolchain
     raise Error, "reviewed candidate go_identity #{row['go_identity'].inspect} is not the reviewed toolchain #{tool['identity'].inspect}" unless row["go_identity"] == tool["identity"]
 

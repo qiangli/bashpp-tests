@@ -25,3 +25,7 @@
 # spawned, complete and passing.  Story fa07603b71dc closes on that and on
 # nothing weaker; the failures this chain records are listed in
 # prerequisites.md and are real product defects, not harness gaps.
+# Historical v4 root (superseded by reviewed v5 normalization and telemetry setup):
+# Sprint118/Story3/fa07603b71dc	/Users/qiangli/.local/state/bashy/sprint118-evidence/published-candidate-002/gbe/results.jsonl.fail	fail	e15613842200bd68b6558964397a2a074d244635322d0d8475bf3a8cbb54a11f
+Sprint118/Story3/fa07603b71dc	/Users/qiangli/.local/state/bashy/sprint118-evidence/published-candidate-002/gbe/final-results.jsonl.fail	fail	f90040136533d83c9626f2bb222db2e5dcf86c2e41a6d235827c21a915c0bee7
+Sprint118/Story3/fa07603b71dc	/Users/qiangli/.local/state/bashy/sprint118-evidence/published-candidate-002/gbe/reviewed-results.jsonl.fail	fail	79fc60e9bfadbbfa01f00d7855e16f395841fb65db3e9bf6db419c9add33f791

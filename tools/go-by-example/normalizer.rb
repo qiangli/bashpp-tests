@@ -29,12 +29,37 @@ require "time"
 # VERSION 4 rejects extra interleaved output and unlicensed worker/job IDs;
 # ordering normalization never licenses discarding additional observable events.
 module GoByExampleNormalizer
-  VERSION = 4
+  VERSION = 5
   NAMES = %w[none argv0_path env_listing file_metadata tmp_path ephemeral_port wallclock duration panic_trace random_stream map_order interleave_order throughput_count pointer_address].freeze
-  STDOUT_NAMES = %w[argv0_path env_listing file_metadata tmp_path ephemeral_port wallclock duration random_stream map_order interleave_order throughput_count pointer_address].freeze
+  STDOUT_NAMES = %w[argv0_path env_listing file_metadata tmp_path ephemeral_port duration random_stream map_order interleave_order throughput_count pointer_address].freeze
   STDERR_NAMES = %w[panic_trace].freeze
 
   module_function
+
+  # The pinned time example prints one volatile instant and values derived
+  # from it. Validate every arithmetic relationship before removing that instant;
+  # fixed date fields, comparisons and all output structure remain observable.
+  def normalize_time_example(output)
+    lines = output.lines.map(&:chomp)
+    expected = ["2009", "November", "17", "20", "34", "58", "651387237", "UTC", "Tuesday"]
+    raise "time fixed components" unless lines[2, 9] == expected
+    parse_ns = ->(text) { (Time.parse(text.sub(/ m=[+-][\d.]+\z/, '')).to_r * 1_000_000_000).to_i }
+    now = parse_ns.call(lines[0])
+    fixed = (Time.utc(2009, 11, 17, 20, 34, 58).to_r * 1_000_000_000).to_i + 651_387_237
+    raise "time fixed instant" unless parse_ns.call(lines[1]) == fixed
+    raise "time comparisons" unless lines[11, 3] == [(fixed < now).to_s, (fixed > now).to_s, (fixed == now).to_s]
+    difference = now - fixed
+    duration = lines[14].match(/\A(?:(\d+)h)?(?:(\d+)m)?(\d+(?:\.\d+)?)s\z/)
+    raise "time duration shape" unless duration
+    rendered = Integer(duration[1] || '0') * 3_600_000_000_000 + Integer(duration[2] || '0') * 60_000_000_000 + Rational(duration[3]) * 1_000_000_000
+    raise "time duration arithmetic" unless rendered == difference && Integer(lines[18]) == difference
+    [3_600_000_000_000, 60_000_000_000, 1_000_000_000].each_with_index do |divisor, index|
+      actual = Float(lines[15 + index]); expected_value = difference.to_f / divisor
+      raise "time duration units" unless actual.finite? && (actual - expected_value).abs <= [expected_value.abs * 1e-14, 1e-9].max
+    end
+    raise "time addition arithmetic" unless parse_ns.call(lines[19]) == now && parse_ns.call(lines[20]) == 2 * fixed - now
+    JSON.generate({"fixed" => lines[1, 10], "comparisons" => lines[11, 3], "duration_units" => "consistent", "additions" => "consistent"})
+  end
 
   def normalize(data, names, stream)
     output = data.dup.force_encoding("UTF-8")
@@ -61,6 +86,11 @@ module GoByExampleNormalizer
       when "pointer_address"
         output = output.gsub(/0x[0-9a-fA-F]+/, "<ptr>")
       when "wallclock"
+        next if output.empty?
+        if stream == :stdout && output.lines.size == 21 && output.lines[1].start_with?("2009-11-17 ")
+          output = normalize_time_example(output)
+          next
+        end
         values = output.scan(/\bm=[+-][\d.]+|\b\d{4}[-\/]\d\d[-\/]\d\d(?:T| )[0-9:.+\-Z ]+|\b(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun)\s+\w+\s+\d+\s+\d\d:\d\d:\d\d\s+(?:UTC\s+)?\d{4}\b|\b\d{1,2}:\d\d(?:AM|PM)\b|(?<![\w.])\d{10,19}(?![\w.])/)
         if values.empty?
           raise "wallclock shape" unless output.match?(/It's a (?:weekend|weekday)/) && output.match?(/It's before noon|It's after noon/)
@@ -123,11 +153,12 @@ module GoByExampleNormalizer
           output = JSON.generate({"jobs" => (1..5).to_a, "constraint" => "same-worker start-before-finish"})
         end
       when "throughput_count"
-        values = output.scan(/^(readOps|writeOps): (\d+)$/).to_h.transform_values(&:to_i)
-        raise "throughput shape" unless values.keys.sort == %w[readOps writeOps] && values.values.all?(&:positive?)
-        output = JSON.generate(values)
+        lines = output.lines
+        parsed = lines.map { |line| line.match(/\A(readOps|writeOps): (\d+)\n?\z/)&.captures }
+        raise "throughput shape" unless lines.size == 2 && parsed.none?(&:nil?) && parsed.map(&:first) == %w[readOps writeOps] && parsed.all? { |_, value| Integer(value).positive? }
+        output = JSON.generate({"readOps" => "positive integer", "writeOps" => "positive integer"})
       when "file_metadata"
-        output = output.lines.map { |line| line.match?(/\A[-dl][rwx-]{9}\s+/) ? line.sub(/\A([-dl][rwx-]{9})\s+\d+\s+\S+\s+\S+\s+\S+\s+\S+\s+\d+\s+\d\d:\d\d/, '\\1 <metadata>') : line }.join
+        output = output.lines.map { |line| line.match?(/\A[-dl][rwx-]{9}[@+]?\s+/) ? line.sub(/\A([-dl][rwx-]{9})[@+]?\s+\d+\s+\S+\s+\S+\s+\S+\s+\S+\s+\d+\s+\d\d:\d\d/, '\\1 <metadata>') : line }.join
       when "ephemeral_port"
         output = output.gsub(/(?<=:)\d{2,5}\b/, "<port>")
       else

@@ -37,9 +37,9 @@ until args.empty?
 end
 
 begin
-  reviewed = GoByExampleCandidate.reviewed
   toolchain = GoByExampleCandidate.toolchain
   manifest = GoByExampleCandidate.manifest_path(manifest_arg)
+  reviewed = GoByExampleCandidate.reviewed(manifest_sha256: Corpus.digest(manifest))
   bashy = bashy_arg || ENV["BASHY_BIN"]
   die("pass --bashy LAUNCHER (or set BASHY_BIN) naming the candidate launcher") if bashy.to_s.empty?
   provenance = GoByExampleCandidate.authenticate(manifest, File.expand_path(bashy), reviewed, toolchain)

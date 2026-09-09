@@ -1,0 +1,5 @@
+2026/09/09 06:37:32 standard logger
+2026/09/09 06:37:32.240654 with micro
+2026/09/09 06:37:32 logging.go:40: with file/line
+{"time":"2026-09-09T06:37:32.240751Z","level":"INFO","msg":"hi there"}
+{"time":"2026-09-09T06:37:32.240781Z","level":"INFO","msg":"hello again","key":"val","age":25}

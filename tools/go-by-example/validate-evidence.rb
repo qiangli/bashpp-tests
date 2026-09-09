@@ -109,7 +109,7 @@ die.call("no local production anchor row") unless toolpin
 # the same reviewed release the oracle used: a pass may never be assembled from
 # a Go 1.27 oracle plus a candidate some other release actually built.
 begin
-  reviewed_candidate = GoByExampleCandidate.reviewed(candidates_path)
+  reviewed_candidate = GoByExampleCandidate.reviewed(candidates_path, manifest_sha256: manifest.dig("candidate", "manifest_sha256"))
 rescue GoByExampleCandidate::Error => e
   die.call(e.message)
 end
@@ -128,8 +128,7 @@ anchors.each { |key, value| die.call("manifest #{key} is not anchored to product
 # Sprint 98 anchored one executor digest. The Go-source front end is a launcher
 # plus a `.real` payload plus a set of replaced runtime modules, so the whole
 # candidate is re-derived here from candidates.tsv: both digests, the front-end
-# version, the asserted build recipe (which must be the tag-enabled one -- a
-# default-CLI build carries the correction inert), the SDK identity, and every
+# version, the exact reviewed build recipe, the SDK identity, and every
 # runtime repository at its exact reviewed commit, the lowering runtime and
 # filebrowser included. Evidence produced against any other candidate is refused.
 recorded = manifest["candidate"] || {}
@@ -169,6 +168,10 @@ die.call("evidence licenses an unreviewed effect normalization: #{recipe['effect
 # and the evidence has to name the exact reviewed bytes it used for them.
 die.call("evidence does not record the shared corpus process primitives") unless recipe["process_primitives"].to_s.include?("Corpus.capture")
 die.call("corpus executor is not anchored to production") unless recipe["corpus_executor_sha256"] == sha.call(root + "/tools/corpus/executor.rb")
+if recipe.key?("runtime_config_sha256")
+  die.call("runtime configuration helper is not anchored") unless recipe["runtime_config_sha256"] == sha.call(root + "/tools/go-by-example/runtime-config.rb")
+  die.call("unreviewed telemetry configuration") unless recipe["runtime_telemetry"] == {"OTEL_TRACES_EXPORTER" => "none", "Go" => "pinned go telemetry off in each isolated HOME before effect baseline"}
+end
 die.call("input binding helper is not anchored to production") unless recipe["input_binding_sha256"] == sha.call(root + "/tools/go-by-example/inputs.rb")
 die.call("run launcher is not anchored to production") unless recipe["launcher_source_sha256"] == sha.call(root + "/tools/go-by-example/launch.go")
 # The isolation claim is bounded on purpose: no OS-level sandbox is built, so
@@ -180,12 +183,38 @@ expected_pairs = inventory.flat_map { |r| MODES.map { |mode| [r[0], mode] } }
 actual_pairs = attempts.map { |r| [r["path"], r["mode"]] }
 die.call("missing, duplicate, reordered, or foreign row/mode evidence") unless actual_pairs == expected_pairs
 
+seen_stream_paths = {}
 attempts.each do |attempt|
   body = attempt.reject { |key, _| key == "evidence_sha256" }
   die.call("result tampering detected") unless attempt["binding_sha256"] == binding && attempt["evidence_sha256"] == Digest::SHA256.hexdigest(JSON.generate(body))
   inventory_row = inventory.find { |row| row[0] == attempt["path"] }
   die.call("attempt kind differs from the inventory: #{attempt['path']}") unless attempt["kind"] == inventory_row[1]
   normalizations = inventory_row[3] == "none" ? [] : inventory_row[3].split(",")
+
+  if recipe.key?("runtime_config_sha256") && attempt["state"] == "complete"
+    config = attempt.fetch("configuration", {})
+    die.call("completed attempt lacks verified telemetry setup") unless config["state"] == "complete" && config["go_mode"] == "off" && config["environment"] == {"OTEL_TRACES_EXPORTER" => "none"}
+    setup = config.fetch("stages", [])
+    die.call("invalid telemetry setup stages") unless setup.size == 2 && setup.all? { |stage| stage["state"] == "exited" && stage["exit"] == 0 && stage["environment"]["OTEL_TRACES_EXPORTER"] == "none" }
+    die.call("invalid telemetry setup commands") unless setup[0]["argv"][1..] == ["telemetry", "off"] && setup[1]["argv"][1..] == ["env", "-json", "GOTELEMETRY", "GOTELEMETRYDIR"]
+    begin
+      mode = config.fetch("mode_file")
+      actual_mode = Corpus.file_record(mode.fetch("path"))
+      die.call("telemetry mode file changed") unless actual_mode.values_at("sha256", "bytes") == mode.values_at("sha256", "bytes") && File.binread(mode.fetch("path")).match?(/\Aoff(?: \d{4}-\d{2}-\d{2})?\z/)
+      setup.each do |stage|
+        die.call("telemetry setup SDK digest mismatch") unless Corpus.digest(stage.fetch("argv").first) == manifest.fetch("go_sha256")
+        %w[stdout stderr].each do |stream|
+          artifact = stage.fetch(stream)
+          actual = Corpus.file_record(artifact.fetch("path"))
+          die.call("telemetry setup raw log changed") unless actual.values_at("sha256", "bytes") == artifact.values_at("sha256", "bytes")
+        end
+      end
+      observed = JSON.parse(File.read(setup.last.fetch("stdout").fetch("path")))
+      die.call("telemetry query does not match configuration") unless observed["GOTELEMETRY"] == "off" && File.expand_path(File.join(observed.fetch("GOTELEMETRYDIR"), "mode")) == File.expand_path(mode.fetch("path"))
+    rescue StandardError => error
+      die.call("invalid retained telemetry configuration: #{error.message}")
+    end
+  end
 
   # --- stage separation ---
   stages = attempt["stages"]
@@ -195,6 +224,31 @@ attempts.each do |attempt|
     die.call("missing #{allowed.join('/')} stage: #{attempt['path']}:#{attempt['mode']}") unless allowed.include?(stages[index].to_h["stage"])
   end
   die.call("interpreted mode may only record a run stage: #{attempt['path']}") if attempt["mode"] == "interpreted" && stages.size != 1
+  stages.each do |stage|
+    capture = stage["capture"]
+    next unless capture
+    %w[stdout stderr].each do |stream|
+      artifact = capture.fetch(stream)
+      path = File.realpath(artifact.fetch("path"))
+      die.call("duplicate retained stage stream path") if seen_stream_paths.key?(path)
+      seen_stream_paths[path] = true
+      actual = Corpus.file_record(path)
+      die.call("retained stage stream changed") unless actual.values_at("sha256", "bytes") == artifact.values_at("sha256", "bytes") && stage[stream + "_sha256"] == actual["sha256"]
+      if stage["stage"] == "run"
+        die.call("run raw bytes differ from retained capture") unless Base64.strict_decode64(attempt.fetch("raw_" + stream + "_b64")) == File.binread(path)
+      end
+    end
+    %w[native_file generated_file source_map_file].each do |key|
+      next unless stage[key]
+      artifact = stage.fetch(key); actual = Corpus.file_record(artifact.fetch("path"))
+      die.call("retained #{key} changed") unless actual.values_at("sha256", "bytes") == artifact.values_at("sha256", "bytes")
+      die.call("retained native artifact is not a binary") if key == "native_file" && !Corpus.native_binary?(artifact.fetch("path"))
+    end
+    if stage["source_map_file"]
+      mapping = JSON.parse(File.read(stage.fetch("source_map_file").fetch("path")))
+      die.call("retained source map does not bind original inputs") unless Corpus.valid_source_map?(mapping, stage.fetch("generated_file"), stage.fetch("source_inputs"))
+    end
+  end
   run_stage = stages.last
   die.call("run stage disagrees with the attempt: #{attempt['path']}:#{attempt['mode']}") unless run_stage["spawned"] == attempt["spawned"] && run_stage["state"] == attempt["state"] && run_stage["exit"] == attempt["exit"]
 
@@ -210,6 +264,13 @@ attempts.each do |attempt|
       next if argv.empty?
       go_inputs = argv.each_with_index.select { |token, index| token.to_s.end_with?(".go") && argv[index - 1] != "-o" && argv[index - 1] != "--map" }.map(&:first)
       next if go_inputs.size <= 1
+      if attempt["mode"] == "interpreted" && stage["stage"] == "run" && recipe.key?("multi_file_program_arguments")
+        die.call("unreviewed multi-file argv contract") unless recipe["multi_file_program_arguments"] == "-- separator before program argv"
+        if attempt["kind"] == "test_program"
+          separator = argv.index("--")
+          die.call("test driver arguments lack an explicit separator") unless separator && argv[(separator + 1)..] == ["-test.v"]
+        end
+      end
       flagged = argv.each_cons(2).count { |flag, value| flag == "--go-file" && value.to_s.end_with?(".go") }
       die.call("a multi-file product stage did not use the --go-file contract: #{attempt['path']}:#{attempt['mode']}:#{stage['stage']}") unless flagged == go_inputs.size
     end

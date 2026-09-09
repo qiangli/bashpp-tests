@@ -47,6 +47,7 @@ require "tmpdir"
 require_relative "normalizer"
 require_relative "candidate"
 require_relative "inputs"
+require_relative "runtime-config"
 Thread.report_on_exception = false
 
 ROOT = File.expand_path("../..", __dir__)
@@ -138,9 +139,9 @@ system(ROOT + "/tools/go-by-example/validate.sh") or fatal("corpus integrity gat
 # the supplied manifest must equal a reviewed row of candidates.tsv, so a caller
 # selects a candidate but can never introduce one.
 begin
-  REVIEWED = GoByExampleCandidate.reviewed(CANDIDATES)
   TOOLPIN = GoByExampleCandidate.toolchain(DOCS + "/toolchain.tsv")
   CANDIDATE_MANIFEST = GoByExampleCandidate.manifest_path(candidate_arg)
+  REVIEWED = GoByExampleCandidate.reviewed(CANDIDATES, manifest_sha256: Corpus.digest(CANDIDATE_MANIFEST))
   CANDIDATE = GoByExampleCandidate.authenticate(CANDIDATE_MANIFEST, BASHY, REVIEWED, TOOLPIN)
 rescue GoByExampleCandidate::Error, Corpus::ContractError => e
   fatal(e.message)
@@ -411,6 +412,7 @@ def run(cmd, cwd, env, input, outer, child_limit, path, adapters, adapter_dir, l
   end
 
   if stage
+    result["capture"] = stage
     result["spawned"] = stage["spawned"] ? true : false
     result["stdout"] = read_stream(log_prefix + ".stdout")
     result["stderr"] = read_stream(log_prefix + ".stderr")
@@ -608,8 +610,8 @@ end
 # recorded as program effects. Pointing all three modes at one cache outside the
 # roots is environment construction, not normalization: it makes the effect
 # channel measure the program rather than the toolchain. It does not hide the
-# run-time toolchain use itself, which prerequisites.md records and which the
-# telemetry this harness does NOT suppress still shows.
+# run-time toolchain use itself, which prerequisites.md records. Supported
+# telemetry opt-outs are configured identically before each effect baseline.
 #
 # Note what none of this is: an empty PATH is command-lookup isolation, not an
 # OS-level denial of the SDK or of the source tree, and the evidence says so
@@ -622,7 +624,7 @@ def run_env(root, behaviors)
     "BAR" => "",
     "GOROOT" => GOROOT, "GOMODCACHE" => GOMODCACHE, "GOCACHE" => RUN_GOCACHE,
     "GOTOOLCHAIN" => "local", "GOPROXY" => "off", "GOSUMDB" => "off",
-    "BASHY_HINTS" => "off"
+    "BASHY_HINTS" => "off", "OTEL_TRACES_EXPORTER" => "none"
   }
 end
 
@@ -638,6 +640,7 @@ end
 def stage_record(name, result, replacements, extra = {})
   {
     "stage" => name,
+    "capture" => result["capture"],
     "argv" => Array(result["command"]).map { |a| relativize(a, replacements) },
     # What Corpus.capture was actually handed, when the corpus-owned launcher
     # was interposed. Recorded so `argv` is never read as the whole truth about
@@ -701,12 +704,15 @@ manifest = {
     "interpreted" => "bashy --bashpp --source=go <source> [argv...]; explicit multi-file uses repeated --go-file",
     "compiled" => "bashy transpile --bashpp --source=go <source|--go-file...> -o gen.go --map gen.go.map; pinned go build; run the artifact",
     "multi_file_input" => "--go-file",
+    "multi_file_program_arguments" => "-- separator before program argv",
     "declared_env_divergence" => DECLARED_ENV_DIVERGENCE,
     "common_runtime_go_env" => %w[GOROOT GOMODCACHE GOCACHE],
     "effect_normalizations" => EFFECT_NORMALIZATIONS,
     "process_primitives" => "tools/corpus/executor.rb Corpus.capture/success?/snapshot/file_record/authenticate_candidate",
     "corpus_executor_sha256" => sha(ROOT + "/tools/corpus/executor.rb"),
     "input_binding_sha256" => sha(ROOT + "/tools/go-by-example/inputs.rb"),
+    "runtime_config_sha256" => sha(ROOT + "/tools/go-by-example/runtime-config.rb"),
+    "runtime_telemetry" => {"OTEL_TRACES_EXPORTER" => "none", "Go" => "pinned go telemetry off in each isolated HOME before effect baseline"},
     "launcher_source_sha256" => sha(LAUNCHER_SOURCE),
     "source_absence" => "compilation inputs are absent from the run cwd and PATH is empty for every row that does not declare process_exec; this is cwd and command-lookup isolation, NOT an OS-level denial of the SDK or of the source tree",
     "source_layout" => "per mode, original program plus declared assets at their original relative paths"
@@ -716,9 +722,15 @@ binding = Digest::SHA256.hexdigest(JSON.generate(manifest))
 records = [manifest]
 incomplete = false
 
-Dir.mktmpdir("gbe-gate-") do |base|
+FileUtils.mkdir_p(File.dirname(RESULTS))
+journal = File.open(RESULTS + ".progress.jsonl", "wx", 0o600)
+journal.puts(JSON.generate(manifest)); journal.flush
+base = File.expand_path(ENV.fetch("GBE_WORK_ROOT", RESULTS + ".work"))
+fatal("refusing to overwrite retained work: #{base}") if File.exist?(base)
+FileUtils.mkdir_p(base)
+begin
   gocache = base + "/gocache"
-  gomodcache = base + "/gomodcache"
+  gomodcache = GOMODCACHE
   gohome = base + "/gohome"
   gotmp = base + "/gotmp"
   [gocache, gomodcache, gohome, gotmp].each { |d| FileUtils.mkdir_p(d) }
@@ -741,7 +753,7 @@ Dir.mktmpdir("gbe-gate-") do |base|
   fatal("cannot build the corpus run launcher: #{launcher_build['detail'] || launcher_build['stderr'].to_s[0, 400]}") unless stage_ok?(launcher_build) && native?(LAUNCHER)
   # One run-time toolchain cache, outside every execution root, shared by all
   # three modes exactly like GOROOT and GOMODCACHE.
-  RUN_GOCACHE = base + "/run-gocache"
+  RUN_GOCACHE = gocache
   FileUtils.mkdir_p(RUN_GOCACHE)
   replacements = {base => "${WORK}", ROOT => "${ROOT}", GOROOT => "${GOROOT}", SH_MODULE => "${SH_MODULE}"}
 
@@ -781,7 +793,10 @@ Dir.mktmpdir("gbe-gate-") do |base|
     GoByExampleInputs.enforce(oracle_build, input_bindings)
     stages["oracle"] << stage_record(test_row ? "oracle-test-build" : "oracle-build", oracle_build, replacements,
                                      "source_sha256" => row[7])
-    binaries["oracle"] = oracle_bin if stage_ok?(oracle_build) && File.file?(oracle_bin) && File.executable?(oracle_bin) && native?(oracle_bin)
+    if stage_ok?(oracle_build) && File.file?(oracle_bin) && File.executable?(oracle_bin) && native?(oracle_bin)
+      binaries["oracle"] = oracle_bin
+      stages["oracle"].last["native_file"] = Corpus.file_record(oracle_bin)
+    end
 
     # -- product inputs: unchanged bytes, plus a generated driver for the test
     #    row. The driver is a separate file; the _test.go bytes are untouched.
@@ -821,6 +836,9 @@ Dir.mktmpdir("gbe-gate-") do |base|
       # and the compiled mode must not proceed as if it had.
       mapping = (JSON.parse(File.read(source_map)) rescue nil)
       if mapping && Corpus.valid_source_map?(mapping, Corpus.file_record(generated), product_inputs.fetch("compiled"))
+        stages["compiled"].last["generated_file"] = Corpus.file_record(generated)
+        stages["compiled"].last["source_map_file"] = Corpus.file_record(source_map)
+        stages["compiled"].last["source_inputs"] = product_inputs.fetch("compiled")
         stages["compiled"].last["source_map_sha256"] = sha(source_map)
         input_bindings << GoByExampleInputs.new(transpile_dir)
       else
@@ -842,6 +860,7 @@ Dir.mktmpdir("gbe-gate-") do |base|
       stages["compiled"] << stage_record("build", build, replacements, "generated_go_sha256" => sha(generated))
       if stage_ok?(build) && File.file?(lowered_bin) && File.executable?(lowered_bin) && native?(lowered_bin)
         binaries["compiled"] = lowered_bin
+        stages["compiled"].last["native_file"] = Corpus.file_record(lowered_bin)
         stages["compiled"].last["artifact_sha256"] = sha(lowered_bin)
         stages["compiled"].last["artifact_bytes"] = File.size(lowered_bin)
       end
@@ -851,8 +870,9 @@ Dir.mktmpdir("gbe-gate-") do |base|
 
     # -- three runs, each in its own freshly constructed execution root.
     observations = {}
+    runtime_roots = MODES.to_h { |mode| [mode, stage_root(work + "/run/" + mode, row, adapters)] }
     MODES.each do |mode|
-      root = stage_root(work + "/run/" + mode, row, adapters)
+      root = runtime_roots.fetch(mode)
       # Adapter scratch (the loopback origin's trust anchor) lives OUTSIDE the
       # execution root so a gate fixture can never be read as a program effect.
       adapter_dir = work + "/adapters/" + mode
@@ -862,11 +882,12 @@ Dir.mktmpdir("gbe-gate-") do |base|
         case mode
         when "oracle" then binaries["oracle"] && [binaries["oracle"], *args]
         when "compiled" then binaries["compiled"] && [binaries["compiled"], *args]
-        else [BASHY, "--bashpp", "--source=go", *source_arguments.fetch("interpreted"), *args]
+        else [BASHY, "--bashpp", "--source=go", *source_arguments.fetch("interpreted"), *(test_row && !args.empty? ? ["--", *args] : args)]
         end
+      configuration = GoByExampleRuntimeConfig.configure(GO, root, env, deadline: deadline, log_prefix: work + "/logs/config-" + mode)
       before = snapshot(root)
       result =
-        if command && input_bindings.all?(&:unchanged?)
+        if command && input_bindings.all?(&:unchanged?) && configuration["state"] == "complete"
           run(command, root, env, input, deadline, RUN_LIMIT, path, run_adapters, adapter_dir,
               work + "/logs/run-" + mode, launch: true)
         else
@@ -874,6 +895,7 @@ Dir.mktmpdir("gbe-gate-") do |base|
           {"exit" => nil, "state" => "unspawned", "spawned" => false, "stdout" => "", "stderr" => "",
            "command" => [], "detail" => "no runnable artifact: #{missing} did not produce one"}
         end
+      result["state"] = "configuration_failure" if configuration["state"] != "complete"
       GoByExampleInputs.enforce(result, input_bindings)
       after = snapshot(root)
       effects = begin
@@ -883,8 +905,7 @@ Dir.mktmpdir("gbe-gate-") do |base|
         nil
       end
       stages[mode] << stage_record("run", result, replacements)
-      observations[mode] = {"result" => result, "effects" => effects, "env_profile" => env_profile(env, root)}
-      FileUtils.rm_rf(root)
+      observations[mode] = {"configuration" => configuration, "result" => result, "effects" => effects, "env_profile" => env_profile(env, root)}
     end
 
     profiles = MODES.map { |m| observations[m]["env_profile"] }
@@ -927,7 +948,7 @@ Dir.mktmpdir("gbe-gate-") do |base|
         "normalized_stderr_b64" => normalized && Base64.strict_encode64(normalized[1]),
         "effects_sha256" => observation["effects"] && observation["effects"]["sha256"],
         "effects_delta" => observation["effects"] && observation["effects"]["delta"],
-        "stages" => stages[mode],
+        "stages" => stages[mode], "configuration" => observation.fetch("configuration"),
         "verdict" => verdict, "detail" => result["detail"] && relativize(result["detail"], replacements),
         "binding_sha256" => binding
       )
@@ -935,9 +956,14 @@ Dir.mktmpdir("gbe-gate-") do |base|
 
     rows_unchanged = sha(ROOT + "/" + path)
     fatal("source changed during gate: #{path}") unless rows_unchanged == row[7]
-    FileUtils.rm_rf(work)
+    records.last(MODES.size).each { |record| journal.puts(JSON.generate(record)) }
+    journal.flush; journal.fsync
+    puts "ROW #{index + 1}/#{rows.size} #{path}: " + records.last(MODES.size).map { |r| "#{r['mode']}=#{r['verdict']}(#{r['state']},#{r['exit']})" }.join(" ")
+    $stdout.flush
   end
 end
+
+journal.close
 
 attempts = records.count { |r| r["type"] == "attempt" }
 fatal("missing-attempt evidence: expected #{DENOMINATOR} attempt records, got #{attempts}") unless attempts == DENOMINATOR

@@ -1,0 +1,5 @@
+total 0
+drwxr-xr-x@ 4 qiangli  staff   128B Sep  9 06:36 .
+drwxr-xr-x@ 5 qiangli  staff   160B Sep  9 06:36 ..
+drwxr-xr-x@ 2 qiangli  staff    64B Sep  9 06:36 home
+drwxr-xr-x@ 2 qiangli  staff    64B Sep  9 06:36 tmp

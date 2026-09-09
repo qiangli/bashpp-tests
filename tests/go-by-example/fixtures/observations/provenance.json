@@ -1,0 +1,103 @@
+{
+  "evidence_root": "e15613842200bd68b6558964397a2a074d244635322d0d8475bf3a8cbb54a11f",
+  "candidate_manifest_sha256": "ddf233e89c2839f299c14010c3d2ca8fba4ffb23e8835b86bd5ae0b6811f9aff",
+  "purpose": "retained real output for comparator contract tests, not new corpus certification",
+  "files": [
+    {
+      "file": "execing-processes.oracle.stdout.txt",
+      "sha256": "da0f698d5a811b4a6832db7872260a80156c0708a8c19a5cf07c7723c5794335",
+      "source": "examples/execing-processes/execing-processes.go",
+      "mode": "oracle"
+    },
+    {
+      "file": "execing-processes.oracle.stderr.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "source": "examples/execing-processes/execing-processes.go",
+      "mode": "oracle"
+    },
+    {
+      "file": "execing-processes.compiled.stdout.txt",
+      "sha256": "c1c3ff598b2984b08230d08c69acccaa1dc742e5290e85cf77e44ff6e2a4469f",
+      "source": "examples/execing-processes/execing-processes.go",
+      "mode": "compiled"
+    },
+    {
+      "file": "execing-processes.compiled.stderr.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "source": "examples/execing-processes/execing-processes.go",
+      "mode": "compiled"
+    },
+    {
+      "file": "logging.oracle.stdout.txt",
+      "sha256": "0d55779ba510213f152bbcfd81238f6dff29ce66e38e639bcbe2cb28da20631f",
+      "source": "examples/logging/logging.go",
+      "mode": "oracle"
+    },
+    {
+      "file": "logging.oracle.stderr.txt",
+      "sha256": "8642f719ad144c5a591d495f67434375fde262c30179fe70248ec28c8d46e832",
+      "source": "examples/logging/logging.go",
+      "mode": "oracle"
+    },
+    {
+      "file": "logging.compiled.stdout.txt",
+      "sha256": "583bf3d148bdabc1b7a4e4a5ad593b5fbd0eed1859ee35e55a3471c423d47bbb",
+      "source": "examples/logging/logging.go",
+      "mode": "compiled"
+    },
+    {
+      "file": "logging.compiled.stderr.txt",
+      "sha256": "2918ddf115f4fbaa1cc78037becf168e37b6f6b94a2795fe05e2284f342a2a5a",
+      "source": "examples/logging/logging.go",
+      "mode": "compiled"
+    },
+    {
+      "file": "stateful-goroutines.oracle.stdout.txt",
+      "sha256": "72e7011b36320b8116f3139378cb09f7d62c0769cc149b928159240225d6d986",
+      "source": "examples/stateful-goroutines/stateful-goroutines.go",
+      "mode": "oracle"
+    },
+    {
+      "file": "stateful-goroutines.oracle.stderr.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "source": "examples/stateful-goroutines/stateful-goroutines.go",
+      "mode": "oracle"
+    },
+    {
+      "file": "stateful-goroutines.compiled.stdout.txt",
+      "sha256": "fc15683299424c37cb5e4db3a328c3808108d7879312b545067355f7916a8a5a",
+      "source": "examples/stateful-goroutines/stateful-goroutines.go",
+      "mode": "compiled"
+    },
+    {
+      "file": "stateful-goroutines.compiled.stderr.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "source": "examples/stateful-goroutines/stateful-goroutines.go",
+      "mode": "compiled"
+    },
+    {
+      "file": "time.oracle.stdout.txt",
+      "sha256": "fd6f93e643951c41e00c4257b3ae558be230b6924be098631670ff738e179467",
+      "source": "examples/time/time.go",
+      "mode": "oracle"
+    },
+    {
+      "file": "time.oracle.stderr.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "source": "examples/time/time.go",
+      "mode": "oracle"
+    },
+    {
+      "file": "time.compiled.stdout.txt",
+      "sha256": "4de1f1ab3c348dfa1b3c19edd8f6cc8ba6904e012ac4a1159ffa9938b46c8d40",
+      "source": "examples/time/time.go",
+      "mode": "compiled"
+    },
+    {
+      "file": "time.compiled.stderr.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "source": "examples/time/time.go",
+      "mode": "compiled"
+    }
+  ]
+}

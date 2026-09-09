@@ -1,5 +1,10 @@
 # Measured product state of the Go by Example gate
 
+> Historical candidate001 report. Superseded by the full
+> [published candidate002 replay](sprint118-candidate002.md). Counts and defect
+> status below describe that earlier candidate only; they are not current
+> acceptance claims. The earlier evidence is retained as diagnostic history.
+
 Sprint 118, Story #3, Story-ID `fa07603b71dc`.
 
 Nothing here is a projection. Every line is derived from one real run of
