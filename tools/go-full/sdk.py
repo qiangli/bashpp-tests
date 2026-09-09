@@ -19,13 +19,19 @@ sys.dont_write_bytecode = True
 import inventory as inv
 
 
-def prepare(source_cache, cache, output, goos, goarch):
+def prepare(source_cache, cache, output, goos, goarch, verify_existing=False):
     pin = inv.pins()
     candidates = [r for r in inv.rows(inv.REPO / "docs/go-oracle/toolchain.tsv") if r[0] == "toolchain" and r[1:4] == [pin["release"], goos, goarch]]
     inv.require(len(candidates) == 1, "platform lacks one reviewed toolchain pin")
     tool = candidates[0]
-    cache.mkdir(parents=True, exist_ok=True)
     archive = cache / tool[5]
+    if verify_existing:
+        for directory in (source_cache / "go", cache, output):
+            inv.require(directory.is_dir() and not directory.is_symlink(), "existing SDK directory required: " + str(directory))
+        for existing in (source_cache / pin["filename"], archive, output / "bin/go"):
+            inv.require(existing.is_file() and not existing.is_symlink(), "existing SDK file required: " + str(existing))
+    else:
+        cache.mkdir(parents=True, exist_ok=True)
     if not archive.exists():
         fd, tmp = tempfile.mkstemp(prefix="sdk-download-", dir=cache)
         os.close(fd)
@@ -81,10 +87,11 @@ def main():
     p.add_argument("--source-cache", type=Path, default=inv.REPO / ".cache/go-full")
     p.add_argument("--cache", type=Path, default=inv.REPO / ".cache/go-full-sdk")
     p.add_argument("--output", type=Path, required=True)
+    p.add_argument("--verify-existing", action="store_true", help="authenticate only; never download or materialize missing paths")
     p.add_argument("--goos", required=True)
     p.add_argument("--goarch", required=True)
     args = p.parse_args()
-    print(json.dumps(prepare(args.source_cache, args.cache, args.output, args.goos, args.goarch), sort_keys=True))
+    print(json.dumps(prepare(args.source_cache, args.cache, args.output, args.goos, args.goarch, args.verify_existing), sort_keys=True))
 
 
 if __name__ == "__main__":

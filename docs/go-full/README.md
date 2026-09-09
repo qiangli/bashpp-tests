@@ -131,7 +131,9 @@ from the authenticated release; run it after generating and before executing.
 ## Execution foundations and remaining implementation
 
 The full native oracle and product accounting drivers are separate from the
-inventory. They depend on the shared `tools/corpus/executor.rb` contract.
+inventory. See [SDK relocation and authenticated continuations](AUTHENTICATION-RESUME.md)
+for durable source paths, fail-closed resume rules and the legacy evidence boundary.
+They depend on the shared `tools/corpus/executor.rb` contract.
 `GO_FULL_CORPUS_LIB=/absolute/path/to/executor.rb` supports isolated integration
 before the shared harness commit lands. These drivers have parser/negative
 contract tests; a full corpus run has **not** been performed in this change.

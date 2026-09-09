@@ -7,12 +7,25 @@ require 'fileutils'
 require 'digest'
 require ENV.fetch('GO_FULL_CORPUS_LIB', File.expand_path('../corpus/executor.rb', __dir__))
 require_relative 'native'
+require_relative 'authentication'
+require_relative 'resume'
 
 module GoFullProduct
   module_function
 
   def read_rows(path)
     File.foreach(path).map { |line| JSON.parse(line) }
+  end
+
+  def unique_rows(path)
+    rows = read_rows(path)
+    ids = rows.map { |row| row.fetch('id') }
+    raise Corpus::ContractError, "duplicate root IDs: #{path}" unless ids.uniq == ids
+    rows.to_h { |row| [row.fetch('id'), row] }
+  end
+
+  def verify_sdk_identity(native, current, relocation_file = nil, **options)
+    GoFullAuthentication.verify_sdk_identity(native, current, relocation_file, **options)
   end
 
   def simple_recipe?(root)
@@ -159,23 +172,25 @@ module GoFullProduct
   end
 
   def execute(options)
+    options = options.merge(bashy: File.realpath(options.fetch(:bashy)))
     dir = File.expand_path(options.fetch(:inventory))
-    source_root = File.expand_path(options.fetch(:source_root))
+    source_root = File.realpath(options.fetch(:source_root))
     evidence = File.expand_path(options.fetch(:evidence))
     raise Corpus::ContractError, 'evidence root already exists' if File.exist?(evidence)
     native_dir = File.expand_path(options.fetch(:native))
     native_summary = JSON.parse(File.read(File.join(native_dir, 'summary.json')))
     raise Corpus::ContractError, 'requires retained native-only oracle evidence' unless native_summary['schema'] == 'go-full-native/v1' && native_summary['product_execution_claim'] == false
-    native = read_rows(File.join(native_dir, 'roots.jsonl')).to_h { |r| [r.fetch('id'), r] }
+    native = unique_rows(File.join(native_dir, 'roots.jsonl'))
     expected_native_count = native_summary.fetch('counts_by_axis').values.sum { |counts| counts.values.sum }
     raise Corpus::ContractError, 'native root duplicates/denominator mismatch' unless native.size == expected_native_count
     log = native_summary.fetch('native_stage').fetch('stdout')
-    Corpus.authenticate_file(log.fetch('path'), log.fetch('sha256'))
+    Corpus::Validation.file!(log)
+    Corpus::Validation.file!(native_summary.fetch('native_stage').fetch('stderr'))
     native_events = GoFull::NativeEvents.new
     File.foreach(log.fetch('path')) { |line| native_events.consume(line) }
     candidate = JSON.parse(File.read(options.fetch(:candidate)))
     sdk_identity = JSON.parse(File.read(options.fetch(:sdk_identity)))
-    raise Corpus::ContractError, 'native/product SDK identities differ' unless native_summary.fetch('sdk') == sdk_identity
+    sdk_authentication = verify_sdk_identity(native_summary.fetch('sdk'), sdk_identity, options[:relocation], relocation_sha256: options.fetch(:relocation_sha256, GoFullAuthentication::REVIEWED_RELOCATION_SHA256))
     sdk = { 'sha256' => sdk_identity.fetch('go').fetch('sha256'),
             'identity' => "go version #{sdk_identity.fetch('release')} #{sdk_identity.fetch('goos')}/#{sdk_identity.fetch('goarch')}" }
     module_files = options[:modules] ? JSON.parse(File.read(options[:modules])) : {}
@@ -205,16 +220,34 @@ module GoFullProduct
       raise Corpus::ContractError, 'native observation differs from retained event log: ' + root.fetch('id') unless native.fetch(root.fetch('id')).fetch('observation') == native_events.observation(package, test)
     end
     full_manifest_denominators = roots.group_by { |root| root.fetch('axis') }.transform_values(&:length)
+    all_roots = roots.to_h { |root| [root.fetch('id'), root] }
+    checkpoint = GoFullResume.context(roots: roots, inventory: native_summary.fetch('inventory').transform_values { |record| record.fetch('sha256') },
+      sdk: sdk_identity, provenance: executor.provenance, modules: module_files, timeout: options.fetch(:timeout),
+      environment: { 'PATH' => ENV.fetch('PATH', ''), 'LC_ALL' => 'C', 'TZ' => 'UTC', 'GOTOOLCHAIN' => 'local', 'GOPROXY' => 'off', 'GOSUMDB' => 'off', 'BASHY_HINTS' => 'off', 'GOROOT' => sdk_identity.fetch('root'), 'GOMAXPROCS' => '2' },
+      native: { 'summary' => Corpus.file_record(File.join(native_dir, 'summary.json')), 'roots' => Corpus.file_record(File.join(native_dir, 'roots.jsonl')), 'stdout' => log, 'stderr' => native_summary.fetch('native_stage').fetch('stderr') })
+    resumed = options[:resume] ? GoFullResume.load(options[:resume], context: checkpoint, roots: all_roots, source_root: source_root,
+      provenance: executor.provenance, modules: module_files, native: native, catalog: catalog) : { 'reusable' => {}, 'fresh' => {}, 'checkpoint_roots' => 0 }
+
     if options[:phase_shard]
       raise Corpus::ContractError, 'unknown phase shard' unless options[:phase_shard] == 'negative'
       roots = roots.select { |root| root['axis'] == 'testdir' && diagnostic_recipe?(root) }
       raise Corpus::ContractError, 'negative shard denominator drift' unless roots.length == 521
     end
+    # Fresh-only adapters from a prior checkpoint must not starve roots that
+    # have never been attempted when a manager bounds wall-clock execution.
+    roots = roots.sort_by { |root| resumed.fetch('fresh').key?(root.fetch('id')) ? 1 : 0 }
     FileUtils.mkdir_p(evidence)
+    File.write(File.join(evidence, 'context.json'), Corpus.canonical(checkpoint) + "\n", mode: 'wx')
     matcher = build_matcher(evidence, sdk_identity)
     File.open(File.join(evidence, 'roots.jsonl'), 'wx') do |stream|
       roots.each do |root|
         id = root.fetch('id')
+        if (retained = resumed.fetch('reusable')[id])
+          rows << retained
+          stream.write(Corpus.canonical(retained) + "\n")
+          stream.flush
+          next
+        end
         oracle = native.fetch(id).fetch('observation')
         row = { 'schema' => 'go-full-product-root/v1', 'id' => id, 'axis' => root.fetch('axis'),
                 'native_observation' => oracle, 'product_verdict' => 'FAIL', 'modes' => {}, 'unfinished_phases' => [] }
@@ -260,6 +293,7 @@ module GoFullProduct
                                      end
           row['modes'] = probe(root, options, source_root, evidence, sdk_identity, candidate)
         end
+        row = GoFullResume.seal(row, root: root, source_root: source_root, context: checkpoint, provenance: executor.provenance, evidence: evidence)
         rows << row
         stream.write(Corpus.canonical(row) + "\n")
         stream.flush
@@ -272,6 +306,8 @@ module GoFullProduct
                 'scope' => options[:phase_shard] ? 'negative-phase-discovery-shard' : 'full-root-accounting',
                 'full_manifest_denominators' => full_manifest_denominators, 'selected_root_denominator' => roots.length,
                 'selection_rule' => options[:phase_shard] ? 'all unflagged negative errorcheck/errorcheckwithauto roots without expected-failure inversion' : 'all independent static axes',
+                'checkpoint' => Corpus.file_record(File.join(evidence, 'context.json')), 'sdk_authentication' => sdk_authentication,
+                'resume' => { 'attempt_order' => 'unattempted and authenticated terminals before prior fresh-required adapters; complete selected denominator retained', 'checkpoint_roots' => resumed['checkpoint_roots'], 'reused_roots' => rows.count { |row| resumed['reusable'].key?(row['id']) }, 'fresh_required' => resumed['fresh'] },
                 'provenance' => executor.provenance, 'diagnostic_matcher' => matcher, 'source_integrity_after' => integrity_status.success?, 'source_integrity_error' => err,
                 'native_summary' => Corpus.file_record(File.join(native_dir, 'summary.json')),
                 'native_roots' => Corpus.file_record(File.join(native_dir, 'roots.jsonl')),
@@ -326,9 +362,10 @@ end
 if $PROGRAM_NAME == __FILE__
   options = { inventory: File.expand_path('../../docs/go-full', __dir__), timeout: 60 }
   OptionParser.new do |parser|
-    %i[bashy candidate sdk_identity source_root evidence native inventory modules].each do |key|
+    %i[bashy candidate sdk_identity source_root evidence native inventory modules relocation resume].each do |key|
       parser.on("--#{key.to_s.tr('_', '-')} PATH") { |value| options[key] = File.expand_path(value) }
     end
+    parser.on('--relocation-sha256 SHA256') { |value| options[:relocation_sha256] = value }
     parser.on('--phase-shard NAME') { |value| options[:phase_shard] = value }
     parser.on('--timeout N', Integer) { |value| options[:timeout] = value }
   end.parse!
