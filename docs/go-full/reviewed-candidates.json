@@ -1,0 +1,69 @@
+{
+  "schema": "go-full-reviewed-candidate-binding/v1",
+  "purpose": "Exact reviewed bindings that official product validation (tools/go-full/product.rb) accepts. Each entry names the frozen candidate manifest and the offline module-context manifest that binds it. product.rb authenticates these digests itself; this table is the reviewed record of which digests were approved, not a substitute for that authentication. Frozen candidate trees are read-only inputs and are never edited to produce a binding.",
+  "candidates": [
+    {
+      "candidate": "candidate018",
+      "goos": "darwin",
+      "goarch": "arm64",
+      "frozen_root": "/private/tmp/s118-runtime-018",
+      "candidate_manifest": "/Users/qiangli/.local/state/bashy/sprint118-evidence/runtime-integration-018/candidate.json",
+      "candidate_manifest_sha256": "a927efce4f80e392f78c9552e0a0f6f3465f1921d1a8fcc3ae7976e02250fdd2",
+      "launcher": "/private/tmp/s118-runtime-018/bashy/bin/bashy",
+      "launcher_sha256": "454c25a8cfb70a45e2bcb4fe57f64e7726164ed1ec8b7e46f3c243f4b87930a4",
+      "payload_sha256": "c58b7fe28598c737bccc8f2733071ebf12d4608f03a5cf375c116632b2b61ed1",
+      "frontend_version": "gosource-v1",
+      "repositories": {
+        "bashy": "118bb3f6841a57a7010b7858bf02564c445416f7",
+        "sh": "071f2409490641f3ae64ad45560164ca8f60506d",
+        "coreutils": "ec91ea4560a556c8217117bf7cb24e79f53e54f0",
+        "readline": "b958823bd7075ed8b9a3aedd351422356a95fe79",
+        "filebrowser": "cde1146904add2d78d9846c71597520d34b17f7d"
+      },
+      "module_context": "/Users/qiangli/.bashy/sprint118/sources/go-full-candidate018-modules/manifest.json",
+      "module_context_sha256": "60ff879edfbf74b9a00bf5cd8a942faf0c90057f209164ea5855b232755d8518",
+      "module_files_argument_sha256": "78fc155259f12de43779da767c50dc6feb64cb0b14b02b23a89dd10ded1c96b6",
+      "dependency_modules": 19,
+      "dependency_files": 4391,
+      "build_cache_root": "/Users/qiangli/.bashy/sprint118/caches/go-full-candidate018",
+      "sdk_identity": "/Users/qiangli/.bashy/sprint118/sources/go-full-sdk-identity-relocated.json",
+      "sdk_identity_sha256": "74a775fee106116daa2a225604022c9940bd21d59ccd8784bf6d660849840d88",
+      "relocation_manifest": "/Users/qiangli/.bashy/sprint118/sources/issue8-relocation.json",
+      "relocation_manifest_sha256": "3d061c0322b546005acf7ce1878aee4e4382a7dd2820feeb4c570fa267a23c2e",
+      "native_oracle": "/Users/qiangli/.bashy/sprint118/evidence/go-full/native-001",
+      "replaces": "published-candidate-002",
+      "notes": "Replaces the stale published-002 binding. The module graph, scaffold go.sum and the frozen sh go.mod/go.sum bytes are unchanged from the reviewed candidate013/published-002 provisioning; only the scaffold replace target, the candidate binding and the disposable build-cache root move to candidate018. No bytes under /private/tmp/s118-runtime-018 were written."
+    },
+    {
+      "candidate": "published-candidate-002",
+      "goos": "darwin",
+      "goarch": "arm64",
+      "frozen_root": "/private/tmp/s118-published-002",
+      "candidate_manifest": "/Users/qiangli/.local/state/bashy/sprint118-evidence/published-candidate-002/candidate.json",
+      "candidate_manifest_sha256": "ddf233e89c2839f299c14010c3d2ca8fba4ffb23e8835b86bd5ae0b6811f9aff",
+      "module_context": "/Users/qiangli/.bashy/sprint118/sources/go-full-published002-modules/manifest.json",
+      "module_context_sha256": "305b5cbff2b3e0effa6d1f9b6ac0f22f3557a3943f61df3d2cfd466ae57a5136",
+      "status": "superseded-by-candidate018"
+    },
+    {
+      "candidate": "candidate013",
+      "goos": "darwin",
+      "goarch": "arm64",
+      "frozen_root": "/private/tmp/s118-runtime-013",
+      "candidate_manifest": "/Users/qiangli/.local/state/bashy/sprint118-evidence/runtime-integration-013/candidate.json",
+      "candidate_manifest_sha256": "4452dbe4c2c61bfe804259232d93fc37303c1204e97f7576e2a50c4b05bb1118",
+      "module_context": "/Users/qiangli/.bashy/sprint118/sources/go-full-candidate013-modules/manifest.json",
+      "module_context_sha256": "8f6b4ae106b5855ae69858ecabf7c5cb544457304052d9067f45ca259c3ec837",
+      "status": "retained-typechecker-shard-binding"
+    },
+    {
+      "candidate": "candidate006",
+      "goos": "darwin",
+      "goarch": "arm64",
+      "candidate_manifest_sha256": "b4cf7401f24a3d57110c4e4f02c62242c435846344b54af8dc915401c5e97df4",
+      "module_context": "/Users/qiangli/.bashy/sprint118/sources/go-full-candidate006-modules/manifest.json",
+      "module_context_sha256": "a886a3618bcacccbb5df4030ad9e0f58442f3440a75dab3b6e62e6e0a4550dd6",
+      "status": "tools-default-reviewed-module-context"
+    }
+  ]
+}
