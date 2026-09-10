@@ -93,6 +93,12 @@ class RecipeAdapterRegistryTests < Minitest::Test
                  registry.registrations.map { |entry| entry.values_at('lane', 'action', 'name') }
   end
 
+  def test_subset_runner_binding_includes_the_adapter_spine
+    paths = GoFullRecipeAdapters.runner_paths(File.expand_path('../../tools/go-full', __dir__))
+
+    assert_equal [File.realpath(File.expand_path('../../tools/go-full/recipe_adapters.rb', __dir__))], paths
+  end
+
   def test_adapter_cannot_claim_a_root_without_authenticated_attempt_evidence
     registry = GoFullRecipeAdapters::Registry.new
     registry.register(lane: 'testdir', action: 'future-action', name: 'recipe_future', adapter: adapter(result: result([])))
@@ -103,6 +109,15 @@ class RecipeAdapterRegistryTests < Minitest::Test
     tampered.fetch('executable')['sha256'] = '0' * 64
     registry = GoFullRecipeAdapters::Registry.new
     registry.register(lane: 'testdir', action: 'future-action', name: 'recipe_future', adapter: adapter(result: result([tampered])))
+    assert_raises(Corpus::ContractError) { registry.dispatch(root: @root, context: @context) }
+  end
+
+  def test_malformed_attempt_evidence_is_rejected_as_a_contract_error
+    registry = GoFullRecipeAdapters::Registry.new
+    malformed = capture_attempt
+    malformed['stage'] = 'not a capture record'
+    registry.register(lane: 'testdir', action: 'future-action', name: 'recipe_future', adapter: adapter(result: result([malformed])))
+
     assert_raises(Corpus::ContractError) { registry.dispatch(root: @root, context: @context) }
   end
 end

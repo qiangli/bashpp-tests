@@ -277,7 +277,7 @@ module GoFullProduct
     subset = if options[:root_subset]
                raise Corpus::ContractError, '--root-subset cannot be combined with --phase-shard' if options[:phase_shard]
                GoFullSubset.load(path: options.fetch(:root_subset), expected_sha256: options[:root_subset_sha256], roots: roots,
-                 inventory: native_summary.fetch('inventory'), candidate_path: options.fetch(:candidate), runner_paths: [__FILE__, File.join(__dir__, 'subset.rb')], evidence: evidence,
+                 inventory: native_summary.fetch('inventory'), candidate_path: options.fetch(:candidate), runner_paths: [__FILE__, File.join(__dir__, 'subset.rb'), *GoFullRecipeAdapters.runner_paths(__dir__)], evidence: evidence,
                  protected_roots: options.fetch(:protected_evidence_roots, []))
              end
     roots = subset ? subset.fetch('roots') : phase_roots(roots, options[:phase_shard])

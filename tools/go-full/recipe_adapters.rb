@@ -23,7 +23,7 @@ module GoFullRecipeAdapters
         raise Corpus::ContractError, 'recipe adapter must implement eligible?(root) and execute(root:, context:)'
       end
 
-      @entries[key] = { 'lane' => key[0], 'action' => key[1], 'name' => name, adapter: adapter }
+      @entries[key] = { 'lane' => key[0], 'action' => key[1], 'name' => name.dup.freeze, adapter: adapter }
       adapter
     end
 
@@ -59,7 +59,7 @@ module GoFullRecipeAdapters
       row.merge('product_verdict' => result.fetch('product_verdict'),
                 'adapter_evidence' => { 'adapter' => entry.slice('lane', 'action', 'name'),
                                         'attempts' => result.fetch('attempt_evidence') })
-    rescue KeyError, TypeError => error
+    rescue KeyError, TypeError, NoMethodError => error
       raise Corpus::ContractError, "malformed recipe adapter result: #{error.message}"
     end
 
@@ -69,7 +69,7 @@ module GoFullRecipeAdapters
       unless valid_coordinate?(lane, action)
         raise Corpus::ContractError, 'recipe adapter lane/action must be nonempty Strings'
       end
-      [lane, action].freeze
+      [lane.dup.freeze, action.dup.freeze].freeze
     end
 
     def valid_coordinate?(lane, action)
@@ -104,11 +104,17 @@ module GoFullRecipeAdapters
       executable = attempt.fetch('executable')
       Corpus::Validation.file!(executable)
       raise Corpus::ContractError, 'recipe adapter attempt executable differs' unless File.realpath(argv.first) == File.realpath(executable.fetch('path'))
+      state = stage.fetch('state')
       raise Corpus::ContractError, 'recipe adapter attempt terminal is incomplete' unless
-        TERMINAL_STATES.include?(stage.fetch('state')) && [true, false].include?(stage.fetch('spawned')) &&
-        stage.key?('exit') && stage.key?('signal') && stage.fetch('duration_seconds').is_a?(Numeric)
-      if stage['spawned'] && stage['state'] == 'exited'
-        raise Corpus::ContractError, 'recipe adapter exited attempt lacks a process result' unless stage['exit'].is_a?(Integer) || stage['signal'].is_a?(Integer)
+        TERMINAL_STATES.include?(state) && [true, false].include?(stage.fetch('spawned')) &&
+        stage.key?('exit') && stage.key?('signal') && stage.fetch('duration_seconds').is_a?(Numeric) &&
+        stage.fetch('duration_seconds').finite?
+      if state == 'launch_failure'
+        raise Corpus::ContractError, 'recipe adapter launch failure incorrectly claims a spawned process' if stage.fetch('spawned')
+        raise Corpus::ContractError, 'recipe adapter launch failure has a process result' unless stage['exit'].nil? && stage['signal'].nil?
+      else
+        raise Corpus::ContractError, 'recipe adapter terminal attempt lacks a spawned process' unless stage.fetch('spawned')
+        raise Corpus::ContractError, 'recipe adapter terminal attempt lacks a process result' unless stage['exit'].is_a?(Integer) || stage['signal'].is_a?(Integer)
       end
       %w[stdout stderr].each { |stream| Corpus::Validation.file!(stage.fetch(stream)) }
       if File.realpath(stage.fetch('stdout').fetch('path')) == File.realpath(stage.fetch('stderr').fetch('path'))
@@ -143,7 +149,18 @@ module GoFullRecipeAdapters
   end
 
   def load_directory(directory)
+    adapter_paths(directory).each { |path| require path }
+  end
+
+  # A subset runner must bind every source file that can change adapter
+  # registration or dispatch. This is separate from loading so the product can
+  # authenticate the exact extension set before it selects roots.
+  def runner_paths(directory)
+    [File.realpath(__FILE__), *adapter_paths(directory)]
+  end
+
+  def adapter_paths(directory)
     own_file = File.realpath(__FILE__)
-    Dir[File.join(directory, 'recipe_*.rb')].map { |path| File.realpath(path) }.reject { |path| path == own_file }.sort.each { |path| require path }
+    Dir[File.join(directory, 'recipe_*.rb')].map { |path| File.realpath(path) }.reject { |path| path == own_file }.sort
   end
 end
