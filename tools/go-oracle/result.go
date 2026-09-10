@@ -10,15 +10,18 @@ import (
 // Step is one spawned process. The presence of a Step is the only evidence this
 // driver accepts that work happened; a result with no steps is never a pass.
 type Step struct {
-	Command        []string `json:"command"`
-	Dir            string   `json:"dir"`
-	Exit           int      `json:"exit"`
-	DurationMS     int64    `json:"duration_ms"`
-	Artifact       string   `json:"artifact,omitempty"`
-	ArtifactKind   string   `json:"artifact_kind,omitempty"`
-	ArtifactBytes  int64    `json:"artifact_bytes,omitempty"`
-	ArtifactSHA256 string   `json:"artifact_sha256,omitempty"`
-	Output         string   `json:"output,omitempty"`
+	Command         []string `json:"command"`
+	Dir             string   `json:"dir"`
+	Exit            int      `json:"exit"`
+	DurationMS      int64    `json:"duration_ms"`
+	Artifact        string   `json:"artifact,omitempty"`
+	ArtifactKind    string   `json:"artifact_kind,omitempty"`
+	ArtifactBytes   int64    `json:"artifact_bytes,omitempty"`
+	ArtifactSHA256  string   `json:"artifact_sha256,omitempty"`
+	Importcfg       string   `json:"importcfg,omitempty"`
+	ImportcfgBytes  int64    `json:"importcfg_bytes,omitempty"`
+	ImportcfgSHA256 string   `json:"importcfg_sha256,omitempty"`
+	Output          string   `json:"output,omitempty"`
 }
 
 // Result is one corpus file. The top-level command/exit/duration/action/artifact

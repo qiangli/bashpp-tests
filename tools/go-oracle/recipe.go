@@ -296,8 +296,52 @@ func parseRecipe(line string, env *goEnv) (*recipe, error) {
 			r.flags = append(r.flags, "-d=ssa/check/on")
 		}
 	}
+	if r.action == "compile" {
+		if err := validateSingleFileCompileFlags(r.flags); err != nil {
+			return nil, err
+		}
+	}
 	return r, nil
 }
+
+// validateSingleFileCompileFlags is deliberately the small, reviewed grammar
+// observed in the pinned compile corpus. Do not grow it by forwarding whatever
+// the compiler happens to accept: this recipe must remain fail-closed. In
+// particular, -o is absent from the reviewed corpus, and the driver's expected
+// object name is therefore derived solely from the source basename.
+func validateSingleFileCompileFlags(flags []string) error {
+	for _, flag := range flags {
+		switch flag {
+		case "-N", "-l", "-B", "-dynlink":
+			continue
+		}
+		switch {
+		case strings.HasPrefix(flag, "-d="):
+			value := strings.TrimPrefix(flag, "-d=")
+			if value == "" || !compileDebugValueRE.MatchString(value) {
+				return fmt.Errorf("compile recipe has malformed -d flag %q", flag)
+			}
+		case strings.HasPrefix(flag, "-c="):
+			value := strings.TrimPrefix(flag, "-c=")
+			n, err := strconv.Atoi(value)
+			if err != nil || n <= 0 {
+				return fmt.Errorf("compile recipe has malformed -c flag %q (want a positive integer)", flag)
+			}
+		case strings.HasPrefix(flag, "-p="):
+			if strings.TrimPrefix(flag, "-p=") == "" {
+				return fmt.Errorf("compile recipe has malformed -p flag %q", flag)
+			}
+		default:
+			return fmt.Errorf("compile recipe has unsupported flag %q; the reviewed single-file compile flags are -N, -l, -B, -dynlink, nonempty -d=..., positive -c=..., and nonempty -p=...", flag)
+		}
+	}
+	return nil
+}
+
+// Compiler debug settings are comma-separated key/value selectors. This
+// lexical check admits the reviewed forms (including ssa/check/seed=1) while
+// refusing whitespace, shell-like punctuation, and empty selectors.
+var compileDebugValueRE = regexp.MustCompile(`^[[:alnum:]_./,=-]+$`)
 
 // buildContext answers build-constraint tag queries the way upstream's context
 // does. The GOOS/GOARCH here are the PINNED TOOLCHAIN's, read from `go env
