@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 # Sprint: #118; Story: #20; Story-ID: 405d0d96bb28
 # Sprint: #118; Story: #22; Story-ID: 6fd56605a361
+# Sprint: #118; Story: #23; Story-ID: 72ac9344b150
 # Authenticate a retained bounded diagnostic. This validator is intentionally
 # separate from, and cannot select rows for, the production gate.
 #
@@ -70,6 +71,27 @@ CANDIDATES = {
       "examples/recursion/recursion.go" => {
         "sha256" => "3e64a878e9dd7226620ed33e36c74318b0d75bf9d0119ce02094c95b78353ec2",
         "bytes" => 778
+      }
+    }
+  },
+  "ba070aae2debb02c231cedb3625ad54e04cc20b71ad99e2125d4c202f7771aa8" => {
+    "label" => "Candidate026",
+    "rows" => 1,
+    "attempts" => 3,
+    "evidence_sha256" => "6ac6b399931c17e0eb2b96ec993ac56cfd06d6266ebc8ce57ae7db54e580b2b1",
+    "inventory_sha256" => "1b93b5bc0255f5c409f5e1f71c15b0f3d16c68e41bc1250d80ad8e9d3ca57257",
+    "recorded_candidates_sha256" => "6a5555ceb2995730eb3ecd16a8282ab91eca85364f46fb613f19be1480bf6470",
+    "ledger" => "sprint118-candidate026-ledger.tsv",
+    "ledger_sha256" => "0980dc4331f1599e3e6d622aef9c69a534b521d297c438f7c36292be54de142e",
+    "root_digest" => "aaa7c16794ea3436252892abc21d17b62802133b9d9ab6efd91306ddd1a929dd",
+    "cases" => {
+      "examples/generics/generics.go" => {
+        "sha256" => "d070bee32f553632b83695063238193edb07d29ba609d12fb478d461dc352563",
+        "bytes" => 2236,
+        "interpreted" => {
+          "diagnostic" => "BASHPP-ESELECTOR-TYPE: assignment parent is not struct storage",
+          "exit" => 2
+        }
       }
     }
   }
