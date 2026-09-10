@@ -363,7 +363,12 @@ ruby tests/go-full/compile_adapter_test.rb
 ruby tests/corpus/executor_test.rb
 GOMAXPROCS=1 GOTOOLCHAIN=local /absolute/pinned/sdk/bin/go -C tools/go-full/diagnostics test -p=1 ./...
 GOMAXPROCS=1 GOTOOLCHAIN=local /absolute/pinned/sdk/bin/go -C tools/go-full/typecheck-diagnostics test -p=1 ./...
+GOMAXPROCS=1 GOTOOLCHAIN=local /absolute/pinned/sdk/bin/go -C tools/go-full/source-remap test -p=1 ./...
 ```
+
+`tools/go-full/source-remap` holds the Sprint 148 validated original-position
+remapper and exact byte/diagnostic/multiplicity matcher primitives; see
+[SOURCE-REMAP.md](SOURCE-REMAP.md). It is not yet wired into `product.rb`.
 
 `compile_adapter_test.rb` is hermetic: every process it runs is a fake tool it
 creates, so it proves harness behaviour and never skips itself into credit. Its
