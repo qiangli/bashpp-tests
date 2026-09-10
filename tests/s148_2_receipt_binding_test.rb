@@ -4,6 +4,7 @@ require 'minitest/autorun'
 require 'tmpdir'
 require 'open3'
 require_relative '../tools/go-full/execution_identity'
+require_relative '../tools/go-full/stage_resolver'
 
 class Sprint148ExactExecutionIdentityTest < Minitest::Test
   def setup
@@ -218,5 +219,45 @@ class Sprint148ExactExecutionIdentityTest < Minitest::Test
     path, record = persist; assert_raises(Corpus::ContractError) { GoFullExecutionIdentity.persist!(path, prepare) }
     assert_raises(Corpus::ContractError) { GoFullExecutionIdentity.authenticate_verdict!(path, expected_sha256: record.fetch('sha256'), root_id: 'foreign', stage_id: 'compiled:compile', verdict: 'PASS') }
     assert_raises(Corpus::ContractError) { GoFullExecutionIdentity.authenticate_verdict!(path, expected_sha256: record.fetch('sha256'), root_id: 'testdir:fixedbugs/example.go', stage_id: 'compiled:compile', verdict: 'UNKNOWN') }
+  end
+
+  def test_stage_resolver_runs_through_authenticated_identity_and_lineage
+    path, record = persist
+    lineage_path = File.join(@tmp, 'evidence', 'lineage.jsonl')
+    result = GoFullStageResolver.run!(
+      identity_path: path, identity_sha256: record.fetch('sha256'),
+      root_id: args.fetch(:root_id), stage_id: args.fetch(:stage_id),
+      native_observation: { 'status' => 'pass', 'evidence_kind' => 'native-go-only' },
+      decision: 'execute', stage_role: 'compile', argv: [RbConfig.ruby, '-e', 'exit 0'],
+      cwd: @tmp, environment: @environment, lineage_path: lineage_path,
+      log_prefix: File.join(@tmp, 'evidence', 'logs', 'compile')
+    )
+    assert_equal 'PASS', result.fetch('verdict')
+    payload = Corpus::ProcessLineage.authenticate!(lineage_path).fetch(0)
+    assert_equal record.fetch('sha256'), payload.dig('artifacts', 'execution_identity', 'sha256')
+    assert_equal result.dig('stage', 'lineage', 'payload_sha256'),
+                 Corpus::ProcessLineage.payload_sha256(payload)
+  end
+
+  def test_stage_resolver_deadline_kills_reaps_and_remains_a_failure
+    receipt = GoFullExecutionIdentity.prepare!(**args.merge(timeout_seconds: 0.05))
+    path, record = persist(receipt, 'deadline-identity.json')
+    lineage_path = File.join(@tmp, 'evidence', 'deadline-lineage.jsonl')
+    result = GoFullStageResolver.run!(
+      identity_path: path, identity_sha256: record.fetch('sha256'),
+      root_id: args.fetch(:root_id), stage_id: args.fetch(:stage_id),
+      native_observation: { 'status' => 'pass', 'evidence_kind' => 'native-go-only' },
+      decision: 'execute', stage_role: 'compile',
+      argv: [RbConfig.ruby, '-e', 'fork { sleep 30 }; sleep 30'],
+      cwd: @tmp, environment: @environment, lineage_path: lineage_path,
+      log_prefix: File.join(@tmp, 'evidence', 'logs', 'deadline')
+    )
+    assert_equal 'FAIL', result.fetch('verdict')
+    assert_equal 'deadline-is-failed-execution', result.dig('decisive', 'rule')
+    payload = Corpus::ProcessLineage.authenticate!(lineage_path).fetch(0)
+    assert_equal 'deadline', payload.dig('terminal', 'state')
+    assert_equal false, payload.dig('terminal', 'descendants_survived')
+    assert payload.fetch('kill_events').any? { |event| event['reason'] == 'deadline' }
+    refute_empty payload.fetch('reap_events')
   end
 end
