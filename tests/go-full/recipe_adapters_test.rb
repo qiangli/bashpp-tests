@@ -120,4 +120,20 @@ class RecipeAdapterRegistryTests < Minitest::Test
 
     assert_raises(Corpus::ContractError) { registry.dispatch(root: @root, context: @context) }
   end
+
+  # A capture stream file is the receipt of one independent execution. The
+  # sibling evidence gate (Corpus::Validation.validate!) refuses two stages that
+  # share a stdout/stderr path anywhere in a validation, so one process cannot be
+  # presented as many. The adapter authentication only checks stdout != stderr
+  # WITHIN an attempt; it never rejects two attempts backed by the same physical
+  # capture, so a single run can be inflated into N distinct "attempts".
+  def test_attempts_may_not_reuse_one_captures_stream_files
+    registry = GoFullRecipeAdapters::Registry.new
+    shared = capture_attempt
+    duplicate = capture_attempt.merge('stage' => shared.fetch('stage'))
+    registry.register(lane: 'testdir', action: 'future-action', name: 'recipe_future',
+                      adapter: adapter(result: result([shared, duplicate])))
+
+    assert_raises(Corpus::ContractError) { registry.dispatch(root: @root, context: @context) }
+  end
 end
