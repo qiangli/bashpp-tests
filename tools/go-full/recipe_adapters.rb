@@ -87,10 +87,11 @@ module GoFullRecipeAdapters
 
       evidence = result.fetch('attempt_evidence')
       raise Corpus::ContractError, 'recipe adapter produced no attempt evidence' unless evidence.is_a?(Array) && !evidence.empty?
-      evidence.each { |attempt| authenticate_attempt!(attempt, root, context) }
+      seen_capture_identities = {}
+      evidence.each { |attempt| authenticate_attempt!(attempt, root, context, seen_capture_identities) }
     end
 
-    def authenticate_attempt!(attempt, root, context)
+    def authenticate_attempt!(attempt, root, context, seen_capture_identities)
       raise Corpus::ContractError, 'recipe adapter attempt must be a Hash' unless attempt.is_a?(Hash)
       source_root = File.realpath(context.fetch(:source_root))
       expected_inputs = (root['input_files'] || root.fetch('source_files')).to_h do |relative|
@@ -116,10 +117,18 @@ module GoFullRecipeAdapters
         raise Corpus::ContractError, 'recipe adapter terminal attempt lacks a spawned process' unless stage.fetch('spawned')
         raise Corpus::ContractError, 'recipe adapter terminal attempt lacks a process result' unless stage['exit'].is_a?(Integer) || stage['signal'].is_a?(Integer)
       end
-      %w[stdout stderr].each { |stream| Corpus::Validation.file!(stage.fetch(stream)) }
-      if File.realpath(stage.fetch('stdout').fetch('path')) == File.realpath(stage.fetch('stderr').fetch('path'))
+      capture_identities = %w[stdout stderr].flat_map do |stream|
+        observation = stage.fetch(stream)
+        Corpus::Validation.file!(observation)
+        path = File.realpath(observation.fetch('path'))
+        stat = File.stat(path)
+        [[:path, path], [:physical_file, stat.dev, stat.ino]]
+      end
+      if capture_identities.uniq.length != capture_identities.length ||
+         capture_identities.any? { |identity| seen_capture_identities.key?(identity) }
         raise Corpus::ContractError, 'recipe adapter attempt reused a capture stream'
       end
+      capture_identities.each { |identity| seen_capture_identities[identity] = true }
       true
     rescue SystemCallError => error
       raise Corpus::ContractError, "recipe adapter attempt authentication failed: #{error.message}"
