@@ -34,14 +34,50 @@ module GoFullSubset
     sha(records)
   end
 
+  # Canonical filesystem identity of +path+: every existing component is
+  # resolved through symlinks (dangling symlinks resolve through their
+  # readlink target, since a later mkdir_p would follow them), while
+  # non-existing trailing components are retained lexically so legitimate
+  # not-yet-created subset directories still resolve against real ancestry.
+  def canonical_path(path, depth = 0)
+    raise Corpus::ContractError, 'subset evidence path exceeds symlink resolution depth' if depth > 40
+    resolved = File::SEPARATOR
+    File.expand_path(path).split(File::SEPARATOR).reject(&:empty?).each do |component|
+      candidate = File.join(resolved, component)
+      resolved = if File.symlink?(candidate)
+                   target = File.readlink(candidate)
+                   canonical_path(target.start_with?(File::SEPARATOR) ? target : File.expand_path(target, resolved), depth + 1)
+                 else
+                   candidate
+                 end
+    end
+    resolved
+  rescue SystemCallError => error
+    raise Corpus::ContractError, "subset evidence path cannot be resolved: #{error.message}"
+  end
+
+  def overlapping?(evidence_form, root_form)
+    evidence_form == root_form || evidence_form.start_with?(root_form + File::SEPARATOR) || root_form.start_with?(evidence_form + File::SEPARATOR)
+  end
+
+  # Lexical name/parent checks alone are spoofable: a lexical
+  # subsets/<name> path can be a symlink resolving inside a protected
+  # full-corpus evidence root. Ancestry is therefore enforced on both the
+  # lexical and the canonically resolved forms of the evidence path and of
+  # every protected root, before the caller performs any write.
   def protected_path!(evidence, name, protected_roots)
     evidence = File.expand_path(evidence)
     raise Corpus::ContractError, 'subset evidence must be named by its manifest under a subsets directory' unless File.basename(evidence) == name && File.basename(File.dirname(evidence)) == 'subsets'
+    canonical_evidence = canonical_path(evidence)
 
     protected_roots.each do |root|
-      root = File.expand_path(root)
-      overlap = evidence == root || evidence.start_with?(root + File::SEPARATOR) || root.start_with?(evidence + File::SEPARATOR)
-      raise Corpus::ContractError, 'subset evidence overlaps a protected full-corpus evidence root' if overlap
+      root_forms = [File.expand_path(root), canonical_path(root)].uniq
+      evidence_forms = [evidence, canonical_evidence].uniq
+      root_forms.each do |root_form|
+        evidence_forms.each do |evidence_form|
+          raise Corpus::ContractError, 'subset evidence overlaps a protected full-corpus evidence root' if overlapping?(evidence_form, root_form)
+        end
+      end
     end
     evidence
   end

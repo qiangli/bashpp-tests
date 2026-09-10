@@ -94,6 +94,58 @@ class GoFullSubsetRunnerTest < Minitest::Test
     assert_raises(Corpus::ContractError) { load_selection(evidence: File.join(@tmp, 'product-all-009')) }
   end
 
+  def test_symlinked_subsets_parent_into_protected_root_fails_closed_before_any_write
+    protected_evidence = File.join(@tmp, 'evidence', 'go-full', 'product-all-008')
+    FileUtils.mkdir_p(protected_evidence)
+    work = File.join(@tmp, 'work')
+    FileUtils.mkdir_p(work)
+    File.symlink(protected_evidence, File.join(work, 'subsets'))
+    escaped = File.join(work, 'subsets', 'feedback-008')
+    refute File.exist?(escaped)
+    error = assert_raises(Corpus::ContractError) do
+      load_selection(evidence: escaped, protected_roots: [protected_evidence])
+    end
+    assert_match(/overlaps a protected full-corpus evidence root/, error.message)
+    refute File.exist?(File.join(protected_evidence, 'feedback-008')), 'load must reject the symlinked evidence path before any write into the protected root'
+  end
+
+  def test_dangling_symlinked_subset_name_into_protected_root_fails_closed
+    protected_evidence = File.join(@tmp, 'evidence', 'go-full', 'product-all-008')
+    FileUtils.mkdir_p(protected_evidence)
+    subsets = File.join(@tmp, 'work', 'subsets')
+    FileUtils.mkdir_p(subsets)
+    File.symlink(File.join(protected_evidence, 'feedback-008'), File.join(subsets, 'feedback-008'))
+    assert_raises(Corpus::ContractError) do
+      load_selection(evidence: File.join(subsets, 'feedback-008'), protected_roots: [protected_evidence])
+    end
+    refute File.exist?(File.join(protected_evidence, 'feedback-008')), 'a dangling symlink must not become a write into the protected root'
+  end
+
+  def test_protected_root_symlink_alias_fails_closed
+    protected_evidence = File.join(@tmp, 'evidence', 'go-full', 'product-all-008')
+    inside = File.join(protected_evidence, 'nested', 'subsets', 'feedback-008')
+    FileUtils.mkdir_p(File.dirname(inside))
+    alias_link = File.join(@tmp, 'alias')
+    File.symlink(protected_evidence, alias_link)
+    assert_raises(Corpus::ContractError) do
+      load_selection(evidence: inside, protected_roots: [alias_link])
+    end
+  end
+
+  def test_legitimate_non_existing_subset_directory_is_accepted_without_writes
+    protected_evidence = File.join(@tmp, 'evidence', 'go-full', 'product-all-008')
+    FileUtils.mkdir_p(protected_evidence)
+    subsets = File.join(@tmp, 'elsewhere', 'subsets')
+    FileUtils.mkdir_p(subsets)
+    absent = File.join(subsets, 'feedback-008')
+    refute File.exist?(absent)
+    selection = load_selection(evidence: absent, protected_roots: [protected_evidence])
+    assert_equal @ids, selection.fetch('root_ids')
+    refute File.exist?(absent), 'load must not create evidence for a legitimate non-existing subset directory'
+    assert_equal absent, GoFullSubset.protected_path!(absent, 'feedback-008', [protected_evidence])
+    assert_equal File.join(File.realpath(File.dirname(absent)), 'feedback-008'), GoFullSubset.canonical_path(absent)
+  end
+
   def test_subset_summary_has_only_subset_scope_and_exact_per_root_verdicts
     selected = load_selection
     rows = selected.fetch('roots').map.with_index do |root, index|
