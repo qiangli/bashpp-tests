@@ -7,6 +7,7 @@ require 'find'
 require 'json'
 require 'open3'
 require 'rbconfig'
+require_relative 'process_lineage'
 
 module Corpus
   SCHEMA = 'corpus-execution/v1'
@@ -219,52 +220,15 @@ module Corpus
 
   # No shell, no inherited secrets, file-backed streams, bounded process-group lifetime.
   # A surviving descendant is a failure even when its parent exited successfully.
-  def capture(argv, cwd:, log_prefix:, env:, timeout:, stdin: File::NULL)
-    raise ContractError, 'invalid command/deadline' unless argv.is_a?(Array) && !argv.empty? && argv.all? { |a| a.is_a?(String) } && timeout.positive?
-    FileUtils.mkdir_p(File.dirname(log_prefix))
-    out_path, err_path = log_prefix + '.stdout', log_prefix + '.stderr'
-    started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
-    result = { 'argv' => argv, 'cwd' => cwd, 'environment' => env.sort.to_h, 'timeout_seconds' => timeout,
-               'spawned' => false, 'state' => 'launch_failure', 'exit' => nil, 'signal' => nil }
-    pid = nil
-    File.open(out_path, 'wb') do |out|
-      File.open(err_path, 'wb') do |err|
-        begin
-          pid = Process.spawn(env, *argv, chdir: cwd, in: stdin, out: out, err: err, pgroup: true, unsetenv_others: true)
-          result['spawned'] = true
-          status = nil
-          loop do
-            waited, status = Process.waitpid2(pid, Process::WNOHANG)
-            break if waited
-            if Process.clock_gettime(Process::CLOCK_MONOTONIC) - started >= timeout
-              result['state'] = 'deadline'
-              kill_group(pid)
-              _, status = Process.waitpid2(pid)
-              break
-            end
-            sleep 0.01
-          end
-          result['state'] = 'exited' unless result['state'] == 'deadline'
-          result['exit'] = status.exitstatus
-          result['signal'] = status.termsig
-          begin
-            Process.kill(0, -pid)
-            result['descendants_survived'] = true
-            result['state'] = 'process_leak' if result['state'] == 'exited'
-          rescue Errno::ESRCH
-            result['descendants_survived'] = false
-          end
-        rescue SystemCallError => e
-          err.write("#{e.class}: #{e.message}\n")
-        ensure
-          kill_group(pid) if pid
-        end
-      end
-    end
-    result['duration_seconds'] = Process.clock_gettime(Process::CLOCK_MONOTONIC) - started
-    result['stdout'] = file_record(out_path)
-    result['stderr'] = file_record(err_path)
-    result
+  def capture(argv, cwd:, log_prefix:, env:, timeout:, stdin: File::NULL, lineage: {})
+    root_id = lineage.fetch(:root_id, "standalone:#{Digest::SHA256.hexdigest(File.expand_path(log_prefix))[0, 16]}")
+    stage_id = lineage.fetch(:stage_id, File.basename(log_prefix))
+    ProcessLineage.run(argv, cwd: cwd, env: env, timeout: timeout, stdin: stdin,
+                       lineage_path: lineage.fetch(:path, log_prefix + '.lineage.jsonl'),
+                       log_prefix: log_prefix, root_id: root_id, stage_id: stage_id,
+                       parent_launch_id: lineage[:parent_launch_id],
+                       artifact_paths: lineage.fetch(:artifact_paths, {}),
+                       artifact_parents: lineage.fetch(:artifact_parents, {}))
   end
 
   def kill_group(pid)
@@ -527,6 +491,7 @@ module Corpus
     def initialize(bashy:, go:, evidence_root:, candidate:, sdk:, env: {}, timeout: 30, cache_root: nil, importcfg_timeout: IMPORTCFG_TIMEOUT_SECONDS)
       @bashy, @go = File.expand_path(bashy), File.realpath(go)
       @root, @timeout = File.expand_path(evidence_root), timeout
+      @lineage_root = File.join(@root, '.process-lineage')
       raise ContractError, 'importcfg preparation must be bounded' unless importcfg_timeout.is_a?(Numeric) && importcfg_timeout.positive?
       @importcfg_timeout = importcfg_timeout
       @env = { 'PATH' => ENV.fetch('PATH', ''), 'LC_ALL' => 'C', 'TZ' => 'UTC', 'GOTOOLCHAIN' => 'local', 'GOPROXY' => 'off', 'GOSUMDB' => 'off', 'BASHY_HINTS' => 'off' }.merge(env)
@@ -546,7 +511,8 @@ module Corpus
     # sources/assets are relative paths; module_files contains generated module
     # context, never replacements for original input. package_input is an explicit
     # directory argument for multi-file packages (the CLI must support it).
-    def execute(id:, source_root:, sources:, assets: [], phase: 'run', args: [], module_files: {}, runtime_env: {}, package_input: nil)
+    def execute(id:, source_root:, sources:, assets: [], phase: 'run', args: [], module_files: {}, runtime_env: {}, package_input: nil,
+                root_id: id, parent_launch_id: nil)
       verify_tools!
       raise ContractError, 'unknown phase' unless %w[run build compile].include?(phase)
       raise ContractError, 'source list empty or duplicated' if sources.empty? || sources.uniq != sources
@@ -565,7 +531,8 @@ module Corpus
                  'package_input' => package_input, 'runtime_environment' => runtime_env,
                  'module_files' => module_files.transform_values { |bytes| Digest::SHA256.hexdigest(bytes) } }
       MODES.each do |mode|
-        record['modes'][mode] = execute_mode(case_dir, mode, inputs, sources, assets, module_files, phase, args, runtime_env, package_input)
+        record['modes'][mode] = execute_mode(case_dir, mode, inputs, sources, assets, module_files, phase, args, runtime_env,
+                                             package_input, root_id, parent_launch_id, id)
       end
       inputs.each { |p, data| raise ContractError, "upstream input changed: #{p}" unless Corpus.digest(data.fetch('path')) == data.fetch('sha256') }
       verify_tools!
@@ -679,7 +646,8 @@ module Corpus
       end
     end
 
-    def execute_mode(case_dir, mode, inputs, sources, assets, module_files, phase, args, runtime_env, package_input)
+    def execute_mode(case_dir, mode, inputs, sources, assets, module_files, phase, args, runtime_env, package_input,
+                     root_id = File.basename(case_dir), parent_launch_id = nil, execution_id = File.basename(case_dir))
       dir = File.join(case_dir, mode)
       work, artifacts, runtime = %w[work artifacts runtime].map { |s| File.join(dir, s) }
       [work, artifacts, runtime].each { |p| FileUtils.mkdir_p(p) }
@@ -707,6 +675,8 @@ module Corpus
       runtime_before = Corpus.snapshot(runtime)
       generated, map, binary, object = %w[generated.go generated.go.map program object.o].map { |s| File.join(artifacts, s) }
       result = { 'mode' => mode, 'phase' => phase, 'stages' => [], 'artifacts' => {}, 'state' => 'complete', 'source_directory' => work, 'runtime_directory' => runtime, 'input_checks' => [] }
+      lineage_path = File.join(@lineage_root || File.join(@root || case_dir, '.process-lineage'), Digest::SHA256.hexdigest(root_id) + '.jsonl')
+      lineage_parent = parent_launch_id
       # `compile` is a compile-only obligation: the upstream testdir harness runs
       # `go tool compile -e -p=p -importcfg=<stdlib>` and never links. An ordinary
       # `go build` would reject a valid `package main` that declares no main, so it
@@ -738,7 +708,22 @@ module Corpus
           result['state'] = 'input_mutation'; break
         end
         argv = argv.call if argv.is_a?(Proc)
-        stage = Corpus.capture(argv, cwd: stage_name == 'run' ? runtime : work, log_prefix: File.join(dir, stage_name), env: stage_name == 'run' ? run_env : environment, timeout: @timeout)
+        lineage_artifacts = case stage_name
+                            when 'transpile' then { 'generated_source' => generated, 'source_map' => map }
+                            when 'compile' then { 'object' => object }
+                            when 'build' then { 'native' => binary }
+                            else {}
+                            end
+        lineage_artifact_parents = if mode == 'compiled' && lineage_parent && %w[compile build].include?(stage_name)
+                                     lineage_artifacts.keys.to_h { |label| [label, { 'launch_id' => lineage_parent, 'artifact' => 'generated_source' }] }
+                                   else
+                                     {}
+                                   end
+        stage = Corpus.capture(argv, cwd: stage_name == 'run' ? runtime : work, log_prefix: File.join(dir, stage_name), env: stage_name == 'run' ? run_env : environment, timeout: @timeout,
+                               lineage: { path: lineage_path, root_id: root_id,
+                                          stage_id: "#{execution_id}/#{mode}/#{stage_name}", parent_launch_id: lineage_parent,
+                                          artifact_paths: lineage_artifacts, artifact_parents: lineage_artifact_parents })
+        lineage_parent = stage.dig('lineage', 'launch_id')
         stage['stage'] = stage_name
         result['stages'] << stage
         intact = verify_inputs(work, inputs, module_files)
@@ -756,6 +741,8 @@ module Corpus
           end
           result['artifacts']['generated'] = Corpus.file_record(generated)
           result['artifacts']['source_map'] = Corpus.file_record(map)
+          result['artifacts']['generated']['lineage'] = { 'producer_launch_id' => stage.dig('lineage', 'launch_id'), 'artifact' => 'generated_source' }
+          result['artifacts']['source_map']['lineage'] = { 'producer_launch_id' => stage.dig('lineage', 'launch_id'), 'artifact' => 'source_map' }
           mapping = JSON.parse(File.read(map)) rescue {}
           unless Corpus.valid_source_map?(mapping, result['artifacts']['generated'], inputs.slice(*sources))
             result['state'] = 'invalid_source_map'; break
@@ -767,6 +754,7 @@ module Corpus
             result['state'] = 'missing_artifact'; break
           end
           result['artifacts']['object'] = Corpus.file_record(object)
+          result['artifacts']['object']['lineage'] = { 'producer_launch_id' => stage.dig('lineage', 'launch_id'), 'artifact' => 'object' }
         elsif stage_name == 'build'
           # `go build` links a native program for main packages and writes a Go
           # archive for non-main ones; neither may degrade to an arbitrary file.
@@ -775,6 +763,7 @@ module Corpus
             result['state'] = 'missing_artifact'; break
           end
           result['artifacts']['native'] = Corpus.file_record(binary)
+          result['artifacts']['native']['lineage'] = { 'producer_launch_id' => stage.dig('lineage', 'launch_id'), 'artifact' => 'native' }
         end
       end
       result['input_integrity'] = verify_inputs(work, inputs, module_files) && result['input_checks'].all? { |check| check['valid'] }
@@ -787,7 +776,9 @@ module Corpus
         FileUtils.mkdir_p(work)
         sources.each { |p| raise ContractError, 'source remains in runtime cwd' if File.exist?(File.join(runtime, p)) }
         raise ContractError, 'runtime asset changed before run' unless verify_assets(runtime, assets, inputs)
-        stage = Corpus.capture([binary, *args], cwd: runtime, log_prefix: File.join(dir, 'run'), env: run_env, timeout: @timeout)
+        stage = Corpus.capture([binary, *args], cwd: runtime, log_prefix: File.join(dir, 'run'), env: run_env, timeout: @timeout,
+                               lineage: { path: lineage_path, root_id: root_id,
+                                          stage_id: "#{execution_id}/#{mode}/run", parent_launch_id: lineage_parent })
         stage['stage'] = 'run'
         result['stages'] << stage
         result['state'] = 'stage_failure' unless stage['spawned'] && stage['state'] == 'exited'
