@@ -521,3 +521,36 @@ fields.
 ```sh
 ruby tests/go-full/packet_manifest_test.rb
 ```
+
+## Deterministic multi-predicate recipe router (packet 148.6)
+
+`tools/go-full/router.rb` localizes a root into one fact per routing axis —
+axis, action, effective action, flags, files, graph, env, output, mode and
+phases — and matches those facts against a table of declarative routes. Every
+route must state a predicate for every axis; there is no priority and no
+first-match shortcut. Zero matching routes reject and more than one matching
+route rejects, so the answer is independent of registration order. The router
+returns a self-digested `go-full-recipe-route/v1` plan and delegates
+applicability to the packet 148.5 resolver; it executes nothing and carries
+`corpus_credit: false`.
+
+Packet 148.6 owns exactly one root, `testdir:cmplxdivide.go` (`run
+cmplxdivide1.go`). Upstream hands a `run` recipe with arguments to `go run`,
+which takes the leading `.go` arguments as package files: `cmplxdivide1.go` is
+a compile input, not program argv. The shared simple-execution seam had passed
+it as argv and compiled only the root file, so the recorded native run passed
+while the product failed. The single registered route,
+`testdir-run-go-file-compile-inputs`, plans both files as compile inputs with
+empty argv. The file lives outside the `recipe_*.rb` adapter glob on purpose:
+the shared registry and `product.rb` wiring are untouched and remain with the
+Substrate Integration Owner.
+
+```sh
+ruby tests/s148_6_recipe_router_test.rb
+```
+
+The test pins the exact inventory row and the retained ledger's native pass,
+proves every axis can reject the root on its own, rejects ambiguous and empty
+tables, and runs a bounded native-only control (skipped, never passed, when the
+local SDK does not carry the inventory bytes) showing the selected plan runs
+and the argv misrouting does not compile.
