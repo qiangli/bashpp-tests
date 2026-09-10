@@ -3,10 +3,9 @@ id: b5d3bd1bd24c
 kind: task
 title: Authenticate a current candidate and deliver the complete official-Go baseline replay
 seq: 17
-status: assigned
+status: todo
 priority: p0
 created: 2026-09-09T06:36:02.000807Z
-weave: 60
 assignee: qiangli
 sprint: 142
 ---

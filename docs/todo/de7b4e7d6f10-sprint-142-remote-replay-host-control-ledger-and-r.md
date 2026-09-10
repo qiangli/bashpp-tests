@@ -3,10 +3,9 @@ id: de7b4e7d6f10
 kind: task
 title: Sprint 142 remote replay-host control ledger and resource preflight
 seq: 27
-status: assigned
+status: todo
 priority: p0
 created: 2026-09-10T11:43:14.032527Z
-weave: 62
 assignee: qiangli
 sprint: 142
 ---

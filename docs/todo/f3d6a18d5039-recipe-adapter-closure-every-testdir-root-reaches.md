@@ -3,10 +3,9 @@ id: f3d6a18d5039
 kind: task
 title: 'Recipe-adapter closure: every testdir root reaches its declared terminal phase'
 seq: 25
-status: assigned
+status: todo
 priority: p0
 created: 2026-09-10T09:03:08.897813Z
-weave: 61
 assignee: qiangli
 sprint: 142
 ---
