@@ -45,11 +45,15 @@ goroot_probe	src/go/build/build.go	a8b066521d73f2b1c1f01d65588483e416deeab9b2139
 # The darwin/arm64 row was established on 2026-09-03 by downloading
 # go1.27.0.darwin-arm64.tar.gz, confirming its published sha256, and observing
 # that its bin/go is byte-identical to the bin/go of the module-cache
-# distribution golang.org/toolchain@v0.0.1-go1.27.0.darwin-arm64. Two
-# independent official origins, one digest.
+# distribution golang.org/toolchain@v0.0.1-go1.27.0.darwin-arm64. The
+# linux/amd64 row was established on 2026-09-10 from the same two origins:
+# go.dev/dl published the archive SHA-256 and extraction yielded the recorded
+# bin/go SHA-256; the module zip hash below is sum.golang.org-attested. Two
+# independent official origins, one digest per platform.
 #
 # A platform with no row here is FATAL, not skipped. Add a row the same way:
 # download the published archive, check its sha256 against go.dev/dl, and record
 # the sha256 of go/bin/go from inside it.
 # ---------------------------------------------------------------------------
 toolchain	go1.27.0	darwin	arm64	a19a71df81715c12d9a7e81bab036c12696fec1ddbd4258b48a2131a9080b267	go1.27.0.darwin-arm64.tar.gz	90493b3bbd5e10f91d12153198bf1994fd756399b4fec93b49b0c6e2acdeeb3e	golang.org/toolchain	v0.0.1-go1.27.0.darwin-arm64	h1:QFUhEu+WNZ4lGI/0ual1EOKBq/Z/df/cL75PkCW8m1k=
+toolchain	go1.27.0	linux	amd64	1db869c560a193573a71be466a34e0d4abb7792d78165c6102cdda069276a3a8	go1.27.0.linux-amd64.tar.gz	675c26c449cbb18fc24b74650de1eabbae6e16f64326fd85a283fb3b58280685	golang.org/toolchain	v0.0.1-go1.27.0.linux-amd64	h1:fVts2HjYwzBWrJtkf1B9HRDAuCZcZLexWI6ZX6Ls/IU=

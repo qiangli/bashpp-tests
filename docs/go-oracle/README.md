@@ -158,11 +158,12 @@ the forgeable one:
    *two independent official origins*: the go.dev/dl published archive checksum,
    and the `golang.org/toolchain` module zip hash that `sum.golang.org` attests.
 
-The `darwin/arm64` row was established by downloading
-`go1.27.0.darwin-arm64.tar.gz`, confirming its published SHA-256, and observing
-that its `bin/go` is byte-identical to the module-cache distribution's. **A
-platform with no reviewed row is fatal, not skipped** — an unreviewed toolchain
-is exactly what the gate exists to refuse.
+The `darwin/arm64` and `linux/amd64` rows were each established by downloading
+their official `go1.27.0` archive, confirming its published SHA-256, and
+recording the SHA-256 of its extracted `bin/go`; each corresponding module zip
+hash is independently attested by `sum.golang.org`. **A platform with no
+reviewed row is fatal, not skipped** — an unreviewed toolchain is exactly what
+the gate exists to refuse.
 
 ## Upstream `go env` and timeout semantics
 

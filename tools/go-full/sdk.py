@@ -19,11 +19,20 @@ sys.dont_write_bytecode = True
 import inventory as inv
 
 
-def prepare(source_cache, cache, output, goos, goarch, verify_existing=False):
-    pin = inv.pins()
-    candidates = [r for r in inv.rows(inv.REPO / "docs/go-oracle/toolchain.tsv") if r[0] == "toolchain" and r[1:4] == [pin["release"], goos, goarch]]
+def reviewed_toolchain(pin, goos, goarch, rows=None):
+    """Return the one reviewed distribution for an SDK platform, or refuse."""
+    if rows is None:
+        rows = inv.rows(inv.REPO / "docs/go-oracle/toolchain.tsv")
+    candidates = [r for r in rows if r[0] == "toolchain" and r[1:4] == [pin["release"], goos, goarch]]
     inv.require(len(candidates) == 1, "platform lacks one reviewed toolchain pin")
     tool = candidates[0]
+    inv.require(len(tool) == 10, "malformed reviewed toolchain pin")
+    return tool
+
+
+def prepare(source_cache, cache, output, goos, goarch, verify_existing=False):
+    pin = inv.pins()
+    tool = reviewed_toolchain(pin, goos, goarch)
     archive = cache / tool[5]
     if verify_existing:
         for directory in (source_cache / "go", cache, output):
