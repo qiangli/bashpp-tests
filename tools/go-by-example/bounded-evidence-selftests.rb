@@ -3,10 +3,10 @@
 # Sprint: #118; Story: #20; Story-ID: 405d0d96bb28
 # Sprint: #118; Story: #22; Story-ID: 6fd56605a361
 # Sprint: #118; Story: #23; Story-ID: 72ac9344b150
+# Sprint: #118; Story: #3; Story-ID: fa07603b71dc
 # Tamper the retained bounded evidence chains and their bindings; every mutation
 # must be rejected by the real validate-bounded-evidence.rb, never asserted from
-# here. Both the Candidate024 two-row diagnostic and the Candidate025 one-row
-# diagnostic are exercised through the same generalized validator.
+# here. Candidates024-027 are exercised through the same generalized validator.
 require 'digest'
 require 'fileutils'
 require 'json'
@@ -46,6 +46,14 @@ SUITES = [
     'source' => 'examples/generics/generics.go',
     'inventory_target' => 'd070bee32f',
     'candidate_target' => '304bc25216736f83'
+  },
+  {
+    'label' => 'Candidate027',
+    'evidence' => "#{STATE}/runtime-integration-027/gbe-subset.jsonl.pass",
+    'inventory' => "#{STATE}/runtime-integration-027/subset-inventory.tsv",
+    'source' => 'examples/range-over-iterators/range-over-iterators.go',
+    'inventory_target' => '7ee6216ba1',
+    'candidate_target' => 'd2da6d9cf2e36906'
   }
 ].freeze
 

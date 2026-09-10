@@ -2,6 +2,7 @@
 # Sprint: #118; Story: #20; Story-ID: 405d0d96bb28
 # Sprint: #118; Story: #22; Story-ID: 6fd56605a361
 # Sprint: #118; Story: #23; Story-ID: 72ac9344b150
+# Sprint: #118; Story: #3; Story-ID: fa07603b71dc
 # Authenticate a retained bounded diagnostic. This validator is intentionally
 # separate from, and cannot select rows for, the production gate.
 #
@@ -11,8 +12,8 @@
 # diagnostic) are both covered. The shared docs/go-by-example/candidates.tsv is
 # an append-only reviewed table, so each run authenticates the exact byte prefix
 # ending at its selected manifest row before re-deriving that row through the
-# shared primitives. Adding a newer reviewed candidate row therefore can never
-# invalidate an older bounded run.
+# shared primitives. Candidates024-027 are covered, and adding a newer reviewed
+# candidate row therefore can never invalidate an older bounded run.
 require "base64"
 require "digest"
 require "json"
@@ -92,6 +93,23 @@ CANDIDATES = {
           "diagnostic" => "BASHPP-ESELECTOR-TYPE: assignment parent is not struct storage",
           "exit" => 2
         }
+      }
+    }
+  },
+  "f86c94dffe4d734e00be21cf15a622a24072427653f2caeba8bb440fc77ba279" => {
+    "label" => "Candidate027",
+    "rows" => 1,
+    "attempts" => 3,
+    "evidence_sha256" => "0424321650327bb8b03ed61abce40626d6cc8d607db319752b772f034fc1363c",
+    "inventory_sha256" => "ea0c1d26fefb6693673963029d386c1287db248a7a466252490d7cf547dc6afd",
+    "recorded_candidates_sha256" => "bd496738dac24ff1ef721a328640a250afb08ad0cf2749635ce0f2704d7501e0",
+    "ledger" => "sprint118-candidate027-ledger.tsv",
+    "ledger_sha256" => "527e0827951af30033371665f8625568105a68758382821333c99cd784106459",
+    "root_digest" => "1a5c5b733829aa611ad9f2658182f5dcd92a59255deb7f18c43fca727c852ee2",
+    "cases" => {
+      "examples/range-over-iterators/range-over-iterators.go" => {
+        "sha256" => "7ee6216ba19fe8e06821e1e46391a5040f3ae29c289f477d17c6a5f1b8f60717",
+        "bytes" => 2667
       }
     }
   }
