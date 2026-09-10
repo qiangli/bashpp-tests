@@ -12,6 +12,7 @@ require_relative 'authentication'
 require_relative 'resume'
 require_relative 'module_context'
 require_relative 'subset'
+require_relative 'recipe_adapters'
 
 module GoFullProduct
   module_function
@@ -276,7 +277,7 @@ module GoFullProduct
     subset = if options[:root_subset]
                raise Corpus::ContractError, '--root-subset cannot be combined with --phase-shard' if options[:phase_shard]
                GoFullSubset.load(path: options.fetch(:root_subset), expected_sha256: options[:root_subset_sha256], roots: roots,
-                 inventory: native_summary.fetch('inventory'), candidate_path: options.fetch(:candidate), runner_paths: [__FILE__, File.join(__dir__, 'subset.rb')], evidence: evidence,
+                 inventory: native_summary.fetch('inventory'), candidate_path: options.fetch(:candidate), runner_paths: [__FILE__, File.join(__dir__, 'subset.rb'), *GoFullRecipeAdapters.runner_paths(__dir__)], evidence: evidence,
                  protected_roots: options.fetch(:protected_evidence_roots, []))
              end
     roots = subset ? subset.fetch('roots') : phase_roots(roots, options[:phase_shard])
@@ -326,6 +327,15 @@ module GoFullProduct
             observed = probe(root, options, source_root, evidence, sdk_identity, candidate)
             row['modes'] = match_diagnostics(root, observed, matcher, evidence, options.fetch(:timeout))
             row['product_verdict'] = oracle['status'] == 'pass' && row['modes'].values.all? { |mode| mode['verdict'] == 'PASS' } ? 'PASS' : 'FAIL'
+          rescue Corpus::ContractError, SystemCallError => error
+            row['reason'] = error.message
+          end
+        elsif root['axis'] == 'testdir' && GoFullRecipeAdapters.eligible?(root)
+          begin
+            row.merge!(GoFullRecipeAdapters.dispatch(root: root, context: {
+              source_root: source_root, evidence: evidence, executor: executor, module_files: module_files,
+              options: options, sdk_identity: sdk_identity, candidate: candidate, native_observation: oracle
+            }))
           rescue Corpus::ContractError, SystemCallError => error
             row['reason'] = error.message
           end
@@ -441,6 +451,8 @@ module GoFullProduct
     %w[interpreted compiled].to_h { |mode| [mode, { 'verdict' => 'FAIL', 'reason' => error.message }] }
   end
 end
+
+GoFullRecipeAdapters.load_directory(__dir__)
 
 if $PROGRAM_NAME == __FILE__
   options = { inventory: File.expand_path('../../docs/go-full', __dir__), timeout: 60 }
