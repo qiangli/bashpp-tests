@@ -4,7 +4,7 @@ kind: task
 title: 'Recipe-adapter closure: every testdir root reaches its declared terminal phase'
 seq: 25
 status: todo
-priority: p0
+priority: p1
 created: 2026-09-10T09:03:08.897813Z
 assignee: qiangli
 sprint: 150
