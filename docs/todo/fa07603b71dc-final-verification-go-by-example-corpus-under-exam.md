@@ -3,12 +3,13 @@ id: fa07603b71dc
 kind: task
 title: 'Final verification: Go by Example corpus under examples/'
 seq: 3
-status: doing
+status: done
 priority: p1
 created: 2026-09-03T09:45:35.902827Z
 weave: 44
 assignee: qiangli
 sprint: 118
+closed: 2026-09-10T07:28:41.663697Z
 ---
 
 Candidate021 remains the accepted stable baseline: oracle 85/85, compiled 85/85, interpreted 57/85, root c005009bb0cef9e0ab16b2560bf4aeeb55180d63ad7b64f64c32a06f89285f98 under /Users/qiangli/.local/state/bashy/sprint118-evidence/runtime-integration-021.
