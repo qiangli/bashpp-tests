@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# Sprint: #118; Story-ID: 3abd77da923c
+# Sprint: #118/#142; Story: #24; Story-ID: 3abd77da923c/605c7c4f2cad
 # Complete root accounting; only exact implemented recipes can acquire PASS.
 require 'json'
 require 'optparse'
@@ -11,6 +11,7 @@ require_relative 'typechecker'
 require_relative 'authentication'
 require_relative 'resume'
 require_relative 'module_context'
+require_relative 'subset'
 
 module GoFullProduct
   module_function
@@ -272,10 +273,16 @@ module GoFullProduct
     resumed = options[:resume] ? GoFullResume.load(options[:resume], context: checkpoint, roots: all_roots, source_root: source_root,
       provenance: executor.provenance, modules: module_files, native: native, catalog: catalog) : { 'reusable' => {}, 'fresh' => {}, 'checkpoint_roots' => 0 }
 
-    roots = phase_roots(roots, options[:phase_shard])
+    subset = if options[:root_subset]
+               raise Corpus::ContractError, '--root-subset cannot be combined with --phase-shard' if options[:phase_shard]
+               GoFullSubset.load(path: options.fetch(:root_subset), expected_sha256: options[:root_subset_sha256], roots: roots,
+                 inventory: native_summary.fetch('inventory'), candidate_path: options.fetch(:candidate), runner_paths: [__FILE__, File.join(__dir__, 'subset.rb')], evidence: evidence,
+                 protected_roots: options.fetch(:protected_evidence_roots, []))
+             end
+    roots = subset ? subset.fetch('roots') : phase_roots(roots, options[:phase_shard])
     # Fresh-only adapters from a prior checkpoint must not starve roots that
     # have never been attempted when a manager bounds wall-clock execution.
-    roots = roots.sort_by { |root| resumed.fetch('fresh').key?(root.fetch('id')) ? 1 : 0 }
+    roots = roots.sort_by { |root| resumed.fetch('fresh').key?(root.fetch('id')) ? 1 : 0 } unless subset
     FileUtils.mkdir_p(evidence)
     File.write(File.join(evidence, 'context.json'), Corpus.canonical(checkpoint) + "\n", mode: 'wx')
     matcher = build_matcher(evidence, sdk_identity, options.fetch(:runtime))
@@ -359,10 +366,7 @@ module GoFullProduct
                                                '--source-root', source_root, '--output', dir)
     counts = rows.group_by { |r| r['axis'] }.transform_values { |group| group.group_by { |r| r['product_verdict'] }.transform_values(&:length) }
     module_integrity_after = GoFullModuleContext.load(options.fetch(:module_context), candidate_path: options.fetch(:candidate), sdk_path: options.fetch(:sdk_identity), cache_root: options[:cache_root], bashy: options.fetch(:bashy), expected_sha256: options.fetch(:module_context_sha256, GoFullModuleContext::REVIEWED_SHA256)).fetch('proof') == module_context.fetch('proof')
-    summary = { 'schema' => 'go-full-product/v1', 'counts_by_axis' => counts, 'roots' => roots.length,
-                'scope' => options[:phase_shard] ? "#{options[:phase_shard]}-phase-discovery-shard" : 'full-root-accounting',
-                'full_manifest_denominators' => full_manifest_denominators, 'selected_root_denominator' => roots.length,
-                'selection_rule' => options[:phase_shard] == 'typechecker' ? 'all 743 independent typechecker roots, including unsupported recipes and upstream skips' : (options[:phase_shard] ? 'all unflagged negative errorcheck/errorcheckwithauto roots without expected-failure inversion' : 'all independent static axes'),
+    common_summary = {
                 'checkpoint' => Corpus.file_record(File.join(evidence, 'context.json')), 'sdk_authentication' => sdk_authentication, 'module_context' => module_context.fetch('proof'), 'module_integrity_after' => module_integrity_after,
                 'resume' => { 'attempt_order' => 'unattempted and authenticated terminals before prior fresh-required adapters; complete selected denominator retained', 'checkpoint_roots' => resumed['checkpoint_roots'], 'reused_roots' => rows.count { |row| resumed['reusable'].key?(row['id']) }, 'fresh_required' => resumed['fresh'] },
                 'typechecker_adapter' => { 'schema' => 'go-full-typechecker-adapter/v1', 'matcher' => typecheck_matcher,
@@ -373,13 +377,24 @@ module GoFullProduct
                                            'claim_scope' => 'per-root check obligations only; no whole-axis or whole-corpus PASS is claimed' },
                 'provenance' => executor.provenance, 'diagnostic_matcher' => matcher, 'source_integrity_after' => integrity_status.success?, 'source_integrity_error' => err,
                 'native_summary' => Corpus.file_record(File.join(native_dir, 'summary.json')),
-                'native_roots' => Corpus.file_record(File.join(native_dir, 'roots.jsonl')),
+                'native_roots' => Corpus.file_record(File.join(native_dir, 'roots.jsonl')) }
+    summary = if subset
+                common_summary.fetch('typechecker_adapter').delete('root_denominator')
+                common_summary.fetch('typechecker_adapter')['selected_root_count'] = rows.count { |row| row['axis'] == 'typechecker' }
+                GoFullSubset.summary(subset, rows, common_summary)
+              else
+              { 'schema' => 'go-full-product/v1', 'counts_by_axis' => counts, 'roots' => roots.length,
+                'scope' => options[:phase_shard] ? "#{options[:phase_shard]}-phase-discovery-shard" : 'full-root-accounting',
+                'full_manifest_denominators' => full_manifest_denominators, 'selected_root_denominator' => roots.length,
+                'selection_rule' => options[:phase_shard] == 'typechecker' ? 'all 743 independent typechecker roots, including unsupported recipes and upstream skips' : (options[:phase_shard] ? 'all unflagged negative errorcheck/errorcheckwithauto roots without expected-failure inversion' : 'all independent static axes'),
+                **common_summary,
                 'all_runtime_tests_covered' => false, 'nested_process_instrumentation_complete' => false,
                 'generated_program_denominator_complete' => false,
                 'verdict' => 'FAIL', 'reason' => 'Sprint closure requires every phase, dynamic test, nested-tool and applicability obligation to be independently verified.' }
+              end
     File.write(File.join(evidence, 'summary.json'), Corpus.canonical(summary) + "\n")
-    puts JSON.generate(summary.slice('verdict', 'counts_by_axis', 'roots', 'source_integrity_after'))
-    1
+    puts JSON.generate(summary.slice('schema', 'scope', 'verdict', 'counts_by_axis', 'roots', 'selected_root_count', 'source_integrity_after'))
+    subset ? (rows.any? { |row| row['product_verdict'] == 'FAIL' } ? 1 : 0) : 1
   end
 
   def probe(root, options, source_root, evidence, sdk_identity, candidate)
@@ -430,12 +445,14 @@ end
 if $PROGRAM_NAME == __FILE__
   options = { inventory: File.expand_path('../../docs/go-full', __dir__), timeout: 60 }
   OptionParser.new do |parser|
-    %i[bashy candidate sdk_identity source_root evidence native inventory modules relocation resume module_context cache_root].each do |key|
+    %i[bashy candidate sdk_identity source_root evidence native inventory modules relocation resume module_context cache_root root_subset].each do |key|
       parser.on("--#{key.to_s.tr('_', '-')} PATH") { |value| options[key] = File.expand_path(value) }
     end
     parser.on('--relocation-sha256 SHA256') { |value| options[:relocation_sha256] = value }
     parser.on('--module-context-sha256 SHA256') { |value| options[:module_context_sha256] = value }
     parser.on('--phase-shard NAME') { |value| options[:phase_shard] = value }
+    parser.on('--root-subset-sha256 SHA256') { |value| options[:root_subset_sha256] = value }
+    parser.on('--protected-evidence-root PATH') { |value| (options[:protected_evidence_roots] ||= []) << File.expand_path(value) }
     parser.on('--timeout N', Integer) { |value| options[:timeout] = value }
   end.parse!
   begin
