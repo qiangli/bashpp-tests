@@ -9,6 +9,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"slices"
 	"sort"
 	"strings"
 	"testing"
@@ -1518,6 +1519,65 @@ func TestRecipeTimeoutIsScaled(t *testing.T) {
 	}
 	if rec.timeout != 15 {
 		t.Fatalf("timeout %d, want 5*3=15 as upstream computes it", rec.timeout)
+	}
+}
+
+func TestSingleFileCompileFlagsAreBoundedAndOrdered(t *testing.T) {
+	env := &goEnv{TimeoutScale: 1}
+	line := "compile -N -l -B -dynlink -d=ssa/check/seed=1 -c=2 -p=main"
+	rec, err := parseRecipe(line, env)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := []string{"-N", "-l", "-B", "-dynlink", "-d=ssa/check/seed=1", "-c=2", "-p=main"}
+	if !slices.Equal(rec.flags, want) {
+		t.Fatalf("compile flags %q, want %q", rec.flags, want)
+	}
+}
+
+func TestSingleFileCompileFlagsFailClosed(t *testing.T) {
+	env := &goEnv{TimeoutScale: 1}
+	for _, line := range []string{
+		"compile -o=object.o", "compile -o object.o", "compile -d=", "compile -d=bad;setting",
+		"compile -c=0", "compile -c=-1", "compile -c=two", "compile -p=",
+		"compile -unknown",
+	} {
+		if _, err := parseRecipe(line, env); err == nil {
+			t.Errorf("%q was accepted", line)
+		}
+	}
+}
+
+func TestSingleFileCompileRecordsExactRecipeAndImportcfgEvidence(t *testing.T) {
+	corpus := scratchCorpus(t)
+	write(t, filepath.Join(corpus, "test", "zcompile.go"), `// compile -N -d=checkptr -c=2 -p=p
+
+package p
+
+func F() int { return 1 }
+`)
+	r := invoke(t, corpus, writeTranche(t, "test/zcompile.go\tcompile"))
+	if r.exit != 0 {
+		t.Fatalf("exit %d\nstderr: %s", r.exit, r.stderr)
+	}
+	res := mustResult(t, r, "test/zcompile.go")
+	if len(res.Steps) != 1 {
+		t.Fatalf("compile ran %d commands, want exactly one terminal compiler command: %v", len(res.Steps), res.Steps)
+	}
+	step := res.Steps[0]
+	wantCommand := []string{"$GOTOOL", "tool", "compile", "-e", "-p=p", "-importcfg=$WORK/importcfg", "-N", "-d=checkptr", "-c=2", "-p=p", "$GOROOT_TEST/zcompile.go"}
+	if !slices.Equal(step.Command, wantCommand) {
+		t.Fatalf("command %q, want %q", step.Command, wantCommand)
+	}
+	if step.Dir != "$WORK/t-0000" {
+		t.Fatalf("cwd %q, want temporary directory", step.Dir)
+	}
+	if step.Artifact != "zcompile.o" || step.ArtifactKind != artifactArchive || step.ArtifactBytes == 0 || step.ArtifactSHA256 == "" {
+		t.Fatalf("artifact evidence %+v does not prove the expected object", step)
+	}
+	importcfg := []byte(capture(goToolPath(), "list", "-export", "-f", "{{if .Export}}packagefile {{.ImportPath}}={{.Export}}{{end}}", "std"))
+	if step.Importcfg != "$WORK/importcfg" || step.ImportcfgBytes != int64(len(importcfg)) || step.ImportcfgSHA256 != sha256hex(importcfg) {
+		t.Fatalf("importcfg evidence path/bytes/digest = %q/%d/%q, want $WORK/importcfg/%d/%q", step.Importcfg, step.ImportcfgBytes, step.ImportcfgSHA256, len(importcfg), sha256hex(importcfg))
 	}
 }
 

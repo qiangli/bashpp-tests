@@ -35,8 +35,9 @@ const maxRecordedOutput = 8192
 // be a regular file of the right KIND, and be non-empty where non-empty is
 // meaningful. TestFakeGoProducesZeroArtifact is the regression for it.
 type artifactSpec struct {
-	name string // path, relative to the command's working directory
-	kind string // artifactArchive, artifactExecutable, artifactGoSource, or ""
+	name      string // path, relative to the command's working directory
+	kind      string // artifactArchive, artifactExecutable, artifactGoSource, or ""
+	importcfg string // generated importcfg consumed by this compiler/linker step
 }
 
 const (
@@ -182,6 +183,7 @@ func (e *execution) runcmd(spec artifactSpec, args ...string) ([]byte, error) {
 		}
 	}
 	bytesOut, sum := describeArtifact(dir, artifact)
+	importcfgBytes, importcfgSum := describeArtifact(dir, spec.importcfg)
 	out := buf.Bytes()
 	recorded := string(out)
 	if len(recorded) > maxRecordedOutput {
@@ -192,15 +194,18 @@ func (e *execution) runcmd(spec artifactSpec, args ...string) ([]byte, error) {
 		normArgs[i] = e.drv.normalize(a)
 	}
 	e.res.Steps = append(e.res.Steps, Step{
-		Command:        normArgs,
-		Dir:            e.drv.normalize(dir),
-		Exit:           exit,
-		DurationMS:     elapsed.Milliseconds(),
-		Artifact:       e.drv.normalize(artifact),
-		ArtifactKind:   spec.kind,
-		ArtifactBytes:  bytesOut,
-		ArtifactSHA256: sum,
-		Output:         e.drv.normalize(recorded),
+		Command:         normArgs,
+		Dir:             e.drv.normalize(dir),
+		Exit:            exit,
+		DurationMS:      elapsed.Milliseconds(),
+		Artifact:        e.drv.normalize(artifact),
+		ArtifactKind:    spec.kind,
+		ArtifactBytes:   bytesOut,
+		ArtifactSHA256:  sum,
+		Importcfg:       e.drv.normalize(spec.importcfg),
+		ImportcfgBytes:  importcfgBytes,
+		ImportcfgSHA256: importcfgSum,
+		Output:          e.drv.normalize(recorded),
 	})
 	if err != nil && !errors.Is(err, errTimeout) {
 		err = fmt.Errorf("%s\n%s", err, out)
@@ -245,7 +250,7 @@ func (e *execution) compileFile(long string) ([]byte, error) {
 	cmd = append(cmd, e.rec.flags...)
 	cmd = append(cmd, long)
 	artifact := strings.TrimSuffix(filepath.Base(long), ".go") + ".o"
-	return e.runcmd(artifactSpec{name: artifact, kind: artifactArchive}, cmd...)
+	return e.runcmd(artifactSpec{name: artifact, kind: artifactArchive, importcfg: e.drv.stdlibImportcfgFile}, cmd...)
 }
 
 func (e *execution) compileInDir(dir string, importcfg, pkgname string, names ...string) ([]byte, error) {
@@ -266,7 +271,7 @@ func (e *execution) compileInDir(dir string, importcfg, pkgname string, names ..
 	for _, name := range names {
 		cmd = append(cmd, filepath.Join(dir, name))
 	}
-	return e.runcmd(artifactSpec{name: artifact, kind: artifactArchive}, cmd...)
+	return e.runcmd(artifactSpec{name: artifact, kind: artifactArchive, importcfg: importcfg}, cmd...)
 }
 
 func (e *execution) linkFile(outfile, infile, importcfg string, ldflags []string) error {
@@ -279,7 +284,7 @@ func (e *execution) linkFile(outfile, infile, importcfg string, ldflags []string
 	cmd := []string{e.drv.goTool, "tool", "link", "-s", "-w", "-buildid=test", "-o", outfile, "-importcfg=" + importcfg}
 	cmd = append(cmd, ldflags...)
 	cmd = append(cmd, infile)
-	_, err := e.runcmd(artifactSpec{name: outfile, kind: artifactExecutable}, cmd...)
+	_, err := e.runcmd(artifactSpec{name: outfile, kind: artifactExecutable, importcfg: importcfg}, cmd...)
 	return err
 }
 
