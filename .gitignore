@@ -2,6 +2,10 @@
 .agents/
 .claude/
 
+# Python bytecode and interpreter caches.
+__pycache__/
+*.pyc
+
 # Built by tools/go-oracle/run.sh (it normally writes into .cache/go-oracle/).
 tools/go-oracle/go-oracle
 
