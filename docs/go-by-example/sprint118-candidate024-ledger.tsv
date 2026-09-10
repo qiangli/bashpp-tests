@@ -1,0 +1,9 @@
+# Sprint: #118; Story: #20; Story-ID: 405d0d96bb28
+# Candidate024 bounded diagnostic ledger; this is exactly two rows, not corpus coverage.
+# path	mode	verdict	state	exit	diagnostic
+examples/generics/generics.go	oracle	pass	complete	0
+examples/generics/generics.go	interpreted	fail_mismatch	complete	1	BASHPP-EGENERIC-CONSTRAINT: []string does not satisfy constraint for S in SlicesIndex
+examples/generics/generics.go	compiled	pass	complete	0
+examples/range-over-iterators/range-over-iterators.go	oracle	pass	complete	0
+examples/range-over-iterators/range-over-iterators.go	interpreted	fail_mismatch	complete	2	BASHPP-ESELECTOR-TYPE: assignment parent is not struct storage
+examples/range-over-iterators/range-over-iterators.go	compiled	pass	complete	0
