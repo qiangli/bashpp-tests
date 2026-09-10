@@ -64,14 +64,22 @@ module Corpus
     end
 
     def signal_group(signal, pgid, events, reason)
+      error = nil
       delivered = begin
         Process.kill(signal, -pgid)
         true
       rescue Errno::ESRCH
         false
+      rescue Errno::EPERM => exception
+        # Losing permission to signal a group is evidence of non-delivery, not
+        # permission to discard the attempted-launch receipt. Keep sweeping and
+        # let the terminal descendant-survival field fail the launch closed.
+        error = exception.class.name
+        false
       end
       events << { 'signal' => signal, 'target_pgid' => pgid, 'reason' => reason,
-                  'delivered' => delivered, 'monotonic_ns' => monotonic_ns, 'wall' => wall_time }
+                  'delivered' => delivered, 'error' => error,
+                  'monotonic_ns' => monotonic_ns, 'wall' => wall_time }
       delivered
     end
 
@@ -295,13 +303,14 @@ module Corpus
       else
         raise ContractError, 'spawned launch lacks PID/PGID' unless launch['pid'].is_a?(Integer) && launch['pid'].positive? && launch['pgid'] == launch['pid']
         raise ContractError, 'spawned launch lacks reap event' if payload.fetch('reap_events').empty?
-        raise ContractError, 'spawned launch reports surviving descendants' unless terminal['descendants_survived'] == false
+        raise ContractError, 'successful launch reports surviving descendants' if terminal['state'] == 'exited' && terminal['descendants_survived'] != false
       end
       raise ContractError, 'event lists are invalid' unless payload['kill_events'].is_a?(Array) && payload['reap_events'].is_a?(Array)
       payload['kill_events'].each do |event|
-        exact_keys!(event, %w[delivered monotonic_ns reason signal target_pgid wall], 'kill event')
+        exact_keys!(event, %w[delivered error monotonic_ns reason signal target_pgid wall], 'kill event')
         raise ContractError, 'kill event targets another process group' unless event['target_pgid'] == launch['pgid']
         raise ContractError, 'kill event signal is invalid' unless event['signal'] == 'KILL' && [true, false].include?(event['delivered'])
+        raise ContractError, 'kill event delivery/error disagree' unless event['delivered'] ? event['error'].nil? : [nil, 'Errno::EPERM'].include?(event['error'])
         raise ContractError, 'kill event time is invalid' unless event['monotonic_ns'].is_a?(Integer) && event['monotonic_ns'] >= launch['monotonic_started_ns'] && Time.iso8601(event['wall'])
       end
       payload['reap_events'].each do |event|

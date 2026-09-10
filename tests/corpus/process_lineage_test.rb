@@ -147,6 +147,23 @@ class ProcessLineageTest < Minitest::Test
     end
   end
 
+  def test_permission_denied_kill_is_durable_and_surviving_group_fails_closed
+    result = nil
+    Process.stub(:kill, ->(*_arguments) { raise Errno::EPERM }) do
+      result = capture('exit 0')
+    end
+    assert result['spawned']
+    assert_equal 'process_leak', result['state']
+    assert result['descendants_survived']
+    payload = records.fetch(0)
+    assert_equal true, payload.dig('terminal', 'descendants_survived')
+    refute_empty payload.fetch('kill_events')
+    assert payload.fetch('kill_events').all? { |event| event['delivered'] == false && event['error'] == 'Errno::EPERM' }
+    assert_equal 'descendant_sweep', payload.dig('kill_events', 0, 'reason')
+    assert_equal 'ensure_sweep', payload.dig('kill_events', 1, 'reason')
+    refute Corpus.success?(result)
+  end
+
   def test_digest_semantic_and_artifact_tampering_fail_in_a_fresh_process
     result = capture("STDOUT.write('original')")
     original = File.binread(@ledger)
