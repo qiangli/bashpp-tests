@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 # Sprint: #118; Story: #20; Story-ID: 405d0d96bb28
 # Sprint: #118; Story: #22; Story-ID: 6fd56605a361
+# Sprint: #118; Story: #23; Story-ID: 72ac9344b150
 # Tamper the retained bounded evidence chains and their bindings; every mutation
 # must be rejected by the real validate-bounded-evidence.rb, never asserted from
 # here. Both the Candidate024 two-row diagnostic and the Candidate025 one-row
@@ -37,6 +38,14 @@ SUITES = [
     'source' => 'examples/recursion/recursion.go',
     'inventory_target' => '3e64a878e9',
     'candidate_target' => '57a8b7680573866b'
+  },
+  {
+    'label' => 'Candidate026',
+    'evidence' => "#{STATE}/runtime-integration-026/gbe-subset.jsonl.fail",
+    'inventory' => "#{STATE}/runtime-integration-026/subset-inventory.tsv",
+    'source' => 'examples/generics/generics.go',
+    'inventory_target' => 'd070bee32f',
+    'candidate_target' => '304bc25216736f83'
   }
 ].freeze
 
