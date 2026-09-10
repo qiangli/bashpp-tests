@@ -60,6 +60,40 @@ module GoFullSubset
     evidence_form == root_form || evidence_form.start_with?(root_form + File::SEPARATOR) || root_form.start_with?(evidence_form + File::SEPARATOR)
   end
 
+  # String ancestry is not filesystem ancestry on a case-insensitive volume:
+  # two differently-cased path spellings can name the same inode.  Compare the
+  # protected root's identity with every existing ancestor of the proposed
+  # output (and vice versa) so an as-yet-uncreated leaf is covered too.  Do not
+  # case-fold strings: on a case-sensitive filesystem those names are distinct.
+  def filesystem_identity(path)
+    stat = File.stat(path)
+    [stat.dev, stat.ino]
+  rescue Errno::ENOENT, Errno::ENOTDIR
+    nil
+  rescue SystemCallError => error
+    raise Corpus::ContractError, "subset evidence path cannot be inspected: #{error.message}"
+  end
+
+  def existing_ancestor_identities(path)
+    ancestors = []
+    current = File.expand_path(path)
+    loop do
+      identity = filesystem_identity(current)
+      ancestors << identity if identity
+      parent = File.dirname(current)
+      break if parent == current
+      current = parent
+    end
+    ancestors
+  end
+
+  def filesystem_overlapping?(evidence_form, root_form)
+    root_identity = filesystem_identity(root_form)
+    evidence_identity = filesystem_identity(evidence_form)
+    (root_identity && existing_ancestor_identities(evidence_form).include?(root_identity)) ||
+      (evidence_identity && existing_ancestor_identities(root_form).include?(evidence_identity))
+  end
+
   # Lexical name/parent checks alone are spoofable: a lexical
   # subsets/<name> path can be a symlink resolving inside a protected
   # full-corpus evidence root. Ancestry is therefore enforced on both the
@@ -75,7 +109,9 @@ module GoFullSubset
       evidence_forms = [evidence, canonical_evidence].uniq
       root_forms.each do |root_form|
         evidence_forms.each do |evidence_form|
-          raise Corpus::ContractError, 'subset evidence overlaps a protected full-corpus evidence root' if overlapping?(evidence_form, root_form)
+          if overlapping?(evidence_form, root_form) || filesystem_overlapping?(evidence_form, root_form)
+            raise Corpus::ContractError, 'subset evidence overlaps a protected full-corpus evidence root'
+          end
         end
       end
     end

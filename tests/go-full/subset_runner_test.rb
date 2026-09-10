@@ -132,6 +132,17 @@ class GoFullSubsetRunnerTest < Minitest::Test
     end
   end
 
+  def test_differently_cased_distinct_directories_remain_distinct_on_case_sensitive_filesystems
+    protected_evidence = File.join(@tmp, 'CaseSensitiveProtected')
+    evidence = File.join(@tmp, 'casesensitiveprotected', 'subsets', 'feedback-008')
+    FileUtils.mkdir_p(protected_evidence)
+    FileUtils.mkdir_p(File.dirname(evidence))
+    skip 'filesystem is case-insensitive; these spellings name the same directory' if File.identical?(protected_evidence, File.dirname(File.dirname(evidence)))
+
+    selection = load_selection(evidence: evidence, protected_roots: [protected_evidence])
+    assert_equal @ids, selection.fetch('root_ids')
+  end
+
   def test_legitimate_non_existing_subset_directory_is_accepted_without_writes
     protected_evidence = File.join(@tmp, 'evidence', 'go-full', 'product-all-008')
     FileUtils.mkdir_p(protected_evidence)
