@@ -1,0 +1,108 @@
+# frozen_string_literal: true
+# Sprint: #142; Story: #24; Story-ID: 605c7c4f2cad
+
+require 'digest'
+require 'json'
+require ENV.fetch('GO_FULL_CORPUS_LIB', File.expand_path('../corpus/executor.rb', __dir__))
+
+# Authentication and selection for named, arbitrary proper subsets of the
+# official Go root inventory. The product driver calls this only after the
+# complete inventory and all native observations have been joined.
+module GoFullSubset
+  SCHEMA = 'go-full-root-subset/v1'
+  CLAIM_SCOPE = 'selected-roots-only; no axis or corpus verdict'
+  OFFICIAL_ROOTS = 3495
+  SHA256 = /\A[0-9a-f]{64}\z/
+  NAME = /\A[a-z0-9][a-z0-9._-]{0,63}\z/
+  KEYS = %w[schema name claim_scope expected_count root_ids root_ids_sha256 inventory_sha256 runner_sha256 candidate_sha256].freeze
+  CORPUS_SUMMARY_FIELDS = %w[verdict roots selected_root_denominator full_manifest_denominators selection_rule
+                             all_runtime_tests_covered nested_process_instrumentation_complete generated_program_denominator_complete].freeze
+
+  module_function
+
+  def sha(value)
+    Digest::SHA256.hexdigest(value.is_a?(String) ? value : Corpus.canonical(value))
+  end
+
+  def inventory_binding(inventory)
+    sha(inventory.to_h { |name, record| [name, record.is_a?(Hash) ? record.fetch('sha256') : record] })
+  end
+
+  def runner_binding(paths)
+    records = Array(paths).to_h { |path| [File.basename(path), Corpus.digest(path)] }
+    raise Corpus::ContractError, 'duplicate subset runner filenames' unless records.length == Array(paths).length
+    sha(records)
+  end
+
+  def protected_path!(evidence, name, protected_roots)
+    evidence = File.expand_path(evidence)
+    raise Corpus::ContractError, 'subset evidence must be named by its manifest under a subsets directory' unless File.basename(evidence) == name && File.basename(File.dirname(evidence)) == 'subsets'
+
+    protected_roots.each do |root|
+      root = File.expand_path(root)
+      overlap = evidence == root || evidence.start_with?(root + File::SEPARATOR) || root.start_with?(evidence + File::SEPARATOR)
+      raise Corpus::ContractError, 'subset evidence overlaps a protected full-corpus evidence root' if overlap
+    end
+    evidence
+  end
+
+  def load(path:, expected_sha256:, roots:, inventory:, candidate_path:, runner_paths:, evidence:, protected_roots: [])
+    raise Corpus::ContractError, 'subset manifest SHA-256 is required' unless expected_sha256&.match?(SHA256)
+    raise Corpus::ContractError, 'complete official inventory must be authenticated before subset selection' unless roots.length == OFFICIAL_ROOTS
+    actual_sha256 = Corpus.digest(path)
+    raise Corpus::ContractError, 'subset manifest changed' unless actual_sha256 == expected_sha256
+
+    manifest = JSON.parse(File.read(path))
+    raise Corpus::ContractError, 'unknown subset manifest fields' unless manifest.keys.sort == KEYS.sort
+    raise Corpus::ContractError, 'invalid subset manifest schema' unless manifest['schema'] == SCHEMA
+    name = manifest.fetch('name')
+    raise Corpus::ContractError, 'invalid subset name' unless name.is_a?(String) && name.match?(NAME) && !name.start_with?('product-all-', 'native-', 'full-')
+    raise Corpus::ContractError, 'subset attempted a corpus-level claim' unless manifest['claim_scope'] == CLAIM_SCOPE
+    protected_path!(evidence, name, protected_roots)
+
+    ids = manifest.fetch('root_ids')
+    expected_count = manifest.fetch('expected_count')
+    raise Corpus::ContractError, 'subset root IDs must be a sorted array of strings' unless ids.is_a?(Array) && ids.all? { |id| id.is_a?(String) && !id.empty? } && ids == ids.sort
+    raise Corpus::ContractError, 'subset count differs from exact ID list' unless expected_count.is_a?(Integer) && expected_count.positive? && expected_count == ids.length
+    raise Corpus::ContractError, 'subset must be a proper subset of the official corpus' unless expected_count < OFFICIAL_ROOTS
+    raise Corpus::ContractError, 'duplicate subset root ID' unless ids.uniq.length == ids.length
+    raise Corpus::ContractError, 'subset root ID digest differs' unless manifest['root_ids_sha256']&.match?(SHA256) && manifest['root_ids_sha256'] == sha(ids)
+
+    by_id = roots.to_h { |root| [root.fetch('id'), root] }
+    raise Corpus::ContractError, 'complete official inventory contains duplicate root IDs' unless by_id.length == OFFICIAL_ROOTS
+    unknown = ids.reject { |id| by_id.key?(id) }
+    raise Corpus::ContractError, 'unknown subset root ID: ' + unknown.first unless unknown.empty?
+    raise Corpus::ContractError, 'subset inventory digest differs' unless manifest['inventory_sha256']&.match?(SHA256) && manifest['inventory_sha256'] == inventory_binding(inventory)
+    raise Corpus::ContractError, 'subset runner digest differs' unless manifest['runner_sha256']&.match?(SHA256) && manifest['runner_sha256'] == runner_binding(runner_paths)
+    raise Corpus::ContractError, 'subset candidate digest differs' unless manifest['candidate_sha256']&.match?(SHA256) && manifest['candidate_sha256'] == Corpus.digest(candidate_path)
+
+    { 'manifest' => Corpus.file_record(path), 'runner' => Array(runner_paths).map { |runner_path| Corpus.file_record(runner_path) },
+      'candidate' => Corpus.file_record(candidate_path), 'name' => name, 'claim_scope' => CLAIM_SCOPE,
+      'expected_count' => expected_count, 'root_ids' => ids, 'root_ids_sha256' => manifest.fetch('root_ids_sha256'),
+      'inventory_sha256' => manifest.fetch('inventory_sha256'), 'runner_sha256' => manifest.fetch('runner_sha256'),
+      'candidate_sha256' => manifest.fetch('candidate_sha256'), 'roots' => ids.map { |id| by_id.fetch(id) } }
+  rescue Errno::ENOENT, JSON::ParserError, KeyError, TypeError => error
+    raise Corpus::ContractError, "invalid subset manifest: #{error.message}"
+  end
+
+  def reauthenticate!(selection)
+    %w[manifest candidate].each { |key| Corpus::Validation.file!(selection.fetch(key)) }
+    selection.fetch('runner').each { |record| Corpus::Validation.file!(record) }
+  end
+
+  def summary(selection, rows, common)
+    forbidden = common.keys & CORPUS_SUMMARY_FIELDS
+    raise Corpus::ContractError, 'subset summary attempted corpus fields: ' + forbidden.sort.join(', ') unless forbidden.empty?
+    ids = rows.map { |row| row.fetch('id') }
+    raise Corpus::ContractError, 'subset result IDs differ from authenticated selection' unless ids == selection.fetch('root_ids')
+    raise Corpus::ContractError, 'subset result denominator differs from authenticated selection' unless rows.length == selection.fetch('expected_count')
+    reauthenticate!(selection)
+    counts = rows.group_by { |row| row.fetch('axis') }.transform_values do |axis_rows|
+      axis_rows.group_by { |row| row.fetch('product_verdict') }.transform_values(&:length)
+    end
+    common.merge('schema' => 'go-full-product-subset/v1', 'scope' => 'subset-only', 'claim_scope' => CLAIM_SCOPE,
+      'name' => selection.fetch('name'), 'selected_root_count' => rows.length, 'selected_root_ids' => ids,
+      'selected_root_ids_sha256' => selection.fetch('root_ids_sha256'), 'counts_by_axis' => counts,
+      'selection' => selection.reject { |key, _| key == 'roots' }, 'per_root_verdicts' => rows.to_h { |row| [row.fetch('id'), row.fetch('product_verdict')] })
+  end
+end
