@@ -12,6 +12,7 @@ require_relative 'authentication'
 require_relative 'resume'
 require_relative 'module_context'
 require_relative 'subset'
+require_relative 'recipe_adapters'
 
 module GoFullProduct
   module_function
@@ -329,6 +330,15 @@ module GoFullProduct
           rescue Corpus::ContractError, SystemCallError => error
             row['reason'] = error.message
           end
+        elsif root['axis'] == 'testdir' && GoFullRecipeAdapters.eligible?(root)
+          begin
+            row.merge!(GoFullRecipeAdapters.dispatch(root: root, context: {
+              source_root: source_root, evidence: evidence, executor: executor, module_files: module_files,
+              options: options, sdk_identity: sdk_identity, candidate: candidate, native_observation: oracle
+            }))
+          rescue Corpus::ContractError, SystemCallError => error
+            row['reason'] = error.message
+          end
         elsif root['axis'] == 'typechecker' && GoFullTypechecker.adaptable?(root, source_root)
           begin
             checked = GoFullTypechecker.execute(root: root, options: options, source_root: source_root, evidence: evidence,
@@ -441,6 +451,8 @@ module GoFullProduct
     %w[interpreted compiled].to_h { |mode| [mode, { 'verdict' => 'FAIL', 'reason' => error.message }] }
   end
 end
+
+GoFullRecipeAdapters.load_directory(__dir__)
 
 if $PROGRAM_NAME == __FILE__
   options = { inventory: File.expand_path('../../docs/go-full', __dir__), timeout: 60 }
