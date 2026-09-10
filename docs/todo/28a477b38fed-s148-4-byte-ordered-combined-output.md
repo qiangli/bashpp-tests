@@ -3,9 +3,11 @@ id: 28a477b38fed
 kind: task
 title: S148.4 byte-ordered combined output
 seq: 32
-status: todo
+status: assigned
 priority: p0
 created: 2026-09-10T21:21:58.835444Z
+weave: 100
+assignee: qiangli
 sprint: 148
 ---
 
