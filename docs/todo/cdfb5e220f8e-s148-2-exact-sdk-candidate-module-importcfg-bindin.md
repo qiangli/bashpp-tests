@@ -3,9 +3,11 @@ id: cdfb5e220f8e
 kind: task
 title: S148.2 exact SDK candidate module importcfg binding
 seq: 30
-status: todo
+status: assigned
 priority: p0
 created: 2026-09-10T21:21:58.749749Z
+weave: 94
+assignee: qiangli
 sprint: 148
 ---
 

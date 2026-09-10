@@ -3,9 +3,11 @@ id: 3e561455641a
 kind: task
 title: S148.5 centralized timeout and applicability resolver
 seq: 33
-status: todo
+status: assigned
 priority: p0
 created: 2026-09-10T21:21:58.874486Z
+weave: 98
+assignee: qiangli
 sprint: 148
 ---
 

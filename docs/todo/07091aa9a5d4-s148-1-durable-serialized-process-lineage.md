@@ -3,9 +3,11 @@ id: 07091aa9a5d4
 kind: task
 title: S148.1 durable serialized process lineage
 seq: 29
-status: todo
+status: assigned
 priority: p0
 created: 2026-09-10T21:21:58.705886Z
+weave: 93
+assignee: qiangli
 sprint: 148
 ---
 

@@ -3,9 +3,11 @@ id: 2070d075d95e
 kind: task
 title: S148.6 deterministic multi-predicate recipe router
 seq: 34
-status: todo
+status: assigned
 priority: p0
 created: 2026-09-10T21:21:58.905845Z
+weave: 99
+assignee: qiangli
 sprint: 148
 ---
 

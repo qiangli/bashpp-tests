@@ -3,9 +3,11 @@ id: 7a1175a64d88
 kind: task
 title: S148.3 real source remapper and fail-closed matcher
 seq: 31
-status: todo
+status: assigned
 priority: p0
 created: 2026-09-10T21:21:58.78744Z
+weave: 95
+assignee: qiangli
 sprint: 148
 ---
 

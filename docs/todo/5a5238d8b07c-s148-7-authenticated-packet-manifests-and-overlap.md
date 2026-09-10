@@ -3,9 +3,11 @@ id: 5a5238d8b07c
 kind: task
 title: S148.7 authenticated packet manifests and overlap protection
 seq: 35
-status: todo
+status: assigned
 priority: p0
 created: 2026-09-10T21:21:58.948169Z
+weave: 97
+assignee: qiangli
 sprint: 148
 ---
 
