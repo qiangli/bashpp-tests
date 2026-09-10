@@ -1,0 +1,6 @@
+# Sprint: #118; Story: #22; Story-ID: 6fd56605a361
+# Candidate025 bounded diagnostic ledger; this is exactly one row, not corpus coverage.
+# path	mode	verdict	state	exit	diagnostic
+examples/recursion/recursion.go	oracle	pass	complete	0
+examples/recursion/recursion.go	interpreted	pass	complete	0
+examples/recursion/recursion.go	compiled	pass	complete	0
