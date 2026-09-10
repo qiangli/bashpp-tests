@@ -157,6 +157,34 @@ class GoFullSubsetRunnerTest < Minitest::Test
     assert_equal File.join(File.realpath(File.dirname(absent)), 'feedback-008'), GoFullSubset.canonical_path(absent)
   end
 
+  def test_distinct_non_existing_suffixes_under_the_same_ancestor_are_accepted
+    subsets = File.join(@tmp, 'shared', 'subsets')
+    FileUtils.mkdir_p(subsets)
+    evidence = File.join(subsets, 'feedback-008')
+    protected = File.join(subsets, 'feedback-009', 'deep', 'secret')
+
+    selection = load_selection(evidence: evidence, protected_roots: [protected])
+    assert_equal @ids, selection.fetch('root_ids')
+    refute File.exist?(evidence), 'the overlap guard must remain read-only'
+    refute File.exist?(protected), 'the overlap guard must remain read-only'
+  end
+
+  def test_case_folded_non_existing_suffixes_are_rejected_only_when_the_filesystem_folds_case
+    shared = File.join(@tmp, 'shared')
+    FileUtils.mkdir_p(shared)
+    evidence = File.join(shared, 'subsets', 'feedback-008')
+    protected = File.join(shared, 'SUBSETS', 'FEEDBACK-008', 'deep')
+
+    if File.exist?(File.join(@tmp, 'SHARED'))
+      assert_raises(Corpus::ContractError) do
+        load_selection(evidence: evidence, protected_roots: [protected])
+      end
+    else
+      selection = load_selection(evidence: evidence, protected_roots: [protected])
+      assert_equal @ids, selection.fetch('root_ids')
+    end
+  end
+
   def test_subset_summary_has_only_subset_scope_and_exact_per_root_verdicts
     selected = load_selection
     rows = selected.fetch('roots').map.with_index do |root, index|

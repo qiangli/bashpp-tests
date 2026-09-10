@@ -74,24 +74,68 @@ module GoFullSubset
     raise Corpus::ContractError, "subset evidence path cannot be inspected: #{error.message}"
   end
 
-  def existing_ancestor_identities(path)
+  def existing_ancestor_forms(path)
     ancestors = []
     current = File.expand_path(path)
+    suffix = []
     loop do
       identity = filesystem_identity(current)
-      ancestors << identity if identity
+      ancestors << { path: current, identity: identity, suffix: suffix.dup } if identity
       parent = File.dirname(current)
       break if parent == current
+      suffix.unshift(File.basename(current))
       current = parent
     end
     ancestors
   end
 
+  # Prove case folding from the filesystem instead of assuming it from the
+  # host OS. This keeps differently-cased names distinct on case-sensitive
+  # volumes, including Linux, while allowing absent suffixes to be compared
+  # according to the namespace in which they would later be created.
+  def case_insensitive_ancestry?(path)
+    current = File.expand_path(path)
+    loop do
+      identity = filesystem_identity(current)
+      if identity
+        basename = File.basename(current)
+        alternate = basename.sub(/[A-Za-z]/) { |letter| letter == letter.downcase ? letter.upcase : letter.downcase }
+        if alternate != basename
+          alternate_identity = filesystem_identity(File.join(File.dirname(current), alternate))
+          return true if alternate_identity == identity
+        end
+      end
+      parent = File.dirname(current)
+      break if parent == current
+      current = parent
+    end
+    false
+  end
+
+  def suffixes_overlap?(left, right, case_insensitive:)
+    shorter, longer = [left, right].sort_by(&:length)
+    shorter.each_with_index.all? do |component, index|
+      case_insensitive ? component.casecmp?(longer.fetch(index)) : component == longer.fetch(index)
+    end
+  end
+
   def filesystem_overlapping?(evidence_form, root_form)
-    root_identity = filesystem_identity(root_form)
-    evidence_identity = filesystem_identity(evidence_form)
-    (root_identity && existing_ancestor_identities(evidence_form).include?(root_identity)) ||
-      (evidence_identity && existing_ancestor_identities(root_form).include?(evidence_identity))
+    evidence_ancestors = existing_ancestor_forms(evidence_form)
+    root_ancestors = existing_ancestor_forms(root_form)
+    evidence_ancestors.each do |evidence_ancestor|
+      root_ancestors.each do |root_ancestor|
+        next unless evidence_ancestor.fetch(:identity) == root_ancestor.fetch(:identity)
+
+        left = evidence_ancestor.fetch(:suffix)
+        right = root_ancestor.fetch(:suffix)
+        return true if suffixes_overlap?(left, right, case_insensitive: false)
+        if case_insensitive_ancestry?(evidence_ancestor.fetch(:path)) ||
+           case_insensitive_ancestry?(root_ancestor.fetch(:path))
+          return true if suffixes_overlap?(left, right, case_insensitive: true)
+        end
+      end
+    end
+    false
   end
 
   # Lexical name/parent checks alone are spoofable: a lexical
