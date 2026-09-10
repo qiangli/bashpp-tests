@@ -487,3 +487,32 @@ no output normalization or unsupported flags were used to turn them green.
 The main missing-diagnostic cause was returning only the first `go/types` error
 and formatting `scanner.ErrorList` as one error plus an omitted-error count.
 Full positioned error collection/rendering is product work, not a corpus edit.
+
+## Authenticated Sprint 142 leaf packets (v4)
+
+`tools/go-full/packet_manifest.rb` authenticates the immutable
+`sprint142-leaf-packet-index/v4` and all 49
+`sprint142-leaf-packet-manifest/v4` leaves. It verifies the supplied index and
+manifest hashes, the causal-partition file, each newline-delimited root list,
+the 1,682-root disjoint and complete partition, exact IDs/counts, timestamps,
+selected-only claim scope, canonical paths, and symlink/case-fold collisions.
+The shared subset and product seams are not modified.
+
+V4 does not contain candidate, inventory, or runner fields. Those mutable
+execution inputs are bound without changing v4 by a separately reviewed
+`go-full-reviewed-packet-projection/v1`. The projection includes its packet,
+fresh attempt/evidence name, v4 index and selected-manifest hashes, exact
+official-inventory ID digest, candidate record, and every inventory and runner
+file record. Its independently supplied SHA-256 and every bound file are
+reauthenticated before a packet summary is emitted. Existing evidence,
+previously consumed projections/attempts/paths, protected-root overlap, and
+stale bindings fail closed.
+
+Packet **148.7** is mechanism-only: the real manifest has count zero, empty
+`ids`, and `mechanism_only_contract: packet-manifest-mechanism`. Packet results
+remain `packet-only`, carry `corpus_credit: false`, and reject corpus-verdict
+fields.
+
+```sh
+ruby tests/go-full/packet_manifest_test.rb
+```
