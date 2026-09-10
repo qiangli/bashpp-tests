@@ -119,6 +119,17 @@ class AuthenticatedResumeTest < Minitest::Test
     result = load_checkpoint
     assert_equal 'FAIL', result['reusable'].fetch(@root['id'])['product_verdict']
   end
+
+  def test_product_executor_stages_share_a_root_bound_durable_lineage
+    stages = @row.fetch('execution').fetch('modes').values.flat_map { |mode| mode.fetch('stages') }
+    refute_empty stages
+    paths = stages.map { |stage| stage.dig('lineage', 'path') }.uniq
+    assert_equal 1, paths.length
+    assert stages.all? { |stage| stage.dig('lineage', 'root_id') == @root.fetch('id') }
+    payloads = Corpus::ProcessLineage.authenticate!(paths.fetch(0))
+    assert_equal stages.map { |stage| stage.dig('lineage', 'launch_id') }, payloads.map { |payload| payload.fetch('launch_id') }
+    assert payloads.all? { |payload| payload.fetch('stage_id').start_with?(@root.fetch('id') + '/') }
+  end
   def test_new_evidence_cache_location_preserves_exact_cache_identity
     @provenance['cache']['path'] = File.join(@tmp, 'new-run/cache')
     assert_equal 'FAIL', load_checkpoint['reusable'].fetch(@root['id'])['product_verdict']

@@ -47,7 +47,7 @@ module GoFullProduct
   end
 
   def execute_generator(root, executor, source_root, module_files, evidence)
-    generator = executor.execute(id: root.fetch('id') + ':generator', source_root: source_root, sources: [root.fetch('path')],
+    generator = executor.execute(id: root.fetch('id') + ':generator', root_id: root.fetch('id'), source_root: source_root, sources: [root.fetch('path')],
                                  phase: 'run', args: root.fetch('recipe').fetch('args'), module_files: module_files)
     children = {}
     generator.fetch('modes').each do |mode, observation|
@@ -77,9 +77,13 @@ module GoFullProduct
       File.binwrite(generated_path, bytes)
       child['generated_source'] = Corpus.file_record(generated_path)
       child['emitter_stream'] = stage.fetch(stream)
+      child['generated_source']['lineage'] = { 'root_id' => root.fetch('id'),
+                                                'parent_launch_id' => stage.dig('lineage', 'launch_id'),
+                                                'parent_artifact' => stream }
       raise Corpus::ContractError, 'generated source differs from its mode-specific emitter stream' unless child['generated_source']['sha256'] == child['emitter_stream']['sha256']
-      execution = executor.execute(id: root.fetch('id') + ':generated-by-' + mode, source_root: generated_root, sources: ['tmp__.go'],
-                                   phase: 'run', module_files: module_files)
+      execution = executor.execute(id: root.fetch('id') + ':generated-by-' + mode, root_id: root.fetch('id'),
+                                   parent_launch_id: stage.dig('lineage', 'launch_id'), source_root: generated_root,
+                                   sources: ['tmp__.go'], phase: 'run', module_files: module_files)
       child['execution'] = execution
       child['actual_child_modes'] = execution.fetch('modes').keys
       child['upstream_output'] = exact_upstream_output(execution, root, source_root)
