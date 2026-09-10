@@ -35,11 +35,11 @@ class GoFullSubsetRunnerTest
     end
     assert_match(/overlaps a protected full-corpus evidence root/, error.message)
 
-    # The consequence the guard exists to prevent: the accepted evidence path,
-    # written the way the product driver writes it, lands inside the protected
-    # full-corpus evidence directory.
+    # The product invokes the guard before its mkdir_p(evidence).  This direct
+    # probe demonstrates why that ordering matters: without the rejection, the
+    # product write would land in the protected full-corpus evidence directory.
     FileUtils.mkdir_p(escaped)
-    refute File.exist?(File.join(protected_evidence, 'feedback-008')),
-           'a case-folded subsets symlink resolved into a protected full-corpus evidence root'
+    assert File.exist?(File.join(protected_evidence, 'feedback-008')),
+           'a case-folded subsets symlink must resolve into the protected full-corpus evidence root'
   end
 end

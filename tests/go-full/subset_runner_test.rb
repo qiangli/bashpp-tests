@@ -132,6 +132,17 @@ class GoFullSubsetRunnerTest < Minitest::Test
     end
   end
 
+  def test_differently_cased_distinct_directories_remain_distinct_on_case_sensitive_filesystems
+    protected_evidence = File.join(@tmp, 'CaseSensitiveProtected')
+    evidence = File.join(@tmp, 'casesensitiveprotected', 'subsets', 'feedback-008')
+    FileUtils.mkdir_p(protected_evidence)
+    FileUtils.mkdir_p(File.dirname(evidence))
+    skip 'filesystem is case-insensitive; these spellings name the same directory' if File.identical?(protected_evidence, File.dirname(File.dirname(evidence)))
+
+    selection = load_selection(evidence: evidence, protected_roots: [protected_evidence])
+    assert_equal @ids, selection.fetch('root_ids')
+  end
+
   def test_legitimate_non_existing_subset_directory_is_accepted_without_writes
     protected_evidence = File.join(@tmp, 'evidence', 'go-full', 'product-all-008')
     FileUtils.mkdir_p(protected_evidence)
@@ -144,6 +155,34 @@ class GoFullSubsetRunnerTest < Minitest::Test
     refute File.exist?(absent), 'load must not create evidence for a legitimate non-existing subset directory'
     assert_equal absent, GoFullSubset.protected_path!(absent, 'feedback-008', [protected_evidence])
     assert_equal File.join(File.realpath(File.dirname(absent)), 'feedback-008'), GoFullSubset.canonical_path(absent)
+  end
+
+  def test_distinct_non_existing_suffixes_under_the_same_ancestor_are_accepted
+    subsets = File.join(@tmp, 'shared', 'subsets')
+    FileUtils.mkdir_p(subsets)
+    evidence = File.join(subsets, 'feedback-008')
+    protected = File.join(subsets, 'feedback-009', 'deep', 'secret')
+
+    selection = load_selection(evidence: evidence, protected_roots: [protected])
+    assert_equal @ids, selection.fetch('root_ids')
+    refute File.exist?(evidence), 'the overlap guard must remain read-only'
+    refute File.exist?(protected), 'the overlap guard must remain read-only'
+  end
+
+  def test_case_folded_non_existing_suffixes_are_rejected_only_when_the_filesystem_folds_case
+    shared = File.join(@tmp, 'shared')
+    FileUtils.mkdir_p(shared)
+    evidence = File.join(shared, 'subsets', 'feedback-008')
+    protected = File.join(shared, 'SUBSETS', 'FEEDBACK-008', 'deep')
+
+    if File.exist?(File.join(@tmp, 'SHARED'))
+      assert_raises(Corpus::ContractError) do
+        load_selection(evidence: evidence, protected_roots: [protected])
+      end
+    else
+      selection = load_selection(evidence: evidence, protected_roots: [protected])
+      assert_equal @ids, selection.fetch('root_ids')
+    end
   end
 
   def test_subset_summary_has_only_subset_scope_and_exact_per_root_verdicts
