@@ -3,7 +3,7 @@ id: 4228ed646074
 kind: task
 title: S150.6 exact ordinary run adapter
 seq: 51
-status: todo
+status: doing
 priority: p0
 created: 2026-09-10T21:24:10.707398Z
 sprint: 150
