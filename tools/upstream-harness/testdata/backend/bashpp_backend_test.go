@@ -1,6 +1,7 @@
 // Copyright 2026 The bashpp-tests Authors. All rights reserved.
 // Sprint: #157; Story: S157.2; Story-ID: 31520c72b5e0
 // Sprint: #149; Stories: S149.1 (3f416ade73ef), S149.2 (1e87cb008ec3), S149.3 (60d35d1ec914)
+// Sprint: #150; Story: S150.6 (4228ed646074)
 //
 // Direct Go-source backend for the authenticated Go 1.27 testdir seam. The
 // only program description accepted here is the compileInputs/programArgv
@@ -249,10 +250,15 @@ func (t test) backendPlan(step *planStep, action, phase string, pkg *packageIden
 			runArgs = append(runArgs, "--")
 			runArgs = append(runArgs, programArgv...)
 		}
+		runDeviations := deviations
+		if len(recipeFlags) != 0 {
+			runDeviations = append(append([]string(nil), deviations...),
+				"upstream go-command recipe flags have no representation in the direct Go-source interpreter and remain explicit evidence only")
+		}
 		*step.cmd = *shellCommand(step.cmd,
 			append([]string{tool}, checkArgs...),
 			append([]string{tool}, runArgs...))
-		t.backendEvent(mode, action, phase, "check-then-run", compileInputs, programArgv, recipeFlags, nativeArgv, nil, nil, deviations)
+		t.backendEvent(mode, action, phase, "check-then-run", compileInputs, programArgv, recipeFlags, nativeArgv, nil, nil, runDeviations)
 
 	case "compiled":
 		goTool := os.Getenv("BASHPP_TESTDIR_GO")
@@ -351,12 +357,22 @@ func (t test) backendPlan(step *planStep, action, phase string, pkg *packageIden
 				step.artifacts, step.maps, compileDeviations, packageMap)
 			return
 		}
+		// An ordinary run root with recipe flags reaches this path through
+		// upstream's `go run <flags> <file>` branch; the flags are go-command
+		// flags and are passed verbatim to the pinned build of the generated
+		// module, exactly as the build action does (never rewrapped).
+		buildArgs := []string{goTool, "build", "-C", moduleDir}
+		buildArgs = append(buildArgs, recipeFlags...)
+		buildArgs = append(buildArgs, "-o", artifact, ".")
+		runDeviations := append(deviations, "generated source is built in a temporary module with a caller-supplied mvdan.cc/sh/v3 replacement")
+		if len(recipeFlags) != 0 {
+			runDeviations = append(runDeviations, "upstream go-command recipe flags are passed verbatim to the pinned Go build of the generated module; they are never rewrapped as compile-tool or all= flags")
+		}
 		*step.cmd = *shellCommand(step.cmd,
 			append([]string{tool}, transpileArgs...),
-			[]string{goTool, "build", "-C", moduleDir, "-o", artifact, "."},
+			buildArgs,
 			append([]string{artifact}, programArgv...))
-		t.backendEvent(mode, action, phase, "transpile-build-run", compileInputs, programArgv, recipeFlags, nativeArgv, nil, nil,
-			append(deviations, "generated source is built in a temporary module with a caller-supplied mvdan.cc/sh/v3 replacement"))
+		t.backendEvent(mode, action, phase, "transpile-build-run", compileInputs, programArgv, recipeFlags, nativeArgv, nil, nil, runDeviations)
 
 	default:
 		step.backendErr = fmt.Errorf("unsupported Bash++ backend mode %q", mode)

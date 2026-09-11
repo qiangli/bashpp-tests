@@ -265,10 +265,70 @@ func verifyRow(row matrixRow, dir, mode, version, tool string) (string, error) {
 		}
 		return "UPSTREAM-BYPASS", nil
 	}
+	if row.Action == "run" {
+		return verifyRunRow(row, ev, mode, goAction)
+	}
 	if len(ev.Backends) == 0 || ev.Backends[0].Disposition != "unsupported" || goAction != "fail" {
 		return "", fmt.Errorf("non-run recipe was not an explicit honest failure: action=%s dispositions=%v", goAction, dispositions(ev.Backends))
 	}
 	return "UNSUPPORTED", nil
+}
+
+// verifyRunRow checks an ordinary run root (S150.6): upstream selected one
+// execute phase whose compile inputs are the root (plus any auxiliary `go run`
+// operands) and whose program argv holds only true runtime arguments; the
+// backend ran it directly in the requested mode; and, when upstream carried
+// go-command recipe flags, the backend declared how it treated them. Upstream
+// checkExpectedOutput decides the terminal, so a failing terminal after a
+// direct run is a product failure whatever the phase exit was.
+func verifyRunRow(row matrixRow, ev evidence, mode, goAction string) (string, error) {
+	if goAction == "skip" {
+		if len(ev.Phases) != 0 {
+			return "", fmt.Errorf("upstream skip with %d recorded phases", len(ev.Phases))
+		}
+		return "UPSTREAM-SKIP", nil
+	}
+	if len(ev.Phases) != 1 || len(ev.Backends) != 1 || len(ev.Results) != 1 {
+		return "", fmt.Errorf("wanted exactly one execute phase/backend/result, got %d/%d/%d", len(ev.Phases), len(ev.Backends), len(ev.Results))
+	}
+	backend := ev.Backends[0]
+	if backend.Action != "run" || backend.Phase != "execute" {
+		return "", fmt.Errorf("run root did not reach one execute phase: action=%s phase=%s", backend.Action, backend.Phase)
+	}
+	if len(backend.CompileInputs) == 0 || backend.CompileInputs[0] != row.Test {
+		return "", fmt.Errorf("execute phase must select the upstream root as its first compile input, got %v", backend.CompileInputs)
+	}
+	for _, input := range backend.CompileInputs {
+		if !strings.HasSuffix(input, ".go") {
+			return "", fmt.Errorf("compile input %q is not a Go source", input)
+		}
+	}
+	for _, arg := range backend.ProgramArgv {
+		if strings.HasSuffix(arg, ".go") {
+			return "", fmt.Errorf("program argv %v carries a Go source; the source/argument boundary is wrong", backend.ProgramArgv)
+		}
+	}
+	if !directDisposition(mode, backend.Disposition) {
+		return "", fmt.Errorf("run root was not a direct %s run: %s", mode, backend.Disposition)
+	}
+	if len(backend.RecipeFlags) != 0 {
+		declared := false
+		for _, deviation := range backend.Deviations {
+			if strings.Contains(deviation, "recipe flags") {
+				declared = true
+			}
+		}
+		if !declared {
+			return "", fmt.Errorf("upstream recipe flags %v without a declared backend treatment", backend.RecipeFlags)
+		}
+	}
+	if goAction == "pass" {
+		if ev.Results[0].Exit != 0 {
+			return "", fmt.Errorf("upstream pass with nonzero execute phase exit %d", ev.Results[0].Exit)
+		}
+		return "RUN-PASS", nil
+	}
+	return "RUN-PRODUCT-FAIL", nil
 }
 
 // buildRoots is the authenticated Sprint 149.6 packet: the exact upstream

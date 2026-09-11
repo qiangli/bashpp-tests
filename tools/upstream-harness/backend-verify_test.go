@@ -229,3 +229,71 @@ func writeJSONLines(t *testing.T, name string, records ...any) {
 		t.Fatal(err)
 	}
 }
+
+// Sprint: #150; Story: S150.6; Story-ID: 4228ed646074
+func runEvidence(mode string, recipeFlags, programArgv []string) (eventRecord, eventRecord, eventRecord) {
+	test := "fixedbugs/issue32680.go"
+	native := append([]string{"go", "run", ""}, recipeFlags...)
+	native = append(native, test)
+	native = append(native, programArgv...)
+	phase := eventRecord{Kind: "phase", Test: test, Action: "run", PhaseKind: "execute", CompileInputs: []string{test}, ProgramArgv: programArgv, RecipeFlags: recipeFlags, Argv: native, Cwd: "/tmp/testdir"}
+	backend := eventRecord{Kind: "backend", Test: test, BackendSchema: backendSchema, Mode: mode, Tool: toolIdentity{Path: "/bin/bashy", Version: "test"}, Action: phase.Action, Phase: phase.PhaseKind, CompileInputs: phase.CompileInputs, ProgramArgv: phase.ProgramArgv, RecipeFlags: phase.RecipeFlags, NativeArgv: native, Disposition: "check-then-run", Deviations: []string{"structured evidence"}}
+	if mode == "compiled" {
+		backend.Disposition = "transpile-build-run"
+	}
+	if len(recipeFlags) != 0 {
+		backend.Deviations = append(backend.Deviations, "upstream go-command recipe flags are passed verbatim")
+	}
+	result := eventRecord{Kind: "phase_result", Test: test, Exit: 0}
+	return phase, backend, result
+}
+
+func verifyRunEvidence(t *testing.T, mode, goAction string, records ...eventRecord) (string, error) {
+	t.Helper()
+	dir := t.TempDir()
+	base := filepath.Join(dir, "fixedbugs_issue32680_go")
+	writeJSONLines(t, base+".go-test.json", goRecord{Action: goAction, Test: "Test/fixedbugs/issue32680.go"})
+	items := make([]any, 0, len(records)+1)
+	for _, record := range records {
+		items = append(items, record)
+	}
+	items = append(items, eventRecord{Kind: "terminal", Test: "fixedbugs/issue32680.go", Failed: goAction == "fail"})
+	writeJSONLines(t, base+".events.jsonl", items...)
+	return verifyRow(matrixRow{Test: "fixedbugs/issue32680.go", Action: "run"}, dir, mode, "test", "/bin/bashy")
+}
+
+func TestVerifierAcceptsDirectRun(t *testing.T) {
+	for _, mode := range []string{"interpreted", "compiled"} {
+		t.Run(mode, func(t *testing.T) {
+			phase, backend, result := runEvidence(mode, []string{"-gcflags=-d=ssa/check/on"}, []string{})
+			status, err := verifyRunEvidence(t, mode, "pass", phase, backend, result)
+			if err != nil || status != "RUN-PASS" {
+				t.Fatalf("verifyRow = %q, %v", status, err)
+			}
+			// Upstream checkExpectedOutput can fail after a clean exit; that is
+			// a retained product failure, not a seam defect.
+			status, err = verifyRunEvidence(t, mode, "fail", phase, backend, result)
+			if err != nil || status != "RUN-PRODUCT-FAIL" {
+				t.Fatalf("verifyRow = %q, %v, want retained product failure", status, err)
+			}
+		})
+	}
+}
+
+func TestVerifierRejectsRunBoundaryAndUndeclaredFlags(t *testing.T) {
+	phase, backend, result := runEvidence("compiled", []string{"-race"}, []string{"extra.go"})
+	phase.ProgramArgv, backend.ProgramArgv = []string{"extra.go"}, []string{"extra.go"}
+	if _, err := verifyRunEvidence(t, "compiled", "pass", phase, backend, result); err == nil || !strings.Contains(err.Error(), "boundary") {
+		t.Fatalf("verifyRow error = %v, want source/argument boundary rejection", err)
+	}
+	phase, backend, result = runEvidence("compiled", []string{"-race"}, []string{})
+	backend.Deviations = []string{"structured evidence"}
+	if _, err := verifyRunEvidence(t, "compiled", "pass", phase, backend, result); err == nil || !strings.Contains(err.Error(), "declared") {
+		t.Fatalf("verifyRow error = %v, want undeclared recipe-flag rejection", err)
+	}
+	phase, backend, result = runEvidence("interpreted", nil, []string{})
+	backend.Disposition = "transpile-build-run"
+	if _, err := verifyRunEvidence(t, "interpreted", "pass", phase, backend, result); err == nil || !strings.Contains(err.Error(), "direct") {
+		t.Fatalf("verifyRow error = %v, want wrong-mode rejection", err)
+	}
+}
