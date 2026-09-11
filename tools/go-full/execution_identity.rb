@@ -161,7 +161,7 @@ module GoFullExecutionIdentity
     raise Corpus::ContractError, 'SDK bin/go path differs' unless same_path!(sdk.fetch('bin_go').fetch('path'), File.join(sdk_manifest.fetch('root'), 'bin/go'))
     assert_digest!(sdk.fetch('bin_go'), sdk_manifest.fetch('go').fetch('sha256'), 'SDK bin/go')
     %w[source_archive distribution_archive].each do |key|
-      assert_record_identity!(sdk_manifest.fetch(key), sdk.fetch(key), "SDK #{key}")
+      assert_manifest_record_identity!(sdk_manifest.fetch(key), sdk.fetch(key), "SDK #{key}")
     end
 
     validate_collection!(receipt.fetch('inventory'), 'inventory', required: INVENTORY_FILES)
@@ -234,6 +234,7 @@ module GoFullExecutionIdentity
 
 
   def manifest_file!(record, label)
+    assert_manifest_record_fields!(record, label)
     actual = exact_file!(record.fetch('path'), record.fetch('sha256'), label)
     if record.key?('bytes') && record.fetch('bytes') != actual.fetch('bytes')
       raise Corpus::ContractError, "#{label} size differs"
@@ -252,6 +253,22 @@ module GoFullExecutionIdentity
   def assert_record_identity!(expected, actual, label)
     %w[path sha256 bytes].each do |key|
       raise Corpus::ContractError, "#{label} #{key} differs" unless expected.fetch(key) == actual.fetch(key)
+    end
+  end
+
+  def assert_manifest_record_identity!(expected, actual, label)
+    assert_manifest_record_fields!(expected, label)
+    %w[path sha256].each do |key|
+      raise Corpus::ContractError, "#{label} #{key} differs" unless expected.fetch(key) == actual.fetch(key)
+    end
+    if expected.key?('bytes') && expected.fetch('bytes') != actual.fetch('bytes')
+      raise Corpus::ContractError, "#{label} bytes differs"
+    end
+  end
+
+  def assert_manifest_record_fields!(record, label)
+    unless record.is_a?(Hash) && (record.keys - %w[path sha256 bytes]).empty? && %w[path sha256].all? { |key| record.key?(key) }
+      raise Corpus::ContractError, "#{label} manifest file record has extra/missing fields"
     end
   end
 
