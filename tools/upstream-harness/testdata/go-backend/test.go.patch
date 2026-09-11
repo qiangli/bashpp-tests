@@ -1,0 +1,14 @@
+--- a/src/cmd/go/internal/test/test.go	2026-09-11 13:37:33.541479146 -0700
++++ b/src/cmd/go/internal/test/test.go	2026-09-11 13:37:33.557029424 -0700
+@@ -1668,6 +1668,11 @@
+ 		cancelKilled   = false
+ 		cancelSignaled = false
+ 	)
++	// bashpp-tests S150.8: when the Bash++ backend is selected, the program
++	// that runs is the Bash++ form of this test binary, never the binary.
++	if plan := bashppTestPlan(a.Package, buildAction, args); plan != nil {
++		args = plan
++	}
+ 	for {
+ 		cmd = exec.CommandContext(ctx, args[0], args[1:]...)
+ 		cmd.Dir = a.Package.Dir

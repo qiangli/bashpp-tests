@@ -3,7 +3,7 @@ id: 65db485f62ab
 kind: task
 title: S150.8 execute original package test bodies
 seq: 53
-status: todo
+status: doing
 priority: p0
 created: 2026-09-10T21:24:10.768266Z
 sprint: 150
