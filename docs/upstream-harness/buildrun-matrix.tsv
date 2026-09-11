@@ -1,0 +1,6 @@
+# Sprint: #150; Story: S150.5; Story-ID: e87e1cbcbb20
+# Authenticated 150.5 `buildrun` packet (manifest sprint142-leaf-packet-manifest/v4
+# packet-150.5.json sha256 0890ae57a2a00591169cab3c5a0d823761621f4f46582a8da7d84fd79a061d2b,
+# count 1, root list sha256 416bc3ccb0cd094173ceb116a1ae61858504bc7defefb52506208f26a115d896).
+# capability	test	action	sha256	selected_companions (path=sha256, comma-separated; - means none)
+buildrun-issue46234	fixedbugs/issue46234.go	buildrun	329bef5730da8243d2e4846f3d62e305a419ce03374c39e570e9fa4cadd0ba90	-

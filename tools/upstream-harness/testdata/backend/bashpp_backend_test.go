@@ -1,7 +1,7 @@
 // Copyright 2026 The bashpp-tests Authors. All rights reserved.
 // Sprint: #157; Story: S157.2; Story-ID: 31520c72b5e0
 // Sprint: #149; Stories: S149.1 (3f416ade73ef), S149.2 (1e87cb008ec3), S149.3 (60d35d1ec914)
-// Sprint: #150; Story: S150.6 (4228ed646074)
+// Sprint: #150; Stories: S150.6 (4228ed646074), S150.5 (e87e1cbcbb20)
 //
 // Direct Go-source backend for the authenticated Go 1.27 testdir seam. The
 // only program description accepted here is the compileInputs/programArgv
@@ -67,7 +67,17 @@ func (t test) backendEvent(mode, action, phase, disposition string, compileInput
 // Bash++ for a directory package phase, so a verifier can check it without
 // parsing prose.
 func (t test) backendEventMap(mode, action, phase, disposition string, compileInputs, programArgv, recipeFlags, nativeArgv, artifacts, maps, deviations []string, packageMap map[string]any) {
+	t.backendEventProgram(mode, action, phase, disposition, compileInputs, programArgv, recipeFlags, nativeArgv, artifacts, maps, deviations, packageMap, nil)
+}
+
+// backendEventProgram is backendEventMap plus the program record a later
+// phase of the same upstream test acted on (S150.5): the files and package
+// map earlier phases were handed and, in compiled mode, the artifact they
+// built. A verifier can then check that link/execute acted on exactly what
+// upstream compiled, without the seam ever looking for anything on disk.
+func (t test) backendEventProgram(mode, action, phase, disposition string, compileInputs, programArgv, recipeFlags, nativeArgv, artifacts, maps, deviations []string, packageMap map[string]any, program map[string]any) {
 	events.emit(t.eventName(), "backend", map[string]any{
+		"program":        program,
 		"package_map":    packageMap,
 		"backend_schema": backendSchema,
 		"mode":           mode,
@@ -102,6 +112,23 @@ type packageGroup struct {
 // the key is the upstream test identity.
 var backendPackages sync.Map
 
+// backendProgram is what the phases of one upstream test have handed the
+// seam so far as the program: the files (and package map) of the last
+// compile phase and, in compiled mode, the artifact that phase built. A
+// later `link` or input-less `execute` phase of the same test acts on it.
+type backendProgram struct {
+	files    []string
+	mapArgs  []string
+	artifact string
+}
+
+// backendPrograms is keyed by the upstream test identity, like backendPackages.
+var backendPrograms sync.Map
+
+func (p backendProgram) record() map[string]any {
+	return map[string]any{"files": nonNil(p.files), "map_args": nonNil(p.mapArgs), "artifact": p.artifact}
+}
+
 // backendModule writes the temporary Go module that hosts transpiled source.
 func backendModule(t test, shellrt string) (moduleDir string, err error) {
 	moduleDir = t.TempDir()
@@ -110,6 +137,16 @@ func backendModule(t test, shellrt string) (moduleDir string, err error) {
 		return "", fmt.Errorf("write Bash++ backend module: %w", err)
 	}
 	return moduleDir, nil
+}
+
+// artifactUse states what happens to the cwd a.exe a build-only phase writes:
+// nothing for `build`; for `buildrun` only this test's later execute phase
+// runs it (S150.5).
+func artifactUse(action string) string {
+	if action == "buildrun" {
+		return "the a.exe artifact is written to the upstream working directory and is executed only by this test's later execute phase"
+	}
+	return "the a.exe artifact is written to the upstream working directory and is never executed"
 }
 
 // asmBuildArgs mirrors the upstream asmcheck flag merge: -gcflags values are
@@ -143,9 +180,40 @@ func (t test) backendPlan(step *planStep, action, phase string, pkg *packageIden
 		return
 	}
 	if len(compileInputs) == 0 {
+		// An execute phase with no inputs runs the program an earlier phase
+		// of this same test built (buildrun's `./a.exe`, rundir's linked
+		// a.exe): the seam remembers what upstream handed it, never looks.
+		if value, ok := backendPrograms.Load(t.eventName()); ok && phase == "execute" && tool != "" {
+			program := value.(backendProgram)
+			deviations := []string{
+				"upstream native command argv is preserved as evidence and never used to classify the action",
+				"the execute phase carries no compile inputs; the program is the one this test's earlier compile phase handed the seam",
+			}
+			switch mode {
+			case "interpreted":
+				runArgs := append([]string{"--bashpp", "--source=go"}, program.mapArgs...)
+				runArgs = append(runArgs, goFileArgs(program.files)...)
+				if len(programArgv) != 0 {
+					runArgs = append(runArgs, "--")
+					runArgs = append(runArgs, programArgv...)
+				}
+				*step.cmd = *directSourceCommand(step.cmd, tool, runArgs...)
+				t.backendEventProgram(mode, action, phase, "run-remembered-program", compileInputs, programArgv, recipeFlags, nativeArgv, nil, nil,
+					append(deviations, "the remembered sources run directly through the Bash++ interpreter with only the upstream program argv; no artifact exists in interpreted mode"), nil, program.record())
+				return
+			case "compiled":
+				if program.artifact == "" {
+					break
+				}
+				*step.cmd = *directSourceCommand(step.cmd, program.artifact, programArgv...)
+				t.backendEventProgram(mode, action, phase, "run-artifact", compileInputs, programArgv, recipeFlags, nativeArgv, []string{program.artifact}, nil,
+					append(deviations, "the artifact the earlier compile phase built from the transpiled sources runs with only the upstream program argv"), nil, program.record())
+				return
+			}
+		}
 		step.backendErr = fmt.Errorf("Bash++ backend unsupported %s phase without Go source inputs", phase)
 		t.backendEvent(mode, action, phase, "unsupported", compileInputs, programArgv, recipeFlags, nativeArgv, nil, nil,
-			[]string{"upstream selected no language-source inputs; native tested-source execution is disabled in backend mode"})
+			[]string{"upstream selected no language-source inputs and no earlier phase of this test handed the seam a program; native tested-source execution is disabled in backend mode"})
 		return
 	}
 
@@ -166,7 +234,7 @@ func (t test) backendPlan(step *planStep, action, phase string, pkg *packageIden
 	// it has exactly the execute phase's direct meaning.
 	run := phase == "execute" || phase == "generate"
 	compileOnly := action == "compile" && phase == "compile"
-	buildOnly := action == "build" && phase == "compile"
+	buildOnly := (action == "build" || action == "buildrun") && phase == "compile"
 	diagnostics := phase == "compile" && pkg == nil &&
 		(action == "errorcheck" || action == "errorcheckoutput" || action == "errorcheckwithauto")
 	directory := phase == "compile" && pkg != nil
@@ -241,6 +309,7 @@ func (t test) backendPlan(step *planStep, action, phase string, pkg *packageIden
 				checkDeviations = append(append([]string(nil), deviations...),
 					"the Bash++ check interface has no compiler or artifact semantics; upstream go-command recipe flags and the cwd a.exe artifact remain explicit evidence only",
 					"build-only phase stops after Bash++ check; no artifact is produced and no init or main is executed")
+				backendPrograms.Store(t.eventName(), backendProgram{files: append([]string(nil), compileInputs...)})
 			}
 			t.backendEvent(mode, action, phase, "check-only", compileInputs, programArgv, recipeFlags, nativeArgv, nil, nil, checkDeviations)
 			return
@@ -291,12 +360,13 @@ func (t test) backendPlan(step *planStep, action, phase string, pkg *packageIden
 				buildArgs)
 			step.artifacts = []string{generated, built}
 			step.maps = []string{sourceMap}
+			backendPrograms.Store(t.eventName(), backendProgram{files: append([]string(nil), compileInputs...), artifact: built})
 			t.backendEvent(mode, action, phase, "transpile-build-only", compileInputs, programArgv, recipeFlags, nativeArgv,
 				step.artifacts, step.maps,
 				append(deviations,
 					"upstream go-command recipe flags are passed verbatim to the pinned Go build of the generated module; they are never rewrapped as compile-tool or all= flags",
 					"the upstream-selected environment, including any runenv GOEXPERIMENT, is preserved unchanged",
-					"the a.exe artifact is written to the upstream working directory and is never executed"))
+					artifactUse(action)))
 			return
 		}
 		if assembly {

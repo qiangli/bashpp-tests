@@ -3,7 +3,7 @@ id: e87e1cbcbb20
 kind: task
 title: S150.5 exact buildrun adapter
 seq: 50
-status: todo
+status: doing
 priority: p0
 created: 2026-09-10T21:24:10.668795Z
 sprint: 150

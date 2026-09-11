@@ -297,3 +297,61 @@ func TestVerifierRejectsRunBoundaryAndUndeclaredFlags(t *testing.T) {
 		t.Fatalf("verifyRow error = %v, want wrong-mode rejection", err)
 	}
 }
+
+// Sprint: #150; Story: S150.5; Story-ID: e87e1cbcbb20
+func buildRunEvidence(mode string) []eventRecord {
+	test := "fixedbugs/issue46234.go"
+	cwd, long := "/tmp/testdir", "/goroot/test/"+test
+	build := eventRecord{Kind: "phase", Test: test, Action: "buildrun", PhaseKind: "compile", CompileInputs: []string{long}, ProgramArgv: []string{}, RecipeFlags: []string{}, Argv: []string{"go", "build", "", "-o", "a.exe", long}, Cwd: cwd}
+	buildBackend := eventRecord{Kind: "backend", Test: test, BackendSchema: backendSchema, Mode: mode, Tool: toolIdentity{Path: "/bin/bashy", Version: "test"}, Action: "buildrun", Phase: "compile", CompileInputs: build.CompileInputs, ProgramArgv: build.ProgramArgv, RecipeFlags: build.RecipeFlags, NativeArgv: build.Argv, Disposition: "check-only", Deviations: []string{"structured evidence"}}
+	run := eventRecord{Kind: "phase", Test: test, Action: "buildrun", PhaseKind: "execute", CompileInputs: []string{}, ProgramArgv: []string{}, RecipeFlags: []string{}, Argv: []string{"./a.exe"}, Cwd: cwd}
+	runBackend := eventRecord{Kind: "backend", Test: test, BackendSchema: backendSchema, Mode: mode, Tool: toolIdentity{Path: "/bin/bashy", Version: "test"}, Action: "buildrun", Phase: "execute", CompileInputs: run.CompileInputs, ProgramArgv: run.ProgramArgv, RecipeFlags: run.RecipeFlags, NativeArgv: run.Argv, Disposition: "run-remembered-program", Deviations: []string{"structured evidence"}, Program: &programRec{Files: build.CompileInputs}}
+	if mode == "compiled" {
+		buildBackend.Disposition = "transpile-build-only"
+		buildBackend.Artifacts = []string{"/tmp/module/main.go", cwd + "/a.exe"}
+		buildBackend.Maps = []string{"/tmp/module/main.go.map"}
+		runBackend.Disposition = "run-artifact"
+		runBackend.Program.Artifact = cwd + "/a.exe"
+		runBackend.Artifacts = []string{cwd + "/a.exe"}
+	}
+	return []eventRecord{build, buildBackend, {Kind: "phase_result", Test: test, Exit: 0}, run, runBackend, {Kind: "phase_result", Test: test, Exit: 0}}
+}
+
+func verifyBuildRunEvidence(t *testing.T, mode, goAction string, records []eventRecord) (string, error) {
+	t.Helper()
+	dir := t.TempDir()
+	base := filepath.Join(dir, "fixedbugs_issue46234_go")
+	writeJSONLines(t, base+".go-test.json", goRecord{Action: goAction, Test: "Test/fixedbugs/issue46234.go"})
+	items := make([]any, 0, len(records)+1)
+	for _, record := range records {
+		items = append(items, record)
+	}
+	items = append(items, eventRecord{Kind: "terminal", Test: "fixedbugs/issue46234.go", Failed: goAction == "fail"})
+	writeJSONLines(t, base+".events.jsonl", items...)
+	return verifyRow(matrixRow{Test: "fixedbugs/issue46234.go", Action: "buildrun"}, dir, mode, "test", "/bin/bashy")
+}
+
+func TestVerifierBuildRunProgramContinuity(t *testing.T) {
+	for _, mode := range []string{"interpreted", "compiled"} {
+		t.Run(mode, func(t *testing.T) {
+			records := buildRunEvidence(mode)
+			status, err := verifyBuildRunEvidence(t, mode, "pass", records)
+			if err != nil || status != "BUILDRUN-PASS" {
+				t.Fatalf("verifyRow = %q, %v", status, err)
+			}
+			// The execute phase must act on exactly what the build phase compiled.
+			records = buildRunEvidence(mode)
+			records[4].Program.Files = []string{"/goroot/test/other.go"}
+			if _, err := verifyBuildRunEvidence(t, mode, "pass", records); err == nil || !strings.Contains(err.Error(), "not what the build phase compiled") {
+				t.Fatalf("verifyRow error = %v, want program continuity rejection", err)
+			}
+			// A failed build stops upstream: one phase, recorded nonzero exit.
+			records = buildRunEvidence(mode)[:3]
+			records[2].Exit = 1
+			status, err = verifyBuildRunEvidence(t, mode, "fail", records)
+			if err != nil || status != "BUILDRUN-PRODUCT-FAIL" {
+				t.Fatalf("verifyRow = %q, %v, want retained build failure", status, err)
+			}
+		})
+	}
+}

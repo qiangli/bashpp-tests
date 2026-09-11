@@ -58,6 +58,7 @@ type eventRecord struct {
 	Deviations    []string     `json:"deviations"`
 	Package       *packageID   `json:"package"`
 	PackageMap    *packageMap  `json:"package_map"`
+	Program       *programRec  `json:"program"`
 	Tool          toolIdentity `json:"tool"`
 	ExpectedBytes int          `json:"expected_bytes"`
 	ActualBytes   int          `json:"actual_bytes"`
@@ -65,6 +66,15 @@ type eventRecord struct {
 	Exit          int          `json:"exit"`
 	Skipped       bool         `json:"skipped"`
 	Failed        bool         `json:"failed"`
+}
+
+// programRec is the program a later phase of one upstream test acted on
+// (S150.5): the files and map earlier phases handed the seam and, in
+// compiled mode, the artifact they built.
+type programRec struct {
+	Files    []string `json:"files"`
+	MapArgs  []string `json:"map_args"`
+	Artifact string   `json:"artifact"`
 }
 
 // packageID is the upstream compiler's naming of a directory package
@@ -194,6 +204,9 @@ func verifyRow(row matrixRow, dir, mode, version, tool string) (string, error) {
 
 	if row.Action == "build" {
 		return verifyBuildRow(row, ev, mode, goAction)
+	}
+	if row.Action == "buildrun" {
+		return verifyBuildRunRow(row, ev, mode, goAction)
 	}
 	if row.Action == "compile" {
 		return verifyCompileRow(row, ev, mode, goAction)
@@ -604,6 +617,85 @@ func verifyBuildRow(row matrixRow, ev evidence, mode, goAction string) (string, 
 		return "", fmt.Errorf("upstream failure without a recorded nonzero build phase exit")
 	}
 	return "BUILD-PRODUCT-FAIL", nil
+}
+
+// verifyBuildRunRow checks a buildrun root (S150.5): upstream's compile phase
+// (`go build -o a.exe <root>`) is the build-only shape — check-only in
+// interpreted mode, transpile + pinned build to the cwd a.exe in compiled
+// mode — and its execute phase carries no compile inputs, so the backend runs
+// the program that compile phase handed it: the remembered sources
+// (interpreted) or the a.exe it built (compiled), with only the upstream
+// program argv. Upstream checkExpectedOutput decides the terminal.
+func verifyBuildRunRow(row matrixRow, ev evidence, mode, goAction string) (string, error) {
+	if goAction == "skip" {
+		if len(ev.Phases) != 0 {
+			return "", fmt.Errorf("upstream skip with %d recorded phases", len(ev.Phases))
+		}
+		return "UPSTREAM-SKIP", nil
+	}
+	if len(ev.Backends) == 0 || len(ev.Backends) > 2 || len(ev.Results) != len(ev.Backends) {
+		return "", fmt.Errorf("wanted one build phase and at most one execute phase, got %d backends / %d results", len(ev.Backends), len(ev.Results))
+	}
+	build, phase := ev.Backends[0], ev.Phases[0]
+	if build.Action != "buildrun" || build.Phase != "compile" || len(build.CompileInputs) != 1 || !strings.HasSuffix(build.CompileInputs[0], "/"+row.Test) || len(build.ProgramArgv) != 0 {
+		return "", fmt.Errorf("buildrun build phase must compile exactly the upstream root with no argv: action=%s phase=%s inputs=%v argv=%v", build.Action, build.Phase, build.CompileInputs, build.ProgramArgv)
+	}
+	wantBuild := map[string]string{"interpreted": "check-only", "compiled": "transpile-build-only"}[mode]
+	if wantBuild == "" {
+		return "", fmt.Errorf("unknown backend mode %q", mode)
+	}
+	if build.Disposition != wantBuild {
+		return "", fmt.Errorf("buildrun build phase disposition = %s, want %s", build.Disposition, wantBuild)
+	}
+	var built string
+	if mode == "compiled" {
+		if len(build.Artifacts) != 2 || len(build.Maps) != 1 {
+			return "", fmt.Errorf("compiled buildrun build phase must transpile with a map and build")
+		}
+		built = build.Artifacts[1]
+		if filepath.Base(built) != "a.exe" || phase.Cwd == "" || filepath.Dir(built) != phase.Cwd {
+			return "", fmt.Errorf("build artifact %q is not a.exe in the upstream working directory %q", built, phase.Cwd)
+		}
+	}
+	if len(ev.Backends) == 1 {
+		// Upstream stopped after a failed build.
+		if goAction != "fail" || ev.Results[0].Exit == 0 {
+			return "", fmt.Errorf("buildrun stopped after the build phase without a recorded build failure: action=%s exit=%d", goAction, ev.Results[0].Exit)
+		}
+		return "BUILDRUN-PRODUCT-FAIL", nil
+	}
+	if ev.Results[0].Exit != 0 {
+		return "", fmt.Errorf("execute phase recorded after a build phase that exited %d", ev.Results[0].Exit)
+	}
+	run := ev.Backends[1]
+	if run.Action != "buildrun" || run.Phase != "execute" || len(run.CompileInputs) != 0 || run.Program == nil {
+		return "", fmt.Errorf("buildrun execute phase must carry no compile inputs and a program record: phase=%s inputs=%v", run.Phase, run.CompileInputs)
+	}
+	if !reflect.DeepEqual(run.Program.Files, build.CompileInputs) {
+		return "", fmt.Errorf("execute phase program %v is not what the build phase compiled %v", run.Program.Files, build.CompileInputs)
+	}
+	for _, arg := range run.ProgramArgv {
+		if strings.HasSuffix(arg, ".go") {
+			return "", fmt.Errorf("program argv %v carries a Go source", run.ProgramArgv)
+		}
+	}
+	switch mode {
+	case "interpreted":
+		if run.Disposition != "run-remembered-program" || run.Program.Artifact != "" {
+			return "", fmt.Errorf("interpreted execute phase must run the remembered sources: disposition=%s artifact=%q", run.Disposition, run.Program.Artifact)
+		}
+	case "compiled":
+		if run.Disposition != "run-artifact" || run.Program.Artifact != built {
+			return "", fmt.Errorf("compiled execute phase must run the build phase's a.exe %q: disposition=%s artifact=%q", built, run.Disposition, run.Program.Artifact)
+		}
+	}
+	if goAction == "pass" {
+		if ev.Results[1].Exit != 0 {
+			return "", fmt.Errorf("upstream pass with nonzero execute exit %d", ev.Results[1].Exit)
+		}
+		return "BUILDRUN-PASS", nil
+	}
+	return "BUILDRUN-PRODUCT-FAIL", nil
 }
 
 func validProofs(paths []string, proofs []fileProof) bool {
