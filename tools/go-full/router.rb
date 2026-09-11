@@ -5,6 +5,7 @@ require 'digest'
 require 'json'
 require ENV.fetch('GO_FULL_CORPUS_LIB', File.expand_path('../corpus/executor.rb', __dir__))
 require_relative '../corpus/validate'
+require_relative 'native'
 require_relative 'stage_resolver'
 
 # Deterministic multi-predicate recipe router.
@@ -37,6 +38,7 @@ module GoFullRecipeRouter
   RUN_PHASES = %w[compile-or-build link-if-needed run match-output].freeze
   PACKET_ROOT_ID = 'testdir:cmplxdivide.go'
   PACKET_ROOT_SHA256 = '3c9e41483acc225411e06f0726d0f177a7af1d6f9d332dfd4d03372ec81a540b'
+  ROUTER_NATIVE_OBSERVATION_KEYS = %w[event evidence_kind status].freeze
   # Upstream `run` with arguments delegates to `go run <gcflags> <flags> root.go
   # <args...>`. `go run` takes the leading `.go` arguments as package files of
   # the tested program; only what follows the first non-`.go` argument reaches
@@ -266,14 +268,41 @@ module GoFullRecipeRouter
   end
 
   def applicability(native_observation)
-    raise Corpus::ContractError, 'native observation must be an object' unless native_observation.is_a?(Hash)
-    decision = case native_observation['status']
+    native_observation = resolver_native_observation(native_observation)
+    decision = case native_observation.fetch('status')
                when 'pass', 'fail' then 'execute'
                when 'skip', 'ancestor-skip' then 'upstream-skip'
                else 'execute'
                end
     resolved = GoFullStageResolver.applicability!(native_observation: native_observation, decision: decision)
     resolved.merge('decision' => decision)
+  end
+
+  def resolver_native_observation(native_observation)
+    raise Corpus::ContractError, 'native observation must be an object' unless native_observation.is_a?(Hash)
+    keys = native_observation.keys.sort
+    unless keys == GoFullStageResolver::NATIVE_OBSERVATION_KEYS || keys == ROUTER_NATIVE_OBSERVATION_KEYS
+      raise Corpus::ContractError, 'router native observation has extra or missing fields'
+    end
+    validate_native_event!(native_observation) if native_observation.key?('event')
+    GoFullStageResolver::NATIVE_OBSERVATION_KEYS.to_h { |key| [key, native_observation.fetch(key)] }
+  end
+
+  def validate_native_event!(native_observation)
+    event = native_observation.fetch('event')
+    raise Corpus::ContractError, 'native observation event must be an object' unless event.is_a?(Hash)
+    action = event.fetch('Action')
+    package = event.fetch('Package')
+    raise Corpus::ContractError, 'native observation event package must be a String' unless package.is_a?(String) && !package.empty?
+    raise Corpus::ContractError, 'native observation event action must be terminal' unless GoFull::NativeEvents::TERMINAL.include?(action)
+    expected_action = native_observation.fetch('status') == 'ancestor-skip' ? 'skip' : native_observation.fetch('status')
+    unless action == expected_action
+      raise Corpus::ContractError, 'native observation event action contradicts status'
+    end
+    test = event['Test']
+    raise Corpus::ContractError, 'native observation event test must be a String when present' unless test.nil? || test.is_a?(String)
+  rescue KeyError => error
+    raise Corpus::ContractError, "incomplete native observation event: #{error.message}"
   end
 
   def run_go_file_inputs_plan(root, facts)
