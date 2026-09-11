@@ -47,7 +47,7 @@ The patch observes the upstream decisions at their existing sites:
 | directive/action | first eligible comment, `splitQuoted`, unchanged action switch | `selection` |
 | applicability/skip | `shouldTest` result and `skip` action | `selection` with reason |
 | flags/env/timeout | existing recipe flag loop | `selection` |
-| command/cwd/env | existing `runcmd` and asmcheck `exec.Command` sites | ordered `phase` |
+| command/cwd/env | existing `runcmd` and asmcheck `exec.Command` sites | ordered `phase`, including structured action and recipe flags |
 | compile inputs/program argv | arguments passed explicitly by each switch/helper call site | `phase` |
 | directory companions | results already returned by `goDirPackages`, or `gos`/`asms` already selected by builddir | `companions` |
 | `go run` recipe operands | the already-parsed recipe operand slice at the exact `go run` call site | leading `.go` compile inputs and remaining program argv; never filesystem-probed |

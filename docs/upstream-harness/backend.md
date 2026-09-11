@@ -21,13 +21,19 @@ with only `programArgv`. The original native Go command is never executed in a
 backend phase. A minimal shell coordinator keeps check/run and
 transpile/build/run inside the upstream command timeout boundary; it receives
 only those direct-source commands, never the upstream native argv. A phase
-without Go source inputs, a non-Go input, or a recipe
-phase without direct run-program meaning fails explicitly as unsupported.
+without Go source inputs, a non-Go input, or a recipe phase without direct
+run-program meaning fails explicitly as unsupported. Sprint 149 adds one
+narrow exception: an upstream `compile` action's `compile` phase runs Bash++
+check-only in interpreted mode, or transpile-with-map then pinned-Go build-only
+in compiled mode. It never executes the generated program.
 
 The backend records one small JSON event for each observed upstream phase. The
-event repeats the mode, source/argument boundary, tool identity, disposition,
-and declared deviations. `backend-verify.go` checks the one-to-one phase/event
-identity and the two required anchors. It does not make recipe decisions.
+event repeats the mode, structured action and recipe flags, source/argument
+boundary, native argv evidence, tool identity, disposition, and declared
+deviations. `backend-verify.go` checks the one-to-one phase/event identity and
+the required canaries. Compiled compile results additionally prove the actual
+generated source, map, and artifact by path, existence, size, and SHA-256. The
+verifier does not make recipe decisions.
 
 ## Behavioral delta
 
@@ -39,11 +45,14 @@ element; the upstream harness therefore reports an expected, honestly retained
 failure. The other authenticated rows are either explicit unsupported backend
 phases or unchanged upstream skip/bypass decisions.
 
-The backend deliberately does not translate native Go flags because the direct
-Go-source interface has no representation for them. It also disables the
-upstream `go run` fast path while backend mode is selected so that the existing
-source-execution plan reaches the seam. Both deviations are present in every
-backend event.
+The backend deliberately does not translate native Go flags for S157 execute
+phases because the direct Go-source interface has no representation for them.
+For the compile-only exception, exact upstream recipe flags are transported as
+structured values and, when non-empty, become one unpatterned
+`-gcflags=<space-joined flags>` argument to the pinned Go build. The native argv
+is retained only as evidence. The backend also disables the upstream `go run`
+fast path while backend mode is selected so that the existing source-execution
+plan reaches the seam.
 
 ## Verification
 

@@ -40,8 +40,16 @@ type eventRecord struct {
 	Test          string       `json:"test"`
 	Mode          string       `json:"mode"`
 	BackendSchema string       `json:"backend_schema"`
+	Action        string       `json:"action"`
 	CompileInputs []string     `json:"compile_inputs"`
 	ProgramArgv   []string     `json:"program_argv"`
+	RecipeFlags   []string     `json:"recipe_flags"`
+	NativeArgv    []string     `json:"native_argv"`
+	Argv          []string     `json:"argv"`
+	Artifacts     []string     `json:"artifacts"`
+	Maps          []string     `json:"maps"`
+	ArtifactProof []fileProof  `json:"artifact_proof"`
+	MapProof      []fileProof  `json:"map_proof"`
 	PhaseKind     string       `json:"phase_kind"`
 	Phase         string       `json:"phase"`
 	Disposition   string       `json:"disposition"`
@@ -53,6 +61,13 @@ type eventRecord struct {
 	Exit          int          `json:"exit"`
 	Skipped       bool         `json:"skipped"`
 	Failed        bool         `json:"failed"`
+}
+
+type fileProof struct {
+	Path   string `json:"path"`
+	Exists bool   `json:"exists"`
+	Bytes  int    `json:"bytes"`
+	SHA256 string `json:"sha256"`
 }
 
 type evidence struct {
@@ -133,8 +148,12 @@ func verifyRow(row matrixRow, dir, mode, version, tool string) (string, error) {
 		if backend.BackendSchema != backendSchema || backend.Mode != mode || backend.Tool.Path != tool || backend.Tool.Version != version {
 			return "", fmt.Errorf("backend identity is incomplete")
 		}
-		if backend.Phase != phase.PhaseKind || !reflect.DeepEqual(backend.CompileInputs, phase.CompileInputs) || !reflect.DeepEqual(backend.ProgramArgv, phase.ProgramArgv) {
-			return "", fmt.Errorf("backend did not retain the upstream source/argument boundary")
+		if backend.Action != phase.Action || backend.Phase != phase.PhaseKind ||
+			!reflect.DeepEqual(backend.CompileInputs, phase.CompileInputs) ||
+			!reflect.DeepEqual(backend.ProgramArgv, phase.ProgramArgv) ||
+			!reflect.DeepEqual(backend.RecipeFlags, phase.RecipeFlags) ||
+			!reflect.DeepEqual(backend.NativeArgv, phase.Argv) {
+			return "", fmt.Errorf("backend did not retain upstream action, flags, native argv, and source/argument boundary")
 		}
 		if len(backend.Deviations) == 0 {
 			return "", fmt.Errorf("backend deviations are not explicit")
@@ -142,6 +161,25 @@ func verifyRow(row matrixRow, dir, mode, version, tool string) (string, error) {
 	}
 
 	switch row.Test {
+	case "fixedbugs/bug020.go":
+		if goAction != "pass" || len(ev.Backends) != 1 || len(ev.Results) != 1 ||
+			ev.Backends[0].Action != "compile" || ev.Backends[0].Phase != "compile" ||
+			len(ev.Backends[0].ProgramArgv) != 0 || ev.Results[0].Exit != 0 {
+			return "", fmt.Errorf("wanted compile-only Bash++ pass, got action=%s disposition=%v results=%v", goAction, dispositions(ev.Backends), resultExits(ev.Results))
+		}
+		if mode == "interpreted" {
+			if ev.Backends[0].Disposition != "check-only" || len(ev.Backends[0].Artifacts) != 0 || len(ev.Backends[0].Maps) != 0 || len(ev.Results[0].ArtifactProof) != 0 || len(ev.Results[0].MapProof) != 0 {
+				return "", fmt.Errorf("interpreted compile phase was not check-only")
+			}
+			return "COMPILE-ONLY-PASS", nil
+		}
+		if ev.Backends[0].Disposition != "transpile-build-only" ||
+			!validProofs(ev.Backends[0].Artifacts, ev.Results[0].ArtifactProof) ||
+			!validProofs(ev.Backends[0].Maps, ev.Results[0].MapProof) {
+			return "", fmt.Errorf("compiled compile phase lacks generated/map/artifact existence and hash proof")
+		}
+		return "COMPILE-ONLY-PASS", nil
+
 	case "fixedbugs/issue21808.go":
 		if goAction != "pass" || len(ev.Backends) != 1 || !directDisposition(mode, ev.Backends[0].Disposition) {
 			return "", fmt.Errorf("wanted direct-source ordered-output pass, got action=%s disposition=%v", goAction, dispositions(ev.Backends))
@@ -185,6 +223,23 @@ func verifyRow(row matrixRow, dir, mode, version, tool string) (string, error) {
 		return "", fmt.Errorf("non-run recipe was not an explicit honest failure: action=%s dispositions=%v", goAction, dispositions(ev.Backends))
 	}
 	return "UNSUPPORTED", nil
+}
+
+func validProofs(paths []string, proofs []fileProof) bool {
+	if len(paths) == 0 || len(paths) != len(proofs) {
+		return false
+	}
+	for i, proof := range proofs {
+		if proof.Path != paths[i] || !proof.Exists || proof.Bytes <= 0 || len(proof.SHA256) != 64 {
+			return false
+		}
+		for _, r := range proof.SHA256 {
+			if !strings.ContainsRune("0123456789abcdef", r) {
+				return false
+			}
+		}
+	}
+	return true
 }
 
 func directDisposition(mode, got string) bool {

@@ -28,6 +28,7 @@ check_pin backend_patch "$harness/testdata/backend/testdir_test.go.patch"
 check_pin backend_events_patch "$harness/testdata/backend/events_test.go.patch"
 check_pin backend_hook "$harness/testdata/backend/bashpp_backend_test.go"
 check_pin verifier "$harness/backend-verify.go"
+check_pin verifier_test "$harness/backend-verify_test.go"
 check_pin observer "$harness/observer.go"
 check_pin matrix "$matrix"
 
@@ -39,6 +40,8 @@ case "$go_version" in
 	*) printf 'FAIL Go pin: %s\n' "$go_version" >&2; exit 1 ;;
 esac
 real_goroot=$($go_tool env GOROOT)
+
+GOROOT="$real_goroot" GOTOOLCHAIN=local "$go_tool" test "$harness/backend-verify.go" "$harness/backend-verify_test.go"
 
 bashpp_tool=${BASHPP_TOOL:-}
 if test -z "$bashpp_tool"; then bashpp_tool=$(command -v bashy || true); fi

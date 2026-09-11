@@ -55,12 +55,17 @@ func shellCommand(selected *exec.Cmd, commands ...[]string) *exec.Cmd {
 	return directSourceCommand(selected, "/bin/sh", "-c", strings.Join(lines, "\n"))
 }
 
-func (t test) backendEvent(mode, phase, disposition string, compileInputs, programArgv, deviations []string) {
+func (t test) backendEvent(mode, action, phase, disposition string, compileInputs, programArgv, recipeFlags, nativeArgv, artifacts, maps, deviations []string) {
 	events.emit(t.eventName(), "backend", map[string]any{
 		"backend_schema": backendSchema,
 		"mode":           mode,
+		"action":         action,
 		"compile_inputs": nonNil(compileInputs),
 		"program_argv":   nonNil(programArgv),
+		"recipe_flags":   nonNil(recipeFlags),
+		"native_argv":    nonNil(nativeArgv),
+		"artifacts":      nonNil(artifacts),
+		"maps":           nonNil(maps),
 		"tool": map[string]any{
 			"path":    os.Getenv("BASHPP_TESTDIR_TOOL"),
 			"version": os.Getenv("BASHPP_TESTDIR_VERSION"),
@@ -71,40 +76,42 @@ func (t test) backendEvent(mode, phase, disposition string, compileInputs, progr
 	})
 }
 
-func (t test) backendPlan(step *planStep, phase string, compileInputs, programArgv []string) {
+func (t test) backendPlan(step *planStep, action, phase string, compileInputs, programArgv, recipeFlags []string) {
 	mode := os.Getenv("BASHPP_TESTDIR_BACKEND")
 	tool := os.Getenv("BASHPP_TESTDIR_TOOL")
+	nativeArgv := append([]string(nil), step.cmd.Args...)
 	if mode == "" {
 		return
 	}
 	if len(compileInputs) == 0 {
 		step.backendErr = fmt.Errorf("Bash++ backend unsupported %s phase without Go source inputs", phase)
-		t.backendEvent(mode, phase, "unsupported", compileInputs, programArgv,
+		t.backendEvent(mode, action, phase, "unsupported", compileInputs, programArgv, recipeFlags, nativeArgv, nil, nil,
 			[]string{"upstream selected no language-source inputs; native tested-source execution is disabled in backend mode"})
 		return
 	}
 
 	deviations := []string{
-		"native Go tool flags are intentionally not represented by the direct Go-source interface",
+		"upstream native command argv is preserved as evidence and never used to classify the action",
 		"the upstream run fast path is replaced by its existing source-execution plan so planExec receives language sources",
 	}
 	for _, input := range compileInputs {
 		if !strings.HasSuffix(input, ".go") {
 			step.backendErr = fmt.Errorf("Bash++ backend unsupported %s phase: compile input %q is not a Go source file", phase, input)
-			t.backendEvent(mode, phase, "unsupported", compileInputs, programArgv,
+			t.backendEvent(mode, action, phase, "unsupported", compileInputs, programArgv, recipeFlags, nativeArgv, nil, nil,
 				append(deviations, "non-Go compile input has no direct Go-source meaning"))
 			return
 		}
 	}
-	if phase != "execute" {
+	compileOnly := action == "compile" && phase == "compile"
+	if phase != "execute" && !compileOnly {
 		step.backendErr = fmt.Errorf("Bash++ backend unsupported source phase %q", phase)
-		t.backendEvent(mode, phase, "unsupported", compileInputs, programArgv,
-			append(deviations, "only upstream execute phases have a direct run-program meaning in S157.2"))
+		t.backendEvent(mode, action, phase, "unsupported", compileInputs, programArgv, recipeFlags, nativeArgv, nil, nil,
+			append(deviations, "only upstream execute phases and action=compile phase=compile have a direct Bash++ meaning"))
 		return
 	}
 	if tool == "" || os.Getenv("BASHPP_TESTDIR_VERSION") == "" {
 		step.backendErr = fmt.Errorf("Bash++ backend requires an identified BASHPP_TESTDIR_TOOL")
-		t.backendEvent(mode, phase, "configuration-error", compileInputs, programArgv, deviations)
+		t.backendEvent(mode, action, phase, "configuration-error", compileInputs, programArgv, recipeFlags, nativeArgv, nil, nil, deviations)
 		return
 	}
 
@@ -112,6 +119,14 @@ func (t test) backendPlan(step *planStep, phase string, compileInputs, programAr
 	switch mode {
 	case "interpreted":
 		checkArgs := append([]string{"--bashpp", "--source=go", "--check"}, fileArgs...)
+		if compileOnly {
+			*step.cmd = *directSourceCommand(step.cmd, tool, checkArgs...)
+			t.backendEvent(mode, action, phase, "check-only", compileInputs, programArgv, recipeFlags, nativeArgv, nil, nil,
+				append(deviations,
+					"the Bash++ check interface does not accept compiler recipe flags; they remain explicit evidence",
+					"compile-only phase stops after Bash++ check; no init or main is executed"))
+			return
+		}
 		runArgs := append([]string{"--bashpp", "--source=go"}, fileArgs...)
 		if len(programArgv) != 0 {
 			runArgs = append(runArgs, "--")
@@ -120,14 +135,14 @@ func (t test) backendPlan(step *planStep, phase string, compileInputs, programAr
 		*step.cmd = *shellCommand(step.cmd,
 			append([]string{tool}, checkArgs...),
 			append([]string{tool}, runArgs...))
-		t.backendEvent(mode, phase, "check-then-run", compileInputs, programArgv, deviations)
+		t.backendEvent(mode, action, phase, "check-then-run", compileInputs, programArgv, recipeFlags, nativeArgv, nil, nil, deviations)
 
 	case "compiled":
 		goTool := os.Getenv("BASHPP_TESTDIR_GO")
 		shellrt := os.Getenv("BASHPP_SHELLRT_ROOT")
 		if goTool == "" || shellrt == "" {
 			step.backendErr = fmt.Errorf("compiled Bash++ backend requires BASHPP_TESTDIR_GO and caller-supplied BASHPP_SHELLRT_ROOT")
-			t.backendEvent(mode, phase, "configuration-error", compileInputs, programArgv, deviations)
+			t.backendEvent(mode, action, phase, "configuration-error", compileInputs, programArgv, recipeFlags, nativeArgv, nil, nil, deviations)
 			return
 		}
 		moduleDir := t.TempDir()
@@ -138,18 +153,36 @@ func (t test) backendPlan(step *planStep, phase string, compileInputs, programAr
 		module := fmt.Sprintf("module bashpp_s1572\n\ngo 1.27\n\nrequire mvdan.cc/sh/v3 v3.13.1\nreplace mvdan.cc/sh/v3 => %s\n", shellrt)
 		if err := os.WriteFile(filepath.Join(moduleDir, "go.mod"), []byte(module), 0o600); err != nil {
 			step.backendErr = fmt.Errorf("write Bash++ backend module: %w", err)
-			t.backendEvent(mode, phase, "module-failed", compileInputs, programArgv, deviations)
+			t.backendEvent(mode, action, phase, "module-failed", compileInputs, programArgv, recipeFlags, nativeArgv, nil, nil, deviations)
+			return
+		}
+		if compileOnly {
+			sourceMap := filepath.Join(moduleDir, "main.go.map")
+			transpileArgs = append(transpileArgs, "--map", sourceMap)
+			buildArgs := []string{goTool, "build", "-C", moduleDir}
+			if len(recipeFlags) != 0 {
+				buildArgs = append(buildArgs, "-gcflags="+strings.Join(recipeFlags, " "))
+			}
+			buildArgs = append(buildArgs, "-o", artifact, ".")
+			*step.cmd = *shellCommand(step.cmd,
+				append([]string{tool}, transpileArgs...),
+				buildArgs)
+			step.artifacts = []string{generated, artifact}
+			step.maps = []string{sourceMap}
+			t.backendEvent(mode, action, phase, "transpile-build-only", compileInputs, programArgv, recipeFlags, nativeArgv,
+				step.artifacts, step.maps,
+				append(deviations, "non-empty compiler flags use one unpatterned -gcflags=<space-joined exact flags>; generated program is never executed"))
 			return
 		}
 		*step.cmd = *shellCommand(step.cmd,
 			append([]string{tool}, transpileArgs...),
 			[]string{goTool, "build", "-C", moduleDir, "-o", artifact, "."},
 			append([]string{artifact}, programArgv...))
-		t.backendEvent(mode, phase, "transpile-build-run", compileInputs, programArgv,
+		t.backendEvent(mode, action, phase, "transpile-build-run", compileInputs, programArgv, recipeFlags, nativeArgv, nil, nil,
 			append(deviations, "generated source is built in a temporary module with a caller-supplied mvdan.cc/sh/v3 replacement"))
 
 	default:
 		step.backendErr = fmt.Errorf("unsupported Bash++ backend mode %q", mode)
-		t.backendEvent(mode, phase, "configuration-error", compileInputs, programArgv, deviations)
+		t.backendEvent(mode, action, phase, "configuration-error", compileInputs, programArgv, recipeFlags, nativeArgv, nil, nil, deviations)
 	}
 }

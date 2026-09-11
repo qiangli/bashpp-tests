@@ -1,17 +1,38 @@
 --- a/src/cmd/internal/testdir/bashpp_events_test.go
 +++ b/src/cmd/internal/testdir/bashpp_events_test.go
-@@ -136,0 +137 @@
+@@ -135,7 +135,8 @@
+ type planStep struct {
+-	test      string
+-	phase     int
+-	cmd       *exec.Cmd
+-	artifacts []string
+-	maps      []string
++	test       string
 +	backendErr error
-@@ -152 +153,5 @@
++	phase      int
++	cmd        *exec.Cmd
++	artifacts  []string
++	maps       []string
+ }
+@@ -158,2 +159,6 @@
 -	return &planStep{test: t.eventName(), cmd: cmd}
 +	step := &planStep{test: t.eventName(), cmd: cmd}
 +	if os.Getenv("BASHPP_TESTDIR_BACKEND") != "" {
-+		t.backendPlan(step, phase, compileInputs, programArgv)
++		t.backendPlan(step, action, phase, compileInputs, programArgv, recipeFlags)
 +	}
 +	return step
-@@ -171,0 +177,5 @@
+ }
+@@ -177,5 +182,10 @@
+ func (s *planStep) run(buf interface{ String() string }) error {
 +	if s.backendErr != nil {
 +		err := s.backendErr
 +		s.done([]byte(buf.String()), err)
 +		return err
 +	}
+-	err := s.cmd.Run()
+-	s.done([]byte(buf.String()), err)
+-	return err
++	err := s.cmd.Run()
++	s.done([]byte(buf.String()), err)
++	return err
+ }

@@ -6,6 +6,8 @@
 package testdir_test
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"log"
@@ -131,19 +133,23 @@ func (t test) planRecipe(words []string, action string, args, flags, runenv []st
 }
 
 type planStep struct {
-	test  string
-	phase int
-	cmd   *exec.Cmd
+	test      string
+	phase     int
+	cmd       *exec.Cmd
+	artifacts []string
+	maps      []string
 }
 
-func (t test) planExec(cmd *exec.Cmd, timeoutSeconds int, phase string, compileInputs, programArgv []string) *planStep {
+func (t test) planExec(cmd *exec.Cmd, timeoutSeconds int, action, phase string, compileInputs, programArgv, recipeFlags []string) *planStep {
 	// Every value here is passed by the exact action-switch/helper call site.
 	// This hook never parses argv or probes the filesystem.
 	fields := map[string]any{
+		"action":          action,
 		"phase_kind":      phase,
 		"argv":            nonNil(cmd.Args),
 		"compile_inputs":  nonNil(compileInputs),
 		"program_argv":    nonNil(programArgv),
+		"recipe_flags":    nonNil(recipeFlags),
 		"cwd":             cmd.Dir,
 		"env_delta":       commandEnvDelta(cmd.Env),
 		"timeout_seconds": timeoutSeconds,
@@ -184,10 +190,27 @@ func (s *planStep) done(out []byte, err error) {
 	} else if err != nil {
 		exit = -1
 	}
+	proof := func(paths []string) []map[string]any {
+		result := make([]map[string]any, 0, len(paths))
+		for _, path := range paths {
+			item := map[string]any{"path": path, "exists": false, "bytes": 0, "sha256": ""}
+			data, readErr := os.ReadFile(path)
+			if readErr == nil {
+				digest := sha256.Sum256(data)
+				item["exists"] = true
+				item["bytes"] = len(data)
+				item["sha256"] = hex.EncodeToString(digest[:])
+			}
+			result = append(result, item)
+		}
+		return result
+	}
 	events.emit(s.test, "phase_result", map[string]any{
-		"exit":         exit,
-		"output_bytes": len(out),
-		"timed_out":    errors.Is(err, errTimeout),
+		"exit":           exit,
+		"output_bytes":   len(out),
+		"timed_out":      errors.Is(err, errTimeout),
+		"artifact_proof": proof(s.artifacts),
+		"map_proof":      proof(s.maps),
 	})
 }
 
