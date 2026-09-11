@@ -28,6 +28,7 @@ check_pin backend_patch "$harness/testdata/backend/testdir_test.go.patch"
 check_pin backend_events_patch "$harness/testdata/backend/events_test.go.patch"
 check_pin backend_hook "$harness/testdata/backend/bashpp_backend_test.go"
 check_pin verifier "$harness/backend-verify.go"
+check_pin observer "$harness/observer.go"
 check_pin matrix "$matrix"
 
 go_tool=${GO127_TOOL:-go}
@@ -161,6 +162,10 @@ run_mode() {
 	GOROOT="$tmp/goroot" GOTOOLCHAIN=local GOCACHE="$tmp/gocache" \
 		"$tmp/goroot/bin/go" run "$harness/backend-verify.go" \
 		-matrix "$matrix" -evidence "$dir" -mode "$mode" -version "$bashpp_version" -tool "$bashpp_tool"
+	GOROOT="$tmp/goroot" GOTOOLCHAIN=local GOCACHE="$tmp/gocache" \
+		"$tmp/goroot/bin/go" run "$harness/observer.go" \
+		-pins "$pin" -evidence "$dir" -mode "$mode" -version "$bashpp_version" -tool "$bashpp_tool" \
+		-out "$dir/observer.json"
 }
 
 printf 'Bash++ interpreted mode: %s\n' "$bashpp_version"
