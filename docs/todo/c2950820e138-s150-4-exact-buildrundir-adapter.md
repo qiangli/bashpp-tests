@@ -3,7 +3,7 @@ id: c2950820e138
 kind: task
 title: S150.4 exact buildrundir adapter
 seq: 49
-status: todo
+status: doing
 priority: p0
 created: 2026-09-10T21:24:10.646772Z
 sprint: 150

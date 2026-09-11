@@ -201,7 +201,10 @@ func verifyRow(row matrixRow, dir, mode, version, tool string) (string, error) {
 	switch row.Action {
 	case "errorcheck", "errorcheckwithauto", "errorcheckoutput":
 		return verifyDiagnosticsRow(row, ev, mode, goAction)
-	case "compiledir", "errorcheckdir", "builddir":
+	case "compiledir", "errorcheckdir", "builddir", "buildrundir":
+		// buildrundir (S150.4) is builddir plus an execute phase; every
+		// authenticated root carries a .s input, so upstream stops at its
+		// generate phase and the directory rule classifies it.
 		return verifyDirectoryRow(row, ev, mode, goAction)
 	case "asmcheck":
 		if status, handled, err := verifyAssemblyRow(row, ev, mode, goAction); handled {

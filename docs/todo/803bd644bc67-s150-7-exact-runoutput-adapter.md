@@ -3,7 +3,7 @@ id: 803bd644bc67
 kind: task
 title: S150.7 exact runoutput adapter
 seq: 52
-status: todo
+status: doing
 priority: p0
 created: 2026-09-10T21:24:10.739576Z
 sprint: 150

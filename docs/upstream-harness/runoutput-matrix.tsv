@@ -1,0 +1,6 @@
+# Sprint: #150; Story: S150.7; Story-ID: 803bd644bc67
+# Authenticated 150.7 `runoutput` packet (manifest sprint142-leaf-packet-manifest/v4
+# packet-150.7.json sha256 2a4d0bf842b2df52f4060509f276d333e39835cc4a1f89d936e04863e1a7428d,
+# count 1, root list sha256 7da3c08a5ff60ecba9a5333b0b5054def32915d4555169e291c350ad497af145).
+# capability	test	action	sha256	selected_companions (path=sha256, comma-separated; - means none)
+runoutput-rangegen	rangegen.go	runoutput	fb8d46255b7c1d1b2f4cda63fedafd5847cf160fa7a8de3802bc50d0134bd364	-
