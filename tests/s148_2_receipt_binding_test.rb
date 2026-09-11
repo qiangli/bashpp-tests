@@ -5,6 +5,7 @@ require 'tmpdir'
 require 'open3'
 require_relative '../tools/go-full/execution_identity'
 require_relative '../tools/go-full/stage_resolver'
+require_relative '../tools/go-full/product'
 
 class Sprint148ExactExecutionIdentityTest < Minitest::Test
   def setup
@@ -237,6 +238,58 @@ class Sprint148ExactExecutionIdentityTest < Minitest::Test
     assert_equal record.fetch('sha256'), payload.dig('artifacts', 'execution_identity', 'sha256')
     assert_equal result.dig('stage', 'lineage', 'payload_sha256'),
                  Corpus::ProcessLineage.payload_sha256(payload)
+  end
+
+  def test_shared_executor_preflight_consumes_exact_stage_identity_reference
+    path, record = persist
+    executor = Corpus::Executor.allocate
+    executor.instance_variable_set(:@timeout, 60)
+    references = { args.fetch(:stage_id) => { 'path' => path, 'sha256' => record.fetch('sha256') } }
+    assert_equal references.fetch(args.fetch(:stage_id)), executor.send(:authenticate_stage_identity,
+      references, args.fetch(:stage_id), args.fetch(:root_id), @environment)
+    assert_raises(Corpus::ContractError) do
+      executor.send(:authenticate_stage_identity, references, 'other-stage', args.fetch(:root_id), @environment)
+    end
+    assert_raises(Corpus::ContractError) do
+      executor.send(:authenticate_stage_identity, references, args.fetch(:stage_id), 'other-root', @environment)
+    end
+  end
+
+  def test_identity_index_rejects_missing_and_extra_stages_against_plan
+    path, record = persist
+    reference = { 'path' => path, 'sha256' => record.fetch('sha256') }
+    index = write_json('evidence/index.json', { 'schema' => 'go-full-execution-identity-index/v1',
+      'root_id' => args.fetch(:root_id), 'entries' => { args.fetch(:stage_id) => reference } })
+    loaded, = GoFullProduct.load_identity_index(index, Corpus.digest(index), args.fetch(:root_id),
+      expected_stage_ids: [args.fetch(:stage_id)])
+    assert_equal reference, loaded.fetch(args.fetch(:stage_id))
+    assert_raises(Corpus::ContractError) do
+      GoFullProduct.load_identity_index(index, Corpus.digest(index), args.fetch(:root_id),
+        expected_stage_ids: [args.fetch(:stage_id), 'missing'])
+    end
+    assert_raises(Corpus::ContractError) do
+      GoFullProduct.load_identity_index(index, Corpus.digest(index), args.fetch(:root_id), expected_stage_ids: [])
+    end
+  end
+
+  def test_shared_executor_stage_uses_resolver_identity_lineage_and_combined_sink
+    path, record = persist
+    executor = Corpus::Executor.allocate
+    executor.instance_variable_set(:@timeout, 60)
+    environment = @environment.merge('HOME' => File.join(@tmp, 'home'), 'TMPDIR' => File.join(@tmp, 'tmp'),
+                                     'GOCACHE' => File.join(@tmp, 'gocache'))
+    stage = executor.send(:capture_stage,
+      argv: [RbConfig.ruby, '-e', 'STDOUT.sync=true; STDERR.sync=true; STDOUT.write("A\\n"); STDERR.write("\\n"); STDOUT.write("B\\n")'],
+      cwd: @tmp, log_prefix: File.join(@tmp, 'evidence', 'shared-stage'), environment: environment,
+      lineage_path: File.join(@tmp, 'evidence', 'shared-lineage.jsonl'), root_id: args.fetch(:root_id),
+      stage_id: args.fetch(:stage_id), parent_launch_id: nil, artifact_paths: {}, artifact_parents: {},
+      combined_output: true, identity: { 'path' => path, 'sha256' => record.fetch('sha256') },
+      native_observation: { 'status' => 'pass', 'evidence_kind' => 'native-go-only' }, stage_role: 'compile')
+    assert_equal "A\n\nB\n", File.binread(stage.dig('combined', 'path'))
+    assert_equal 'PASS', stage.dig('resolution', 'verdict')
+    payload = Corpus::ProcessLineage.authenticate!(stage.dig('lineage', 'path')).fetch(0)
+    assert_equal record.fetch('sha256'), payload.dig('artifacts', 'execution_identity', 'sha256')
+    assert_equal 'kernel-combined', payload['output_mode']
   end
 
   def test_stage_resolver_deadline_kills_reaps_and_remains_a_failure

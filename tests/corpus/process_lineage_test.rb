@@ -20,12 +20,12 @@ class ProcessLineageTest < Minitest::Test
     FileUtils.rm_rf(@tmp)
   end
 
-  def capture(code, timeout: 2, parent: nil, root: 'testdir:lineage.go', command: nil)
+  def capture(code, timeout: 2, parent: nil, root: 'testdir:lineage.go', command: nil, combined: false)
     @sequence += 1
     Corpus.capture(command || [RbConfig.ruby, '-e', code], cwd: @tmp, env: @env, timeout: timeout,
                    log_prefix: File.join(@tmp, 'logs', "stage-#{@sequence}"),
                    lineage: { path: @ledger, root_id: root, stage_id: "mode/stage-#{@sequence}",
-                              parent_launch_id: parent })
+                              parent_launch_id: parent, combined_output: combined })
   end
 
   def records
@@ -81,6 +81,33 @@ class ProcessLineageTest < Minitest::Test
     assert_equal 'Errno::ENOENT', payload.dig('launch', 'launch_failure', 'class')
     assert_equal [], payload['reap_events']
     assert_equal %w[stderr stdout], payload['artifacts'].keys.sort
+  end
+
+  def test_kernel_combined_capture_preserves_write_order_and_is_lineage_artifact
+    last = nil
+    5.times do
+      last = capture('STDOUT.sync=true; STDERR.sync=true; STDOUT.write("A\\n"); STDERR.write("\\n"); STDOUT.write("B\\n")', combined: true)
+      assert_equal "A\n\nB\n", File.binread(last.dig('combined', 'path'))
+      refute last.key?('stdout')
+      refute last.key?('stderr')
+    end
+    records.each do |payload|
+      assert_equal 'kernel-combined', payload['output_mode']
+      assert_equal ['combined'], payload['artifacts'].keys
+    end
+    _out, error, status = fresh_verify
+    assert status.success?, error
+    File.binwrite(last.dig('combined', 'path'), "A\nB\n\n")
+    assert_match(/artifact changed: combined/, fresh_verify[1])
+  end
+
+  def test_combined_output_selection_rejects_truthy_non_boolean_values
+    assert_raises(Corpus::ContractError) do
+      Corpus.capture([RbConfig.ruby, '-e', 'exit 0'], cwd: @tmp, env: @env, timeout: 1,
+                     log_prefix: File.join(@tmp, 'bad-combined'),
+                     lineage: { path: @ledger, root_id: 'testdir:lineage.go', stage_id: 'run', combined_output: 'yes' })
+    end
+    refute File.exist?(@ledger)
   end
 
   def test_deadline_and_leak_have_explicit_kill_and_reap_events_and_no_survivor

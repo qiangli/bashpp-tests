@@ -127,13 +127,14 @@ module GoFullStageResolver
   # durable lineage implementation from packet 148.1.
   def run!(identity_path:, identity_sha256:, root_id:, stage_id:, native_observation:, decision:,
            stage_role:, argv:, cwd:, environment:, lineage_path:, log_prefix:, stdin: File::NULL,
-           parent_launch_id: nil, artifact_paths: {}, artifact_parents: {})
+           parent_launch_id: nil, artifact_paths: {}, artifact_parents: {}, combined_output: false)
     receipt = GoFullExecutionIdentity.load!(identity_path, expected_sha256: identity_sha256)
     applicability!(native_observation: native_observation, decision: decision)
     unless receipt.values_at('root_id', 'stage_id') == [root_id, stage_id]
       raise Corpus::ContractError, 'stage resolver root/stage differs from execution identity'
     end
-    controlled_environment = GoFullExecutionIdentity.controlled_environment!(environment)
+    raise Corpus::ContractError, 'spawn environment must be a string map' unless environment.is_a?(Hash) && environment.all? { |key, value| key.is_a?(String) && value.is_a?(String) }
+    controlled_environment = GoFullExecutionIdentity.controlled_environment!(environment.slice(*GoFullExecutionIdentity::CONTROLLED_ENVIRONMENT))
     raise Corpus::ContractError, 'stage resolver environment differs from execution identity' unless
       receipt.fetch('environment') == controlled_environment
 
@@ -158,10 +159,10 @@ module GoFullStageResolver
       raise Corpus::ContractError, 'execution_identity is a reserved lineage artifact'
     end
     lineage_artifacts = artifact_paths.merge('execution_identity' => identity_path)
-    stage = Corpus::ProcessLineage.run(argv, cwd: cwd, env: controlled_environment, timeout: remaining,
+    stage = Corpus::ProcessLineage.run(argv, cwd: cwd, env: environment, timeout: remaining,
       lineage_path: lineage_path, log_prefix: log_prefix, root_id: root_id, stage_id: stage_id,
       parent_launch_id: parent_launch_id, artifact_paths: lineage_artifacts,
-      artifact_parents: artifact_parents, stdin: stdin)
+      artifact_parents: artifact_parents, stdin: stdin, combined_output: combined_output)
     authenticate_lineage_stage!(lineage_path, stage, root_id, stage_id,
                                 identity_path, identity_sha256)
     answer = adjudicate!(root_id: root_id, stage_id: stage_id, decision: decision,
