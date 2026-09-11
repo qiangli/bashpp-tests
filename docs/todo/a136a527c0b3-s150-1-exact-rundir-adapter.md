@@ -3,7 +3,7 @@ id: a136a527c0b3
 kind: task
 title: S150.1 exact rundir adapter
 seq: 46
-status: todo
+status: doing
 priority: p0
 created: 2026-09-10T21:24:10.576031Z
 sprint: 150

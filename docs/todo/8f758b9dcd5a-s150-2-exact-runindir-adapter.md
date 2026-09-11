@@ -3,7 +3,7 @@ id: 8f758b9dcd5a
 kind: task
 title: S150.2 exact runindir adapter
 seq: 47
-status: todo
+status: doing
 priority: p0
 created: 2026-09-10T21:24:10.600588Z
 sprint: 150

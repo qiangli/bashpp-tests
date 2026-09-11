@@ -1,7 +1,7 @@
 // Copyright 2026 The bashpp-tests Authors. All rights reserved.
 // Sprint: #157; Story: S157.2; Story-ID: 31520c72b5e0
 // Sprint: #149; Stories: S149.1 (3f416ade73ef), S149.2 (1e87cb008ec3), S149.3 (60d35d1ec914)
-// Sprint: #150; Stories: S150.6 (4228ed646074), S150.5 (e87e1cbcbb20)
+// Sprint: #150; Stories: S150.6 (4228ed646074), S150.5 (e87e1cbcbb20), S150.1 (a136a527c0b3), S150.2 (8f758b9dcd5a)
 //
 // Direct Go-source backend for the authenticated Go 1.27 testdir seam. The
 // only program description accepted here is the compileInputs/programArgv
@@ -10,6 +10,7 @@
 package testdir_test
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"os/exec"
@@ -139,6 +140,117 @@ func backendModule(t test, shellrt string) (moduleDir string, err error) {
 	return moduleDir, nil
 }
 
+// backendLink gives upstream's link phase a meaning (S150.1). Upstream hands
+// it the object name of the last package it compiled (its own .go -> .o
+// rewrite) plus any -ldflags; the seam checks that object is the program its
+// last directory compile phase handed it and adopts that program: nothing to
+// link in interpreted mode (the sources run later), the artifact the pinned
+// build already linked in compiled mode. Anything else is unsupported.
+func (t test) backendLink(step *planStep, mode, action string, compileInputs, programArgv, recipeFlags, nativeArgv, deviations []string) {
+	value, ok := backendPrograms.Load(t.eventName())
+	program, _ := value.(backendProgram)
+	object := ""
+	if len(compileInputs) == 1 {
+		object = strings.TrimSuffix(filepath.Base(compileInputs[0]), ".o") + ".go"
+	}
+	if !ok || len(program.files) == 0 || object != filepath.Base(program.files[0]) {
+		step.backendErr = fmt.Errorf("Bash++ backend unsupported link phase: input %v is not the program this test's compile phases handed the seam", compileInputs)
+		t.backendEvent(mode, action, "link", "unsupported", compileInputs, programArgv, recipeFlags, nativeArgv, nil, nil,
+			append(deviations, "the link input is not the object of the last directory package upstream compiled through Bash++"))
+		return
+	}
+	deviations = append(deviations,
+		"the link input is upstream's object name for the last package it compiled; the seam adopts the program that compile phase handed it and never links objects",
+		"upstream -ldflags are retained as evidence only")
+	switch mode {
+	case "interpreted":
+		*step.cmd = *directSourceCommand(step.cmd, "/bin/sh", "-c", ":")
+		t.backendEventProgram(mode, action, "link", "link-adopt-check", compileInputs, programArgv, recipeFlags, nativeArgv, nil, nil,
+			append(deviations, "an interpreter has nothing to link: the checked sources are the program and run at the execute phase"), nil, program.record())
+	case "compiled":
+		if program.artifact == "" {
+			step.backendErr = fmt.Errorf("Bash++ backend unsupported link phase: no artifact was built for this program")
+			t.backendEvent(mode, action, "link", "unsupported", compileInputs, programArgv, recipeFlags, nativeArgv, nil, nil, deviations)
+			return
+		}
+		*step.cmd = *directSourceCommand(step.cmd, "/bin/sh", "-c", "test -x "+shellQuote(program.artifact))
+		t.backendEventProgram(mode, action, "link", "link-adopt-artifact", compileInputs, programArgv, recipeFlags, nativeArgv, []string{program.artifact}, nil,
+			append(deviations, "the pinned Go build of the last package's generated module already linked the program; the link phase only proves that artifact exists"), nil, program.record())
+	default:
+		step.backendErr = fmt.Errorf("unsupported Bash++ backend mode %q", mode)
+		t.backendEvent(mode, action, "link", "configuration-error", compileInputs, programArgv, recipeFlags, nativeArgv, nil, nil, deviations)
+	}
+}
+
+// goListPackage is the subset of `go list -json` the seam reads.
+type goListPackage struct {
+	ImportPath string
+	Name       string
+	Dir        string
+	GoFiles    []string
+	SFiles     []string
+	CgoFiles   []string
+	Standard   bool
+	Module     *struct {
+		Path string
+		Main bool
+	}
+}
+
+// resolveModuleProgram asks the pinned go command what "." is in dir: the main
+// package's Go files (absolute) and every in-module dependency as an ordered
+// --go-package entry (go list -deps emits dependencies before dependents).
+// A package with assembly or cgo files has no direct Go-source meaning.
+func resolveModuleProgram(goTool, dir string, env []string) (files, mapArgs []string, record map[string]any, err error) {
+	if goTool == "" {
+		return nil, nil, nil, fmt.Errorf("resolving a module program requires BASHPP_TESTDIR_GO")
+	}
+	cmd := exec.Command(goTool, "list", "-json", "-deps", ".")
+	cmd.Dir, cmd.Env = dir, env
+	out, err := cmd.Output()
+	record = map[string]any{"go_list": append([]string{goTool}, cmd.Args[1:]...), "dir": dir}
+	if err != nil {
+		return nil, nil, record, fmt.Errorf("go list -json -deps . failed in %s: %v", dir, err)
+	}
+	dec := json.NewDecoder(strings.NewReader(string(out)))
+	var packages []map[string]any
+	var main *goListPackage
+	for {
+		var pkg goListPackage
+		if err := dec.Decode(&pkg); err != nil {
+			break
+		}
+		if pkg.Standard || pkg.Module == nil || !pkg.Module.Main {
+			continue
+		}
+		if len(pkg.SFiles) != 0 || len(pkg.CgoFiles) != 0 {
+			return nil, nil, record, fmt.Errorf("module package %s has non-Go inputs %v", pkg.ImportPath, append(pkg.SFiles, pkg.CgoFiles...))
+		}
+		abs := make([]string, 0, len(pkg.GoFiles))
+		for _, f := range pkg.GoFiles {
+			abs = append(abs, filepath.Join(pkg.Dir, f))
+		}
+		if pkg.Name == "main" && pkg.Dir == dir {
+			p := pkg
+			main = &p
+			files = abs
+			continue
+		}
+		mapArgs = append(mapArgs, "--go-package", pkg.ImportPath+"="+strings.Join(abs, ","))
+		packages = append(packages, map[string]any{"path": pkg.ImportPath, "files": abs})
+	}
+	if main == nil || len(files) == 0 {
+		return nil, nil, record, fmt.Errorf("go list found no main package in %s", dir)
+	}
+	if len(packages) != 0 {
+		mapArgs = append([]string{"--go-import-path", main.ImportPath}, mapArgs...)
+	}
+	record["base"] = ""
+	record["path"] = main.ImportPath
+	record["packages"] = packages
+	return files, mapArgs, record, nil
+}
+
 // artifactUse states what happens to the cwd a.exe a build-only phase writes:
 // nothing for `build`; for `buildrun` only this test's later execute phase
 // runs it (S150.5).
@@ -221,7 +333,35 @@ func (t test) backendPlan(step *planStep, action, phase string, pkg *packageIden
 		"upstream native command argv is preserved as evidence and never used to classify the action",
 		"the upstream run fast path is replaced by its existing source-execution plan so planExec receives language sources",
 	}
-	for _, input := range compileInputs {
+	if phase == "link" {
+		t.backendLink(step, mode, action, compileInputs, programArgv, recipeFlags, nativeArgv, deviations)
+		return
+	}
+	// runindir: upstream built a module (overlay copy + go.mod) and runs `go run
+	// .` in it. "." means whatever the go command's own on-disk policy says in
+	// that exact directory; the seam asks the pinned go once and hands the
+	// answer to Bash++ as files plus an explicit package map. It never walks
+	// the directory itself.
+	// sourceFiles is what Bash++ is handed as --go-file inputs; it equals
+	// upstream's compileInputs except for runindir's ".", which the go
+	// command resolves. The backend event always records upstream's inputs.
+	sourceFiles := compileInputs
+	var moduleMapArgs []string
+	var moduleMap map[string]any
+	if len(compileInputs) == 1 && compileInputs[0] == "." && phase == "execute" {
+		goTool := os.Getenv("BASHPP_TESTDIR_GO")
+		resolved, mapArgs, record, err := resolveModuleProgram(goTool, step.cmd.Dir, step.cmd.Env)
+		if err != nil {
+			step.backendErr = fmt.Errorf("Bash++ backend unsupported execute phase: %v", err)
+			t.backendEventMap(mode, action, phase, "unsupported", compileInputs, programArgv, recipeFlags, nativeArgv, nil, nil,
+				append(deviations, "the module program upstream prepared has no direct Go-source meaning: "+err.Error()), record)
+			return
+		}
+		deviations = append(deviations, "the \".\" input is resolved once by the pinned go command's own module policy (`go list -json -deps .` in the upstream-prepared module directory, with the upstream environment) into the main package's Go files and the in-module dependency packages, in dependency order; the seam walks no directory")
+		sourceFiles, moduleMapArgs, moduleMap = resolved, mapArgs, record
+		record["files"] = nonNil(resolved)
+	}
+	for _, input := range sourceFiles {
 		if !strings.HasSuffix(input, ".go") {
 			step.backendErr = fmt.Errorf("Bash++ backend unsupported %s phase: compile input %q is not a Go source file", phase, input)
 			t.backendEvent(mode, action, phase, "unsupported", compileInputs, programArgv, recipeFlags, nativeArgv, nil, nil,
@@ -251,7 +391,10 @@ func (t test) backendPlan(step *planStep, action, phase string, pkg *packageIden
 		return
 	}
 
-	fileArgs := goFileArgs(compileInputs)
+	fileArgs := goFileArgs(sourceFiles)
+	if moduleMap != nil {
+		fileArgs = append(append([]string(nil), moduleMapArgs...), fileArgs...)
+	}
 
 	// Directory packages: every earlier package of this same upstream test is
 	// an explicit --go-package entry; the current package carries upstream's
@@ -274,6 +417,15 @@ func (t test) backendPlan(step *planStep, action, phase string, pkg *packageIden
 			packages = append(packages, map[string]any{"path": group.path, "files": nonNil(group.files)})
 		}
 		packageMap = map[string]any{"base": pkg.Base, "path": pkg.Path, "packages": packages}
+		// The last directory package upstream compiles is the program a later
+		// link/execute phase of this test acts on (rundir, errorcheckandrundir).
+		// A single-package program needs no map; a multi-package one carries
+		// upstream's identity and every earlier group.
+		program := backendProgram{files: append([]string(nil), compileInputs...)}
+		if len(earlier) != 0 {
+			program.mapArgs = append([]string(nil), mapArgs...)
+		}
+		backendPrograms.Store(key, program)
 		deviations = append(deviations,
 			fmt.Sprintf("upstream package identity -D %s -p %s and the %d earlier package(s) of this test are handed to Bash++ as an explicit package map; relative imports are never resolved on disk", pkg.Base, pkg.Path, len(earlier)))
 	}
@@ -327,7 +479,7 @@ func (t test) backendPlan(step *planStep, action, phase string, pkg *packageIden
 		*step.cmd = *shellCommand(step.cmd,
 			append([]string{tool}, checkArgs...),
 			append([]string{tool}, runArgs...))
-		t.backendEvent(mode, action, phase, "check-then-run", compileInputs, programArgv, recipeFlags, nativeArgv, nil, nil, runDeviations)
+		t.backendEventMap(mode, action, phase, "check-then-run", compileInputs, programArgv, recipeFlags, nativeArgv, nil, nil, runDeviations, moduleMap)
 
 	case "compiled":
 		goTool := os.Getenv("BASHPP_TESTDIR_GO")
@@ -422,6 +574,11 @@ func (t test) backendPlan(step *planStep, action, phase string, pkg *packageIden
 			case directory:
 				disposition = "transpile-build-package-map"
 				compileDeviations = append(compileDeviations, "the generated module receives no dependency packages; a lowered relative import that does not build is a retained lowering product failure")
+				if value, ok := backendPrograms.Load(t.eventName()); ok {
+					program := value.(backendProgram)
+					program.artifact = artifact
+					backendPrograms.Store(t.eventName(), program)
+				}
 			}
 			t.backendEventMap(mode, action, phase, disposition, compileInputs, programArgv, recipeFlags, nativeArgv,
 				step.artifacts, step.maps, compileDeviations, packageMap)
@@ -442,7 +599,7 @@ func (t test) backendPlan(step *planStep, action, phase string, pkg *packageIden
 			append([]string{tool}, transpileArgs...),
 			buildArgs,
 			append([]string{artifact}, programArgv...))
-		t.backendEvent(mode, action, phase, "transpile-build-run", compileInputs, programArgv, recipeFlags, nativeArgv, nil, nil, runDeviations)
+		t.backendEventMap(mode, action, phase, "transpile-build-run", compileInputs, programArgv, recipeFlags, nativeArgv, nil, nil, runDeviations, moduleMap)
 
 	default:
 		step.backendErr = fmt.Errorf("unsupported Bash++ backend mode %q", mode)

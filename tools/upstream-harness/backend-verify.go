@@ -93,6 +93,11 @@ type packageMap struct {
 		Path  string   `json:"path"`
 		Files []string `json:"files"`
 	} `json:"packages"`
+	// runindir (S150.2): the go command's resolution of "." — the argv the
+	// seam ran, the module dir, and the main package's files.
+	GoList []string `json:"go_list"`
+	Dir    string   `json:"dir"`
+	Files  []string `json:"files"`
 }
 
 type fileProof struct {
@@ -207,6 +212,12 @@ func verifyRow(row matrixRow, dir, mode, version, tool string) (string, error) {
 	}
 	if row.Action == "buildrun" {
 		return verifyBuildRunRow(row, ev, mode, goAction)
+	}
+	if row.Action == "runindir" {
+		return verifyRunInDirRow(row, ev, mode, goAction)
+	}
+	if row.Action == "rundir" || row.Action == "errorcheckandrundir" {
+		return verifyRunDirRow(row, ev, mode, goAction)
 	}
 	if row.Action == "compile" {
 		return verifyCompileRow(row, ev, mode, goAction)
@@ -696,6 +707,186 @@ func verifyBuildRunRow(row matrixRow, ev evidence, mode, goAction string) (strin
 		return "BUILDRUN-PASS", nil
 	}
 	return "BUILDRUN-PRODUCT-FAIL", nil
+}
+
+// verifyRunDirRow checks a rundir / errorcheckandrundir root (S150.1, S150.3):
+// every compile phase is a directory package phase carrying upstream's
+// identity and, as its map, exactly the earlier packages of the same pass
+// (errorcheckandrundir compiles the directory twice: the diagnostics pass,
+// then the run pass); the optional link phase adopts the program the last
+// compile phase handed the seam; the optional execute phase runs that same
+// program with only the upstream argv. Upstream decides the terminal; after
+// every recorded phase executed, a failure is a product failure.
+func verifyRunDirRow(row matrixRow, ev evidence, mode, goAction string) (string, error) {
+	if goAction == "skip" {
+		if len(ev.Phases) != 0 {
+			return "", fmt.Errorf("upstream skip with %d recorded phases", len(ev.Phases))
+		}
+		return "UPSTREAM-SKIP", nil
+	}
+	if len(ev.Backends) == 0 || len(ev.Results) != len(ev.Backends) {
+		return "", fmt.Errorf("wanted at least one phase with one result each, got %d backends / %d results", len(ev.Backends), len(ev.Results))
+	}
+	wantCompile := map[string]string{"interpreted": "check-package-map", "compiled": "transpile-build-package-map"}[mode]
+	wantLink := map[string]string{"interpreted": "link-adopt-check", "compiled": "link-adopt-artifact"}[mode]
+	wantRun := map[string]string{"interpreted": "run-remembered-program", "compiled": "run-artifact"}[mode]
+	if wantCompile == "" {
+		return "", fmt.Errorf("unknown backend mode %q", mode)
+	}
+	var seen []string
+	var last *eventRecord
+	var program *programRec
+	stage := "compile"
+	for i := range ev.Backends {
+		backend, phase := ev.Backends[i], ev.Phases[i]
+		switch backend.Phase {
+		case "compile":
+			if stage != "compile" {
+				return "", fmt.Errorf("phase %d: compile after %s", i, stage)
+			}
+			if phase.Package == nil || backend.PackageMap == nil || backend.Disposition != wantCompile || len(backend.ProgramArgv) != 0 {
+				return "", fmt.Errorf("phase %d is not a directory package phase: disposition=%s", i, backend.Disposition)
+			}
+			if backend.PackageMap.Base != phase.Package.Base || backend.PackageMap.Path != phase.Package.Path {
+				return "", fmt.Errorf("phase %d map identity %s/%s differs from upstream %s/%s", i, backend.PackageMap.Base, backend.PackageMap.Path, phase.Package.Base, phase.Package.Path)
+			}
+			var got []string
+			for _, p := range backend.PackageMap.Packages {
+				got = append(got, p.Path)
+			}
+			if len(got) == 0 {
+				seen = nil // a new upstream pass over the directory
+			}
+			if !reflect.DeepEqual(got, seen) {
+				return "", fmt.Errorf("phase %d map lists %v, want the earlier packages %v", i, got, seen)
+			}
+			seen = append(seen, phase.Package.Path)
+			last = &ev.Backends[i]
+		case "link":
+			if stage != "compile" || last == nil {
+				return "", fmt.Errorf("phase %d: link without a preceding compile phase", i)
+			}
+			if backend.Disposition != wantLink || backend.Program == nil || !reflect.DeepEqual(backend.Program.Files, last.CompileInputs) {
+				return "", fmt.Errorf("phase %d: link did not adopt the last compiled package: disposition=%s program=%v want files %v", i, backend.Disposition, backend.Program, last.CompileInputs)
+			}
+			if mode == "compiled" && (len(last.Artifacts) != 2 || backend.Program.Artifact != last.Artifacts[1]) {
+				return "", fmt.Errorf("phase %d: link adopted artifact %q, want the last compile phase's %v", i, backend.Program.Artifact, last.Artifacts)
+			}
+			program = backend.Program
+			stage = "link"
+		case "execute":
+			if stage != "link" || program == nil {
+				return "", fmt.Errorf("phase %d: execute without a link phase", i)
+			}
+			if backend.Disposition != wantRun || len(backend.CompileInputs) != 0 || backend.Program == nil || !reflect.DeepEqual(backend.Program, program) {
+				return "", fmt.Errorf("phase %d: execute did not run the linked program: disposition=%s", i, backend.Disposition)
+			}
+			for _, arg := range backend.ProgramArgv {
+				if strings.HasSuffix(arg, ".go") {
+					return "", fmt.Errorf("program argv %v carries a Go source", backend.ProgramArgv)
+				}
+			}
+			stage = "execute"
+		default:
+			return "", fmt.Errorf("phase %d: unexpected %s phase (%s)", i, backend.Phase, backend.Disposition)
+		}
+	}
+	lastExit := ev.Results[len(ev.Results)-1].Exit
+	if goAction == "pass" {
+		if stage != "execute" || lastExit != 0 {
+			return "", fmt.Errorf("upstream pass without a clean execute phase: stage=%s exit=%d", stage, lastExit)
+		}
+		return "RUNDIR-PASS", nil
+	}
+	if stage != "execute" && lastExit == 0 {
+		// errorcheckandrundir's diagnostics pass can fail in upstream's own
+		// errorCheck comparison after a clean Bash++ phase (expected
+		// diagnostics the product did not emit); that is upstream's decision
+		// and a product row, provided the comparison is on record.
+		unmatched := false
+		for _, comparison := range ev.Comparisons {
+			if !comparison.Matched {
+				unmatched = true
+			}
+		}
+		if !unmatched {
+			return "", fmt.Errorf("upstream failed after a clean %s phase without reaching execute and without an unmatched comparison", stage)
+		}
+	}
+	return "RUNDIR-PRODUCT-FAIL", nil
+}
+
+// verifyRunInDirRow checks a runindir root (S150.2): upstream's one execute
+// phase names "." in the module directory it prepared; the backend resolved
+// that through the pinned go command's own policy (`go list -json -deps .`
+// in that directory, recorded on the event) into the main package's files
+// and an ordered in-module package map, then ran it directly; or it recorded
+// the module as unsupported because a package carries non-Go inputs. The
+// event keeps upstream's "." as its compile input.
+func verifyRunInDirRow(row matrixRow, ev evidence, mode, goAction string) (string, error) {
+	if goAction == "skip" {
+		if len(ev.Phases) != 0 {
+			return "", fmt.Errorf("upstream skip with %d recorded phases", len(ev.Phases))
+		}
+		return "UPSTREAM-SKIP", nil
+	}
+	if len(ev.Phases) != 1 || len(ev.Backends) != 1 || len(ev.Results) != 1 {
+		return "", fmt.Errorf("wanted exactly one execute phase/backend/result, got %d/%d/%d", len(ev.Phases), len(ev.Backends), len(ev.Results))
+	}
+	phase, backend := ev.Phases[0], ev.Backends[0]
+	if backend.Action != "runindir" || backend.Phase != "execute" || !reflect.DeepEqual(backend.CompileInputs, []string{"."}) || phase.Cwd == "" {
+		return "", fmt.Errorf("runindir must be one execute phase over \".\" in the upstream module directory: action=%s phase=%s inputs=%v", backend.Action, backend.Phase, backend.CompileInputs)
+	}
+	m := backend.PackageMap
+	if m == nil || len(m.GoList) < 4 || m.GoList[1] != "list" || m.Dir != phase.Cwd {
+		return "", fmt.Errorf("runindir did not resolve \".\" through the go command in the upstream directory %q: %+v", phase.Cwd, m)
+	}
+	if backend.Disposition == "unsupported" {
+		if goAction != "fail" {
+			return "", fmt.Errorf("unsupported module program with upstream action %s", goAction)
+		}
+		declared := false
+		for _, d := range backend.Deviations {
+			if strings.Contains(d, "non-Go inputs") || strings.Contains(d, "no main package") {
+				declared = true
+			}
+		}
+		if !declared {
+			return "", fmt.Errorf("module program unsupported without a non-Go-input reason: %v", backend.Deviations)
+		}
+		return "RUNINDIR-PRODUCT-FAIL", nil
+	}
+	if !directDisposition(mode, backend.Disposition) || len(m.Files) == 0 {
+		return "", fmt.Errorf("resolved module program was not run directly: disposition=%s files=%v", backend.Disposition, m.Files)
+	}
+	for _, f := range m.Files {
+		if !strings.HasSuffix(f, ".go") || filepath.Dir(f) != phase.Cwd {
+			return "", fmt.Errorf("main package file %q is not a Go file in the module directory", f)
+		}
+	}
+	for _, arg := range backend.ProgramArgv {
+		if strings.HasSuffix(arg, ".go") {
+			return "", fmt.Errorf("program argv %v carries a Go source", backend.ProgramArgv)
+		}
+	}
+	if len(backend.RecipeFlags) != 0 {
+		declared := false
+		for _, d := range backend.Deviations {
+			if strings.Contains(d, "recipe flags") {
+				declared = true
+			}
+		}
+		if !declared {
+			return "", fmt.Errorf("upstream recipe flags %v without a declared backend treatment", backend.RecipeFlags)
+		}
+	}
+	if goAction == "pass" {
+		if ev.Results[0].Exit != 0 {
+			return "", fmt.Errorf("upstream pass with nonzero execute exit %d", ev.Results[0].Exit)
+		}
+		return "RUNINDIR-PASS", nil
+	}
+	return "RUNINDIR-PRODUCT-FAIL", nil
 }
 
 func validProofs(paths []string, proofs []fileProof) bool {

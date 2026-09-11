@@ -3,7 +3,7 @@ id: 4d5c5fab536e
 kind: task
 title: S150.3 exact errorcheckandrundir adapter
 seq: 48
-status: todo
+status: doing
 priority: p0
 created: 2026-09-10T21:24:10.624118Z
 sprint: 150
