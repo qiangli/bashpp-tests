@@ -9,4 +9,4 @@ created: 2026-09-10T21:22:30.850662Z
 sprint: 149
 ---
 
-Packet149.6; manifest /srv/sprint142/evidence/product-baseline-001-control/packet-manifests-v4/packet-149.6.json; SHA bbddc30d7b8a9edfd6f21c117347fcb55c011a232f0c0539ff72a5bf8417c0cf; count4. Depends Sprint148 exit. Own this exact manifest and build-only outcome; localize a minimal repro before naming touched files. Shared registry/product seams are reserved to the Static Adapter Integration Owner. Apply flags/env/build constraints and authenticate artifact without body execution; mutation/execution attacks reject; receipts and canaries pass. No corpus credit beyond exact selected roots.
+Packet 149.6; manifest /srv/sprint142/evidence/product-baseline-001-control/packet-manifests-v4/packet-149.6.json; SHA bbddc30d7b8a9edfd6f21c117347fcb55c011a232f0c0539ff72a5bf8417c0cf; count 4. Use the Sprint 157 upstream Go harness as the only recipe authority. Apply its selected flags, environment, build constraints, and artifact contract through Bash++ without executing the body. Extend only the shared Go backend/event seam. Harness and harness tests must be Go or Bash only.
