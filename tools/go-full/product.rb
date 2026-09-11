@@ -13,9 +13,27 @@ require_relative 'resume'
 require_relative 'module_context'
 require_relative 'subset'
 require_relative 'recipe_adapters'
+require_relative 'router'
+require_relative 'stage_resolver'
+require_relative 'packet_manifest'
 
 module GoFullProduct
   module_function
+
+  PACKET_MANIFEST_SHA256 = {
+    '148.4' => '2a5f736d560267caa155a942e2c8d326d6bb77b23a8f40b40980af5f3c99f841',
+    '148.6' => '1c9c58f3343a707cd3dbca197bbb41b8cea4907ae4d2be87f776b4618e149f4c'
+  }.freeze
+
+  def anchor_stage_ids(packet, root_id)
+    raise Corpus::ContractError, 'unsupported Wave B packet' unless PACKET_MANIFEST_SHA256.key?(packet)
+    executions = packet == '148.4' ? 3.times.map { |index| "#{root_id}:ordered-#{index + 1}" } : [root_id]
+    executions.flat_map do |execution_id|
+      { 'baseline' => %w[build run], 'interpreted' => %w[run], 'compiled' => %w[transpile build run] }.flat_map do |mode, stages|
+        stages.map { |stage| "#{execution_id}/#{mode}/#{stage}" }
+      end
+    end
+  end
 
   def read_rows(path)
     File.foreach(path).map { |line| JSON.parse(line) }
@@ -165,16 +183,39 @@ module GoFullProduct
   def exact_upstream_output(record, root, source_root)
     expected = root['expected_output']
     return { 'status' => 'not-consumed' } unless expected
-    observations = record.fetch('modes').values.to_h do |mode|
-      stage = mode.fetch('stages').find { |s| s['stage'] == 'run' }
-      return { 'status' => 'FAIL', 'reason' => 'run stage absent or unsuccessful' } unless stage && Corpus.success?(stage)
-      out = File.binread(stage.fetch('stdout').fetch('path'))
-      err = File.binread(stage.fetch('stderr').fetch('path'))
-      # Upstream combines both streams into one buffer. With two nonempty
-      # streams, independent logs cannot recover their original interleaving.
-      return { 'status' => 'FAIL', 'reason' => 'combined-stream ordering requires capture adapter' } unless out.empty? || err.empty?
-      [mode.fetch('mode'), out + err]
+    executions = record.fetch('ordered_repetitions', [record])
+    observations = {}
+    executions.each_with_index do |execution, repetition|
+      modes = execution.fetch('modes')
+      unless modes.keys.sort == Corpus::MODES.sort
+        return { 'status' => 'FAIL', 'reason' => 'execution mode denominator differs from required modes' }
+      end
+      modes.each do |mode_name, mode|
+        unless mode.fetch('mode') == mode_name
+          return { 'status' => 'FAIL', 'reason' => 'execution mode identity differs from its mode key' }
+        end
+        run_stages = mode.fetch('stages').select { |stage| stage['stage'] == 'run' }
+        unless run_stages.length == 1 && Corpus.success?(run_stages.first)
+          return { 'status' => 'FAIL', 'reason' => 'mode must contain exactly one successful run observation' }
+        end
+        stage = run_stages.first
+        value = if stage['combined']
+                  Corpus::Validation.file!(stage.fetch('combined'))
+                  File.binread(stage.fetch('combined').fetch('path'))
+                else
+                  Corpus::Validation.file!(stage.fetch('stdout'))
+                  Corpus::Validation.file!(stage.fetch('stderr'))
+                  out = File.binread(stage.fetch('stdout').fetch('path'))
+                  err = File.binread(stage.fetch('stderr').fetch('path'))
+                  # Independent logs are non-ordering evidence. They can satisfy only the
+                  # degenerate case where at most one stream contains bytes.
+                  return { 'status' => 'FAIL', 'reason' => 'combined-stream ordering requires kernel-combined capture' } unless out.empty? || err.empty?
+                  out + err
+                end
+        observations["#{repetition}:#{mode_name}"] = value
+      end
     end
+    return { 'status' => 'FAIL', 'reason' => 'no run observations matched expected output' } if observations.empty?
     path = File.join(source_root, expected.fetch('path'))
     bytes = if expected.fetch('present')
               raise Corpus::ContractError, 'sidecar digest changed' unless Corpus.digest(path) == expected.fetch('sha256')
@@ -185,6 +226,121 @@ module GoFullProduct
             end
     { 'status' => observations.values.all? { |value| value == bytes } ? 'PASS' : 'FAIL',
       'expected' => expected, 'observed_sha256' => observations.transform_values { |value| Digest::SHA256.hexdigest(value) } }
+  end
+
+  def authenticate_execution_lineage!(record, root_id)
+    executions = record.fetch('ordered_repetitions', [record])
+    stages = executions.flat_map { |execution| execution.fetch('modes').values.flat_map { |mode| mode.fetch('stages') } }
+    ledgers = stages.group_by { |stage| stage.dig('lineage', 'path') }
+    raise Corpus::ContractError, 'execution stage lacks a lineage ledger' if ledgers.key?(nil)
+    ledgers.each do |path, expected_stages|
+      payloads = Corpus::ProcessLineage.authenticate!(path)
+      expected_stages.each do |stage|
+        reference = stage.fetch('lineage')
+        matches = payloads.select { |payload| payload['launch_id'] == reference['launch_id'] }
+        raise Corpus::ContractError, 'execution lineage launch is missing or ambiguous' unless matches.length == 1
+        payload = matches.first
+        unless payload.values_at('root_id', 'stage_id') == [root_id, reference['stage_id']] &&
+               Corpus::ProcessLineage.payload_sha256(payload) == reference['payload_sha256']
+          raise Corpus::ContractError, 'execution lineage root/stage/payload join differs'
+        end
+        terminal = payload.fetch('terminal')
+        unless stage.values_at('spawned', 'state', 'exit', 'signal') ==
+               [!payload.dig('launch', 'pid').nil?, terminal['state'], terminal['exit'], terminal['signal']]
+          raise Corpus::ContractError, 'execution stage terminal differs from persisted lineage'
+        end
+        %w[combined stdout stderr].each do |label|
+          next unless stage[label] || payload.fetch('artifacts')[label]
+          payload_record = payload.fetch('artifacts').fetch(label)
+          stage_record = stage.fetch(label)
+          unless stage_record.slice('path', 'sha256', 'bytes') == payload_record.slice('path', 'sha256', 'bytes')
+            raise Corpus::ContractError, 'execution stage artifact differs from persisted lineage'
+          end
+        end
+      end
+    end
+    true
+  end
+
+  def fresh_reauthenticate_execution!(record, identity_receipts)
+    executions = record.fetch('ordered_repetitions', [record])
+    stages = executions.flat_map { |execution| execution.fetch('modes').values.flat_map { |mode| mode.fetch('stages') } }
+    lineage_checks = stages.map { |stage| stage.dig('lineage', 'path') }.uniq.sort.map do |path|
+      out, err, status = Open3.capture3(RbConfig.ruby, File.expand_path('../corpus/process_lineage.rb', __dir__), path)
+      raise Corpus::ContractError, "fresh lineage reauthentication failed: #{err}" unless status.success?
+      { 'path' => path, 'result_sha256' => Digest::SHA256.hexdigest(out), 'status' => status.exitstatus }
+    end
+    identity_checks = identity_receipts.values.uniq.sort_by { |reference| reference.fetch('path') }.map do |reference|
+      out, err, status = Open3.capture3(RbConfig.ruby, File.join(__dir__, 'execution_identity.rb'), 'verify',
+                                       reference.fetch('path'), reference.fetch('sha256'))
+      raise Corpus::ContractError, "fresh execution identity reauthentication failed: #{err}" unless status.success?
+      { 'path' => reference.fetch('path'), 'sha256' => reference.fetch('sha256'),
+        'result_sha256' => Digest::SHA256.hexdigest(out), 'status' => status.exitstatus }
+    end
+    { 'lineage' => lineage_checks, 'execution_identity' => identity_checks }
+  end
+
+  def execute_anchor(root, executor, source_root, module_files, oracle, identity_receipts: nil)
+    id = root.fetch('id')
+    case id
+    when 'testdir:fixedbugs/issue21808.go'
+      repetitions = 3.times.map do |index|
+        executor.execute(id: "#{id}:ordered-#{index + 1}", root_id: id, source_root: source_root,
+                         sources: [root.fetch('path')], phase: 'run', module_files: module_files,
+                         combined_output: true, identity_receipts: identity_receipts, native_observation: oracle)
+      end
+      record = repetitions.first.merge('ordered_repetitions' => repetitions)
+      [record, { 'mechanism' => 'kernel-combined', 'packet' => '148.4' }]
+    when GoFullRecipeRouter::PACKET_ROOT_ID
+      phases = GoFullRecipeRouter.phase_contract('run')
+      graph = [{ 'kind' => 'sdk-dependency' }]
+      routes = Corpus::MODES.to_h do |mode|
+        [mode, GoFullRecipeRouter.route!(root: root, mode: mode, phases: phases, graph: graph,
+                                         native_observation: oracle, source_root: source_root)]
+      end
+      plans = routes.values.map { |route| route.fetch('plan').slice('compile_inputs', 'argv', 'executor_phase', 'package_input_required') }
+      raise Corpus::ContractError, 'mode routes produced different execution plans' unless plans.uniq.length == 1
+      plan = plans.first
+      package_input = plan.fetch('package_input_required') ? File.dirname(root.fetch('path')) : nil
+      record = executor.execute(id: id, source_root: source_root, sources: plan.fetch('compile_inputs'),
+                                phase: plan.fetch('executor_phase'), args: plan.fetch('argv'), module_files: module_files,
+                                package_input: package_input, combined_output: true, route: routes,
+                                identity_receipts: identity_receipts, native_observation: oracle)
+      [record, routes]
+    else
+      raise Corpus::ContractError, 'root is not a Sprint 148 anchor'
+    end
+  end
+
+  def anchor_root?(root)
+    ['testdir:fixedbugs/issue21808.go', GoFullRecipeRouter::PACKET_ROOT_ID].include?(root['id'])
+  end
+
+  def load_identity_index(path, expected_sha256, root_id, expected_stage_ids:)
+    record = Corpus.file_record(path)
+    raise Corpus::ContractError, 'execution identity index digest differs' unless record['sha256'] == expected_sha256
+    index = JSON.parse(File.binread(path))
+    unless index.is_a?(Hash) && index.keys.sort == %w[entries root_id schema] &&
+           index['schema'] == 'go-full-execution-identity-index/v1' && index['root_id'] == root_id &&
+           index['entries'].is_a?(Hash) && !index['entries'].empty?
+      raise Corpus::ContractError, 'execution identity index is malformed or for another root'
+    end
+    index.fetch('entries').each do |stage_id, reference|
+      raise Corpus::ContractError, 'execution identity index stage/reference is malformed' unless stage_id.is_a?(String) &&
+        reference.is_a?(Hash) && reference.keys.sort == %w[path sha256]
+      receipt = GoFullExecutionIdentity.load!(reference.fetch('path'), expected_sha256: reference.fetch('sha256'))
+      raise Corpus::ContractError, 'execution identity index stage differs from receipt' unless receipt.values_at('root_id', 'stage_id') == [root_id, stage_id]
+    end
+    unless index.fetch('entries').keys.sort == expected_stage_ids.sort && expected_stage_ids.uniq.length == expected_stage_ids.length
+      raise Corpus::ContractError, 'execution identity index stage set differs from deterministic plan'
+    end
+    [index.fetch('entries'), record]
+  rescue JSON::ParserError => error
+    raise Corpus::ContractError, "invalid execution identity index: #{error.message}"
+  end
+
+  def packet_rows_pass?(rows)
+    rows.is_a?(Array) && !rows.empty? && rows.all? { |row| row['product_verdict'] == 'PASS' }
   end
 
   def execution_setup(options, evidence, candidate, sdk_identity)
@@ -278,20 +434,52 @@ module GoFullProduct
     resumed = options[:resume] ? GoFullResume.load(options[:resume], context: checkpoint, roots: all_roots, source_root: source_root,
       provenance: executor.provenance, modules: module_files, native: native, catalog: catalog) : { 'reusable' => {}, 'fresh' => {}, 'checkpoint_roots' => 0 }
 
+    packet_selection = if options[:packet_projection]
+                         raise Corpus::ContractError, 'packet execution cannot reuse a prior resume' if options[:resume]
+                         raise Corpus::ContractError, 'packet execution cannot be combined with a phase shard' if options[:phase_shard]
+                         required = %i[packet packet_index packet_index_sha256 causal_partition packet_projection_sha256]
+                         missing = required.reject { |key| options[key] }
+                         raise Corpus::ContractError, "packet execution inputs missing: #{missing.join(', ')}" unless missing.empty?
+                         raise Corpus::ContractError, 'only Sprint 148 anchor packets may use this integration path' unless PACKET_MANIFEST_SHA256.key?(options[:packet])
+                         packet_catalog = GoFullPacketManifest.authenticate_index(path: options.fetch(:packet_index),
+                           expected_sha256: options.fetch(:packet_index_sha256), causal_partition_path: options.fetch(:causal_partition))
+                         selected = GoFullPacketManifest.select(packet_catalog, options.fetch(:packet), roots,
+                           expected_manifest_sha256: PACKET_MANIFEST_SHA256.fetch(options.fetch(:packet)))
+                         inventory_paths = %w[summary.json package-roots.jsonl testdir-roots.jsonl typechecker-roots.jsonl]
+                                           .map { |name| File.join(dir, name) }
+                         runner_paths = [__FILE__, File.join(__dir__, 'packet_manifest.rb'), File.join(__dir__, 'router.rb'),
+                                         File.join(__dir__, 'stage_resolver.rb'), File.expand_path('../corpus/executor.rb', __dir__),
+                                         File.expand_path('../corpus/process_lineage.rb', __dir__)]
+                         GoFullPacketManifest.authenticate_projection(path: options.fetch(:packet_projection),
+                           expected_sha256: options.fetch(:packet_projection_sha256), selection: selected,
+                           inventory_paths: inventory_paths, runner_paths: runner_paths,
+                           candidate_path: options.fetch(:candidate), evidence: evidence,
+                           protected_roots: options.fetch(:protected_evidence_roots, []))
+                       end
+    identity_receipts = identity_index_record = nil
+    if packet_selection
+      raise Corpus::ContractError, 'packet execution requires --execution-identity-index and digest' unless options[:execution_identity_index] && options[:execution_identity_index_sha256]
+      selected_id = packet_selection.fetch('ids').then { |ids| ids.length == 1 ? ids.first : nil }
+      raise Corpus::ContractError, 'substrate packet path requires exactly one selected root' unless selected_id
+      identity_receipts, identity_index_record = load_identity_index(options.fetch(:execution_identity_index),
+        options.fetch(:execution_identity_index_sha256), selected_id,
+        expected_stage_ids: anchor_stage_ids(options.fetch(:packet), selected_id))
+    end
     subset = if options[:root_subset]
+               raise Corpus::ContractError, 'packet projection cannot be combined with root subset' if packet_selection
                raise Corpus::ContractError, '--root-subset cannot be combined with --phase-shard' if options[:phase_shard]
                GoFullSubset.load(path: options.fetch(:root_subset), expected_sha256: options[:root_subset_sha256], roots: roots,
                  inventory: native_summary.fetch('inventory'), candidate_path: options.fetch(:candidate), runner_paths: [__FILE__, File.join(__dir__, 'subset.rb'), *GoFullRecipeAdapters.runner_paths(__dir__)], evidence: evidence,
                  protected_roots: options.fetch(:protected_evidence_roots, []))
              end
-    roots = subset ? subset.fetch('roots') : phase_roots(roots, options[:phase_shard])
+    roots = packet_selection ? packet_selection.fetch('roots') : (subset ? subset.fetch('roots') : phase_roots(roots, options[:phase_shard]))
     # Fresh-only adapters from a prior checkpoint must not starve roots that
     # have never been attempted when a manager bounds wall-clock execution.
     roots = roots.sort_by { |root| resumed.fetch('fresh').key?(root.fetch('id')) ? 1 : 0 } unless subset
     FileUtils.mkdir_p(evidence)
     File.write(File.join(evidence, 'context.json'), Corpus.canonical(checkpoint) + "\n", mode: 'wx')
-    matcher = build_matcher(evidence, sdk_identity, options.fetch(:runtime))
-    typecheck_matcher = GoFullTypechecker.build_matcher(evidence, sdk_identity, options.fetch(:runtime))
+    matcher = packet_selection ? { 'status' => 'not-required-for-exact-output-anchor' } : build_matcher(evidence, sdk_identity, options.fetch(:runtime))
+    typecheck_matcher = packet_selection ? { 'status' => 'not-required-for-testdir-anchor' } : GoFullTypechecker.build_matcher(evidence, sdk_identity, options.fetch(:runtime))
     File.open(File.join(evidence, 'roots.jsonl'), 'wx') do |stream|
       roots.each do |root|
         id = root.fetch('id')
@@ -304,9 +492,41 @@ module GoFullProduct
         oracle = native.fetch(id).fetch('observation')
         row = { 'schema' => 'go-full-product-root/v1', 'id' => id, 'axis' => root.fetch('axis'),
                 'native_observation' => oracle, 'product_verdict' => 'FAIL', 'modes' => {}, 'unfinished_phases' => [] }
+        if packet_selection
+          raise Corpus::ContractError, 'packet attempted an unselected root' unless packet_selection.fetch('ids') == [id]
+          GoFullPacketManifest.reauthenticate!(packet_selection)
+          row['packet_receipt'] = { 'packet' => packet_selection.fetch('packet'),
+                                    'projection' => packet_selection.fetch('projection'),
+                                    'manifest' => packet_selection.fetch('manifest'),
+                                    'index' => packet_selection.fetch('index'),
+                                    'claim_scope' => GoFullPacketManifest::CLAIM_SCOPE }
+          row['execution_identity_index'] = identity_index_record
+        end
         if %w[skip ancestor-skip].include?(oracle.fetch('status'))
           row['product_verdict'] = 'UPSTREAM_SKIP'
           row['reason'] = 'Retained native skip requires manager applicability adjudication; no product execution credited.'
+        elsif root['axis'] == 'testdir' && anchor_root?(root)
+          begin
+            record, substrate = execute_anchor(root, executor, source_root, module_files, oracle,
+                                                identity_receipts: identity_receipts)
+            authenticate_execution_lineage!(record, id)
+            row['fresh_reauthentication'] = fresh_reauthenticate_execution!(record, identity_receipts) if packet_selection
+            Corpus::Validation.file!(identity_index_record) if packet_selection
+            row['execution'] = record
+            row['substrate'] = substrate
+            row['upstream_output'] = exact_upstream_output(record, root, source_root)
+            executions = record.fetch('ordered_repetitions', [record])
+            resolutions = executions.flat_map { |execution| execution.fetch('modes').values.flat_map { |mode| mode.fetch('stages') } }.map do |stage|
+              role = %w[compile build run check].include?(stage.fetch('stage')) ? stage.fetch('stage') : 'execute'
+              GoFullStageResolver.adjudicate!(root_id: id, stage_id: stage.dig('lineage', 'stage_id'), decision: 'execute',
+                native_observation: oracle.slice('status', 'evidence_kind'), stage_role: role, stage: stage)
+            end
+            row['stage_resolutions'] = resolutions
+            row['product_verdict'] = executions.all? { |execution| execution['verdict'] == 'PASS' } && resolutions.all? { |value| value['verdict'] == 'PASS' } &&
+                                     oracle['status'] == 'pass' && row.dig('upstream_output', 'status') == 'PASS' ? 'PASS' : 'FAIL'
+          rescue Corpus::ContractError, SystemCallError => error
+            row['reason'] = error.message
+          end
         elsif root['axis'] == 'testdir' && simple_recipe?(root)
           begin
             action = root.fetch('recipe').fetch('action')
@@ -392,7 +612,9 @@ module GoFullProduct
                 'provenance' => executor.provenance, 'diagnostic_matcher' => matcher, 'source_integrity_after' => integrity_status.success?, 'source_integrity_error' => err,
                 'native_summary' => Corpus.file_record(File.join(native_dir, 'summary.json')),
                 'native_roots' => Corpus.file_record(File.join(native_dir, 'roots.jsonl')) }
-    summary = if subset
+    summary = if packet_selection
+                GoFullPacketManifest.summary(packet_selection, rows, common_summary)
+              elsif subset
                 common_summary.fetch('typechecker_adapter').delete('root_denominator')
                 common_summary.fetch('typechecker_adapter')['selected_root_count'] = rows.count { |row| row['axis'] == 'typechecker' }
                 GoFullSubset.summary(subset, rows, common_summary)
@@ -408,7 +630,13 @@ module GoFullProduct
               end
     File.write(File.join(evidence, 'summary.json'), Corpus.canonical(summary) + "\n")
     puts JSON.generate(summary.slice('schema', 'scope', 'verdict', 'counts_by_axis', 'roots', 'selected_root_count', 'source_integrity_after'))
-    subset ? (rows.any? { |row| row['product_verdict'] == 'FAIL' } ? 1 : 0) : 1
+    if packet_selection
+      packet_rows_pass?(rows) ? 0 : 1
+    elsif subset
+      rows.any? { |row| row['product_verdict'] == 'FAIL' } ? 1 : 0
+    else
+      1
+    end
   end
 
   def probe(root, options, source_root, evidence, sdk_identity, candidate)
@@ -461,13 +689,18 @@ GoFullRecipeAdapters.load_directory(__dir__)
 if $PROGRAM_NAME == __FILE__
   options = { inventory: File.expand_path('../../docs/go-full', __dir__), timeout: 60 }
   OptionParser.new do |parser|
-    %i[bashy candidate sdk_identity source_root evidence native inventory modules relocation resume module_context cache_root root_subset].each do |key|
+    %i[bashy candidate sdk_identity source_root evidence native inventory modules relocation resume module_context cache_root root_subset
+       packet_index causal_partition packet_projection execution_identity_index].each do |key|
       parser.on("--#{key.to_s.tr('_', '-')} PATH") { |value| options[key] = File.expand_path(value) }
     end
     parser.on('--relocation-sha256 SHA256') { |value| options[:relocation_sha256] = value }
     parser.on('--module-context-sha256 SHA256') { |value| options[:module_context_sha256] = value }
     parser.on('--phase-shard NAME') { |value| options[:phase_shard] = value }
     parser.on('--root-subset-sha256 SHA256') { |value| options[:root_subset_sha256] = value }
+    parser.on('--packet NAME') { |value| options[:packet] = value }
+    parser.on('--packet-index-sha256 SHA256') { |value| options[:packet_index_sha256] = value }
+    parser.on('--packet-projection-sha256 SHA256') { |value| options[:packet_projection_sha256] = value }
+    parser.on('--execution-identity-index-sha256 SHA256') { |value| options[:execution_identity_index_sha256] = value }
     parser.on('--protected-evidence-root PATH') { |value| (options[:protected_evidence_roots] ||= []) << File.expand_path(value) }
     parser.on('--timeout N', Integer) { |value| options[:timeout] = value }
   end.parse!

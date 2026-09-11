@@ -13,7 +13,7 @@ module Corpus
   # Append-only launch records used by the shared corpus capture primitive.
   # Environment values are authenticated but never copied into evidence.
   module ProcessLineage
-    SCHEMA = 'corpus-process-lineage/v2'
+    SCHEMA = 'corpus-process-lineage/v3'
     CLOCK = 'CLOCK_MONOTONIC'
     TERMINAL_STATES = %w[exited deadline process_leak launch_failure].freeze
     LAUNCH_ID = /\A[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\z/
@@ -96,13 +96,15 @@ module Corpus
     # authenticated receipt. Parent launch IDs join generated/nested harness
     # launches; process-group ownership joins OS descendants.
     def run(argv, cwd:, env:, timeout:, lineage_path:, log_prefix:, root_id:, stage_id:,
-            parent_launch_id: nil, artifact_paths: {}, artifact_parents: {}, stdin: File::NULL)
+            parent_launch_id: nil, artifact_paths: {}, artifact_parents: {}, stdin: File::NULL,
+            combined_output: false)
       validate_arguments!(argv, cwd, env, timeout, lineage_path, log_prefix, root_id, stage_id,
-                          parent_launch_id, artifact_paths, artifact_parents)
+                          parent_launch_id, artifact_paths, artifact_parents, combined_output)
       FileUtils.mkdir_p(File.dirname(File.expand_path(lineage_path)))
       FileUtils.mkdir_p(File.dirname(File.expand_path(log_prefix)))
       stdout_path = File.expand_path(log_prefix + '.stdout')
       stderr_path = File.expand_path(log_prefix + '.stderr')
+      combined_path = File.expand_path(log_prefix + '.combined')
       launch_id = SecureRandom.uuid
       parent_pid = Process.pid
       started_ns = monotonic_ns
@@ -115,8 +117,7 @@ module Corpus
       kill_events = []
       reap_events = []
 
-      File.open(stdout_path, 'wb') do |stdout|
-        File.open(stderr_path, 'wb') do |stderr|
+      open_output_sinks(stdout_path, stderr_path, combined_path, combined_output) do |stdout, stderr|
           begin
             pid = Process.spawn(env, *argv, chdir: cwd, in: stdin, out: stdout, err: stderr,
                                 pgroup: true, unsetenv_others: true)
@@ -148,21 +149,25 @@ module Corpus
           ensure
             signal_group('KILL', pid, kill_events, 'ensure_sweep') if pid && group_alive?(pid)
           end
-        end
       end
 
       group_empty = pid.nil? || wait_group_empty(pid)
       finished_ns = monotonic_ns
-      artifacts = { 'stdout' => artifact(stdout_path, producer_launch_id: launch_id),
-                    'stderr' => artifact(stderr_path, producer_launch_id: launch_id) }
+      artifacts = if combined_output
+                    { 'combined' => artifact(combined_path, producer_launch_id: launch_id) }
+                  else
+                    { 'stdout' => artifact(stdout_path, producer_launch_id: launch_id),
+                      'stderr' => artifact(stderr_path, producer_launch_id: launch_id) }
+                  end
       artifact_paths.keys.sort.each do |label|
-        raise ContractError, "reserved lineage artifact label: #{label}" if artifacts.key?(label)
+        raise ContractError, "reserved lineage artifact label: #{label}" if %w[stdout stderr combined].include?(label)
         next unless File.file?(artifact_paths.fetch(label)) && !File.symlink?(artifact_paths.fetch(label))
         artifacts[label] = artifact(artifact_paths.fetch(label), producer_launch_id: launch_id,
                                     parent_artifact: artifact_parents[label])
       end
       payload = {
         'schema' => SCHEMA, 'root_id' => root_id, 'stage_id' => stage_id, 'launch_id' => launch_id,
+        'output_mode' => combined_output ? 'kernel-combined' : 'separate-nonordering',
         'parent_launch_id' => parent_launch_id,
         'launch' => { 'argv' => argv, 'cwd' => File.realpath(cwd), 'environment' => environment_record(env),
                       'pid' => pid, 'parent_pid' => parent_pid, 'pgid' => pid,
@@ -178,6 +183,18 @@ module Corpus
       capture_result(payload, timeout, artifacts, lineage_path, env, cwd)
     end
 
+    # In combined mode both descriptors are installed from this one IO object,
+    # hence one open file description. No observer-side merge is possible.
+    def open_output_sinks(stdout_path, stderr_path, combined_path, combined_output)
+      if combined_output
+        File.open(combined_path, File::WRONLY | File::CREAT | File::EXCL | File::APPEND, 0o600) do |sink|
+          yield sink, sink
+        end
+      else
+        File.open(stdout_path, 'wb') { |stdout| File.open(stderr_path, 'wb') { |stderr| yield stdout, stderr } }
+      end
+    end
+
     def reap_event(pid, status, reason)
       { 'waited_pid' => pid, 'exit' => status.exitstatus, 'signal' => status.termsig, 'reason' => reason,
         'monotonic_ns' => monotonic_ns, 'wall' => wall_time }
@@ -185,7 +202,7 @@ module Corpus
 
     def capture_result(payload, timeout, artifacts, lineage_path, env, cwd)
       terminal = payload.fetch('terminal')
-      { 'argv' => payload.dig('launch', 'argv'), 'cwd' => cwd,
+      result = { 'argv' => payload.dig('launch', 'argv'), 'cwd' => cwd,
         'environment' => env.sort.to_h, 'timeout_seconds' => timeout,
         'spawned' => !payload.dig('launch', 'pid').nil?, 'state' => terminal.fetch('state'),
         'exit' => terminal['exit'], 'signal' => terminal['signal'],
@@ -194,15 +211,20 @@ module Corpus
         # the final sweep.
         'descendants_survived' => terminal.fetch('descendant_observed'),
         'duration_seconds' => (terminal.fetch('monotonic_finished_ns') - payload.dig('launch', 'monotonic_started_ns')) / 1_000_000_000.0,
-        'stdout' => artifacts.fetch('stdout').slice('path', 'sha256', 'bytes'),
-        'stderr' => artifacts.fetch('stderr').slice('path', 'sha256', 'bytes'),
         'lineage' => { 'path' => File.expand_path(lineage_path), 'root_id' => payload.fetch('root_id'),
                        'stage_id' => payload.fetch('stage_id'), 'launch_id' => payload.fetch('launch_id'),
                        'parent_launch_id' => payload['parent_launch_id'], 'payload_sha256' => payload_sha256(payload) } }
+      if payload['output_mode'] == 'kernel-combined'
+        result['combined'] = artifacts.fetch('combined').slice('path', 'sha256', 'bytes')
+      else
+        result['stdout'] = artifacts.fetch('stdout').slice('path', 'sha256', 'bytes')
+        result['stderr'] = artifacts.fetch('stderr').slice('path', 'sha256', 'bytes')
+      end
+      result
     end
 
     def validate_arguments!(argv, cwd, env, timeout, lineage_path, log_prefix, root_id, stage_id,
-                            parent_launch_id, artifact_paths, artifact_parents)
+                            parent_launch_id, artifact_paths, artifact_parents, combined_output)
       raise ContractError, 'lineage argv must be a nonempty string array' unless argv.is_a?(Array) && !argv.empty? && argv.all? { |v| v.is_a?(String) }
       raise ContractError, 'lineage cwd must be a directory' unless cwd.is_a?(String) && File.directory?(cwd)
       raise ContractError, 'lineage environment must be a string map' unless env.is_a?(Hash) && env.all? { |k, v| k.is_a?(String) && v.is_a?(String) }
@@ -212,6 +234,7 @@ module Corpus
       raise ContractError, 'invalid parent launch ID' unless parent_launch_id.nil? || parent_launch_id.match?(LAUNCH_ID)
       raise ContractError, 'lineage artifacts must be a string map' unless artifact_paths.is_a?(Hash) && artifact_paths.all? { |k, v| k.is_a?(String) && !k.empty? && v.is_a?(String) }
       raise ContractError, 'artifact parents must name declared artifacts' unless artifact_parents.is_a?(Hash) && (artifact_parents.keys - artifact_paths.keys).empty?
+      raise ContractError, 'combined output selection must be boolean' unless [true, false].include?(combined_output)
     end
 
     def append!(path, envelope)
@@ -277,7 +300,7 @@ module Corpus
     end
 
     def validate_payload!(payload)
-      exact_keys!(payload, %w[artifacts deadline kill_events launch launch_id parent_launch_id reap_events root_id schema stage_id terminal], 'payload')
+      exact_keys!(payload, %w[artifacts deadline kill_events launch launch_id output_mode parent_launch_id reap_events root_id schema stage_id terminal], 'payload')
       raise ContractError, 'unsupported lineage schema' unless payload.fetch('schema') == SCHEMA
       raise ContractError, 'invalid lineage launch ID' unless payload.fetch('launch_id').is_a?(String) && payload.fetch('launch_id').match?(LAUNCH_ID)
       raise ContractError, 'invalid lineage root/stage ID' unless [payload['root_id'], payload['stage_id']].all? { |v| v.is_a?(String) && !v.empty? }
@@ -326,7 +349,13 @@ module Corpus
         raise ContractError, 'terminal status differs from reap event' unless terminal.values_at('exit', 'signal') == event.values_at('exit', 'signal')
       end
       artifacts = payload.fetch('artifacts')
-      raise ContractError, 'lineage artifacts must contain stdout and stderr' unless artifacts.is_a?(Hash) && %w[stdout stderr].all? { |key| artifacts.key?(key) }
+      required_streams = case payload.fetch('output_mode')
+                         when 'kernel-combined' then %w[combined]
+                         when 'separate-nonordering' then %w[stdout stderr]
+                         else raise ContractError, 'unknown lineage output mode'
+                         end
+      raise ContractError, 'lineage stream artifacts differ from output mode' unless artifacts.is_a?(Hash) && (required_streams - artifacts.keys).empty? &&
+                                                                                 (%w[stdout stderr combined] & artifacts.keys).sort == required_streams.sort
       artifacts.each do |label, record|
         exact_keys!(record, %w[bytes parent_artifact path producer_launch_id sha256], "artifact #{label}")
         actual = artifact(record.fetch('path'), producer_launch_id: record.fetch('producer_launch_id'), parent_artifact: record['parent_artifact'])

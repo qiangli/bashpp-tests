@@ -541,9 +541,9 @@ a compile input, not program argv. The shared simple-execution seam had passed
 it as argv and compiled only the root file, so the recorded native run passed
 while the product failed. The single registered route,
 `testdir-run-go-file-compile-inputs`, plans both files as compile inputs with
-empty argv. The file lives outside the `recipe_*.rb` adapter glob on purpose:
-the shared registry and `product.rb` wiring are untouched and remain with the
-Substrate Integration Owner.
+empty argv. The file lives outside the `recipe_*.rb` adapter glob on purpose;
+the shared product path consumes the resolution only for this exact substrate
+anchor and does not register a recipe-family adapter.
 
 ```sh
 ruby tests/s148_6_recipe_router_test.rb
@@ -554,3 +554,28 @@ proves every axis can reject the root on its own, rejects ambiguous and empty
 tables, and runs a bounded native-only control (skipped, never passed, when the
 local SDK does not carry the inventory bytes) showing the selected plan runs
 and the argv misrouting does not compile.
+
+## Byte-ordered combined output (packet 148.4)
+
+For a combined-output obligation, `Corpus::ProcessLineage.run` opens one
+append-only file once and supplies that same IO object for child fd 1 and fd 2.
+The authenticated lineage record labels the mode `kernel-combined` and retains
+the combined artifact. Separate stdout/stderr files are explicitly labeled
+`separate-nonordering` and are never reconstructed when both contain bytes.
+
+The shared executor requests this mode for the run stages of exactly
+`testdir:fixedbugs/issue21808.go` and the Sprint 148 router anchor
+`testdir:cmplxdivide.go`. The product comparator consumes the combined artifact
+directly. The latter root is first resolved by the packet 148.6 multi-predicate
+router, so `cmplxdivide1.go` is copied as a compilation input and never passed
+as program argv. These are substrate anchors, not a new recipe-family adapter.
+
+`tools/go-full/prepare_wave_b.rb` is the deterministic preflight. Given the
+reviewed v4 index/causal partition, candidate, SDK, module context and intended
+fresh evidence path, it writes the reviewed packet projection plus an index of
+one exact 148.2 identity receipt per planned stage. Pass their printed digests
+to `product.rb` with `--packet`, `--packet-index*`, `--causal-partition`,
+`--packet-projection*`, and `--execution-identity-index*`. Packet execution
+fails closed if any input is omitted, if the selected ID differs, or if a stage
+lacks its identity. Before a verdict, product launches fresh reauthenticators
+for every lineage ledger and identity and reauthenticates the packet projection.

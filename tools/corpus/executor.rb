@@ -228,7 +228,8 @@ module Corpus
                        log_prefix: log_prefix, root_id: root_id, stage_id: stage_id,
                        parent_launch_id: lineage[:parent_launch_id],
                        artifact_paths: lineage.fetch(:artifact_paths, {}),
-                       artifact_parents: lineage.fetch(:artifact_parents, {}))
+                       artifact_parents: lineage.fetch(:artifact_parents, {}),
+                       combined_output: lineage.fetch(:combined_output, false))
   end
 
   def kill_group(pid)
@@ -512,7 +513,8 @@ module Corpus
     # context, never replacements for original input. package_input is an explicit
     # directory argument for multi-file packages (the CLI must support it).
     def execute(id:, source_root:, sources:, assets: [], phase: 'run', args: [], module_files: {}, runtime_env: {}, package_input: nil,
-                root_id: id, parent_launch_id: nil)
+                root_id: id, parent_launch_id: nil, combined_output: false, route: nil, identity_receipts: nil,
+                native_observation: nil)
       verify_tools!
       raise ContractError, 'unknown phase' unless %w[run build compile].include?(phase)
       raise ContractError, 'source list empty or duplicated' if sources.empty? || sources.uniq != sources
@@ -530,9 +532,11 @@ module Corpus
                  'inputs' => inputs, 'args' => args, 'provenance' => @provenance, 'modes' => {},
                  'package_input' => package_input, 'runtime_environment' => runtime_env,
                  'module_files' => module_files.transform_values { |bytes| Digest::SHA256.hexdigest(bytes) } }
+      record['route'] = route if route
       MODES.each do |mode|
         record['modes'][mode] = execute_mode(case_dir, mode, inputs, sources, assets, module_files, phase, args, runtime_env,
-                                             package_input, root_id, parent_launch_id, id)
+                                             package_input, root_id, parent_launch_id, id, combined_output, identity_receipts,
+                                             native_observation)
       end
       inputs.each { |p, data| raise ContractError, "upstream input changed: #{p}" unless Corpus.digest(data.fetch('path')) == data.fetch('sha256') }
       verify_tools!
@@ -647,7 +651,8 @@ module Corpus
     end
 
     def execute_mode(case_dir, mode, inputs, sources, assets, module_files, phase, args, runtime_env, package_input,
-                     root_id = File.basename(case_dir), parent_launch_id = nil, execution_id = File.basename(case_dir))
+                     root_id = File.basename(case_dir), parent_launch_id = nil, execution_id = File.basename(case_dir), combined_output = false,
+                     identity_receipts = nil, native_observation = nil)
       dir = File.join(case_dir, mode)
       work, artifacts, runtime = %w[work artifacts runtime].map { |s| File.join(dir, s) }
       [work, artifacts, runtime].each { |p| FileUtils.mkdir_p(p) }
@@ -719,10 +724,14 @@ module Corpus
                                    else
                                      {}
                                    end
-        stage = Corpus.capture(argv, cwd: stage_name == 'run' ? runtime : work, log_prefix: File.join(dir, stage_name), env: stage_name == 'run' ? run_env : environment, timeout: @timeout,
-                               lineage: { path: lineage_path, root_id: root_id,
-                                          stage_id: "#{execution_id}/#{mode}/#{stage_name}", parent_launch_id: lineage_parent,
-                                          artifact_paths: lineage_artifacts, artifact_parents: lineage_artifact_parents })
+        stage_id = "#{execution_id}/#{mode}/#{stage_name}"
+        identity = authenticate_stage_identity(identity_receipts, stage_id, root_id, stage_name == 'run' ? run_env : environment)
+        stage = capture_stage(argv: argv, cwd: stage_name == 'run' ? runtime : work,
+          log_prefix: File.join(dir, stage_name), environment: stage_name == 'run' ? run_env : environment,
+          lineage_path: lineage_path, root_id: root_id, stage_id: stage_id, parent_launch_id: lineage_parent,
+          artifact_paths: lineage_artifacts, artifact_parents: lineage_artifact_parents,
+          combined_output: combined_output && stage_name == 'run', identity: identity,
+          native_observation: native_observation, stage_role: stage_name)
         lineage_parent = stage.dig('lineage', 'launch_id')
         stage['stage'] = stage_name
         result['stages'] << stage
@@ -776,9 +785,13 @@ module Corpus
         FileUtils.mkdir_p(work)
         sources.each { |p| raise ContractError, 'source remains in runtime cwd' if File.exist?(File.join(runtime, p)) }
         raise ContractError, 'runtime asset changed before run' unless verify_assets(runtime, assets, inputs)
-        stage = Corpus.capture([binary, *args], cwd: runtime, log_prefix: File.join(dir, 'run'), env: run_env, timeout: @timeout,
-                               lineage: { path: lineage_path, root_id: root_id,
-                                          stage_id: "#{execution_id}/#{mode}/run", parent_launch_id: lineage_parent })
+        stage_id = "#{execution_id}/#{mode}/run"
+        identity = authenticate_stage_identity(identity_receipts, stage_id, root_id, run_env)
+        stage = capture_stage(argv: [binary, *args], cwd: runtime, log_prefix: File.join(dir, 'run'),
+          environment: run_env, lineage_path: lineage_path, root_id: root_id, stage_id: stage_id,
+          parent_launch_id: lineage_parent, artifact_paths: {}, artifact_parents: {},
+          combined_output: combined_output, identity: identity, native_observation: native_observation,
+          stage_role: 'run')
         stage['stage'] = 'run'
         result['stages'] << stage
         result['state'] = 'stage_failure' unless stage['spawned'] && stage['state'] == 'exited'
@@ -795,6 +808,40 @@ module Corpus
         module_files.all? { |p, bytes| Corpus.digest(Corpus.safe_path(work, p)) == Digest::SHA256.hexdigest(bytes) }
     rescue ContractError, SystemCallError
       false
+    end
+
+    def authenticate_stage_identity(receipts, stage_id, root_id, environment)
+      return nil unless receipts
+      reference = receipts.fetch(stage_id) { raise ContractError, "execution identity missing for #{stage_id}" }
+      unless reference.is_a?(Hash) && reference.keys.sort == %w[path sha256]
+        raise ContractError, "execution identity reference malformed for #{stage_id}"
+      end
+      receipt = GoFullExecutionIdentity.load!(reference.fetch('path'), expected_sha256: reference.fetch('sha256'))
+      controlled = environment.slice(*GoFullExecutionIdentity::CONTROLLED_ENVIRONMENT)
+      GoFullExecutionIdentity.authorize_launch!(receipt, root_id: root_id, stage_id: stage_id,
+        timeout_seconds: @timeout, environment: controlled)
+      reference
+    end
+
+    def capture_stage(argv:, cwd:, log_prefix:, environment:, lineage_path:, root_id:, stage_id:,
+                      parent_launch_id:, artifact_paths:, artifact_parents:, combined_output:,
+                      identity:, native_observation:, stage_role:)
+      unless identity
+        return Corpus.capture(argv, cwd: cwd, log_prefix: log_prefix, env: environment, timeout: @timeout,
+          lineage: { path: lineage_path, root_id: root_id, stage_id: stage_id,
+                     parent_launch_id: parent_launch_id, artifact_paths: artifact_paths,
+                     artifact_parents: artifact_parents, combined_output: combined_output })
+      end
+      raise ContractError, 'authenticated stage requires native applicability evidence' unless native_observation
+      role = %w[compile build run check].include?(stage_role) ? stage_role : 'execute'
+      resolution = GoFullStageResolver.run!(identity_path: identity.fetch('path'), identity_sha256: identity.fetch('sha256'),
+        root_id: root_id, stage_id: stage_id, native_observation: native_observation.slice('status', 'evidence_kind'),
+        decision: 'execute', stage_role: role, argv: argv, cwd: cwd, environment: environment,
+        lineage_path: lineage_path, log_prefix: log_prefix, parent_launch_id: parent_launch_id,
+        artifact_paths: artifact_paths, artifact_parents: artifact_parents, combined_output: combined_output)
+      stage = resolution.fetch('stage')
+      stage['resolution'] = resolution.reject { |key, _value| key == 'stage' }
+      stage
     end
 
     def verify_assets(runtime, assets, inputs)
@@ -816,7 +863,12 @@ module Corpus
       observations = modes.values.map do |mode|
         run = mode['stages'].last
         return 'FAIL' unless run['stage'] == 'run' && run['state'] == 'exited' && run['spawned'] && run['signal'].nil?
-        [run['exit'], run['signal'], run.dig('stdout', 'sha256'), run.dig('stderr', 'sha256'), mode['effects']]
+        streams = if run['combined']
+                    ['kernel-combined', run.dig('combined', 'sha256')]
+                  else
+                    ['separate-nonordering', run.dig('stdout', 'sha256'), run.dig('stderr', 'sha256')]
+                  end
+        [run['exit'], run['signal'], *streams, mode['effects']]
       end
       observations.uniq.length == 1 ? 'PASS' : 'FAIL'
     end
