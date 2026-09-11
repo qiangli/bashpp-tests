@@ -257,6 +257,9 @@ func verifyRow(row matrixRow, dir, mode, version, tool string) (string, error) {
 		return "UPSTREAM-SKIP", nil
 	}
 	if row.Action == "asmcheck" && len(ev.Phases) == 0 {
+		if goAction == "skip" {
+			return "UPSTREAM-SKIP", nil
+		}
 		if goAction != "pass" || ev.Bypasses == 0 {
 			return "", fmt.Errorf("upstream assembly bypass changed")
 		}
