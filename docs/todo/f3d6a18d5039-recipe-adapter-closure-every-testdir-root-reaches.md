@@ -10,4 +10,4 @@ assignee: qiangli
 sprint: 150
 ---
 
-Sprint 150 Barrier-A parent ledger for exact recipe execution. Sprints 148 and 149 provide the shared execution substrate and static recipe prerequisites; Sprint 150 owns the remaining dynamic/package adapters and the integrated 653-root parent-union proof. Exit only when every parent root executes its real product contract with zero harness/adapter first cause, then freeze the integrated 148–150 candidate, run Barrier A, and regenerate versioned active manifests for Sprints 151–154. Baseline seed and packet provenance are in docs/sprint-142-results-and-resolution-plan.md and the Sprint 150 handoff.
+Sprint 150 integration ledger for exact recipe execution. Sprint 157 supplies the upstream Go harness and Sprint 149 supplies accepted static backend phases; Sprint 150 owns the remaining dynamic/package phases and the integrated 653-root proof. Exit only when every root executes its upstream-owned product contract with no harness first cause, then freeze the integrated candidate and regenerate active manifests for Sprints 151–154. All harness code and harness tests must be Go or Bash only.
