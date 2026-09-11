@@ -37,6 +37,28 @@ and never `all=`), writing the artifact to the upstream working directory as
 `a.exe`. The upstream-selected runenv owns `GOEXPERIMENT` and is preserved
 unchanged. The artifact is never executed.
 
+Story S149.4 closes the same `compile` exception over the authenticated
+packet-149.4 root list (`docs/upstream-harness/compile-matrix.tsv`, 28 roots,
+`tools/upstream-harness/compile-gate.sh`). One bounded seam correction came out
+of that run: upstream hands `-p=<importpath>` straight to `go tool compile`,
+but the pinned `go build` of the generated module owns `-p` itself, so
+forwarding it through `-gcflags` relinked `main` into that package. The flag is
+now retained as evidence only and the backend event declares the deviation.
+Every other upstream compile flag (`-N`, `-l`, `-B`, `-c=N`, `-d=…`,
+`-dynlink`, `-goexperiment`, `-godebug`) still passes through unchanged. The
+packet is honestly non-green: three roots fail in both modes on
+`unsupported LabeledStmt` and two fail in compiled mode on a lowering panic;
+all five are recorded in `docs/upstream-harness/residuals.tsv` with a direct
+reproducer and are owned by the product-fix sprints.
+
+On 2026-09-11 at 13:04Z one coordinator ran `compile-gate.sh` from a fresh
+`/srv/sprint149/s149.4` checkout on the authorized Linux host (Go 1.27.0
+linux/amd64 at the pinned SHA-256, Bash++ `118bb3f` Linux binary SHA-256
+`ee3aaae272fec8ddfaaf3b9a6f6bb8facd763b6383b80c7de37386ff8e927d13`, shell runtime `6e6f364f`, `GOMAXPROCS=2`, `POSIXLY_CORRECT` unset):
+48 `COMPILE-ONLY-PASS` rows, exactly the same five product roots, no seam
+`FAIL`, exit 3, and no surviving test, compiler, or Bash++ process. The
+retained log is `/srv/sprint149/s149.4/compile-gate-linux.log`.
+
 The backend records one small JSON event for each observed upstream phase. The
 event repeats the mode, structured action and recipe flags, source/argument
 boundary, native argv evidence, tool identity, disposition, and declared
