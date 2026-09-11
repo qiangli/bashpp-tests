@@ -50,10 +50,11 @@ class Sprint148ExactExecutionIdentityTest < Minitest::Test
     @source_archive = write('sdk/go.src.tar.gz', 'source archive'); @distribution_archive = write('sdk/go.fixture.tar.gz', 'distribution archive')
     @sdk = write_json('manifests/sdk.json', {
       'schema' => 'go-full-sdk/v1', 'root' => @sdk_root, 'release' => 'go1.27.0', 'goos' => 'fixture', 'goarch' => 'fixture',
-      'go' => Corpus.file_record(@go), 'source_archive' => Corpus.file_record(@source_archive),
-      'distribution_archive' => Corpus.file_record(@distribution_archive), 'manifest_sha256' => Digest::SHA256.hexdigest('sdk tree')
+      'go' => Corpus.file_record(@go), 'source_archive' => archive_manifest_record(@source_archive),
+      'distribution_archive' => archive_manifest_record(@distribution_archive), 'manifest_sha256' => Digest::SHA256.hexdigest('sdk tree')
     }); @sdk_sha = Corpus.digest(@sdk)
   end
+  def archive_manifest_record(path); Corpus.file_record(path).slice('path', 'sha256'); end
 
   def build_module_context
     @gomodcache = File.join(@tmp, 'gomodcache'); dependency = File.join(@gomodcache, 'example.org/dep@v1.0.0')
@@ -133,6 +134,8 @@ class Sprint148ExactExecutionIdentityTest < Minitest::Test
 
   def test_preflight_binds_every_required_identity_and_persisted_receipt_reauthenticates
     receipt = prepare
+    assert_equal archive_manifest_record(@source_archive), JSON.parse(File.read(@sdk)).fetch('source_archive')
+    assert_equal Corpus.file_record(@source_archive), receipt.dig('sdk', 'source_archive')
     assert_equal GoFullExecutionIdentity::INVENTORY_FILES.sort, receipt.dig('inventory', 'files').keys.sort
     assert_equal @runners.keys.sort, receipt.dig('runners', 'files').keys.sort
     assert_equal ['fmt'], receipt.dig('importcfg', 'packages').map { |row| row.fetch('name') }
@@ -141,6 +144,32 @@ class Sprint148ExactExecutionIdentityTest < Minitest::Test
       root_id: receipt.fetch('root_id'), stage_id: receipt.fetch('stage_id'), timeout_seconds: 60, environment: @environment)
     assert_equal 'PASS', GoFullExecutionIdentity.authenticate_verdict!(path, expected_sha256: record.fetch('sha256'),
       root_id: receipt.fetch('root_id'), stage_id: receipt.fetch('stage_id'), verdict: 'PASS')
+  end
+
+  def rewrite_sdk_manifest
+    sdk = JSON.parse(File.read(@sdk))
+    yield sdk
+    File.write(@sdk, Corpus.canonical(sdk) + "\n")
+    @sdk_sha = Corpus.digest(@sdk)
+  end
+
+  def test_sdk_archive_manifest_bytes_bind_when_supplied
+    rewrite_sdk_manifest do |sdk|
+      sdk['source_archive'] = Corpus.file_record(@source_archive)
+      sdk['distribution_archive'] = Corpus.file_record(@distribution_archive)
+    end
+    build_module_context
+    receipt = prepare
+    path, record = persist(receipt, 'archive-bytes-identity.json')
+    assert_equal receipt, GoFullExecutionIdentity.load!(path, expected_sha256: record.fetch('sha256'))
+
+    rewrite_sdk_manifest { |sdk| sdk.fetch('source_archive')['bytes'] += 1 }
+    assert_raises(Corpus::ContractError) { GoFullExecutionIdentity.prepare!(**args) }
+  end
+
+  def test_sdk_archive_manifest_fails_closed_on_unknown_fields
+    rewrite_sdk_manifest { |sdk| sdk.fetch('source_archive')['mode'] = 0o644 }
+    assert_raises(Corpus::ContractError) { GoFullExecutionIdentity.prepare!(**args) }
   end
 
 
