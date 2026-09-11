@@ -219,3 +219,91 @@ failed interpreted mode exactly as Bash++ specifies; compiled mode and native
 9/9 equivalence still passed in that diagnostic run. The accepted rerun had no
 second coordinator, and the post-run process table contained no surviving gate,
 test, compiler, linker, or Bash++ process.
+
+## Sprint 150 dynamic and package seams
+
+Stories S150.1–S150.8 extend the same `planExec` seam to every dynamic
+action of the packet inventory and add a second frozen upstream runner for
+package test bodies, on the unchanged identities Bash++ `be20731` and shell
+runtime `828e5b33`. No `sh`/`bashy`/`coreutils` change was made. One rule
+governs every new meaning: **the seam remembers what upstream handed it
+earlier in the same test; it never looks for anything on disk.**
+
+- **Ordinary run** (`run`; S150.6): the execute phase already had the direct
+  meaning (`check-then-run`, `transpile-build-run`). Upstream's go-command
+  recipe flags (`-gcflags=…`, `-race`, `-tags=…`; `-goexperiment` becomes
+  runenv `GOEXPERIMENT`, preserved) are now passed verbatim to the pinned Go
+  build of the generated module in compiled mode — the build action's
+  convention — and remain declared evidence in interpreted mode.
+- **Remembered program** (S150.5, reused by S150.1/S150.3): a compile phase
+  that produces the program (buildrun's build-only phase; the last directory
+  package of rundir/errorcheckandrundir) records, per upstream test, the
+  files it was handed, the package map, and in compiled mode the artifact it
+  built (`backendPrograms`, keyed like `backendPackages`). An **execute phase
+  with no compile inputs** runs that program: `run-remembered-program`
+  (the sources through the interpreter with only the upstream argv) or
+  `run-artifact` (the built artifact with only the argv). The backend event
+  carries a `program` record so the verifier proves the execute phase acted
+  on exactly what the compile phase compiled.
+- **Link** (`rundir`, `errorcheckandrundir`; S150.1, S150.3): upstream hands
+  the link phase the object name of the last package it compiled (its own
+  `.go`→`.o` rewrite) and any `-ldflags`. The seam checks that object is the
+  remembered program and adopts it: `link-adopt-check` (an interpreter has
+  nothing to link; the command is a no-op) or `link-adopt-artifact` (the
+  pinned build of the last package's generated module already linked the
+  program; the phase proves the artifact exists). `-ldflags` are evidence.
+  Interpreted execution of a multi-package program is refused by the
+  product (`--go-package … require --check or --go-list`) — the dominant
+  product row of this sprint; a single-package `rundir` root passes end to
+  end. Compiled mode stops at the first importing package's lowering
+  (literal `./a`), the Sprint 152 row already recorded for compiledir.
+  errorcheckandrundir needs nothing more: upstream owns the diagnostics
+  pass, the "ignore failure of package n−1" rule, and its errorCheck
+  comparison; an errorCheck failure after a clean phase is a product row
+  because the comparison is on record.
+- **Module program** (`runindir`; S150.2): upstream prepares a module
+  (overlay copy + generated `go.mod`) and hands the seam one execute phase
+  over `.` in that directory. `.` is resolved once by the pinned go command's
+  **own** module policy — `go list -json -deps .` in that directory with the
+  upstream environment — into the main package's Go files and the in-module
+  dependency packages as an ordered explicit map (`--go-import-path` +
+  `--go-package`). A package with `.s` or cgo files is a retained non-Go
+  product limitation; the go command's build constraints decide which files
+  exist on the run host. The event keeps upstream's `.` as its compile input
+  and records the `go list` argv, directory, files and map.
+- **buildrundir** (S150.4): every authenticated root carries a `.s` file, so
+  upstream's first phase is `generate` over it (symabis) and stops at the
+  seam's non-Go product limitation — the 149.7 builddir shape. The
+  compile/link/execute meaning buildrundir would take (build-only, then the
+  remembered program) exists but is untested by this packet.
+- **Package test bodies** (S150.8): a second frozen upstream runner —
+  `src/cmd/go/internal/test/test.go` of Go 1.27.0 under
+  `testdata/upstream-go/` (BSD license retained), with a seven-line patch
+  at the one site where the built test binary would be executed and an
+  overlay file `testdata/go-backend/bashpp_backend.go` in package `test`.
+  The unmodified cmd/go enumerates the original test bodies
+  (`load.TestPackagesFor` → generated `_testmain.go`) and builds the native
+  test binary; the patched site replaces the argv with the Bash++ form of
+  that binary — the tested package with its in-package test files, the
+  external test package, and `_testmain.go` as the main package, as an
+  explicit package map with the exact test flags — so the native binary is
+  never run in a backend lane. The enumeration count is read back from Go's
+  own `_testmain.go` (tests, benchmarks, fuzz targets, examples); a zero
+  enumeration, a package build, or a native run can never be PASS
+  (`package-verify.go`). `package-gate.sh` builds the patched go command
+  through `-overlay`, proves it native-equivalent with the backend off on
+  `internal/types/errors`, and replays the 26 packages in both modes. With
+  the product as it stands every package lands a product row at the Bash++
+  invocation (interpreted: the map is refused at execution; compiled: the
+  lowering or the map importer), and `cmd/internal/testdir` is additionally
+  the runner itself.
+
+Every packet has its matrix (`docs/upstream-harness/<action>-matrix.tsv`;
+`package-matrix.tsv` rows are Go packages pinned by a digest over their
+`*.go` files) and gate (`tools/upstream-harness/<action>-gate.sh`), exit
+0/3/1 as before. New verifier rows: RUN, BUILDRUN, RUNDIR, RUNINDIR
+(`backend-verify.go`) and PACKAGE (`package-verify.go`).
+
+### Sprint 150 Linux evidence
+
+(filled from the retained `/srv/sprint150/s150-dynamic` runs below)
