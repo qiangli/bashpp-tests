@@ -306,4 +306,50 @@ Every packet has its matrix (`docs/upstream-harness/<action>-matrix.tsv`;
 
 ### Sprint 150 Linux evidence
 
-(filled from the retained `/srv/sprint150/s150-dynamic` runs below)
+On 2026-09-11 (20:06Z–20:59Z) one coordinator ran each packet gate as its
+story landed, from a fresh `/srv/sprint150/s150-dynamic/bashpp-tests`
+checkout (bundles, fast-forwarded through `e8c436f` → `9f679fc` → `787cede`
+→ `c8988c0`) on the authorized Linux host: Go 1.27.0 linux/amd64 at the
+pinned SHA-256; Bash++ `be20731` rebuilt on the host from the pinned source
+with the authenticated Go — Linux `bashy.real` SHA-256
+`9d6adf3591bfe8edab3c8d720622a34a1240ca7f0afbf3668c1e0c1ced4caf04`,
+byte-identical to the Sprint 149 evidence binary; shell runtime `828e5b33`;
+`GOMAXPROCS=2`, `GOFLAGS=-p=2`, `POSIXLY_CORRECT` unset; evidence retained
+under `/srv/sprint150/s150-dynamic/tmp` (build caches removed), logs under
+`/srv/sprint150/s150-dynamic/logs`. No test, compiler, patched-go or Bash++
+process survived any run. Every packet kept its upstream contract with no
+seam `FAIL`; counts are rows (root × mode):
+
+| Packet | Gate | Exit | PASS | Product | Skip |
+|---|---|---:|---:|---:|---:|
+| 150.6 run (48) | `run-gate.sh` | 3 | 53 | 43 | 0 |
+| 150.7 runoutput (1) | `runoutput-gate.sh` | 3 | 0 | 2 | 0 |
+| 150.4 buildrundir (4) | `buildrundir-gate.sh` | 3 | 0 | 8 (`.s` inputs) | 0 |
+| 150.5 buildrun (1) | `buildrun-gate.sh` | 3 | 1 (compiled) | 1 | 0 |
+| 150.2 runindir (10) | `runindir-gate.sh` | 3 | 1 | 19 | 0 |
+| 150.3 errorcheckandrundir (5) | `errorcheckandrundir-gate.sh` | 3 | 0 | 10 | 0 |
+| 150.1 rundir (116) | `rundir-gate.sh` | 3 | 3 | 229 | 0 |
+| 150.8 packages (26) | `package-gate.sh` | 3 | 0 (patched go native-equivalent: PASS) | 52 | 0 |
+| S157 matrix | `backend-gate.sh` | 0 | native 9/9 | — | — |
+
+Every product row is in `residuals.tsv` with its first diagnostic line and
+a reproducer. The dominant class, by construction of the packet inventory,
+is **the multi-package program**: interpreted execution of an explicit
+package set is refused by the product (`--go-package … require --check or
+--go-list`; 114 rundir + 26 package + 7 runindir interpreted rows, owner
+151), and the lowering emits dependency imports literally (`relative import
+paths are not supported in module mode`, `no required module provides
+package …`; 109 rundir + 8 runindir compiled rows, owner 152). Only two
+rundir roots and one runindir root are single-package programs, and they
+pass. The remaining classes are the Sprint 149 ones: interpreter gaps
+(`gosource: …`, `BASHPP-E…`), lowering type errors (`LOWER-ETYPE`), missing
+`-m` diagnostics in the errorcheckandrundir pass (owner 154), `.s` inputs
+(no assembler), and a handful of programs that ran to a wrong result
+(inline_caller frame names, maymorestack stack size; owner 153).
+
+One flake was observed and is recorded rather than hidden: the S157
+`issue21808.go` ordered-output canary failed once in interpreted mode at
+`9f679fc` (a 37-second run of a one-second program; stdout/stderr
+interleave differed) and passed on the immediate re-run and on every other
+run of the day. The canary is load-sensitive on the 2-core host; it is not
+a seam defect of this sprint.
