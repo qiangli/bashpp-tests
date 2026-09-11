@@ -239,10 +239,12 @@ func recordRoot(runner string, rec partitionGoRecord) (string, bool) {
 		}
 		return "testdir:" + strings.TrimPrefix(rec.Test, "Test/"), true
 	case "typechecker":
-		if !strings.Contains(rec.Test, "/") {
+		// go/types and types2 run the same testdata, so the leaf name alone
+		// names two roots; the package keeps them distinct (743 = both).
+		if !strings.Contains(rec.Test, "/") || rec.Package == "" {
 			return "", false
 		}
-		return "typechecker:" + rec.Test, true
+		return "typechecker:" + rec.Package + "/" + rec.Test, true
 	case "package":
 		// All output in this stream belongs to its package root. readGoStream
 		// separately excludes per-test actions from the package terminal.

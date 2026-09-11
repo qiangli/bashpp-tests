@@ -232,67 +232,118 @@ package_counts() {
 		END { print count + 0, nonpass + 0 }' "$@"
 }
 
+# BASHPP_CORPUS_SMOKE=<go test -run regexp> exercises the plumbing on a few
+# roots; counts are printed but not authenticated and the exit is always 1,
+# so a smoke run can never be read as a barrier result.
+smoke=${BASHPP_CORPUS_SMOKE:-}
+run_arg=${smoke:+-run=$smoke}
+
 seam_fail=0
 product_fail=0
-for mode in interpreted compiled; do
+# The native lane (backend unset: the patched runners execute natively, the
+# S157/S149/S150 native-equivalence shape) is the count authority for the
+# two backend lanes; the Sprint 142 inventory numbers are printed for the
+# record only. This is the "reauthenticate the native oracle" step of
+# Barrier A, done by the same runner that produces the product verdicts.
+native_testdir=; native_types=; native_packages=
+for mode in native interpreted compiled; do
 	dir="$tmp/evidence-$mode"
-	mkdir -p "$dir"
-	printf 'Bash++ %s mode: %s\n' "$mode" "$bashpp_version"
+	mkdir -p "$dir/packages"
+	if test "$mode" = native; then
+		printf 'native lane (backend off): %s\n' "$go_version"
+	else
+		printf 'Bash++ %s mode: %s\n' "$mode" "$bashpp_version"
+	fi
 
-	BASHPP_TESTDIR_EVENTS="$dir/testdir.events.jsonl" \
-	BASHPP_TESTDIR_BACKEND="$mode" BASHPP_TESTDIR_TOOL="$bashpp_tool" \
-	BASHPP_TESTDIR_GO="$go_tool" BASHPP_TESTDIR_VERSION="$bashpp_version" \
-	BASHPP_SHELLRT_ROOT="$shellrt" \
-	BASHY_OTEL_SPOOL="$tmp/bashy-otel.jsonl" BASHY_HINTS=0 BASHY_NO_COACH=1 \
-	GOROOT="$tmp/goroot" GOTOOLCHAIN=local GOCACHE="$tmp/gocache" \
-		"$go127" test -count=1 -json -timeout=6h -overlay="$tmp/harness-overlay.json" cmd/internal/testdir \
-		>"$dir/testdir.go-test.json" 2>"$dir/testdir.stderr" || true
-	set -- $(test_leaf_counts "$dir/testdir.go-test.json")
-	printf 'testdir %s: %s terminals, %s non-PASS (want 2726)\n' "$mode" "$1" "$2"
-	if test "$1" != 2726; then seam_fail=1; elif test "$2" != 0; then product_fail=1; fi
-
-	for entry in "cmd/compile/internal/types2 types2" "go/types gotypes"; do
-		set -- $entry
-		BASHPP_TYPES_BACKEND="$mode" BASHPP_TYPES_TOOL="$bashpp_tool" \
-		BASHPP_TYPES_VERSION="$bashpp_version" BASHPP_TYPES_EVENTS="$dir/$2.events.jsonl" \
+	(
+		if test "$mode" != native; then
+			export BASHPP_TESTDIR_EVENTS="$dir/testdir.events.jsonl" \
+				BASHPP_TESTDIR_BACKEND="$mode" BASHPP_TESTDIR_TOOL="$bashpp_tool" \
+				BASHPP_TESTDIR_GO="$go_tool" BASHPP_TESTDIR_VERSION="$bashpp_version" \
+				BASHPP_SHELLRT_ROOT="$shellrt"
+		fi
 		BASHY_OTEL_SPOOL="$tmp/bashy-otel.jsonl" BASHY_HINTS=0 BASHY_NO_COACH=1 \
 		GOROOT="$tmp/goroot" GOTOOLCHAIN=local GOCACHE="$tmp/gocache" \
-			"$go127" test -count=1 -json -overlay="$tmp/harness-overlay.json" "$1" \
-			>"$dir/$2.go-test.json" 2>"$dir/$2.stderr" || true
+			"$go127" test -count=1 -json -timeout=6h -overlay="$tmp/harness-overlay.json" cmd/internal/testdir $run_arg \
+			>"$dir/testdir.go-test.json" 2>"$dir/testdir.stderr" || true
+	)
+	set -- $(test_leaf_counts "$dir/testdir.go-test.json")
+	printf 'testdir %s: %s terminals, %s non-PASS (inventory 2726)\n' "$mode" "$1" "$2"
+	if test "$mode" = native; then native_testdir=$1
+	elif test -n "$smoke"; then :
+	elif test "$1" != "$native_testdir"; then seam_fail=1
+	elif test "$2" != 0; then product_fail=1; fi
+
+	for entry in "cmd/compile/internal/types2 types2" "go/types types"; do
+		set -- $entry
+		(
+			if test "$mode" != native; then
+				export BASHPP_TYPES_BACKEND="$mode" BASHPP_TYPES_TOOL="$bashpp_tool" \
+					BASHPP_TYPES_VERSION="$bashpp_version" BASHPP_TYPES_EVENTS="$dir/$2.events.jsonl"
+			fi
+			BASHY_OTEL_SPOOL="$tmp/bashy-otel.jsonl" BASHY_HINTS=0 BASHY_NO_COACH=1 \
+			GOROOT="$tmp/goroot" GOTOOLCHAIN=local GOCACHE="$tmp/gocache" \
+				"$go127" test -count=1 -json -timeout=6h -overlay="$tmp/harness-overlay.json" "$1" $run_arg \
+				>"$dir/$2.go-test.json" 2>"$dir/$2.stderr" || true
+		)
 		set -- $(test_leaf_counts "$dir/$2.go-test.json")
 		printf '%s %s: %s terminals, %s non-PASS\n' "$entry" "$mode" "$1" "$2"
 	done
-	set -- $(test_leaf_counts "$dir/types2.go-test.json" "$dir/gotypes.go-test.json")
-	printf 'typechecker %s: %s terminals, %s non-PASS (want 743)\n' "$mode" "$1" "$2"
-	if test "$1" != 743; then seam_fail=1; elif test "$2" != 0; then product_fail=1; fi
+	set -- $(test_leaf_counts "$dir/types2.go-test.json" "$dir/types.go-test.json")
+	printf 'typechecker %s: %s terminals, %s non-PASS (inventory 743)\n' "$mode" "$1" "$2"
+	if test "$mode" = native; then native_types=$1
+	elif test -n "$smoke"; then :
+	elif test "$1" != "$native_types"; then seam_fail=1
+	elif test "$2" != 0; then product_fail=1; fi
 
 	while IFS="$tab" read -r capability pkg action want companions; do
 		case "$capability" in ''|'#'*) continue ;; esac
 		case_id=$(printf '%s' "$pkg" | tr '/.' '__')
 		(
 			cd "$tmp/goroot/src"
-			BASHPP_GOTEST_BACKEND="$mode" BASHPP_GOTEST_TOOL="$bashpp_tool" \
-			BASHPP_GOTEST_VERSION="$bashpp_version" BASHPP_GOTEST_GO="$go127" \
-			BASHPP_SHELLRT_ROOT="$shellrt" BASHPP_GOTEST_EVENTS="$dir/$case_id.events.jsonl" \
+			if test "$mode" != native; then
+				export BASHPP_GOTEST_BACKEND="$mode" BASHPP_GOTEST_TOOL="$bashpp_tool" \
+					BASHPP_GOTEST_VERSION="$bashpp_version" BASHPP_GOTEST_GO="$go127" \
+					BASHPP_SHELLRT_ROOT="$shellrt" BASHPP_GOTEST_EVENTS="$dir/packages/$case_id.events.jsonl"
+			fi
 			BASHY_OTEL_SPOOL="$tmp/bashy-otel.jsonl" BASHY_HINTS=0 BASHY_NO_COACH=1 \
 			GOROOT="$tmp/goroot" GOTOOLCHAIN=local GOCACHE="$tmp/gocache" \
-				"$tmp/go-bashpp" test -count=1 -json "$pkg" \
-				>"$dir/$case_id.go-test.json" 2>"$dir/$case_id.stderr" || true
+				"$tmp/go-bashpp" test -count=1 -json -timeout=2h "$pkg" $run_arg \
+				>"$dir/packages/$case_id.go-test.json" 2>"$dir/packages/$case_id.stderr" || true
 		)
 	done < "$package_matrix"
-	set -- $(package_counts "$dir"/*__*.go-test.json)
-	printf 'packages %s: %s terminals, %s non-PASS (want 26)\n' "$mode" "$1" "$2"
-	if test "$1" != 26; then seam_fail=1; elif test "$2" != 0; then product_fail=1; fi
+	set -- $(package_counts "$dir"/packages/*.go-test.json)
+	printf 'packages %s: %s terminals, %s non-PASS (inventory 26)\n' "$mode" "$1" "$2"
+	if test "$mode" = native; then native_packages=$1
+	elif test -n "$smoke"; then :
+	elif test "$1" != "$native_packages"; then seam_fail=1
+	elif test "$2" != 0; then product_fail=1; fi
+
+	# The partition emitter reads one stream per runner and one events file
+	# per mode (each record already names its package and test).
+	cat "$dir"/packages/*.go-test.json > "$dir/package.go-test.json"
+	if test "$mode" != native; then
+		cat "$dir"/*.events.jsonl "$dir"/packages/*.events.jsonl > "$dir/backend.events.jsonl"
+	fi
 done
 
 if test -f "$harness/partition-emit.go"; then
 	# BARRIER A -> PARTITION EMITTER HANDOFF (keep this invocation explicit).
-	GOROOT="$tmp/goroot" GOTOOLCHAIN=local GOCACHE="$tmp/gocache" "$go127" run "$harness/partition-emit.go" -evidence "$tmp/evidence-interpreted" -evidence "$tmp/evidence-compiled" || seam_fail=1
+	GOROOT="$tmp/goroot" GOTOOLCHAIN=local GOCACHE="$tmp/gocache" \
+		"$go127" build -o "$tmp/partition-emit" "$harness/partition-emit.go"
+	emit_status=0
+	"$tmp/partition-emit" -evidence-interpreted "$tmp/evidence-interpreted" -evidence-compiled "$tmp/evidence-compiled" \
+		-out "${BASHPP_CORPUS_MANIFESTS:-$root/docs/upstream-harness}" || emit_status=$?
+	case "$emit_status" in 0|3) ;; *) seam_fail=1 ;; esac
 else
 	retain_evidence=1
 	printf 'partition emitter not present; evidence directories: %s/evidence-interpreted %s/evidence-compiled\n' "$tmp" "$tmp"
 fi
 
+if test -n "$smoke"; then
+	printf 'SMOKE S151.0 corpus gate (-run=%s): plumbing exercised, no barrier verdict\n' "$smoke"
+	exit 1
+fi
 if test "$seam_fail" -ne 0; then
 	printf 'FAIL S151.0 corpus gate: setup, seam, or authenticated-count failure\n' >&2
 	exit 1

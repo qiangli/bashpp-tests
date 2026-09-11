@@ -75,11 +75,11 @@ func TestEmitPartitions(t *testing.T) {
 			"testdir:s152.go\tinterpreted\tLOWER-ETYPE: cannot lower expression\n" +
 			"testdir:s152.go\tcompiled\t# bashpp_fixture\n",
 		"active-153-manifest.tsv": "root\tmode\tfirst_line\n" +
-			"typechecker:TestCheck/runtime.go\tinterpreted\tpanic: runtime error: boom\n" +
-			"typechecker:TestCheck/runtime.go\tcompiled\truntime error: boom\n",
+			"typechecker:go/types/TestCheck/runtime.go\tinterpreted\tpanic: runtime error: boom\n" +
+			"typechecker:go/types/TestCheck/runtime.go\tcompiled\truntime error: boom\n",
 		"active-154-manifest.tsv": "root\tmode\tfirst_line\n" +
-			"typechecker:TestCheck/escape.go\tinterpreted\tescape.go:8: missing error \"x does not escape\"\n" +
-			"typechecker:TestCheck/escape.go\tcompiled\tescape.go:8: wrong error\n",
+			"typechecker:go/types/TestCheck/escape.go\tinterpreted\tescape.go:8: missing error \"x does not escape\"\n" +
+			"typechecker:go/types/TestCheck/escape.go\tcompiled\tescape.go:8: wrong error\n",
 		"active-unclassified.tsv": "root\tmode\tfirst_line\n" +
 			"package:example/unclassified\tinterpreted\tmystery product limitation\n",
 		"active-summary.tsv": "runner\tPASS\tFAIL\tSKIP\ttotal\n" +
@@ -154,9 +154,9 @@ func writeTypesFixture(t *testing.T, name string, roots map[string]fixtureVerdic
 	for _, root := range sortedFixtureRoots(roots) {
 		v := roots[root]
 		if v.output != "" {
-			records = append(records, partitionGoRecord{Action: "output", Test: root, Output: v.output + "\n"})
+			records = append(records, partitionGoRecord{Action: "output", Test: root, Package: "go/types", Output: v.output + "\n"})
 		}
-		records = append(records, partitionGoRecord{Action: v.action, Test: root})
+		records = append(records, partitionGoRecord{Action: v.action, Test: root, Package: "go/types"})
 	}
 	writeRecords(t, name, records...)
 }
