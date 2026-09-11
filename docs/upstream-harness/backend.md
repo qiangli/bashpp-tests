@@ -68,7 +68,11 @@ plan reaches the seam.
 
 `tools/upstream-harness/backend-gate.sh` first runs the S157.1 native-equivalence
 gate, authenticates every source and patch, and then exercises all nine matrix
-rows in each backend mode. `tools/upstream-harness/build-gate.sh` (S149.6)
+rows in each backend mode. `tools/upstream-harness/compile-gate.sh` (S149.4) replays the 28 packet-149.4
+`compile` roots the same way, and the generic `verifyCompileRow` asserts one
+compile-only phase, one Go input, empty argv, and check-only /
+transpile-build-only dispositions for every compile row (the S157 `bug020`
+canary included). `tools/upstream-harness/build-gate.sh` (S149.6)
 authenticates the packet-149.6 manifest root list
 (`docs/upstream-harness/build-matrix.tsv`, four `build` roots) and replays those
 exact roots through the same seam in both modes. `backend-verify.go` asserts for

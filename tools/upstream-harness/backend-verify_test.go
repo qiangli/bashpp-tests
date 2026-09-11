@@ -47,6 +47,32 @@ func TestVerifierAcceptsCompileProof(t *testing.T) {
 	}
 }
 
+func TestVerifierRetainsCompileProductFailure(t *testing.T) {
+	for _, mode := range []string{"interpreted", "compiled"} {
+		t.Run(mode, func(t *testing.T) {
+			phase, backend, result := compileEvidence(mode)
+			result.Exit = 2
+			status, err := verifyCompileEvidenceAction(t, mode, "fail", phase, backend, result)
+			if err != nil || status != "COMPILE-PRODUCT-FAIL" {
+				t.Fatalf("verifyRow = %q, %v, want retained product failure", status, err)
+			}
+			result.Exit = 0
+			if _, err := verifyCompileEvidenceAction(t, mode, "fail", phase, backend, result); err == nil || !strings.Contains(err.Error(), "nonzero compile phase exit") {
+				t.Fatalf("verifyRow error = %v, want recorded nonzero exit", err)
+			}
+		})
+	}
+}
+
+func TestVerifierRejectsCompileExecutePhase(t *testing.T) {
+	phase, backend, result := compileEvidence("interpreted")
+	phase.PhaseKind, backend.Phase = "execute", "execute"
+	_, err := verifyCompileEvidenceAction(t, "interpreted", "pass", phase, backend, result)
+	if err == nil || !strings.Contains(err.Error(), "compile-only phase") {
+		t.Fatalf("verifyRow error = %v, want compile-only rejection", err)
+	}
+}
+
 func TestVerifierAcceptsBuildOnly(t *testing.T) {
 	for _, mode := range []string{"interpreted", "compiled"} {
 		t.Run(mode, func(t *testing.T) {
@@ -171,14 +197,19 @@ func compileEvidence(mode string) (eventRecord, eventRecord, eventRecord) {
 
 func verifyCompileEvidence(t *testing.T, mode string, records ...eventRecord) (string, error) {
 	t.Helper()
+	return verifyCompileEvidenceAction(t, mode, "pass", records...)
+}
+
+func verifyCompileEvidenceAction(t *testing.T, mode, goAction string, records ...eventRecord) (string, error) {
+	t.Helper()
 	dir := t.TempDir()
 	base := filepath.Join(dir, "fixedbugs_bug020_go")
-	writeJSONLines(t, base+".go-test.json", goRecord{Action: "pass", Test: "Test/fixedbugs/bug020.go"})
+	writeJSONLines(t, base+".go-test.json", goRecord{Action: goAction, Test: "Test/fixedbugs/bug020.go"})
 	items := make([]any, 0, len(records)+1)
 	for _, record := range records {
 		items = append(items, record)
 	}
-	items = append(items, eventRecord{Kind: "terminal", Test: "fixedbugs/bug020.go"})
+	items = append(items, eventRecord{Kind: "terminal", Test: "fixedbugs/bug020.go", Failed: goAction == "fail"})
 	writeJSONLines(t, base+".events.jsonl", items...)
 	return verifyRow(matrixRow{Test: "fixedbugs/bug020.go", Action: "compile"}, dir, mode, "test", "/bin/bashy")
 }

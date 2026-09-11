@@ -102,7 +102,7 @@ func main() {
 			fmt.Printf("FAIL %-34s %-30s %v\n", row.Capability, row.Test, err)
 			continue
 		}
-		if status == "BUILD-PRODUCT-FAIL" {
+		if strings.HasSuffix(status, "-PRODUCT-FAIL") {
 			product = true
 		}
 		fmt.Printf("%-18s %-34s %s\n", status, row.Capability, row.Test)
@@ -173,27 +173,11 @@ func verifyRow(row matrixRow, dir, mode, version, tool string) (string, error) {
 	if row.Action == "build" {
 		return verifyBuildRow(row, ev, mode, goAction)
 	}
+	if row.Action == "compile" {
+		return verifyCompileRow(row, ev, mode, goAction)
+	}
 
 	switch row.Test {
-	case "fixedbugs/bug020.go":
-		if goAction != "pass" || len(ev.Backends) != 1 || len(ev.Results) != 1 ||
-			ev.Backends[0].Action != "compile" || ev.Backends[0].Phase != "compile" ||
-			len(ev.Backends[0].ProgramArgv) != 0 || ev.Results[0].Exit != 0 {
-			return "", fmt.Errorf("wanted compile-only Bash++ pass, got action=%s disposition=%v results=%v", goAction, dispositions(ev.Backends), resultExits(ev.Results))
-		}
-		if mode == "interpreted" {
-			if ev.Backends[0].Disposition != "check-only" || len(ev.Backends[0].Artifacts) != 0 || len(ev.Backends[0].Maps) != 0 || len(ev.Results[0].ArtifactProof) != 0 || len(ev.Results[0].MapProof) != 0 {
-				return "", fmt.Errorf("interpreted compile phase was not check-only")
-			}
-			return "COMPILE-ONLY-PASS", nil
-		}
-		if ev.Backends[0].Disposition != "transpile-build-only" ||
-			!validProofs(ev.Backends[0].Artifacts, ev.Results[0].ArtifactProof) ||
-			!validProofs(ev.Backends[0].Maps, ev.Results[0].MapProof) {
-			return "", fmt.Errorf("compiled compile phase lacks generated/map/artifact existence and hash proof")
-		}
-		return "COMPILE-ONLY-PASS", nil
-
 	case "fixedbugs/issue21808.go":
 		if goAction != "pass" || len(ev.Backends) != 1 || !directDisposition(mode, ev.Backends[0].Disposition) {
 			return "", fmt.Errorf("wanted direct-source ordered-output pass, got action=%s disposition=%v", goAction, dispositions(ev.Backends))
@@ -250,6 +234,60 @@ var buildRoots = map[string]struct {
 	"arenas/smoke.go":         {RecipeFlags: []string{}, GoExperiment: "arenas"},
 	"fixedbugs/issue59404.go": {RecipeFlags: []string{"-gcflags=-l=4"}},
 	"fixedbugs/issue59638.go": {RecipeFlags: []string{"-gcflags=-l=4"}},
+}
+
+// verifyCompileRow checks one upstream `compile` root (the S157 bug020 canary
+// and every Sprint 149.4 packet root alike): exactly one compile-only phase
+// carrying one Go source input and no program argv, never an execute phase.
+// The recipe flags are whatever upstream selected; the generic identity check
+// above already proves the backend retained them. A Bash++ product failure is
+// retained as a recorded nonzero phase exit, never reclassified.
+func verifyCompileRow(row matrixRow, ev evidence, mode, goAction string) (string, error) {
+	if goAction == "skip" {
+		if len(ev.Phases) != 0 {
+			return "", fmt.Errorf("upstream skip with %d recorded phases", len(ev.Phases))
+		}
+		return "UPSTREAM-SKIP", nil
+	}
+	if len(ev.Phases) != 1 || len(ev.Backends) != 1 || len(ev.Results) != 1 {
+		return "", fmt.Errorf("wanted exactly one compile phase/backend/result, got %d/%d/%d", len(ev.Phases), len(ev.Backends), len(ev.Results))
+	}
+	phase, backend, result := ev.Phases[0], ev.Backends[0], ev.Results[0]
+	if backend.Action != "compile" || backend.Phase != "compile" || phase.PhaseKind == "execute" {
+		return "", fmt.Errorf("compile root did not stay a compile-only phase: action=%s phase=%s", backend.Action, backend.Phase)
+	}
+	if len(backend.CompileInputs) != 1 || !strings.HasSuffix(backend.CompileInputs[0], filepath.Base(row.Test)) {
+		return "", fmt.Errorf("compile phase must select exactly the one upstream root, got %v", backend.CompileInputs)
+	}
+	if len(backend.ProgramArgv) != 0 {
+		return "", fmt.Errorf("compile phase must carry an empty program argv, got %v", backend.ProgramArgv)
+	}
+	switch mode {
+	case "interpreted":
+		if backend.Disposition != "check-only" || len(backend.Artifacts) != 0 || len(backend.Maps) != 0 ||
+			len(result.ArtifactProof) != 0 || len(result.MapProof) != 0 {
+			return "", fmt.Errorf("interpreted compile phase was not check-only")
+		}
+	case "compiled":
+		if backend.Disposition != "transpile-build-only" || len(backend.Artifacts) != 2 || len(backend.Maps) != 1 {
+			return "", fmt.Errorf("compiled compile phase must transpile with a map and build only")
+		}
+	default:
+		return "", fmt.Errorf("unknown backend mode %q", mode)
+	}
+	if goAction == "pass" {
+		if result.Exit != 0 {
+			return "", fmt.Errorf("upstream pass with nonzero compile phase exit %d", result.Exit)
+		}
+		if mode == "compiled" && (!validProofs(backend.Artifacts, result.ArtifactProof) || !validProofs(backend.Maps, result.MapProof)) {
+			return "", fmt.Errorf("compiled compile phase lacks generated/map/artifact existence and hash proof")
+		}
+		return "COMPILE-ONLY-PASS", nil
+	}
+	if result.Exit == 0 {
+		return "", fmt.Errorf("upstream failure without a recorded nonzero compile phase exit")
+	}
+	return "COMPILE-PRODUCT-FAIL", nil
 }
 
 func verifyBuildRow(row matrixRow, ev evidence, mode, goAction string) (string, error) {

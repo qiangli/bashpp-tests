@@ -185,9 +185,19 @@ func (t test) backendPlan(step *planStep, action, phase string, compileInputs, p
 		if compileOnly {
 			sourceMap := filepath.Join(moduleDir, "main.go.map")
 			transpileArgs = append(transpileArgs, "--map", sourceMap)
+			// Upstream hands -p=<importpath> straight to `go tool compile`;
+			// the pinned `go build` of the generated module owns -p itself,
+			// so forwarding it through -gcflags relinks main into that
+			// package. Retain it as evidence only.
+			var gcflags []string
+			for _, flag := range recipeFlags {
+				if !strings.HasPrefix(flag, "-p=") {
+					gcflags = append(gcflags, flag)
+				}
+			}
 			buildArgs := []string{goTool, "build", "-C", moduleDir}
-			if len(recipeFlags) != 0 {
-				buildArgs = append(buildArgs, "-gcflags="+strings.Join(recipeFlags, " "))
+			if len(gcflags) != 0 {
+				buildArgs = append(buildArgs, "-gcflags="+strings.Join(gcflags, " "))
 			}
 			buildArgs = append(buildArgs, "-o", artifact, ".")
 			*step.cmd = *shellCommand(step.cmd,
@@ -195,9 +205,12 @@ func (t test) backendPlan(step *planStep, action, phase string, compileInputs, p
 				buildArgs)
 			step.artifacts = []string{generated, artifact}
 			step.maps = []string{sourceMap}
+			compileDeviations := append(deviations, "non-empty compiler flags use one unpatterned -gcflags=<space-joined exact flags>; generated program is never executed")
+			if len(gcflags) != len(recipeFlags) {
+				compileDeviations = append(compileDeviations, "upstream -p=<importpath> is retained as evidence only; the pinned go build owns -p for the generated module")
+			}
 			t.backendEvent(mode, action, phase, "transpile-build-only", compileInputs, programArgv, recipeFlags, nativeArgv,
-				step.artifacts, step.maps,
-				append(deviations, "non-empty compiler flags use one unpatterned -gcflags=<space-joined exact flags>; generated program is never executed"))
+				step.artifacts, step.maps, compileDeviations)
 			return
 		}
 		*step.cmd = *shellCommand(step.cmd,

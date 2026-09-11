@@ -1,0 +1,11 @@
+# Sprint 149 residual ledger: every non-green packet root, classified. A `seam`
+# row blocks its story; a `product` row is handed to the named downstream sprint
+# and is never reclassified here. `first_line` is the leading diagnostic as
+# emitted; `repro` is the direct command that reproduces it outside the harness.
+# packet	root	mode	class	first_line	owner	repro
+149.6	abi/bad_select_crash.go	both	product	unsupported type *ast.BasicLit	151/152	bashy --bashpp --source=go --check --go-file test/abi/bad_select_crash.go
+149.4	fixedbugs/issue44465.go	both	product	gosource: unsupported LabeledStmt	151	bashy --bashpp --source=go --check --go-file test/fixedbugs/issue44465.go
+149.4	fixedbugs/issue45948.go	both	product	gosource: unsupported LabeledStmt	151	bashy --bashpp --source=go --check --go-file test/fixedbugs/issue45948.go
+149.4	fixedbugs/issue52278.go	both	product	gosource: unsupported LabeledStmt	151	bashy --bashpp --source=go --check --go-file test/fixedbugs/issue52278.go
+149.4	fixedbugs/issue31915.go	compiled	product	panic: nil pointer dereference in lower.(*emitter).block (lower/compile.go:631)	152	bashy transpile --bashpp --source=go --go-file test/fixedbugs/issue31915.go -o /tmp/main.go
+149.4	fixedbugs/issue58826.go	compiled	product	panic: nil pointer dereference in lower.(*emitter).block (lower/compile.go:631)	152	bashy transpile --bashpp --source=go --go-file test/fixedbugs/issue58826.go -o /tmp/main.go

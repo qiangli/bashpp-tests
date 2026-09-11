@@ -10,3 +10,5 @@ sprint: 149
 ---
 
 Packet 149.5; manifest /srv/sprint142/evidence/product-baseline-001-control/packet-manifests-v4/packet-149.5.json; SHA 2b0833ea38351648290f63cefbcf90e1e9b1ca75ac2f02e49516a3b68f6de589; count 26. Use the Sprint 157 upstream Go harness as the only recipe and diagnostic authority. Preserve its directory membership/order and exact original-file positioned comparisons while executing selected sources through Bash++. Extend only the shared Go backend/event seam. Harness and harness tests must be Go or Bash only.
+
+CLOSES WITH: docs/upstream-harness/errorcheckdir-matrix.tsv (root-list digest = manifest) + tools/upstream-harness/errorcheckdir-gate.sh on the build-gate.sh shape, both modes; exit 0 green; exit 3 honest with every non-green root ledgered as product in docs/upstream-harness/residuals.tsv; exit 1 seam defect keeps the story open. Seam files (testdata/backend, testdata/instrumented, backend-verify*.go, backend-pin.tsv, backend.md) are edited only by the seam owner sprint149-manager. Plan: docs/sprint-149-master-execution-plan.md.
