@@ -1,0 +1,3 @@
+# status	capability	candidate	expected_go1.27_sha256	observed_source_sha256	reason
+rejected	assembler-planning	codegen/arithmetic.go	34c4f02b9120053c0c90d36c7c313ea9bbe25a3a8afcb5d0c9e166a0763b0627	eb4b74bdace6aeeb6955403d78b2391df3341ead266df3651a2ba0183f63f4b7	local fallback source was not byte-identical to Go 1.27; never executed or reported as representative
+accepted	assembler-planning	codegen/atomics.go	89e999bcbbb7b0ca121d34c0be201e3c0cbd9a40262800c7b64a773d765c897a	89e999bcbbb7b0ca121d34c0be201e3c0cbd9a40262800c7b64a773d765c897a	byte-identical replacement; exercises upstream target-environment bypasses on darwin/arm64
