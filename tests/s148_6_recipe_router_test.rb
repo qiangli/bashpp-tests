@@ -48,6 +48,11 @@ class Sprint148RecipeRouterTest < Minitest::Test
                               native_observation: native, **options)
   end
 
+  def native_event(action: @native.fetch('status'), test: 'TestCmplxdivide')
+    { 'Time' => '2026-09-10T00:00:00Z', 'Action' => action, 'Package' => 'cmd/internal/testdir',
+      'Test' => test, 'Elapsed' => 0.01 }
+  end
+
   def mutate(root = @root)
     copy = Marshal.load(Marshal.dump(root))
     yield copy
@@ -190,6 +195,28 @@ class Sprint148RecipeRouterTest < Minitest::Test
     assert_raises(Corpus::ContractError) { route(native: { 'status' => 'pass', 'evidence_kind' => 'product' }) }
     assert_raises(Corpus::ContractError) { route(native: { 'status' => 'maybe', 'evidence_kind' => 'native-go-only' }) }
     assert_raises(Corpus::ContractError) { route(native: nil) }
+  end
+
+  def test_product_event_shaped_native_observation_routes_but_stage_resolver_receives_canonical_keys
+    resolution = route(native: @native.merge('event' => native_event))
+    assert_equal 'execute', resolution.dig('applicability', 'decision')
+    assert_equal @native.fetch('status'), resolution.dig('applicability', 'inputs', 'native_status')
+    refute_includes resolution.dig('applicability', 'inputs').keys, 'event'
+  end
+
+  def test_router_rejects_noncanonical_native_observation_extras_including_hint
+    assert_raises(Corpus::ContractError) { route(native: @native.merge('hint' => 'skip')) }
+    assert_raises(Corpus::ContractError) { route(native: @native.merge('event' => native_event, 'hint' => 'skip')) }
+    assert_raises(Corpus::ContractError) { route(native: { 'evidence_kind' => 'native-go-only', 'event' => native_event }) }
+  end
+
+  def test_router_validates_native_event_shape
+    assert_raises(Corpus::ContractError) { route(native: @native.merge('event' => native_event(action: 'skip'))) }
+    assert_raises(Corpus::ContractError) { route(native: @native.merge('event' => native_event.merge('Package' => ''))) }
+    assert_raises(Corpus::ContractError) { route(native: @native.merge('event' => native_event.merge('Test' => 1))) }
+    skipped = route(native: { 'status' => 'ancestor-skip', 'evidence_kind' => 'native-go-only',
+                              'event' => native_event(action: 'skip', test: 'TestParent') })
+    assert_equal 'upstream-skip', skipped.dig('applicability', 'decision')
   end
 
   def test_malformed_facts_reject_before_routing

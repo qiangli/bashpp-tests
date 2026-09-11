@@ -62,6 +62,12 @@ class Sprint148StageResolverTest < Minitest::Test
   def test_unknown_and_contradictory_states_reject
     assert_raises(Corpus::ContractError) { adjudicate(native_observation: native('maybe')) }
     assert_raises(Corpus::ContractError) { adjudicate(native_observation: native('pass').merge('hint' => 'skip')) }
+    assert_raises(Corpus::ContractError) do
+      adjudicate(native_observation: native('pass').merge('event' => {
+        'Time' => '2026-09-10T00:00:00Z', 'Action' => 'pass', 'Package' => 'cmd/internal/testdir',
+        'Test' => 'TestExample', 'Elapsed' => 0.01
+      }))
+    end
     assert_raises(Corpus::ContractError) { adjudicate(decision: 'maybe') }
     assert_raises(Corpus::ContractError) do
       adjudicate(decision: 'execute', native_observation: native('ancestor-skip'))
