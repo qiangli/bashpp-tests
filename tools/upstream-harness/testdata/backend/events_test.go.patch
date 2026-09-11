@@ -1,0 +1,17 @@
+--- a/src/cmd/internal/testdir/bashpp_events_test.go
++++ b/src/cmd/internal/testdir/bashpp_events_test.go
+@@ -136,0 +137 @@
++	backendErr error
+@@ -152 +153,5 @@
+-	return &planStep{test: t.eventName(), cmd: cmd}
++	step := &planStep{test: t.eventName(), cmd: cmd}
++	if os.Getenv("BASHPP_TESTDIR_BACKEND") != "" {
++		t.backendPlan(step, phase, compileInputs, programArgv)
++	}
++	return step
+@@ -171,0 +177,5 @@
++	if s.backendErr != nil {
++		err := s.backendErr
++		s.done([]byte(buf.String()), err)
++		return err
++	}
