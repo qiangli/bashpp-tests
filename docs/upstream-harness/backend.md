@@ -113,6 +113,42 @@ root-list digest = manifest, companion digests pinned) and gate
 (`tools/upstream-harness/<action>-gate.sh`): exit 0 green, exit 3 with every
 non-green root a product row in `residuals.tsv`, exit 1 a seam defect.
 
+### Sprint 149 Linux evidence
+
+On 2026-09-11 (17:59Z–18:40Z, plus a 43651cf re-run of the backend and
+asmcheck gates) one coordinator ran every packet gate in sequence from a fresh
+`/srv/sprint149/s149-static/bashpp-tests` checkout on the authorized Linux host
+(Go 1.27.0 linux/amd64 at the pinned SHA-256; Bash++ `be20731`, Linux
+`bashy.real` SHA-256 `9d6adf3591bfe8edab3c8d720622a34a1240ca7f0afbf3668c1e0c1ced4caf04`;
+shell runtime `828e5b33`; `GOMAXPROCS=2`, `GOFLAGS=-p=2`, `POSIXLY_CORRECT`
+unset; evidence retained under `/srv/sprint149/s149-static/tmp`, logs under
+`/srv/sprint149/s149-static/logs`). The post-run process table held no test,
+compiler or Bash++ process. Every packet kept its upstream contract with no
+seam `FAIL`; the counts below are rows (root × mode):
+
+| Packet | Gate | Exit | PASS | Product | Skip / bypass |
+|---|---|---:|---:|---:|---:|
+| 149.1 errorcheck (144) | `errorcheck-gate.sh` | 3 | 94 | 194 | 0 |
+| 149.2 compiledir (125) | `compiledir-gate.sh` | 3 | 120 (119 interpreted) | 130 | 0 |
+| 149.3 asmcheck (84, compiled only) | `asmcheck-gate.sh` | 3 | 18 | 57 | 9 bypass |
+| 149.4 compile (28) | `compile-gate.sh` | 3 | 48 | 8 | 0 |
+| 149.5 errorcheckdir (26) | `errorcheckdir-gate.sh` | 3 | 33 | 19 | 0 |
+| 149.6 build (4) | `build-gate.sh` | 3 | 6 | 2 | 0 |
+| 149.7 builddir (2) | `builddir-gate.sh` | 3 | 0 | 4 (`.s` inputs) | 0 |
+| 149.8 errorcheckoutput (4) | `errorcheckoutput-gate.sh` | 3 | 2 | 6 | 0 |
+| 149.9 errorcheckwithauto (3) | `errorcheckwithauto-gate.sh` | 3 | 1 | 5 | 0 |
+| 149.10 typechecker (20, interpreted) | `typechecker-gate.sh` | 3 | 18 | 2 (`importC`) | 0 |
+| S157 matrix | `backend-gate.sh` | 0 | native 9/9 | — | — |
+
+Every product row is in `residuals.tsv` with its first diagnostic line and a
+direct reproducer. The dominant classes are: relative imports the lowering
+emits literally (compiled mode of every directory packet); diagnostics that
+upstream's `// ERROR` expectations do not match (extra or differently worded
+Bash++ diagnostics, missing escape-analysis and write-barrier diagnostics);
+codegen the transpiled program does not reproduce (asmcheck); and language
+gaps (`LabeledStmt`, labeled branches, range-assignment targets, struct type
+expressions) plus two lowering nil-pointer panics.
+
 The backend records one small JSON event for each observed upstream phase. The
 event repeats the mode, structured action and recipe flags, source/argument
 boundary, native argv evidence, tool identity, disposition, and declared

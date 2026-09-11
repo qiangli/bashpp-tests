@@ -94,3 +94,17 @@ and the frozen upstream runner at the pinned SHA-256 above. Coordinator PID
 973620 was the sole retained authoritative run; PID 972459 had already exited
 and been reaped. All 9/9 native and instrumented terminal verdicts matched,
 and a post-run process-table check found no surviving gate or test process.
+
+## Sprint 149 gates
+
+`backend.md` §Sprint 149 static seams describes the extended seam. The
+packet gates are `tools/upstream-harness/{compile,build,errorcheck,compiledir,
+asmcheck,errorcheckdir,builddir,errorcheckoutput,errorcheckwithauto,
+typechecker}-gate.sh`, each over `docs/upstream-harness/<action>-matrix.tsv`
+(root-list digest = the Sprint 142 packet manifest; companion digests pinned).
+`typechecker-gate.sh` uses the second frozen upstream runner pair under
+`testdata/upstream-types/` (types2 and go/types `check_test.go`, BSD license
+retained) with `testdata/types-backend/` patches and hooks, and
+`types-verify.go`. `residuals.tsv` is the retained-failure ledger every
+non-green gate points at. The S157 `final-gate.sh` is superseded for Sprint 149
+because it asserts the Sprint 149 trackers are still `todo`.
