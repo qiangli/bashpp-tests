@@ -1,0 +1,412 @@
+--- a/src/cmd/internal/testdir/testdir_test.go
++++ b/src/cmd/internal/testdir/testdir_test.go
+@@ -142,8 +142,10 @@
+ 			t.Run(path.Join(dir, goFile), func(t *testing.T) {
+ 				t.Parallel()
+ 				test.T = t
++				defer test.planTerminal()
+ 				testError := test.run()
+ 				wantError := test.expectFail() && !*force
++				test.planVerdict(testError, wantError)
+ 				if testError != nil {
+ 					if wantError {
+ 						t.Log(testError.Error() + " (expected)")
+@@ -182,7 +184,7 @@
+ 	return names
+ }
+ 
+-type runCmd func(...string) ([]byte, error)
++type runCmd func(phase string, compileInputs, programArgv []string, argv ...string) ([]byte, error)
+ 
+ func compileFile(runcmd runCmd, longname string, flags []string) (out []byte, err error) {
+ 	cmd := []string{goTool, "tool", "compile", "-e", "-p=p", "-importcfg=" + stdlibImportcfgFile()}
+@@ -191,7 +193,7 @@
+ 		cmd = append(cmd, "-dynlink", "-installsuffix=dynlink")
+ 	}
+ 	cmd = append(cmd, longname)
+-	return runcmd(cmd...)
++	return runcmd("compile", []string{longname}, nil, cmd...)
+ }
+ 
+ func compileInDir(runcmd runCmd, dir string, flags []string, importcfg string, pkgname string, names ...string) (out []byte, err error) {
+@@ -212,7 +214,11 @@
+ 	for _, name := range names {
+ 		cmd = append(cmd, filepath.Join(dir, name))
+ 	}
+-	return runcmd(cmd...)
++	inputs := make([]string, 0, len(names))
++	for _, name := range names {
++		inputs = append(inputs, filepath.Join(dir, name))
++	}
++	return runcmd("compile", inputs, nil, cmd...)
+ }
+ 
+ var stdlibImportcfg = sync.OnceValue(func() string {
+@@ -254,7 +260,7 @@
+ 		cmd = append(cmd, ldflags...)
+ 	}
+ 	cmd = append(cmd, infile)
+-	_, err = runcmd(cmd...)
++	_, err = runcmd("link", []string{infile}, nil, cmd...)
+ 	return
+ }
+ 
+@@ -498,6 +504,7 @@
+ 		t.Fatal(".go file source starts with a newline")
+ 	}
+ 	src := string(srcBytes)
++	t.planCase(srcBytes)
+ 
+ 	// Execution recipe is contained in a comment in
+ 	// the first non-empty line that is not a build constraint.
+@@ -520,6 +527,7 @@
+ 		header = action // some files are intentionally malformed
+ 	}
+ 	if ok, why := shouldTest(header, goos, goarch); !ok {
++		t.planSkip(action, "build-constraint", why)
+ 		t.Skip(why)
+ 	}
+ 
+@@ -553,6 +561,7 @@
+ 		if *runSkips {
+ 			break
+ 		}
++		t.planSkip(action, "recipe", "skip")
+ 		t.Skip("skip")
+ 	default:
+ 		t.Fatalf("unknown pattern: %q", action)
+@@ -634,13 +643,15 @@
+ 	if err != nil {
+ 		t.Fatal(err)
+ 	}
++	t.eventGenerated("working source copy", filepath.Join(tempDir, t.goFile), len(srcBytes))
++	t.planRecipe(f, action, args, flags, runenv, tim, wantError, wantAuto, singlefilepkgs, gomodvers, goexp, godebug, tempDir)
+ 
+ 	var (
+ 		runInDir        = tempDir
+ 		tempDirIsGOPATH = false
+ 	)
+-	runcmd := func(args ...string) ([]byte, error) {
+-		cmd := exec.Command(args[0], args[1:]...)
++	runcmd := func(phase string, compileInputs, programArgv []string, argv ...string) ([]byte, error) {
++		cmd := exec.Command(argv[0], argv[1:]...)
+ 		var buf bytes.Buffer
+ 		cmd.Stdout = &buf
+ 		cmd.Stderr = &buf
+@@ -660,6 +671,7 @@
+ 		}
+ 		cmd.Env = append(cmd.Env, "STDLIB_IMPORTCFG="+stdlibImportcfgFile())
+ 		cmd.Env = append(cmd.Env, runenv...)
++		step := t.planExec(cmd, tim, phase, compileInputs, programArgv)
+ 
+ 		var err error
+ 
+@@ -697,6 +709,7 @@
+ 		if err != nil && err != errTimeout {
+ 			err = fmt.Errorf("%s\n%s", err, buf.Bytes())
+ 		}
++		step.done(buf.Bytes(), err)
+ 		return buf.Bytes(), err
+ 	}
+ 
+@@ -726,10 +739,15 @@
+ 		ops := t.wantedAsmOpcodes(long)
+ 		self := runtime.GOOS + "/" + runtime.GOARCH
+ 		var lastErr error
+-		for _, env := range ops.Envs() {
++		envs := ops.Envs()
++		if len(envs) == 0 {
++			t.eventBypass("asmcheck", "upstream selected no assembly checks")
++		}
++		for _, env := range envs {
+ 			// Only run checks relevant to the current GOOS/GOARCH,
+ 			// to avoid triggering a cross-compile of the runtime.
+ 			if string(env) != self && !strings.HasPrefix(string(env), self+"/") && !*allCodegen {
++				t.eventBypass("asmcheck", "target environment "+string(env)+" is not host "+self)
+ 				continue
+ 			}
+ 			// -S=2 forces outermost line numbers when disassembling inlined code.
+@@ -762,12 +780,14 @@
+ 
+ 			var buf bytes.Buffer
+ 			cmd.Stdout, cmd.Stderr = &buf, &buf
+-			if err := cmd.Run(); err != nil {
++			step := t.planExec(cmd, 0, "compile", []string{long}, nil)
++			if err := step.run(&buf); err != nil {
+ 				lastErr = err
+ 				t.Log(env, "\n", cmd.Stderr)
+ 			}
+ 
+ 			err := t.asmCheck(buf.String(), long, env, ops[env])
++			t.eventAsmComparison(string(env), err)
+ 			if err != nil {
+ 				lastErr = err
+ 				t.Log(err)
+@@ -788,7 +808,7 @@
+ 		// No need to add -dynlink even if linkshared if we're just checking for errors...
+ 		cmdline = append(cmdline, flags...)
+ 		cmdline = append(cmdline, long)
+-		out, err := runcmd(cmdline...)
++		out, err := runcmd("compile", []string{long}, nil, cmdline...)
+ 		if wantError {
+ 			if err == nil {
+ 				return fmt.Errorf("compilation succeeded unexpectedly\n%s", out)
+@@ -815,6 +835,9 @@
+ 		// Compile all files in the directory as packages in lexicographic order.
+ 		longdir := filepath.Join(t.gorootTestDir, t.goDirName())
+ 		pkgs := goDirPackages(t.T, longdir, singlefilepkgs)
++		for _, pkg := range pkgs {
++			t.eventCompanions("package "+pkg.name, append([]string(nil), pkg.files...))
++		}
+ 		importcfgfile := importcfg(pkgs)
+ 
+ 		for _, pkg := range pkgs {
+@@ -832,6 +855,9 @@
+ 		// If errorcheckandrundir and wantError, compilation of the package prior the last must fail.
+ 		longdir := filepath.Join(t.gorootTestDir, t.goDirName())
+ 		pkgs := goDirPackages(t.T, longdir, singlefilepkgs)
++		for _, pkg := range pkgs {
++			t.eventCompanions("package "+pkg.name, append([]string(nil), pkg.files...))
++		}
+ 		errPkg := len(pkgs) - 1
+ 		if wantError && action == "errorcheckandrundir" {
+ 			// The last pkg should compiled successfully and will be run in next case.
+@@ -871,6 +897,9 @@
+ 		// Verify the expected output.
+ 		longdir := filepath.Join(t.gorootTestDir, t.goDirName())
+ 		pkgs := goDirPackages(t.T, longdir, singlefilepkgs)
++		for _, pkg := range pkgs {
++			t.eventCompanions("package "+pkg.name, append([]string(nil), pkg.files...))
++		}
+ 		// Split flags into gcflags and ldflags
+ 		ldflags := []string{}
+ 		for i, fl := range flags {
+@@ -900,7 +929,7 @@
+ 				cmd = append(cmd, findExecCmd()...)
+ 				cmd = append(cmd, filepath.Join(tempDir, "a.exe"))
+ 				cmd = append(cmd, args...)
+-				out, err := runcmd(cmd...)
++				out, err := runcmd("execute", nil, args, cmd...)
+ 				if err != nil {
+ 					return err
+ 				}
+@@ -920,6 +949,7 @@
+ 		// but still needs to be run to verify the expected output.
+ 		tempDirIsGOPATH = true
+ 		srcDir := filepath.Join(t.gorootTestDir, t.goDirName())
++		t.eventCompanions("overlay source directory", []string{srcDir})
+ 		modName := filepath.Base(srcDir)
+ 		gopathSrcDir := filepath.Join(tempDir, "src", modName)
+ 		runInDir = gopathSrcDir
+@@ -936,6 +966,7 @@
+ 		if err := os.WriteFile(filepath.Join(gopathSrcDir, "go.mod"), []byte(modFile), 0666); err != nil {
+ 			t.Fatal(err)
+ 		}
++		t.eventGenerated("module file", filepath.Join(gopathSrcDir, "go.mod"), len(modFile))
+ 
+ 		cmd := []string{goTool, "run", t.goGcflags()}
+ 		if *linkshared {
+@@ -943,7 +974,7 @@
+ 		}
+ 		cmd = append(cmd, flags...)
+ 		cmd = append(cmd, ".")
+-		out, err := runcmd(cmd...)
++		out, err := runcmd("execute", []string{"."}, nil, cmd...)
+ 		if err != nil {
+ 			return err
+ 		}
+@@ -954,7 +985,7 @@
+ 		cmd := []string{goTool, "build", t.goGcflags()}
+ 		cmd = append(cmd, flags...)
+ 		cmd = append(cmd, "-o", "a.exe", long)
+-		_, err := runcmd(cmd...)
++		_, err := runcmd("compile", []string{long}, nil, cmd...)
+ 		return err
+ 
+ 	case "builddir", "buildrundir":
+@@ -975,14 +1006,17 @@
+ 				asms = append(asms, filepath.Join(longdir, file.Name()))
+ 			}
+ 		}
++		t.eventCompanions("builddir go inputs", append([]string(nil), gos...))
++		t.eventCompanions("builddir assembly inputs", append([]string(nil), asms...))
+ 		if len(asms) > 0 {
+ 			emptyHdrFile := filepath.Join(tempDir, "go_asm.h")
+ 			if err := os.WriteFile(emptyHdrFile, nil, 0666); err != nil {
+ 				t.Fatalf("write empty go_asm.h: %v", err)
+ 			}
++			t.eventGenerated("assembly header", emptyHdrFile, 0)
+ 			cmd := []string{goTool, "tool", "asm", "-p=main", "-gensymabis", "-o", "symabis"}
+ 			cmd = append(cmd, asms...)
+-			_, err = runcmd(cmd...)
++			_, err = runcmd("generate", asms, nil, cmd...)
+ 			if err != nil {
+ 				return err
+ 			}
+@@ -993,7 +1027,7 @@
+ 			cmd = append(cmd, "-asmhdr", "go_asm.h", "-symabis", "symabis")
+ 		}
+ 		cmd = append(cmd, gos...)
+-		_, err = runcmd(cmd...)
++		_, err = runcmd("compile", gos, nil, cmd...)
+ 		if err != nil {
+ 			return err
+ 		}
+@@ -1001,7 +1035,7 @@
+ 		if len(asms) > 0 {
+ 			cmd = []string{goTool, "tool", "asm", "-p=main", "-e", "-I", ".", "-o", "asm.o"}
+ 			cmd = append(cmd, asms...)
+-			_, err = runcmd(cmd...)
++			_, err = runcmd("compile", asms, nil, cmd...)
+ 			if err != nil {
+ 				return err
+ 			}
+@@ -1009,7 +1043,7 @@
+ 		}
+ 		cmd = []string{goTool, "tool", "pack", "c", "all.a"}
+ 		cmd = append(cmd, objs...)
+-		_, err = runcmd(cmd...)
++		_, err = runcmd("link", objs, nil, cmd...)
+ 		if err != nil {
+ 			return err
+ 		}
+@@ -1022,7 +1056,7 @@
+ 			return nil
+ 		}
+ 		cmd = append(findExecCmd(), filepath.Join(tempDir, "a.exe"))
+-		out, err := runcmd(cmd...)
++		out, err := runcmd("execute", nil, nil, cmd...)
+ 		if err != nil {
+ 			return err
+ 		}
+@@ -1039,12 +1073,12 @@
+ 		longDirGoFile := filepath.Join(filepath.Join(t.gorootTestDir, t.dir), t.goFile)
+ 		cmd = append(cmd, flags...)
+ 		cmd = append(cmd, longDirGoFile)
+-		_, err := runcmd(cmd...)
++		_, err := runcmd("compile", []string{longDirGoFile}, nil, cmd...)
+ 		if err != nil {
+ 			return err
+ 		}
+ 		cmd = []string{"./a.exe"}
+-		out, err := runcmd(append(cmd, args...)...)
++		out, err := runcmd("execute", nil, args, append(cmd, args...)...)
+ 		if err != nil {
+ 			return err
+ 		}
+@@ -1067,14 +1101,14 @@
+ 			// Because we run lots of trivial test programs,
+ 			// the time adds up.
+ 			pkg := filepath.Join(tempDir, "pkg.a")
+-			if _, err := runcmd(goTool, "tool", "compile", "-p=main", "-importcfg="+stdlibImportcfgFile(), "-o", pkg, t.goFileName()); err != nil {
++			if _, err := runcmd("compile", []string{t.goFileName()}, nil, goTool, "tool", "compile", "-p=main", "-importcfg="+stdlibImportcfgFile(), "-o", pkg, t.goFileName()); err != nil {
+ 				return err
+ 			}
+ 			exe := filepath.Join(tempDir, "test.exe")
+ 			if err := linkFile(runcmd, exe, pkg, stdlibImportcfgFile(), nil); err != nil {
+ 				return err
+ 			}
+-			out, err = runcmd(append([]string{exe}, args...)...)
++			out, err = runcmd("execute", nil, args, append([]string{exe}, args...)...)
+ 		} else {
+ 			cmd := []string{goTool, "run", t.goGcflags()}
+ 			if *linkshared {
+@@ -1082,7 +1116,9 @@
+ 			}
+ 			cmd = append(cmd, flags...)
+ 			cmd = append(cmd, t.goFileName())
+-			out, err = runcmd(append(cmd, args...)...)
++			compileInputs, programArgv := goRunOperands(t.goFileName(), args)
++			t.eventCompanions("go run compile inputs", compileInputs[1:])
++			out, err = runcmd("execute", compileInputs, programArgv, append(cmd, args...)...)
+ 		}
+ 		if err != nil {
+ 			return err
+@@ -1102,7 +1138,8 @@
+ 			cmd = append(cmd, "-linkshared")
+ 		}
+ 		cmd = append(cmd, t.goFileName())
+-		out, err := runcmd(append(cmd, args...)...)
++		compileInputs, programArgv := goRunOperands(t.goFileName(), args)
++		out, err := runcmd("generate", compileInputs, programArgv, append(cmd, args...)...)
+ 		if err != nil {
+ 			return err
+ 		}
+@@ -1110,12 +1147,13 @@
+ 		if err := os.WriteFile(tfile, out, 0666); err != nil {
+ 			t.Fatalf("write tempfile: %v", err)
+ 		}
++		t.eventGenerated("runoutput source", tfile, len(out))
+ 		cmd = []string{goTool, "run", t.goGcflags()}
+ 		if *linkshared {
+ 			cmd = append(cmd, "-linkshared")
+ 		}
+ 		cmd = append(cmd, tfile)
+-		out, err = runcmd(cmd...)
++		out, err = runcmd("execute", []string{tfile}, nil, cmd...)
+ 		if err != nil {
+ 			return err
+ 		}
+@@ -1130,7 +1168,8 @@
+ 			cmd = append(cmd, "-linkshared")
+ 		}
+ 		cmd = append(cmd, t.goFileName())
+-		out, err := runcmd(append(cmd, args...)...)
++		compileInputs, programArgv := goRunOperands(t.goFileName(), args)
++		out, err := runcmd("generate", compileInputs, programArgv, append(cmd, args...)...)
+ 		if err != nil {
+ 			return err
+ 		}
+@@ -1139,10 +1178,11 @@
+ 		if err != nil {
+ 			t.Fatalf("write tempfile: %v", err)
+ 		}
++		t.eventGenerated("errorcheckoutput source", tfile, len(out))
+ 		cmdline := []string{goTool, "tool", "compile", "-importcfg=" + stdlibImportcfgFile(), "-p=p", "-d=panic", "-e", "-o", "a.o"}
+ 		cmdline = append(cmdline, flags...)
+ 		cmdline = append(cmdline, tfile)
+-		out, err = runcmd(cmdline...)
++		out, err = runcmd("compile", []string{tfile}, nil, cmdline...)
+ 		if wantError {
+ 			if err == nil {
+ 				return fmt.Errorf("compilation succeeded unexpectedly\n%s", out)
+@@ -1169,19 +1209,22 @@
+ // checkExpectedOutput compares the output from compiling and/or running with the contents
+ // of the corresponding reference output file, if any (replace ".go" with ".out").
+ // If they don't match, fail with an informative message.
+-func (t test) checkExpectedOutput(gotBytes []byte) error {
++func (t test) checkExpectedOutput(gotBytes []byte) (retErr error) {
+ 	got := string(gotBytes)
+ 	filename := filepath.Join(t.dir, t.goFile)
+ 	filename = filename[:len(filename)-len(".go")]
+ 	filename += ".out"
+ 	b, err := os.ReadFile(filepath.Join(t.gorootTestDir, filename))
++	present := true
+ 	if errors.Is(err, fs.ErrNotExist) {
+ 		// File is allowed to be missing, in which case output should be empty.
+ 		b = nil
++		present = false
+ 	} else if err != nil {
+ 		return err
+ 	}
+ 	got = strings.ReplaceAll(got, "\r\n", "\n")
++	defer func() { t.eventExpectedOutput(filename, present, b, []byte(got), retErr) }()
+ 	if got != string(b) {
+ 		if err == nil {
+ 			return fmt.Errorf("output does not match expected in %s. Instead saw\n%s", filename, got)
+@@ -1224,6 +1267,7 @@
+ // Sources files are supplied as fullshort slice.
+ // It consists of pairs: full path to source file and its base name.
+ func (t test) errorCheck(outStr string, wantAuto bool, fullshort ...string) (err error) {
++	defer func() { t.planErrorCheck(outStr, wantAuto, fullshort, err) }()
+ 	defer func() {
+ 		if testing.Verbose() && err != nil {
+ 			t.Logf("gc output:\n%s", outStr)
+@@ -1245,6 +1289,7 @@
+ 		full, short := fullshort[j], fullshort[j+1]
+ 		want = append(want, t.wantedErrors(full, short)...)
+ 	}
++	t.eventExpectedDiagnostics(want)
+ 
+ 	for _, we := range want {
+ 		var errmsgs []string
