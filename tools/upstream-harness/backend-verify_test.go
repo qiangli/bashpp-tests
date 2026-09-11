@@ -47,6 +47,113 @@ func TestVerifierAcceptsCompileProof(t *testing.T) {
 	}
 }
 
+func TestVerifierAcceptsBuildOnly(t *testing.T) {
+	for _, mode := range []string{"interpreted", "compiled"} {
+		t.Run(mode, func(t *testing.T) {
+			phase, backend, result := buildEvidence(mode, "fixedbugs/issue59404.go", []string{"-gcflags=-l=4"}, "")
+			status, err := verifyBuildEvidence(t, mode, "fixedbugs/issue59404.go", "pass", phase, backend, result)
+			if err != nil || status != "BUILD-ONLY-PASS" {
+				t.Fatalf("verifyRow = %q, %v", status, err)
+			}
+		})
+	}
+}
+
+func TestVerifierRequiresUpstreamRunenvGoexperiment(t *testing.T) {
+	phase, backend, result := buildEvidence("interpreted", "arenas/smoke.go", []string{}, "arenas")
+	if status, err := verifyBuildEvidence(t, "interpreted", "arenas/smoke.go", "pass", phase, backend, result); err != nil || status != "BUILD-ONLY-PASS" {
+		t.Fatalf("verifyRow = %q, %v", status, err)
+	}
+	phase.EnvDelta = []string{}
+	if _, err := verifyBuildEvidence(t, "interpreted", "arenas/smoke.go", "pass", phase, backend, result); err == nil || !strings.Contains(err.Error(), "GOEXPERIMENT") {
+		t.Fatalf("verifyRow error = %v, want missing runenv GOEXPERIMENT", err)
+	}
+}
+
+func TestVerifierRejectsRewrappedBuildFlags(t *testing.T) {
+	for _, wrapped := range [][]string{{"-gcflags=all=-l=4"}, {"-gcflags=-l=4 -N"}, {}} {
+		phase, backend, result := buildEvidence("compiled", "fixedbugs/issue59638.go", wrapped, "")
+		_, err := verifyBuildEvidence(t, "compiled", "fixedbugs/issue59638.go", "pass", phase, backend, result)
+		if err == nil || !strings.Contains(err.Error(), "exact upstream go-command flags") {
+			t.Fatalf("verifyRow(%v) error = %v, want verbatim flag mismatch", wrapped, err)
+		}
+	}
+}
+
+func TestVerifierRejectsBuildExecutePhaseOrArtifactRun(t *testing.T) {
+	phase, backend, result := buildEvidence("compiled", "fixedbugs/issue59404.go", []string{"-gcflags=-l=4"}, "")
+	execPhase := phase
+	execPhase.PhaseKind = "execute"
+	execPhase.Action = "build"
+	execBackend := backend
+	execBackend.Phase = "execute"
+	execResult := result
+	_, err := verifyBuildEvidence(t, "compiled", "fixedbugs/issue59404.go", "pass",
+		phase, backend, result, execPhase, execBackend, execResult)
+	if err == nil || !strings.Contains(err.Error(), "exactly one build phase") {
+		t.Fatalf("verifyRow error = %v, want single build-only phase", err)
+	}
+}
+
+func TestVerifierRejectsBuildArtifactOutsideUpstreamCwd(t *testing.T) {
+	phase, backend, result := buildEvidence("compiled", "fixedbugs/issue59404.go", []string{"-gcflags=-l=4"}, "")
+	backend.Artifacts = []string{backend.Artifacts[0], "/elsewhere/a.exe"}
+	_, err := verifyBuildEvidence(t, "compiled", "fixedbugs/issue59404.go", "pass", phase, backend, result)
+	if err == nil || !strings.Contains(err.Error(), "upstream working directory") {
+		t.Fatalf("verifyRow error = %v, want cwd artifact mismatch", err)
+	}
+}
+
+func TestVerifierRetainsBuildProductFailure(t *testing.T) {
+	phase, backend, result := buildEvidence("compiled", "arenas/smoke.go", []string{}, "arenas")
+	result.Exit = 1
+	result.ArtifactProof = []fileProof{{Path: backend.Artifacts[0], Exists: true, Bytes: 10, SHA256: strings.Repeat("a", 64)}, {Path: backend.Artifacts[1]}}
+	result.MapProof = []fileProof{{Path: backend.Maps[0], Exists: true, Bytes: 5, SHA256: strings.Repeat("c", 64)}}
+	status, err := verifyBuildEvidence(t, "compiled", "arenas/smoke.go", "fail", phase, backend, result)
+	if err != nil || status != "BUILD-PRODUCT-FAIL" {
+		t.Fatalf("verifyRow = %q, %v, want retained product failure", status, err)
+	}
+	result.Exit = 0
+	if _, err := verifyBuildEvidence(t, "compiled", "arenas/smoke.go", "fail", phase, backend, result); err == nil || !strings.Contains(err.Error(), "nonzero build phase exit") {
+		t.Fatalf("verifyRow error = %v, want recorded nonzero exit", err)
+	}
+}
+
+func buildEvidence(mode, test string, recipeFlags []string, goexperiment string) (eventRecord, eventRecord, eventRecord) {
+	cwd := "/tmp/testdir"
+	long := "/goroot/test/" + test
+	native := []string{"go", "build", "", "-o", "a.exe", long}
+	envDelta := []string{}
+	if goexperiment != "" {
+		envDelta = []string{"GOEXPERIMENT=" + goexperiment}
+	}
+	phase := eventRecord{Kind: "phase", Test: test, Action: "build", PhaseKind: "compile", CompileInputs: []string{long}, ProgramArgv: []string{}, RecipeFlags: recipeFlags, Argv: native, Cwd: cwd, EnvDelta: envDelta}
+	backend := eventRecord{Kind: "backend", Test: test, BackendSchema: backendSchema, Mode: mode, Tool: toolIdentity{Path: "/bin/bashy", Version: "test"}, Action: phase.Action, Phase: phase.PhaseKind, CompileInputs: phase.CompileInputs, ProgramArgv: phase.ProgramArgv, RecipeFlags: phase.RecipeFlags, NativeArgv: native, Disposition: "check-only", Deviations: []string{"structured evidence"}}
+	result := eventRecord{Kind: "phase_result", Test: test, Exit: 0}
+	if mode == "compiled" {
+		backend.Disposition = "transpile-build-only"
+		backend.Artifacts = []string{"/tmp/module/main.go", cwd + "/a.exe"}
+		backend.Maps = []string{"/tmp/module/main.go.map"}
+		result.ArtifactProof = []fileProof{{Path: backend.Artifacts[0], Exists: true, Bytes: 10, SHA256: strings.Repeat("a", 64)}, {Path: backend.Artifacts[1], Exists: true, Bytes: 20, SHA256: strings.Repeat("b", 64)}}
+		result.MapProof = []fileProof{{Path: backend.Maps[0], Exists: true, Bytes: 5, SHA256: strings.Repeat("c", 64)}}
+	}
+	return phase, backend, result
+}
+
+func verifyBuildEvidence(t *testing.T, mode, test, goAction string, records ...eventRecord) (string, error) {
+	t.Helper()
+	dir := t.TempDir()
+	base := filepath.Join(dir, strings.NewReplacer("/", "_", ".", "_").Replace(test))
+	writeJSONLines(t, base+".go-test.json", goRecord{Action: goAction, Test: "Test/" + test})
+	items := make([]any, 0, len(records)+1)
+	for _, record := range records {
+		items = append(items, record)
+	}
+	items = append(items, eventRecord{Kind: "terminal", Test: test, Failed: goAction == "fail"})
+	writeJSONLines(t, base+".events.jsonl", items...)
+	return verifyRow(matrixRow{Test: test, Action: "build"}, dir, mode, "test", "/bin/bashy")
+}
+
 func compileEvidence(mode string) (eventRecord, eventRecord, eventRecord) {
 	native := []string{"go", "tool", "compile", "-N", "bug020.go"}
 	phase := eventRecord{Kind: "phase", Test: "fixedbugs/bug020.go", Action: "compile", PhaseKind: "compile", CompileInputs: []string{"bug020.go"}, ProgramArgv: []string{}, RecipeFlags: []string{"-N"}, Argv: native}

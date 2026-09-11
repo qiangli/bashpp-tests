@@ -22,10 +22,20 @@ backend phase. A minimal shell coordinator keeps check/run and
 transpile/build/run inside the upstream command timeout boundary; it receives
 only those direct-source commands, never the upstream native argv. A phase
 without Go source inputs, a non-Go input, or a recipe phase without direct
-run-program meaning fails explicitly as unsupported. Sprint 149 adds one
-narrow exception: an upstream `compile` action's `compile` phase runs Bash++
+run-program meaning fails explicitly as unsupported. Sprint 149 adds two
+narrow exceptions: an upstream `compile` action's `compile` phase runs Bash++
 check-only in interpreted mode, or transpile-with-map then pinned-Go build-only
-in compiled mode. It never executes the generated program.
+in compiled mode. It never executes the generated program. Story S149.6 extends
+the same seam to the upstream `build` action's single compile/build-only phase:
+one selected root, an empty program argv, and the exact upstream flags and
+environment. Interpreted mode is Bash++ direct `--check` only and explicitly
+records that the check interface has no compiler or artifact semantics.
+Compiled mode transpiles with `--map` and runs one pinned Go 1.27 `go build` of
+the generated module with the upstream go-command recipe flags passed verbatim
+(for example the exact `-gcflags=-l=4`; never rewrapped as compile-tool flags
+and never `all=`), writing the artifact to the upstream working directory as
+`a.exe`. The upstream-selected runenv owns `GOEXPERIMENT` and is preserved
+unchanged. The artifact is never executed.
 
 The backend records one small JSON event for each observed upstream phase. The
 event repeats the mode, structured action and recipe flags, source/argument
@@ -58,7 +68,16 @@ plan reaches the seam.
 
 `tools/upstream-harness/backend-gate.sh` first runs the S157.1 native-equivalence
 gate, authenticates every source and patch, and then exercises all nine matrix
-rows in each backend mode. It requires a non-POSIX startup environment because
+rows in each backend mode. `tools/upstream-harness/build-gate.sh` (S149.6)
+authenticates the packet-149.6 manifest root list
+(`docs/upstream-harness/build-matrix.tsv`, four `build` roots) and replays those
+exact roots through the same seam in both modes. `backend-verify.go` asserts for
+each build root the exact verbatim go-command flags, the upstream-runenv
+`GOEXPERIMENT`, the single-root/empty-argv boundary, the absence of any execute
+phase or artifact execution, the cwd `a.exe` artifact with generated/map/artifact
+proofs in compiled mode, and the actual upstream terminal. A retained Bash++
+product failure keeps the packet honestly non-green (verifier exit 3, gate exit
+3) without reclassification. It requires a non-POSIX startup environment because
 the direct Go-source interface intentionally refuses POSIX mode; the environment
 received at the seam is otherwise preserved.
 

@@ -1,0 +1,9 @@
+# Sprint: #149; Story: S149.6; Story-ID: 158811e6b5b6
+# Authenticated 149.6 `build` packet (manifest sprint142-leaf-packet-manifest/v4
+# packet-149.6.json sha256 bbddc30d7b8a9edfd6f21c117347fcb55c011a232f0c0539ff72a5bf8417c0cf,
+# count 4, root list sha256 7f49cecca4579533277c6d87cdc422aa88df330313faa5ef5b35eea422984ca7).
+# capability	test	action	sha256	selected_companions (path=sha256, comma-separated; - means none)
+build-goexperiment-regabi	abi/bad_select_crash.go	build	b173fdaa1c3d41021738250febd4de5c8fc41ffe941290e20de82773c99977eb	-
+build-goexperiment-arenas	arenas/smoke.go	build	d5581982f30fe5d277b22031020553415b80e27b618e83427213b7d9305b82ed	-
+build-gcflags-verbatim-59404	fixedbugs/issue59404.go	build	dea375c092e4f133fe965a4883bba63c473923746e67cf733c9e50caed328d7b	-
+build-gcflags-verbatim-59638	fixedbugs/issue59638.go	build	3fe8c6f3c67c429484c727ecc702eb31326c49138af5e7c9253908fc4a86ab67	-

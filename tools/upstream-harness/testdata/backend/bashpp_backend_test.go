@@ -103,7 +103,8 @@ func (t test) backendPlan(step *planStep, action, phase string, compileInputs, p
 		}
 	}
 	compileOnly := action == "compile" && phase == "compile"
-	if phase != "execute" && !compileOnly {
+	buildOnly := action == "build" && phase == "compile"
+	if phase != "execute" && !compileOnly && !buildOnly {
 		step.backendErr = fmt.Errorf("Bash++ backend unsupported source phase %q", phase)
 		t.backendEvent(mode, action, phase, "unsupported", compileInputs, programArgv, recipeFlags, nativeArgv, nil, nil,
 			append(deviations, "only upstream execute phases and action=compile phase=compile have a direct Bash++ meaning"))
@@ -119,12 +120,17 @@ func (t test) backendPlan(step *planStep, action, phase string, compileInputs, p
 	switch mode {
 	case "interpreted":
 		checkArgs := append([]string{"--bashpp", "--source=go", "--check"}, fileArgs...)
-		if compileOnly {
+		if compileOnly || buildOnly {
 			*step.cmd = *directSourceCommand(step.cmd, tool, checkArgs...)
-			t.backendEvent(mode, action, phase, "check-only", compileInputs, programArgv, recipeFlags, nativeArgv, nil, nil,
-				append(deviations,
-					"the Bash++ check interface does not accept compiler recipe flags; they remain explicit evidence",
-					"compile-only phase stops after Bash++ check; no init or main is executed"))
+			checkDeviations := append(append([]string(nil), deviations...),
+				"the Bash++ check interface does not accept compiler recipe flags; they remain explicit evidence",
+				"compile-only phase stops after Bash++ check; no init or main is executed")
+			if buildOnly {
+				checkDeviations = append(append([]string(nil), deviations...),
+					"the Bash++ check interface has no compiler or artifact semantics; upstream go-command recipe flags and the cwd a.exe artifact remain explicit evidence only",
+					"build-only phase stops after Bash++ check; no artifact is produced and no init or main is executed")
+			}
+			t.backendEvent(mode, action, phase, "check-only", compileInputs, programArgv, recipeFlags, nativeArgv, nil, nil, checkDeviations)
 			return
 		}
 		runArgs := append([]string{"--bashpp", "--source=go"}, fileArgs...)
@@ -154,6 +160,26 @@ func (t test) backendPlan(step *planStep, action, phase string, compileInputs, p
 		if err := os.WriteFile(filepath.Join(moduleDir, "go.mod"), []byte(module), 0o600); err != nil {
 			step.backendErr = fmt.Errorf("write Bash++ backend module: %w", err)
 			t.backendEvent(mode, action, phase, "module-failed", compileInputs, programArgv, recipeFlags, nativeArgv, nil, nil, deviations)
+			return
+		}
+		if buildOnly {
+			sourceMap := filepath.Join(moduleDir, "main.go.map")
+			transpileArgs = append(transpileArgs, "--map", sourceMap)
+			built := filepath.Join(step.cmd.Dir, "a.exe")
+			buildArgs := []string{goTool, "build", "-C", moduleDir}
+			buildArgs = append(buildArgs, recipeFlags...)
+			buildArgs = append(buildArgs, "-o", built, ".")
+			*step.cmd = *shellCommand(step.cmd,
+				append([]string{tool}, transpileArgs...),
+				buildArgs)
+			step.artifacts = []string{generated, built}
+			step.maps = []string{sourceMap}
+			t.backendEvent(mode, action, phase, "transpile-build-only", compileInputs, programArgv, recipeFlags, nativeArgv,
+				step.artifacts, step.maps,
+				append(deviations,
+					"upstream go-command recipe flags are passed verbatim to the pinned Go build of the generated module; they are never rewrapped as compile-tool or all= flags",
+					"the upstream-selected environment, including any runenv GOEXPERIMENT, is preserved unchanged",
+					"the a.exe artifact is written to the upstream working directory and is never executed"))
 			return
 		}
 		if compileOnly {

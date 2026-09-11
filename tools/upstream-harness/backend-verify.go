@@ -52,6 +52,8 @@ type eventRecord struct {
 	MapProof      []fileProof  `json:"map_proof"`
 	PhaseKind     string       `json:"phase_kind"`
 	Phase         string       `json:"phase"`
+	Cwd           string       `json:"cwd"`
+	EnvDelta      []string     `json:"env_delta"`
 	Disposition   string       `json:"disposition"`
 	Deviations    []string     `json:"deviations"`
 	Tool          toolIdentity `json:"tool"`
@@ -92,6 +94,7 @@ func main() {
 		fatal(err)
 	}
 	bad := false
+	product := false
 	for _, row := range rows {
 		status, err := verifyRow(row, *dir, *mode, *version, *tool)
 		if err != nil {
@@ -99,10 +102,17 @@ func main() {
 			fmt.Printf("FAIL %-34s %-30s %v\n", row.Capability, row.Test, err)
 			continue
 		}
+		if status == "BUILD-PRODUCT-FAIL" {
+			product = true
+		}
 		fmt.Printf("%-18s %-34s %s\n", status, row.Capability, row.Test)
 	}
 	if bad {
 		os.Exit(1)
+	}
+	if product {
+		fmt.Println("NON-GREEN: honest Bash++ product failures are retained in this packet")
+		os.Exit(3)
 	}
 }
 
@@ -158,6 +168,10 @@ func verifyRow(row matrixRow, dir, mode, version, tool string) (string, error) {
 		if len(backend.Deviations) == 0 {
 			return "", fmt.Errorf("backend deviations are not explicit")
 		}
+	}
+
+	if row.Action == "build" {
+		return verifyBuildRow(row, ev, mode, goAction)
 	}
 
 	switch row.Test {
@@ -223,6 +237,84 @@ func verifyRow(row matrixRow, dir, mode, version, tool string) (string, error) {
 		return "", fmt.Errorf("non-run recipe was not an explicit honest failure: action=%s dispositions=%v", goAction, dispositions(ev.Backends))
 	}
 	return "UNSUPPORTED", nil
+}
+
+// buildRoots is the authenticated Sprint 149.6 packet: the exact upstream
+// go-command recipe flags each build root must carry verbatim, and the
+// GOEXPERIMENT value owned by the upstream-selected runenv.
+var buildRoots = map[string]struct {
+	RecipeFlags  []string
+	GoExperiment string
+}{
+	"abi/bad_select_crash.go": {RecipeFlags: []string{}, GoExperiment: "regabi,regabiargs"},
+	"arenas/smoke.go":         {RecipeFlags: []string{}, GoExperiment: "arenas"},
+	"fixedbugs/issue59404.go": {RecipeFlags: []string{"-gcflags=-l=4"}},
+	"fixedbugs/issue59638.go": {RecipeFlags: []string{"-gcflags=-l=4"}},
+}
+
+func verifyBuildRow(row matrixRow, ev evidence, mode, goAction string) (string, error) {
+	want, ok := buildRoots[row.Test]
+	if !ok {
+		return "", fmt.Errorf("build root %q is not in the authenticated 149.6 packet", row.Test)
+	}
+	if goAction == "skip" {
+		return "", fmt.Errorf("upstream unexpectedly skipped an authenticated build root")
+	}
+	if len(ev.Phases) != 1 || len(ev.Backends) != 1 || len(ev.Results) != 1 {
+		return "", fmt.Errorf("wanted exactly one build phase/backend/result, got %d/%d/%d", len(ev.Phases), len(ev.Backends), len(ev.Results))
+	}
+	phase, backend, result := ev.Phases[0], ev.Backends[0], ev.Results[0]
+	if backend.Action != "build" || backend.Phase != "compile" || phase.PhaseKind == "execute" {
+		return "", fmt.Errorf("build root did not stay a compile/build-only phase: action=%s phase=%s", backend.Action, backend.Phase)
+	}
+	if len(backend.CompileInputs) != 1 || !strings.HasSuffix(backend.CompileInputs[0], "/"+row.Test) {
+		return "", fmt.Errorf("build phase must select exactly the one upstream root, got %v", backend.CompileInputs)
+	}
+	if len(backend.ProgramArgv) != 0 {
+		return "", fmt.Errorf("build phase must carry an empty program argv, got %v", backend.ProgramArgv)
+	}
+	if !reflect.DeepEqual(backend.RecipeFlags, want.RecipeFlags) {
+		return "", fmt.Errorf("recipe flags are not the exact upstream go-command flags: got %v, want %v", backend.RecipeFlags, want.RecipeFlags)
+	}
+	goexp := ""
+	for _, entry := range phase.EnvDelta {
+		if value, found := strings.CutPrefix(entry, "GOEXPERIMENT="); found {
+			goexp = value
+		}
+	}
+	if goexp != want.GoExperiment {
+		return "", fmt.Errorf("upstream runenv GOEXPERIMENT = %q, want %q", goexp, want.GoExperiment)
+	}
+	switch mode {
+	case "interpreted":
+		if backend.Disposition != "check-only" || len(backend.Artifacts) != 0 || len(backend.Maps) != 0 ||
+			len(result.ArtifactProof) != 0 || len(result.MapProof) != 0 {
+			return "", fmt.Errorf("interpreted build phase must be check-only with no artifact or compiler semantics")
+		}
+	case "compiled":
+		if backend.Disposition != "transpile-build-only" || len(backend.Artifacts) != 2 || len(backend.Maps) != 1 {
+			return "", fmt.Errorf("compiled build phase must transpile with a map and build only")
+		}
+		built := backend.Artifacts[1]
+		if filepath.Base(built) != "a.exe" || phase.Cwd == "" || filepath.Dir(built) != phase.Cwd {
+			return "", fmt.Errorf("build artifact %q is not a.exe in the upstream working directory %q", built, phase.Cwd)
+		}
+	default:
+		return "", fmt.Errorf("unknown backend mode %q", mode)
+	}
+	if goAction == "pass" {
+		if result.Exit != 0 {
+			return "", fmt.Errorf("upstream pass with nonzero build phase exit %d", result.Exit)
+		}
+		if mode == "compiled" && (!validProofs(backend.Artifacts, result.ArtifactProof) || !validProofs(backend.Maps, result.MapProof)) {
+			return "", fmt.Errorf("compiled build pass lacks generated/map/artifact existence and hash proof")
+		}
+		return "BUILD-ONLY-PASS", nil
+	}
+	if result.Exit == 0 {
+		return "", fmt.Errorf("upstream failure without a recorded nonzero build phase exit")
+	}
+	return "BUILD-PRODUCT-FAIL", nil
 }
 
 func validProofs(paths []string, proofs []fileProof) bool {
