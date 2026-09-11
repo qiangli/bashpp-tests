@@ -1,0 +1,10 @@
+--- a/src/cmd/internal/testdir/testdir_test.go
++++ b/src/cmd/internal/testdir/testdir_test.go
+@@ -677 +677,3 @@
+-		if tim != 0 {
++		if step.backendErr != nil {
++			err = step.backendErr
++		} else if tim != 0 {
+@@ -1101 +1103 @@
+-		if len(flags)+len(args) == 0 && t.goGcflagsIsEmpty() && !*linkshared && goarch == runtime.GOARCH && goos == runtime.GOOS && goexp == goExperiment && godebug == goDebug {
++		if os.Getenv("BASHPP_TESTDIR_BACKEND") == "" && len(flags)+len(args) == 0 && t.goGcflagsIsEmpty() && !*linkshared && goarch == runtime.GOARCH && goos == runtime.GOOS && goexp == goExperiment && godebug == goDebug {
