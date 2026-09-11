@@ -1,0 +1,7 @@
+# Sprint: #149; Story: S149.7; Story-ID: b2d0f7a5503d
+# Authenticated 149.7 `builddir` packet (manifest sprint142-leaf-packet-manifest/v4
+# packet-149.7.json sha256 87d03b0c95b1c3319f1ab595738a750e3739d2ef69c2b49932f5b41ffb92afe3,
+# count 2, root list sha256 1263c632d9880d023c52cf54bda8d02d45ac27dcefa02a9681d36892e3afcd95).
+# capability	test	action	sha256	selected_companions (path=sha256, comma-separated; - means none)
+builddir-issue22877	fixedbugs/issue22877.go	builddir	9fbbca75ff102588cd788911355502758bb17da7f582f9f9afdff5e6468a49b0	fixedbugs/issue22877.dir/p.go=daf972a3a37373eed2b3fd12fd86039493a248ee51693ad15d374b658ebff064,fixedbugs/issue22877.dir/p.s=1930c0cabecdaa881789f10793bdc284d2f91b54eb562ce08b858504b4312feb
+builddir-issue47317	fixedbugs/issue47317.go	builddir	ea6e83a66ccd54791e4be85da2b6943dc6a5dc7180f22a3efbac86233c84f385	fixedbugs/issue47317.dir/a.s=3c60768df54aa03d516ffd83ad11b4d38649c06a3d739622992ac99155b0989c,fixedbugs/issue47317.dir/x.go=55c7e02f9940042c54ee54bcfdf088f43f35d7afb71611ea616fbbf3c85361e0

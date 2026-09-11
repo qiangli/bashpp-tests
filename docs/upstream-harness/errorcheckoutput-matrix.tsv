@@ -1,0 +1,9 @@
+# Sprint: #149; Story: S149.8; Story-ID: 84295fc6a058
+# Authenticated 149.8 `errorcheckoutput` packet (manifest sprint142-leaf-packet-manifest/v4
+# packet-149.8.json sha256 82e8651253bc39f7a5a22d05ee82c07985b532bf231ba3e0bd20dfb1455c9c15,
+# count 4, root list sha256 673580237c73a7af81dc481cda0f29b41959fd775760f4d7e12dcf9ca263a0d3).
+# capability	test	action	sha256	selected_companions (path=sha256, comma-separated; - means none)
+errorcheckoutput-issue4909b	fixedbugs/issue4909b.go	errorcheckoutput	8dc892aedae720596051be0b2ebdac1d0eeb4ec364cd43e8761d7cafd85e6a64	-
+errorcheckoutput-index1	index1.go	errorcheckoutput	bb38ec31eabd5f8e330daa8ca9d50170fdd98756f2372e45817f4a13d92967ef	-
+errorcheckoutput-index2	index2.go	errorcheckoutput	1634afdb8ef44027aebec57098ed9dfce114da2803911d457e97af0c42884d53	-
+errorcheckoutput-nul1	nul1.go	errorcheckoutput	5a7f5ef0affabed4c8b39ed0ecf99789b7f7816c47a49495473af87e81be20ee	-

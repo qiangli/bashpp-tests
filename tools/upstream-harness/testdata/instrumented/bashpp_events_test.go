@@ -140,7 +140,15 @@ type planStep struct {
 	maps      []string
 }
 
-func (t test) planExec(cmd *exec.Cmd, timeoutSeconds int, action, phase string, compileInputs, programArgv, recipeFlags []string) *planStep {
+// packageIdentity is the upstream compiler's own naming of a directory
+// package: the -D relative-import base and the -p import path it chose.
+// Only compileInDir supplies one; every other site passes nil.
+type packageIdentity struct {
+	Base string
+	Path string
+}
+
+func (t test) planExec(cmd *exec.Cmd, timeoutSeconds int, action, phase string, pkg *packageIdentity, compileInputs, programArgv, recipeFlags []string) *planStep {
 	// Every value here is passed by the exact action-switch/helper call site.
 	// This hook never parses argv or probes the filesystem.
 	fields := map[string]any{
@@ -153,6 +161,9 @@ func (t test) planExec(cmd *exec.Cmd, timeoutSeconds int, action, phase string, 
 		"cwd":             cmd.Dir,
 		"env_delta":       commandEnvDelta(cmd.Env),
 		"timeout_seconds": timeoutSeconds,
+	}
+	if pkg != nil {
+		fields["package"] = map[string]string{"base": pkg.Base, "path": pkg.Path}
 	}
 	events.emit(t.eventName(), "phase", fields)
 	return &planStep{test: t.eventName(), cmd: cmd}

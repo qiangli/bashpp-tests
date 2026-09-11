@@ -1,10 +1,22 @@
 --- a/src/cmd/internal/testdir/testdir_test.go
 +++ b/src/cmd/internal/testdir/testdir_test.go
-@@ -677 +677,3 @@
+@@ -675,7 +675,9 @@
+ 
+ 		var err error
+ 
 -		if tim != 0 {
 +		if step.backendErr != nil {
 +			err = step.backendErr
 +		} else if tim != 0 {
-@@ -1101 +1103 @@
+ 			err = cmd.Start()
+ 			// This command-timeout code adapted from cmd/go/test.go
+ 			// Note: the Go command uses a more sophisticated timeout
+@@ -1092,7 +1094,7 @@
+ 		runInDir = ""
+ 		var out []byte
+ 		var err error
 -		if len(flags)+len(args) == 0 && t.goGcflagsIsEmpty() && !*linkshared && goarch == runtime.GOARCH && goos == runtime.GOOS && goexp == goExperiment && godebug == goDebug {
 +		if os.Getenv("BASHPP_TESTDIR_BACKEND") == "" && len(flags)+len(args) == 0 && t.goGcflagsIsEmpty() && !*linkshared && goarch == runtime.GOARCH && goos == runtime.GOOS && goexp == goExperiment && godebug == goDebug {
+ 			// If we're not using special go command flags,
+ 			// skip all the go command machinery.
+ 			// This avoids any time the go command would

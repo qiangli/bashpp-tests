@@ -1,0 +1,15 @@
+--- a/src/go/types/check_test.go
++++ b/src/go/types/check_test.go
+@@ -204,7 +204,11 @@
+ 	}
+ 
+ 	// typecheck
+-	conf.Check(pkgName, fset, files, &info)
++	if bashppTypesBackend() {
++		errlist = bashppTypesCheck(t, filenames, srcs, conf.GoVersion, conf.FakeImportC, goexperiment)
++	} else {
++		conf.Check(pkgName, fset, files, &info)
++	}
+ 	if listErrors {
+ 		return
+ 	}

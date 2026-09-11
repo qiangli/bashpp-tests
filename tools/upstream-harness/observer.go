@@ -126,6 +126,8 @@ func observeCase(name, wantTest, mode, version, toolPath string) (observedCase, 
 	var backend, comparison, result, terminal []observerRecord
 	lastOrder := -1
 	s := bufio.NewScanner(f)
+	// A generated program or a long diagnostic can exceed the default token size.
+	s.Buffer(make([]byte, 1<<20), 1<<28)
 	for s.Scan() {
 		var record observerRecord
 		if err := json.Unmarshal(s.Bytes(), &record); err != nil {
@@ -184,6 +186,8 @@ func readObserverPins(name string) (map[string]string, error) {
 	defer f.Close()
 	pins := make(map[string]string)
 	s := bufio.NewScanner(f)
+	// A generated program or a long diagnostic can exceed the default token size.
+	s.Buffer(make([]byte, 1<<20), 1<<28)
 	for s.Scan() {
 		if s.Text() == "" || strings.HasPrefix(s.Text(), "#") {
 			continue

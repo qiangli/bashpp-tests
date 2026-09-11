@@ -16,7 +16,7 @@
  }
  
 -type runCmd func(...string) ([]byte, error)
-+type runCmd func(phase string, compileInputs, programArgv, recipeFlags []string, argv ...string) ([]byte, error)
++type runCmd func(pkg *packageIdentity, phase string, compileInputs, programArgv, recipeFlags []string, argv ...string) ([]byte, error)
  
  func compileFile(runcmd runCmd, longname string, flags []string) (out []byte, err error) {
  	cmd := []string{goTool, "tool", "compile", "-e", "-p=p", "-importcfg=" + stdlibImportcfgFile()}
@@ -25,7 +25,7 @@
  	}
  	cmd = append(cmd, longname)
 -	return runcmd(cmd...)
-+	return runcmd("compile", []string{longname}, nil, flags, cmd...)
++	return runcmd(nil, "compile", []string{longname}, nil, flags, cmd...)
  }
  
  func compileInDir(runcmd runCmd, dir string, flags []string, importcfg string, pkgname string, names ...string) (out []byte, err error) {
@@ -38,7 +38,7 @@
 +	for _, name := range names {
 +		inputs = append(inputs, filepath.Join(dir, name))
 +	}
-+	return runcmd("compile", inputs, nil, flags, cmd...)
++	return runcmd(&packageIdentity{Base: "test", Path: pkgname}, "compile", inputs, nil, flags, cmd...)
  }
  
  var stdlibImportcfg = sync.OnceValue(func() string {
@@ -47,7 +47,7 @@
  	}
  	cmd = append(cmd, infile)
 -	_, err = runcmd(cmd...)
-+	_, err = runcmd("link", []string{infile}, nil, ldflags, cmd...)
++	_, err = runcmd(nil, "link", []string{infile}, nil, ldflags, cmd...)
  	return
  }
  
@@ -88,7 +88,7 @@
  	)
 -	runcmd := func(args ...string) ([]byte, error) {
 -		cmd := exec.Command(args[0], args[1:]...)
-+	runcmd := func(phase string, compileInputs, programArgv, recipeFlags []string, argv ...string) ([]byte, error) {
++	runcmd := func(pkg *packageIdentity, phase string, compileInputs, programArgv, recipeFlags []string, argv ...string) ([]byte, error) {
 +		cmd := exec.Command(argv[0], argv[1:]...)
  		var buf bytes.Buffer
  		cmd.Stdout = &buf
@@ -97,7 +97,7 @@
  		}
  		cmd.Env = append(cmd.Env, "STDLIB_IMPORTCFG="+stdlibImportcfgFile())
  		cmd.Env = append(cmd.Env, runenv...)
-+		step := t.planExec(cmd, tim, action, phase, compileInputs, programArgv, recipeFlags)
++		step := t.planExec(cmd, tim, action, phase, pkg, compileInputs, programArgv, recipeFlags)
  
  		var err error
  
@@ -131,7 +131,7 @@
  			var buf bytes.Buffer
  			cmd.Stdout, cmd.Stderr = &buf, &buf
 -			if err := cmd.Run(); err != nil {
-+			step := t.planExec(cmd, 0, action, "compile", []string{long}, nil, flags)
++			step := t.planExec(cmd, 0, action, "compile", nil, []string{long}, nil, flags)
 +			if err := step.run(&buf); err != nil {
  				lastErr = err
  				t.Log(env, "\n", cmd.Stderr)
@@ -147,7 +147,7 @@
  		cmdline = append(cmdline, flags...)
  		cmdline = append(cmdline, long)
 -		out, err := runcmd(cmdline...)
-+		out, err := runcmd("compile", []string{long}, nil, flags, cmdline...)
++		out, err := runcmd(nil, "compile", []string{long}, nil, flags, cmdline...)
  		if wantError {
  			if err == nil {
  				return fmt.Errorf("compilation succeeded unexpectedly\n%s", out)
@@ -186,7 +186,7 @@
  				cmd = append(cmd, filepath.Join(tempDir, "a.exe"))
  				cmd = append(cmd, args...)
 -				out, err := runcmd(cmd...)
-+				out, err := runcmd("execute", nil, args, nil, cmd...)
++				out, err := runcmd(nil, "execute", nil, args, nil, cmd...)
  				if err != nil {
  					return err
  				}
@@ -211,7 +211,7 @@
  		cmd = append(cmd, flags...)
  		cmd = append(cmd, ".")
 -		out, err := runcmd(cmd...)
-+		out, err := runcmd("execute", []string{"."}, nil, flags, cmd...)
++		out, err := runcmd(nil, "execute", []string{"."}, nil, flags, cmd...)
  		if err != nil {
  			return err
  		}
@@ -220,7 +220,7 @@
  		cmd = append(cmd, flags...)
  		cmd = append(cmd, "-o", "a.exe", long)
 -		_, err := runcmd(cmd...)
-+		_, err := runcmd("compile", []string{long}, nil, flags, cmd...)
++		_, err := runcmd(nil, "compile", []string{long}, nil, flags, cmd...)
  		return err
  
  	case "builddir", "buildrundir":
@@ -239,7 +239,7 @@
  			cmd := []string{goTool, "tool", "asm", "-p=main", "-gensymabis", "-o", "symabis"}
  			cmd = append(cmd, asms...)
 -			_, err = runcmd(cmd...)
-+			_, err = runcmd("generate", asms, nil, nil, cmd...)
++			_, err = runcmd(nil, "generate", asms, nil, nil, cmd...)
  			if err != nil {
  				return err
  			}
@@ -248,7 +248,7 @@
  		}
  		cmd = append(cmd, gos...)
 -		_, err = runcmd(cmd...)
-+		_, err = runcmd("compile", gos, nil, nil, cmd...)
++		_, err = runcmd(nil, "compile", gos, nil, nil, cmd...)
  		if err != nil {
  			return err
  		}
@@ -257,7 +257,7 @@
  			cmd = []string{goTool, "tool", "asm", "-p=main", "-e", "-I", ".", "-o", "asm.o"}
  			cmd = append(cmd, asms...)
 -			_, err = runcmd(cmd...)
-+			_, err = runcmd("compile", asms, nil, nil, cmd...)
++			_, err = runcmd(nil, "compile", asms, nil, nil, cmd...)
  			if err != nil {
  				return err
  			}
@@ -266,7 +266,7 @@
  		cmd = []string{goTool, "tool", "pack", "c", "all.a"}
  		cmd = append(cmd, objs...)
 -		_, err = runcmd(cmd...)
-+		_, err = runcmd("link", objs, nil, nil, cmd...)
++		_, err = runcmd(nil, "link", objs, nil, nil, cmd...)
  		if err != nil {
  			return err
  		}
@@ -275,7 +275,7 @@
  		}
  		cmd = append(findExecCmd(), filepath.Join(tempDir, "a.exe"))
 -		out, err := runcmd(cmd...)
-+		out, err := runcmd("execute", nil, nil, nil, cmd...)
++		out, err := runcmd(nil, "execute", nil, nil, nil, cmd...)
  		if err != nil {
  			return err
  		}
@@ -284,13 +284,13 @@
  		cmd = append(cmd, flags...)
  		cmd = append(cmd, longDirGoFile)
 -		_, err := runcmd(cmd...)
-+		_, err := runcmd("compile", []string{longDirGoFile}, nil, flags, cmd...)
++		_, err := runcmd(nil, "compile", []string{longDirGoFile}, nil, flags, cmd...)
  		if err != nil {
  			return err
  		}
  		cmd = []string{"./a.exe"}
 -		out, err := runcmd(append(cmd, args...)...)
-+		out, err := runcmd("execute", nil, args, nil, append(cmd, args...)...)
++		out, err := runcmd(nil, "execute", nil, args, nil, append(cmd, args...)...)
  		if err != nil {
  			return err
  		}
@@ -299,7 +299,7 @@
  			// the time adds up.
  			pkg := filepath.Join(tempDir, "pkg.a")
 -			if _, err := runcmd(goTool, "tool", "compile", "-p=main", "-importcfg="+stdlibImportcfgFile(), "-o", pkg, t.goFileName()); err != nil {
-+			if _, err := runcmd("compile", []string{t.goFileName()}, nil, nil, goTool, "tool", "compile", "-p=main", "-importcfg="+stdlibImportcfgFile(), "-o", pkg, t.goFileName()); err != nil {
++			if _, err := runcmd(nil, "compile", []string{t.goFileName()}, nil, nil, goTool, "tool", "compile", "-p=main", "-importcfg="+stdlibImportcfgFile(), "-o", pkg, t.goFileName()); err != nil {
  				return err
  			}
  			exe := filepath.Join(tempDir, "test.exe")
@@ -307,7 +307,7 @@
  				return err
  			}
 -			out, err = runcmd(append([]string{exe}, args...)...)
-+			out, err = runcmd("execute", nil, args, nil, append([]string{exe}, args...)...)
++			out, err = runcmd(nil, "execute", nil, args, nil, append([]string{exe}, args...)...)
  		} else {
  			cmd := []string{goTool, "run", t.goGcflags()}
  			if *linkshared {
@@ -318,7 +318,7 @@
 -			out, err = runcmd(append(cmd, args...)...)
 +			compileInputs, programArgv := goRunOperands(t.goFileName(), args)
 +			t.eventCompanions("go run compile inputs", compileInputs[1:])
-+			out, err = runcmd("execute", compileInputs, programArgv, flags, append(cmd, args...)...)
++			out, err = runcmd(nil, "execute", compileInputs, programArgv, flags, append(cmd, args...)...)
  		}
  		if err != nil {
  			return err
@@ -328,7 +328,7 @@
  		cmd = append(cmd, t.goFileName())
 -		out, err := runcmd(append(cmd, args...)...)
 +		compileInputs, programArgv := goRunOperands(t.goFileName(), args)
-+		out, err := runcmd("generate", compileInputs, programArgv, nil, append(cmd, args...)...)
++		out, err := runcmd(nil, "generate", compileInputs, programArgv, nil, append(cmd, args...)...)
  		if err != nil {
  			return err
  		}
@@ -343,7 +343,7 @@
  		}
  		cmd = append(cmd, tfile)
 -		out, err = runcmd(cmd...)
-+		out, err = runcmd("execute", []string{tfile}, nil, nil, cmd...)
++		out, err = runcmd(nil, "execute", []string{tfile}, nil, nil, cmd...)
  		if err != nil {
  			return err
  		}
@@ -353,7 +353,7 @@
  		cmd = append(cmd, t.goFileName())
 -		out, err := runcmd(append(cmd, args...)...)
 +		compileInputs, programArgv := goRunOperands(t.goFileName(), args)
-+		out, err := runcmd("generate", compileInputs, programArgv, nil, append(cmd, args...)...)
++		out, err := runcmd(nil, "generate", compileInputs, programArgv, nil, append(cmd, args...)...)
  		if err != nil {
  			return err
  		}
@@ -366,7 +366,7 @@
  		cmdline = append(cmdline, flags...)
  		cmdline = append(cmdline, tfile)
 -		out, err = runcmd(cmdline...)
-+		out, err = runcmd("compile", []string{tfile}, nil, flags, cmdline...)
++		out, err = runcmd(nil, "compile", []string{tfile}, nil, flags, cmdline...)
  		if wantError {
  			if err == nil {
  				return fmt.Errorf("compilation succeeded unexpectedly\n%s", out)

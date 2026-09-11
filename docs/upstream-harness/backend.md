@@ -59,6 +59,60 @@ linux/amd64 at the pinned SHA-256, Bash++ `118bb3f` Linux binary SHA-256
 `FAIL`, exit 3, and no surviving test, compiler, or Bash++ process. The
 retained log is `/srv/sprint149/s149.4/compile-gate-linux.log`.
 
+## Sprint 149 static seams
+
+Stories S149.1–S149.3 (with S149.5, S149.7–S149.10 riding on them) extend the
+same `planExec` seam to every static action of the packet inventory, using the
+Bash++ identity `be20731` (which carries the explicit package map of
+`docs/bashpp-import-resolution.md`) and shell runtime `828e5b33`. One
+localized observation was added at the upstream decision site:
+`compileInDir` now hands `planExec` the package identity upstream itself
+chose — the `-D` base and the `-p` path — as a `packageIdentity`, recorded on
+the phase event. Nothing else about the instrumented runner changed and its
+native equivalence stays 9/9.
+
+- **Diagnostics** (`errorcheck`, `errorcheckwithauto`, `errorcheckoutput`;
+  phase `compile`): interpreted mode runs the Bash++ check interface on the
+  exact upstream input (`check-diagnostics`); compiled mode transpiles with a
+  map and builds the generated module (`transpile-build-diagnostics`). Both
+  emit `file:line:col: message` on the upstream input path — the generated Go
+  carries `//line` directives — so the unchanged upstream `errorCheck` applies
+  its own expectations. The compile-tool flags `-e`, `-C`, `-d=` and
+  `-p=` have no representation in either interface and are retained as
+  evidence. `errorcheckoutput`'s generator step is the upstream `generate`
+  phase, a `go run` with the execute phase's direct meaning.
+- **Directory packages** (`compiledir`, `errorcheckdir`, `builddir`; every
+  `compileInDir` phase): each package group is one invocation carrying
+  `--go-import-base <-D> --go-import-path <-p>` and, as `--go-package
+  path=files`, every earlier group of the same upstream test, in upstream
+  order — the in-memory equivalent of the importcfg upstream accumulates.
+  Relative imports are never resolved on disk. Interpreted mode is
+  `check-package-map`; compiled mode is `transpile-build-package-map`, and a
+  lowered relative import that does not build is a retained lowering product
+  failure. A non-Go companion (`.s`) has no Go-source meaning and is a
+  retained product limitation, never a seam failure.
+- **Assembly** (`asmcheck`; compiled mode only): the generated module is built
+  with the upstream `-S=2` listing request and the upstream `-gcflags` merge
+  (`transpile-build-assembly`); the listing cites the upstream input path
+  through `//line`, so the unchanged upstream `asmCheck` indexes it.
+  Interpreted mode records an explicit `unsupported` disposition: assembly is
+  a compiler artifact.
+- **Typechecker** (`cmd/compile/internal/types2` and `go/types`
+  `check_test.go`; S149.10): a second frozen upstream runner pair under
+  `testdata/upstream-types/`, each with a fifteen-line patch that replaces the
+  one `conf.Check` call with the Bash++ check interface on the same files and
+  the upstream-parsed `-lang`; flag parsing, build constraints, ERROR-comment
+  collection and matching stay upstream's. `-fakeImportC` has no counterpart
+  and `import "C"` is checked as an ordinary import (a retained product
+  difference on `importC.go`). `tools/upstream-harness/typechecker-gate.sh`
+  proves both patched runners native-equivalent with the backend off (10/10
+  each) before replaying the 20 roots.
+
+Every packet has its own authenticated matrix (`docs/upstream-harness/<action>-matrix.tsv`,
+root-list digest = manifest, companion digests pinned) and gate
+(`tools/upstream-harness/<action>-gate.sh`): exit 0 green, exit 3 with every
+non-green root a product row in `residuals.tsv`, exit 1 a seam defect.
+
 The backend records one small JSON event for each observed upstream phase. The
 event repeats the mode, structured action and recipe flags, source/argument
 boundary, native argv evidence, tool identity, disposition, and declared

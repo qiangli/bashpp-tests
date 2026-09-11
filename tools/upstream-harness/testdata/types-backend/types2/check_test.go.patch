@@ -1,0 +1,15 @@
+--- a/src/cmd/compile/internal/types2/check_test.go
++++ b/src/cmd/compile/internal/types2/check_test.go
+@@ -189,7 +189,11 @@
+ 	}
+ 
+ 	// typecheck
+-	conf.Check(pkgName, files, &info)
++	if bashppTypesBackend() {
++		errlist = bashppTypesCheck(t, filenames, srcs, conf.GoVersion, conf.FakeImportC, goexperiment)
++	} else {
++		conf.Check(pkgName, files, &info)
++	}
+ 	if listErrors {
+ 		return
+ 	}

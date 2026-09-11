@@ -1,6 +1,8 @@
 --- a/src/cmd/internal/testdir/bashpp_events_test.go
 +++ b/src/cmd/internal/testdir/bashpp_events_test.go
-@@ -135,7 +135,8 @@
+@@ -133,11 +133,12 @@
+ }
+ 
  type planStep struct {
 -	test      string
 -	phase     int
@@ -14,25 +16,30 @@
 +	artifacts  []string
 +	maps       []string
  }
-@@ -158,2 +159,6 @@
+ 
+ // packageIdentity is the upstream compiler's own naming of a directory
+@@ -166,7 +167,11 @@
+ 		fields["package"] = map[string]string{"base": pkg.Base, "path": pkg.Path}
+ 	}
+ 	events.emit(t.eventName(), "phase", fields)
 -	return &planStep{test: t.eventName(), cmd: cmd}
 +	step := &planStep{test: t.eventName(), cmd: cmd}
 +	if os.Getenv("BASHPP_TESTDIR_BACKEND") != "" {
-+		t.backendPlan(step, action, phase, compileInputs, programArgv, recipeFlags)
++		t.backendPlan(step, action, phase, pkg, compileInputs, programArgv, recipeFlags)
 +	}
 +	return step
  }
-@@ -177,5 +182,10 @@
+ 
+ func commandEnvDelta(env []string) []string {
+@@ -186,6 +191,11 @@
+ }
+ 
  func (s *planStep) run(buf interface{ String() string }) error {
 +	if s.backendErr != nil {
 +		err := s.backendErr
 +		s.done([]byte(buf.String()), err)
 +		return err
 +	}
--	err := s.cmd.Run()
--	s.done([]byte(buf.String()), err)
--	return err
-+	err := s.cmd.Run()
-+	s.done([]byte(buf.String()), err)
-+	return err
- }
+ 	err := s.cmd.Run()
+ 	s.done([]byte(buf.String()), err)
+ 	return err

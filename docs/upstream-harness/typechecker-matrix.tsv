@@ -1,0 +1,25 @@
+# Sprint: #149; Story: S149.10; Story-ID: 8ae8f1041a8f
+# Authenticated 149.10 typechecker packet (manifest sprint142-leaf-packet-manifest/v4
+# packet-149.10.json sha256 62500870440412ee29632af50526174f3655e913f6e0defe37b8705da3cc607a,
+# count 20, root list sha256 c4fedc7403d03a34d6a274759764a8d9b557c77128220a6c79e986e7c31a87a1).
+# capability	test	action	sha256	fixture (src-relative path)
+types2-testcheck-go1_19_20	cmd/compile/internal/types2:TestCheck/go1_19_20.go	typechecker	1b78590c99ec00a450c199581bb3db3e78ef20f626fb852be2de2af1fd021302	src/internal/types/testdata/check/go1_19_20.go
+types2-testcheck-go1_20_19	cmd/compile/internal/types2:TestCheck/go1_20_19.go	typechecker	8b618db07da7301148d63332545c043a202d82e7e70ab906be7806d9ada31f8c	src/internal/types/testdata/check/go1_20_19.go
+types2-testcheck-go1_21_19	cmd/compile/internal/types2:TestCheck/go1_21_19.go	typechecker	1e7e253afcfda4c0d7a819f293390c5352e7b7c7430a849e9ef3411c4fc873de	src/internal/types/testdata/check/go1_21_19.go
+types2-testcheck-go1_21_22	cmd/compile/internal/types2:TestCheck/go1_21_22.go	typechecker	022e8d0286c99f877007a67ffbf0905b88dcdc270b52362dae0057728ce705fe	src/internal/types/testdata/check/go1_21_22.go
+types2-testcheck-go1_22_21	cmd/compile/internal/types2:TestCheck/go1_22_21.go	typechecker	c07792ee989e079bf341334364e3d7a24b6a88c6346eb62892a45d4de8626051	src/internal/types/testdata/check/go1_22_21.go
+types2-testcheck-go1_25	cmd/compile/internal/types2:TestCheck/go1_25.go	typechecker	c9844df8b225da63451fdfc263d0ddaeab543d449f131311b89c9673092df254	src/internal/types/testdata/check/go1_25.go
+types2-testcheck-go1_xx_19	cmd/compile/internal/types2:TestCheck/go1_xx_19.go	typechecker	0381e986d82809c4bb4801c506d30b1d2968a902ab236fe80b02e16e635c46d5	src/internal/types/testdata/check/go1_xx_19.go
+types2-testcheck-importC	cmd/compile/internal/types2:TestCheck/importC.go	typechecker	120152debd086289fd2292a2b7c535977bd8d7a91b8b1a7a3389f6e4b25e061e	src/internal/types/testdata/check/importC.go
+types2-testfixedbugs-issue61822	cmd/compile/internal/types2:TestFixedbugs/issue61822.go	typechecker	e172ba2a81fde3d2e0c087cf478813ff94f33f58f71716036a650940ac42558f	src/internal/types/testdata/fixedbugs/issue61822.go
+types2-testfixedbugs-issue66064	cmd/compile/internal/types2:TestFixedbugs/issue66064.go	typechecker	cc7fcb273250e58266276f5e6662e9aa36b9b921629957deb453d4f89534d0cf	src/internal/types/testdata/fixedbugs/issue66064.go
+gotypes-testcheck-go1_19_20	go/types:TestCheck/go1_19_20.go	typechecker	1b78590c99ec00a450c199581bb3db3e78ef20f626fb852be2de2af1fd021302	src/internal/types/testdata/check/go1_19_20.go
+gotypes-testcheck-go1_20_19	go/types:TestCheck/go1_20_19.go	typechecker	8b618db07da7301148d63332545c043a202d82e7e70ab906be7806d9ada31f8c	src/internal/types/testdata/check/go1_20_19.go
+gotypes-testcheck-go1_21_19	go/types:TestCheck/go1_21_19.go	typechecker	1e7e253afcfda4c0d7a819f293390c5352e7b7c7430a849e9ef3411c4fc873de	src/internal/types/testdata/check/go1_21_19.go
+gotypes-testcheck-go1_21_22	go/types:TestCheck/go1_21_22.go	typechecker	022e8d0286c99f877007a67ffbf0905b88dcdc270b52362dae0057728ce705fe	src/internal/types/testdata/check/go1_21_22.go
+gotypes-testcheck-go1_22_21	go/types:TestCheck/go1_22_21.go	typechecker	c07792ee989e079bf341334364e3d7a24b6a88c6346eb62892a45d4de8626051	src/internal/types/testdata/check/go1_22_21.go
+gotypes-testcheck-go1_25	go/types:TestCheck/go1_25.go	typechecker	c9844df8b225da63451fdfc263d0ddaeab543d449f131311b89c9673092df254	src/internal/types/testdata/check/go1_25.go
+gotypes-testcheck-go1_xx_19	go/types:TestCheck/go1_xx_19.go	typechecker	0381e986d82809c4bb4801c506d30b1d2968a902ab236fe80b02e16e635c46d5	src/internal/types/testdata/check/go1_xx_19.go
+gotypes-testcheck-importC	go/types:TestCheck/importC.go	typechecker	120152debd086289fd2292a2b7c535977bd8d7a91b8b1a7a3389f6e4b25e061e	src/internal/types/testdata/check/importC.go
+gotypes-testfixedbugs-issue61822	go/types:TestFixedbugs/issue61822.go	typechecker	e172ba2a81fde3d2e0c087cf478813ff94f33f58f71716036a650940ac42558f	src/internal/types/testdata/fixedbugs/issue61822.go
+gotypes-testfixedbugs-issue66064	go/types:TestFixedbugs/issue66064.go	typechecker	cc7fcb273250e58266276f5e6662e9aa36b9b921629957deb453d4f89534d0cf	src/internal/types/testdata/fixedbugs/issue66064.go

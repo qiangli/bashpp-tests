@@ -56,6 +56,8 @@ type eventRecord struct {
 	EnvDelta      []string     `json:"env_delta"`
 	Disposition   string       `json:"disposition"`
 	Deviations    []string     `json:"deviations"`
+	Package       *packageID   `json:"package"`
+	PackageMap    *packageMap  `json:"package_map"`
 	Tool          toolIdentity `json:"tool"`
 	ExpectedBytes int          `json:"expected_bytes"`
 	ActualBytes   int          `json:"actual_bytes"`
@@ -63,6 +65,24 @@ type eventRecord struct {
 	Exit          int          `json:"exit"`
 	Skipped       bool         `json:"skipped"`
 	Failed        bool         `json:"failed"`
+}
+
+// packageID is the upstream compiler's naming of a directory package
+// (-D base, -p path), recorded on the phase by the instrumented runner.
+type packageID struct {
+	Base string `json:"base"`
+	Path string `json:"path"`
+}
+
+// packageMap is the explicit map the backend handed to Bash++ for a directory
+// package phase: the current identity plus every earlier package of the test.
+type packageMap struct {
+	Base     string `json:"base"`
+	Path     string `json:"path"`
+	Packages []struct {
+		Path  string   `json:"path"`
+		Files []string `json:"files"`
+	} `json:"packages"`
 }
 
 type fileProof struct {
@@ -124,6 +144,8 @@ func readMatrix(name string) ([]matrixRow, error) {
 	defer f.Close()
 	var rows []matrixRow
 	s := bufio.NewScanner(f)
+	// A generated program or a long diagnostic can exceed the default token size.
+	s.Buffer(make([]byte, 1<<20), 1<<28)
 	for s.Scan() {
 		if s.Text() == "" || strings.HasPrefix(s.Text(), "#") {
 			continue
@@ -175,6 +197,29 @@ func verifyRow(row matrixRow, dir, mode, version, tool string) (string, error) {
 	}
 	if row.Action == "compile" {
 		return verifyCompileRow(row, ev, mode, goAction)
+	}
+	switch row.Action {
+	case "errorcheck", "errorcheckwithauto", "errorcheckoutput":
+		return verifyDiagnosticsRow(row, ev, mode, goAction)
+	case "compiledir", "errorcheckdir", "builddir":
+		return verifyDirectoryRow(row, ev, mode, goAction)
+	case "asmcheck":
+		if status, handled, err := verifyAssemblyRow(row, ev, mode, goAction); handled {
+			return status, err
+		}
+	case "runoutput":
+		// Generate then execute: both phases are direct runs.
+		if goAction != "skip" && len(ev.Backends) != 0 {
+			for i, backend := range ev.Backends {
+				if !directDisposition(mode, backend.Disposition) {
+					return "", fmt.Errorf("runoutput phase %d is not a direct run: %s", i, backend.Disposition)
+				}
+			}
+			if goAction == "pass" {
+				return "GEN-PASS", nil
+			}
+			return "GEN-PRODUCT-FAIL", nil
+		}
 	}
 
 	switch row.Test {
@@ -234,6 +279,146 @@ var buildRoots = map[string]struct {
 	"arenas/smoke.go":         {RecipeFlags: []string{}, GoExperiment: "arenas"},
 	"fixedbugs/issue59404.go": {RecipeFlags: []string{"-gcflags=-l=4"}},
 	"fixedbugs/issue59638.go": {RecipeFlags: []string{"-gcflags=-l=4"}},
+}
+
+// verifyDiagnosticsRow checks an errorcheck-family root: the upstream compile
+// phase ran Bash++ as a diagnostics producer (check in interpreted mode,
+// transpile+build in compiled mode) on the exact upstream input, and upstream
+// errorCheck decided the terminal. errorcheckoutput first runs the generator
+// through the ordinary execute path, then checks the generated file. A
+// terminal failure is a product failure whenever the diagnostics phase
+// executed; a missing phase is a seam failure.
+func verifyDiagnosticsRow(row matrixRow, ev evidence, mode, goAction string) (string, error) {
+	if goAction == "skip" {
+		if len(ev.Phases) != 0 {
+			return "", fmt.Errorf("upstream skip with %d recorded phases", len(ev.Phases))
+		}
+		return "UPSTREAM-SKIP", nil
+	}
+	if len(ev.Backends) == 0 || len(ev.Results) == 0 {
+		return "", fmt.Errorf("no diagnostics phase executed")
+	}
+	last, result := ev.Backends[len(ev.Backends)-1], ev.Results[len(ev.Results)-1]
+	if row.Action == "errorcheckoutput" && len(ev.Backends) == 1 {
+		// The generator run itself failed; upstream never reached the check.
+		if !directDisposition(mode, ev.Backends[0].Disposition) || goAction != "fail" || result.Exit == 0 {
+			return "", fmt.Errorf("errorcheckoutput generator phase is neither a direct run nor a recorded failure: %v", dispositions(ev.Backends))
+		}
+		return "DIAG-PRODUCT-FAIL", nil
+	}
+	want := map[string]string{"interpreted": "check-diagnostics", "compiled": "transpile-build-diagnostics"}[mode]
+	if want == "" {
+		return "", fmt.Errorf("unknown backend mode %q", mode)
+	}
+	if last.Phase != "compile" || last.Disposition != want {
+		return "", fmt.Errorf("diagnostics phase disposition = %s/%s, want compile/%s", last.Phase, last.Disposition, want)
+	}
+	if len(last.CompileInputs) != 1 || len(last.ProgramArgv) != 0 {
+		return "", fmt.Errorf("diagnostics phase must carry exactly one Go input and no program argv, got %v %v", last.CompileInputs, last.ProgramArgv)
+	}
+	if row.Action != "errorcheckoutput" && !strings.HasSuffix(last.CompileInputs[0], "/"+row.Test) {
+		return "", fmt.Errorf("diagnostics phase input %q is not the upstream root", last.CompileInputs[0])
+	}
+	if mode == "compiled" && (len(last.Artifacts) != 2 || len(last.Maps) != 1) {
+		return "", fmt.Errorf("compiled diagnostics phase must transpile with a map and build only")
+	}
+	if goAction == "pass" {
+		return "DIAG-PASS", nil
+	}
+	return "DIAG-PRODUCT-FAIL", nil
+}
+
+// verifyDirectoryRow checks a directory root: every compile phase carried the
+// upstream package identity, and the backend handed Bash++ exactly the
+// earlier packages of the same test as its explicit map, in upstream order.
+// A non-Go companion (an assembly source) has no Go-source meaning and is
+// retained as a product limitation, not a seam failure.
+func verifyDirectoryRow(row matrixRow, ev evidence, mode, goAction string) (string, error) {
+	if goAction == "skip" {
+		if len(ev.Phases) != 0 {
+			return "", fmt.Errorf("upstream skip with %d recorded phases", len(ev.Phases))
+		}
+		return "UPSTREAM-SKIP", nil
+	}
+	if len(ev.Backends) == 0 {
+		return "", fmt.Errorf("no directory phase executed")
+	}
+	want := map[string]string{"interpreted": "check-package-map", "compiled": "transpile-build-package-map"}[mode]
+	if want == "" {
+		return "", fmt.Errorf("unknown backend mode %q", mode)
+	}
+	var seen []string
+	assembly := false
+	for i, backend := range ev.Backends {
+		phase := ev.Phases[i]
+		if backend.Disposition == "unsupported" {
+			for _, input := range backend.CompileInputs {
+				if !strings.HasSuffix(input, ".go") {
+					assembly = true
+				}
+			}
+			if !assembly {
+				return "", fmt.Errorf("directory phase %d unsupported without a non-Go input: %v", i, backend.CompileInputs)
+			}
+			continue
+		}
+		if backend.Phase != "compile" {
+			return "", fmt.Errorf("directory phase %d is %q, want compile", i, backend.Phase)
+		}
+		if phase.Package == nil || backend.PackageMap == nil {
+			return "", fmt.Errorf("directory phase %d lacks the upstream package identity or the backend map", i)
+		}
+		if backend.Disposition != want {
+			return "", fmt.Errorf("directory phase %d disposition = %s, want %s", i, backend.Disposition, want)
+		}
+		if backend.PackageMap.Base != phase.Package.Base || backend.PackageMap.Path != phase.Package.Path {
+			return "", fmt.Errorf("backend map identity %s/%s differs from upstream %s/%s", backend.PackageMap.Base, backend.PackageMap.Path, phase.Package.Base, phase.Package.Path)
+		}
+		var got []string
+		for _, p := range backend.PackageMap.Packages {
+			got = append(got, p.Path)
+		}
+		if !reflect.DeepEqual(got, seen) {
+			return "", fmt.Errorf("backend map for phase %d lists %v, want the earlier packages %v", i, got, seen)
+		}
+		seen = append(seen, phase.Package.Path)
+		if len(backend.ProgramArgv) != 0 {
+			return "", fmt.Errorf("directory phase %d must carry an empty program argv", i)
+		}
+	}
+	if goAction == "pass" {
+		return "DIR-PASS", nil
+	}
+	if assembly {
+		return "DIR-PRODUCT-FAIL", nil
+	}
+	return "DIR-PRODUCT-FAIL", nil
+}
+
+// verifyAssemblyRow checks an asmcheck root in compiled mode: one
+// transpile-build-assembly phase per upstream-selected environment, each with
+// generated/map/artifact records, and upstream asmCheck deciding the
+// terminal. Interpreted mode and upstream bypasses are left to the generic
+// rules (handled=false).
+func verifyAssemblyRow(row matrixRow, ev evidence, mode, goAction string) (string, bool, error) {
+	if mode != "compiled" || len(ev.Phases) == 0 {
+		return "", false, nil
+	}
+	for i, backend := range ev.Backends {
+		if backend.Phase != "compile" || backend.Disposition != "transpile-build-assembly" {
+			return "", true, fmt.Errorf("assembly phase %d disposition = %s/%s, want compile/transpile-build-assembly", i, backend.Phase, backend.Disposition)
+		}
+		if len(backend.CompileInputs) != 1 || !strings.HasSuffix(backend.CompileInputs[0], "/"+row.Test) || len(backend.ProgramArgv) != 0 {
+			return "", true, fmt.Errorf("assembly phase %d must carry exactly the upstream root and no program argv", i)
+		}
+		if len(backend.Artifacts) != 2 || len(backend.Maps) != 1 {
+			return "", true, fmt.Errorf("assembly phase %d must transpile with a map and build only", i)
+		}
+	}
+	if goAction == "pass" {
+		return "ASM-PASS", true, nil
+	}
+	return "ASM-PRODUCT-FAIL", true, nil
 }
 
 // verifyCompileRow checks one upstream `compile` root (the S157 bug020 canary
@@ -412,6 +597,8 @@ func terminalAction(name, want string) (string, string, error) {
 	defer f.Close()
 	action, output := "", ""
 	s := bufio.NewScanner(f)
+	// A generated program or a long diagnostic can exceed the default token size.
+	s.Buffer(make([]byte, 1<<20), 1<<28)
 	for s.Scan() {
 		var rec goRecord
 		if json.Unmarshal(s.Bytes(), &rec) == nil && strings.HasPrefix(rec.Test, want) {
@@ -438,6 +625,8 @@ func readEvents(name, test string) (evidence, error) {
 	defer f.Close()
 	var out evidence
 	s := bufio.NewScanner(f)
+	// A generated program or a long diagnostic can exceed the default token size.
+	s.Buffer(make([]byte, 1<<20), 1<<28)
 	for s.Scan() {
 		var rec eventRecord
 		if err := json.Unmarshal(s.Bytes(), &rec); err != nil {

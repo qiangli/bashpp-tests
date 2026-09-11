@@ -1,0 +1,8 @@
+# Sprint: #149; Story: S149.9; Story-ID: 4716cabd8357
+# Authenticated 149.9 `errorcheckwithauto` packet (manifest sprint142-leaf-packet-manifest/v4
+# packet-149.9.json sha256 b2fc08c2e4db1b622ec31693aa02c8a63ce95b4c0110f133872db6fc80dfcfc2,
+# count 3, root list sha256 ef9e4fda65ddd52390bfc894fbd2b5fc2952013dd5dfa65a5184fd95a9763b69).
+# capability	test	action	sha256	selected_companions (path=sha256, comma-separated; - means none)
+errorcheckwithauto-inline	inline.go	errorcheckwithauto	51bb599a8fdd182ee1e21db58f34d065e60f0a209e817eeb3312188715556cd6	-
+errorcheckwithauto-inline_endian	inline_endian.go	errorcheckwithauto	c244b1bf7b1577c25fd3c5bad548cc7bdb404a4ad451ff5843bf6d64ae840fd1	-
+errorcheckwithauto-live_regabi	live_regabi.go	errorcheckwithauto	6c1630dd33abf5e4e48500ac1ccc6942849e7b905fc79ef9393d9213cbc18a87	-
