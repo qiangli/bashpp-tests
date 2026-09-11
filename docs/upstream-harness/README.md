@@ -108,3 +108,17 @@ retained) with `testdata/types-backend/` patches and hooks, and
 `types-verify.go`. `residuals.tsv` is the retained-failure ledger every
 non-green gate points at. The S157 `final-gate.sh` is superseded for Sprint 149
 because it asserts the Sprint 149 trackers are still `todo`.
+
+## Sprint 150 gates
+
+`backend.md` §Sprint 150 dynamic and package seams describes the extended
+seam. The packet gates are `tools/upstream-harness/{run,runoutput,buildrundir,
+buildrun,rundir,errorcheckandrundir,runindir,package}-gate.sh`, each over
+`docs/upstream-harness/<action>-matrix.tsv` (root-list digest = the Sprint 142
+packet manifest; `.out` golden files and `.dir` companions pinned).
+`package-gate.sh` uses a third frozen upstream runner — Go 1.27.0's own
+`cmd/go/internal/test/test.go` under `testdata/upstream-go/` (BSD license
+retained) with the seven-line patch and overlay bridge under
+`testdata/go-backend/` — built through `-overlay` and proven native-equivalent
+with the backend off before the 26 packages are replayed; `package-verify.go`
+is its verifier. `residuals.tsv` carries every non-green root of both sprints.
