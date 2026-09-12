@@ -1,5 +1,6 @@
 // Copyright 2026 The bashpp-tests Authors. All rights reserved.
 // Sprint: #149; Story: S149.4; Story-ID: 60134b3f734f
+// Sprint: #154; Story: S154.0; Story-ID: 4877afd3a207
 package main
 
 import (
@@ -227,6 +228,50 @@ func writeJSONLines(t *testing.T, name string, records ...any) {
 	}
 	if err := os.WriteFile(name, data, 0o600); err != nil {
 		t.Fatal(err)
+	}
+}
+
+// Sprint: #154; Story: S154.0; Story-ID: 4877afd3a207
+// TestVerifierAcceptsDeclaredOptimizerDiagnostics: an interpreted errorcheck
+// root whose recipe wants optimizer diagnostics (-m/-live/-race/-d=) is
+// declared unsupported by the seam with the compiler-artifact reason, and the
+// verifier accepts the declaration the way it accepts interpreted asmcheck.
+// Without the declared reason, or on a non-failing terminal, it still rejects.
+func TestVerifierAcceptsDeclaredOptimizerDiagnostics(t *testing.T) {
+	optimizerEvidence := func(deviation string) []eventRecord {
+		test := "escape/escape.go"
+		native := []string{"go", "tool", "compile", "-m", "-l", "escape.go"}
+		flags := []string{"-0", "-m", "-l"}
+		phase := eventRecord{Kind: "phase", Test: test, Action: "errorcheck", PhaseKind: "compile", CompileInputs: []string{"/goroot/test/" + test}, ProgramArgv: []string{}, RecipeFlags: flags, Argv: native}
+		backend := eventRecord{Kind: "backend", Test: test, BackendSchema: backendSchema, Mode: "interpreted", Tool: toolIdentity{Path: "/bin/bashy", Version: "test"}, Action: phase.Action, Phase: phase.PhaseKind, CompileInputs: phase.CompileInputs, ProgramArgv: phase.ProgramArgv, RecipeFlags: phase.RecipeFlags, NativeArgv: native, Disposition: "unsupported", Deviations: []string{deviation}}
+		// A backendErr step never starts the command; done() records exit -1.
+		result := eventRecord{Kind: "phase_result", Test: test, Exit: -1}
+		return []eventRecord{phase, backend, result}
+	}
+	declared := "optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning"
+
+	verify := func(goAction string, records []eventRecord) (string, error) {
+		dir := t.TempDir()
+		base := filepath.Join(dir, "escape_escape_go")
+		writeJSONLines(t, base+".go-test.json", goRecord{Action: goAction, Test: "Test/escape/escape.go"})
+		items := make([]any, 0, len(records)+1)
+		for _, record := range records {
+			items = append(items, record)
+		}
+		items = append(items, eventRecord{Kind: "terminal", Test: "escape/escape.go", Failed: goAction == "fail"})
+		writeJSONLines(t, base+".events.jsonl", items...)
+		return verifyRow(matrixRow{Test: "escape/escape.go", Action: "errorcheck"}, dir, "interpreted", "test", "/bin/bashy")
+	}
+
+	status, err := verify("fail", optimizerEvidence(declared))
+	if err != nil || status != "UNSUPPORTED" {
+		t.Fatalf("verifyRow = %q, %v, want accepted UNSUPPORTED declaration", status, err)
+	}
+	if _, err := verify("fail", optimizerEvidence("structured evidence")); err == nil || !strings.Contains(err.Error(), "disposition") {
+		t.Fatalf("verifyRow error = %v, want undeclared unsupported rejection", err)
+	}
+	if _, err := verify("pass", optimizerEvidence(declared)); err == nil || !strings.Contains(err.Error(), "upstream action") {
+		t.Fatalf("verifyRow error = %v, want rejection of a passing unsupported declaration", err)
 	}
 }
 

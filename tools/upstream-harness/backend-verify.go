@@ -1,5 +1,6 @@
 // Copyright 2026 The bashpp-tests Authors. All rights reserved.
 // Sprint: #157; Story: S157.2; Story-ID: 31520c72b5e0
+// Sprint: #154; Story: S154.0; Story-ID: 4877afd3a207
 //
 // Verify the small direct-source seam. Go's testdir runner still owns recipe
 // selection and terminal verdicts; this verifier names observed limitations.
@@ -384,6 +385,19 @@ func verifyDiagnosticsRow(row matrixRow, ev evidence, mode, goAction string) (st
 			return "", fmt.Errorf("upstream skip with %d recorded phases", len(ev.Phases))
 		}
 		return "UPSTREAM-SKIP", nil
+	}
+	// An optimizer-diagnostics recipe (-m/-live/-race/-d=) has no
+	// check-interface meaning in interpreted mode; the seam declares it
+	// unsupported with that reason, and the verifier accepts the declaration
+	// the way it accepts the interpreted asmcheck one (S154.0).
+	if len(ev.Backends) != 0 {
+		last := ev.Backends[len(ev.Backends)-1]
+		if last.Disposition == "unsupported" && declaresOptimizerDiagnostics(last.Deviations) {
+			if goAction != "fail" {
+				return "", fmt.Errorf("unsupported optimizer-diagnostics recipe with upstream action %s", goAction)
+			}
+			return "UNSUPPORTED", nil
+		}
 	}
 	if len(ev.Backends) == 0 || len(ev.Results) == 0 {
 		return "", fmt.Errorf("no diagnostics phase executed")
@@ -904,6 +918,18 @@ func validProofs(paths []string, proofs []fileProof) bool {
 		}
 	}
 	return true
+}
+
+// declaresOptimizerDiagnostics reports whether the seam declared the phase
+// unsupported because the recipe wants optimizer diagnostics the check
+// interface cannot produce.
+func declaresOptimizerDiagnostics(deviations []string) bool {
+	for _, deviation := range deviations {
+		if strings.Contains(deviation, "optimizer diagnostics are a compiler artifact") {
+			return true
+		}
+	}
+	return false
 }
 
 func directDisposition(mode, got string) bool {

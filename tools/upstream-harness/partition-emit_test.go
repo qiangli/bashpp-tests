@@ -251,7 +251,8 @@ func TestPartitionRuleChanges(t *testing.T) {
 			if line != tt.wantLine {
 				t.Fatalf("firstLine = %q, want %q", line, tt.wantLine)
 			}
-			if owner := classify(line, tt.mode, diagnostic); owner != tt.wantOwner {
+			owner := classify(line, tt.mode, diagnostic, "testdir", recipeEvidence{}, errorCheckVerdictOf(tt.lines).class)
+			if owner != tt.wantOwner {
 				t.Fatalf("classify(%q, %q) = %q, want %q", line, tt.mode, owner, tt.wantOwner)
 			}
 		})
@@ -304,6 +305,314 @@ func TestCgoRootWithCrossModeRuntimeFailure(t *testing.T) {
 	}
 	if strings.Contains(string(retained), "testdir:cgo_cross.go") {
 		t.Fatalf("cgo_cross.go should not be in retained manifest:\n%s", retained)
+	}
+}
+
+// TestClassifyRecipeAndVerdictRules covers the S154.0 rules that key on the
+// recipe flags carried by the backend events and on the verdict shape, never
+// on expected strings: D1 (optimizer diagnostics), the run-family runtime
+// rows, D2 (typechecker multiplicity and missing test builtins), and the
+// verdict-carrying unclassified rows.
+func TestClassifyRecipeAndVerdictRules(t *testing.T) {
+	errorcheck := func(action string, flags ...string) recipeEvidence {
+		return recipeEvidence{action: action, flags: flags}
+	}
+	tests := []struct {
+		name         string
+		line         string
+		mode         string
+		runner       string
+		recipe       recipeEvidence
+		verdictClass string
+		want         string
+	}{
+		// D1: interpreted errorcheck-family rows with optimizer flags.
+		{
+			name:         "D1 interpreted errorcheck -m",
+			line:         `esc.go:10: missing error "escapes to heap"`,
+			mode:         "interpreted",
+			runner:       "testdir",
+			recipe:       errorcheck("errorcheck", "-0", "-m", "-l"),
+			verdictClass: "missing",
+			want:         "retained",
+		},
+		{
+			name:         "D1 interpreted errorcheckwithauto -m=2 form",
+			line:         `inline.go:20: missing error "can inline f"`,
+			mode:         "interpreted",
+			runner:       "testdir",
+			recipe:       errorcheck("errorcheckwithauto", "-0", "-m=2"),
+			verdictClass: "missing",
+			want:         "retained",
+		},
+		{
+			name:         "D1 interpreted errorcheckdir -live",
+			line:         `live.go:15: missing error "live at entry"`,
+			mode:         "interpreted",
+			runner:       "testdir",
+			recipe:       errorcheck("errorcheckdir", "-0", "-live"),
+			verdictClass: "missing",
+			want:         "retained",
+		},
+		{
+			name:         "D1 interpreted errorcheckandrundir -race",
+			line:         `race.go:9: missing error "write barrier"`,
+			mode:         "interpreted",
+			runner:       "testdir",
+			recipe:       errorcheck("errorcheckandrundir", "-race"),
+			verdictClass: "missing",
+			want:         "retained",
+		},
+		{
+			name:         "D1 interpreted errorcheck -d= debug flag",
+			line:         `dbg.go:3: missing error "cannot use"`,
+			mode:         "interpreted",
+			runner:       "testdir",
+			recipe:       errorcheck("errorcheck", "-0", "-d=ssa/check/on"),
+			verdictClass: "missing",
+			want:         "retained",
+		},
+		{
+			name:         "D1 compiled -d= is retained (dropped as evidence only)",
+			line:         `dbg.go:3: missing error "cannot use"`,
+			mode:         "compiled",
+			runner:       "testdir",
+			recipe:       errorcheck("errorcheck", "-0", "-d=ssa/check/on"),
+			verdictClass: "missing",
+			want:         "retained",
+		},
+		{
+			name:         "D1 compiled -m stays 154",
+			line:         `esc.go:10: missing error "escapes to heap"`,
+			mode:         "compiled",
+			runner:       "testdir",
+			recipe:       errorcheck("errorcheck", "-0", "-m", "-l"),
+			verdictClass: "missing",
+			want:         "154",
+		},
+		{
+			name:         "D1 compiled -live stays 154",
+			line:         `live.go:15: missing error "live at entry"`,
+			mode:         "compiled",
+			runner:       "testdir",
+			recipe:       errorcheck("errorcheckdir", "-0", "-live"),
+			verdictClass: "missing",
+			want:         "154",
+		},
+		{
+			name:         "D1 compiled -race stays 154",
+			line:         `race.go:9: missing error "write barrier"`,
+			mode:         "compiled",
+			runner:       "testdir",
+			recipe:       errorcheck("errorcheckandrundir", "-race"),
+			verdictClass: "missing",
+			want:         "154",
+		},
+		{
+			name:         "D1 does not fire without optimizer flags",
+			line:         `plain.go:4: missing error "undefined"`,
+			mode:         "interpreted",
+			runner:       "testdir",
+			recipe:       errorcheck("errorcheck", "-0", "-l"),
+			verdictClass: "missing",
+			want:         "154",
+		},
+		{
+			name:         "D1 keys on the errorcheck family, not a run recipe with -race",
+			line:         "panic: runtime error: invalid memory address",
+			mode:         "interpreted",
+			runner:       "testdir",
+			recipe:       errorcheck("run", "-race"),
+			verdictClass: "-",
+			want:         "153",
+		},
+		// Run-family rows with no errorCheck verdict and a runtime shape.
+		{
+			name:         "run output mismatch is 153, not the 'expected ' 154 substring",
+			line:         "output does not match expected in run.out. Instead saw",
+			mode:         "interpreted",
+			runner:       "testdir",
+			recipe:       errorcheck("run"),
+			verdictClass: "-",
+			want:         "153",
+		},
+		{
+			name:         "errorcheckoutput generator panic is 153",
+			line:         "panic: runtime error: index out of range [3]",
+			mode:         "compiled",
+			runner:       "testdir",
+			recipe:       errorcheck("errorcheckoutput"),
+			verdictClass: "-",
+			want:         "153",
+		},
+		{
+			name:         "run unexpected fault is 153",
+			line:         "unexpected fault address 0xb01dfacedebac1e",
+			mode:         "compiled",
+			runner:       "testdir",
+			recipe:       errorcheck("run"),
+			verdictClass: "-",
+			want:         "153",
+		},
+		{
+			name:         "run argument-count runtime shape is 153",
+			line:         "expected 2 arguments; got 1",
+			mode:         "interpreted",
+			runner:       "testdir",
+			recipe:       errorcheck("run"),
+			verdictClass: "-",
+			want:         "153",
+		},
+		{
+			name:         "a run row with a real errorCheck verdict is not rerouted",
+			line:         `gen.go:5: missing error "undefined"`,
+			mode:         "compiled",
+			runner:       "testdir",
+			recipe:       errorcheck("errorcheckoutput"),
+			verdictClass: "missing",
+			want:         "154",
+		},
+		// D2: typechecker multiplicity and missing test builtins.
+		{
+			name:         "D2 tab-continuation of a multi-part types.Error",
+			line:         `check_test.go:256: testdata/check/cycles0.go:14:2: no error expected: "\tT3 refers to T4"`,
+			mode:         "interpreted",
+			runner:       "typechecker",
+			recipe:       recipeEvidence{},
+			verdictClass: "-",
+			want:         "154",
+		},
+		{
+			name:         "D2 undefined assert builtin",
+			line:         `check_test.go:256: testdata/check/builtins0.go:91:2: no error expected: "undefined: assert"`,
+			mode:         "compiled",
+			runner:       "typechecker",
+			recipe:       recipeEvidence{},
+			verdictClass: "-",
+			want:         "154",
+		},
+		{
+			name:         "D2 undefined trace builtin",
+			line:         `check_test.go:256: testdata/check/builtins0.go:100:2: no error expected: "undefined: trace"`,
+			mode:         "interpreted",
+			runner:       "typechecker",
+			recipe:       recipeEvidence{},
+			verdictClass: "-",
+			want:         "154",
+		},
+		{
+			name:         "other no-error-expected rows stay 151",
+			line:         `check_test.go:256: testdata/check/decls0.go:12:2: no error expected: "undeclared name: x"`,
+			mode:         "compiled",
+			runner:       "typechecker",
+			recipe:       recipeEvidence{},
+			verdictClass: "-",
+			want:         "151",
+		},
+		{
+			name:         "could not import C still falls to retained",
+			line:         "test/fixedbugs/issue34968.go:12:8: could not import C (go list failed using go SDK go1.27.0)",
+			mode:         "interpreted",
+			runner:       "typechecker",
+			recipe:       recipeEvidence{},
+			verdictClass: "-",
+			want:         "retained",
+		},
+		// Verdict-carrying unclassified rows.
+		{
+			name:         "unclassified with a wording verdict is 154",
+			line:         "mystery product limitation",
+			mode:         "interpreted",
+			runner:       "testdir",
+			recipe:       recipeEvidence{},
+			verdictClass: "wording",
+			want:         "154",
+		},
+		{
+			name:         "unclassified with an extra verdict is 154 in compiled mode too",
+			line:         "mystery product limitation",
+			mode:         "compiled",
+			runner:       "testdir",
+			recipe:       recipeEvidence{},
+			verdictClass: "extra",
+			want:         "154",
+		},
+		{
+			name:         "unclassified without a verdict stays unclassified",
+			line:         "mystery product limitation",
+			mode:         "compiled",
+			runner:       "testdir",
+			recipe:       recipeEvidence{},
+			verdictClass: "-",
+			want:         "unclassified",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			owner := classify(tt.line, tt.mode, false, tt.runner, tt.recipe, tt.verdictClass)
+			if owner != tt.want {
+				t.Fatalf("classify(%q, %q, %v, %q) = %q, want %q", tt.line, tt.mode, tt.recipe, tt.verdictClass, owner, tt.want)
+			}
+		})
+	}
+}
+
+// TestRecipeFlagRootsAcrossModes proves D1 through the full emit path: an
+// interpreted errorcheck -m row is retained, but a real compiled failure of
+// the same root still wins the owner (ownerRank); a -d= root is retained in
+// both modes. The recipe flags arrive only through the backend event lane.
+func TestRecipeFlagRootsAcrossModes(t *testing.T) {
+	interpreted, compiled, out := t.TempDir(), t.TempDir(), t.TempDir()
+
+	testdir := map[string]map[string]fixtureVerdict{
+		"interpreted": {
+			"dflag.go":     {action: "fail", output: "dflag.go:3: missing error \"cannot use\""},
+			"mflag.go":     {action: "fail", output: "mflag.go:10: missing error \"escapes to heap\""},
+			"mflagreal.go": {action: "fail", output: "mflagreal.go:10: missing error \"can inline f\""},
+		},
+		"compiled": {
+			"dflag.go":     {action: "fail", output: "dflag.go:3: missing error \"cannot use\""},
+			"mflag.go":     {action: "pass"},
+			"mflagreal.go": {action: "fail", output: "mflagreal.go:10: missing error \"can inline f\""},
+		},
+	}
+	for _, lane := range []struct{ mode, dir string }{{"interpreted", interpreted}, {"compiled", compiled}} {
+		writeTestdirFixture(t, filepath.Join(lane.dir, "testdir.go-test.json"), testdir[lane.mode])
+		writeRecords(t, filepath.Join(lane.dir, "types.go-test.json"))
+		writeRecords(t, filepath.Join(lane.dir, "types2.go-test.json"))
+		writeRecords(t, filepath.Join(lane.dir, "package.go-test.json"))
+		writeRecords(t, filepath.Join(lane.dir, "backend.events.jsonl"),
+			partitionEventRecord{Kind: "backend", Test: "dflag.go", Mode: lane.mode, Action: "errorcheck", Phase: "compile", RecipeFlags: []string{"-0", "-d=ssa/check/on"}},
+			partitionEventRecord{Kind: "backend", Test: "mflag.go", Mode: lane.mode, Action: "errorcheck", Phase: "compile", RecipeFlags: []string{"-0", "-m", "-l"}},
+			partitionEventRecord{Kind: "backend", Test: "mflagreal.go", Mode: lane.mode, Action: "errorcheck", Phase: "compile", RecipeFlags: []string{"-0", "-m"}},
+			partitionEventRecord{Kind: "terminal", Mode: lane.mode})
+	}
+
+	var stdout bytes.Buffer
+	if _, err := emitPartitions(interpreted, compiled, out, &stdout); err != nil {
+		t.Fatal(err)
+	}
+	retained, err := os.ReadFile(filepath.Join(out, "active-retained-manifest.tsv"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, root := range []string{"testdir:dflag.go", "testdir:mflag.go"} {
+		if !strings.Contains(string(retained), root) {
+			t.Errorf("%s not in retained manifest:\n%s", root, retained)
+		}
+	}
+	if strings.Contains(string(retained), "testdir:mflagreal.go") {
+		t.Errorf("mixed root mflagreal.go must not be retained:\n%s", retained)
+	}
+	fidelity, err := os.ReadFile(filepath.Join(out, "active-154-manifest.tsv"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(fidelity), "testdir:mflagreal.go") {
+		t.Errorf("mixed root mflagreal.go must stay with the real compiled failure in 154:\n%s", fidelity)
+	}
+	if strings.Contains(string(fidelity), "testdir:mflag.go\t") || strings.Contains(string(fidelity), "testdir:dflag.go") {
+		t.Errorf("retained roots leaked into 154:\n%s", fidelity)
 	}
 }
 

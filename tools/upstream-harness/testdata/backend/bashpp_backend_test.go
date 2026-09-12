@@ -2,6 +2,7 @@
 // Sprint: #157; Story: S157.2; Story-ID: 31520c72b5e0
 // Sprint: #149; Stories: S149.1 (3f416ade73ef), S149.2 (1e87cb008ec3), S149.3 (60d35d1ec914)
 // Sprint: #150; Stories: S150.6 (4228ed646074), S150.5 (e87e1cbcbb20), S150.1 (a136a527c0b3), S150.2 (8f758b9dcd5a)
+// Sprint: #154; Story: S154.0; Story-ID: 4877afd3a207
 //
 // Direct Go-source backend for the authenticated Go 1.27 testdir seam. The
 // only program description accepted here is the compileInputs/programArgv
@@ -262,6 +263,20 @@ func artifactUse(action string) string {
 	return "the a.exe artifact is written to the upstream working directory and is never executed"
 }
 
+// optimizerDiagnosticFlags reports whether an errorcheck recipe asks the
+// compiler for optimizer diagnostics: -m (any -m… form), -live, -race, or a
+// -d= debug flag. The check interface has no inlining, escape analysis or
+// SSA, so interpreted mode declares such a recipe unsupported, the same shape
+// as interpreted asmcheck.
+func optimizerDiagnosticFlags(flags []string) bool {
+	for _, flag := range flags {
+		if strings.HasPrefix(flag, "-m") || strings.HasPrefix(flag, "-live") || flag == "-race" || strings.HasPrefix(flag, "-d=") {
+			return true
+		}
+	}
+	return false
+}
+
 // asmBuildArgs mirrors the upstream asmcheck flag merge: -gcflags values are
 // folded into the single -S=2 argument; every other flag is a go build flag.
 func asmBuildArgs(recipeFlags []string) (gcflags string, buildFlags []string) {
@@ -454,6 +469,12 @@ func (t test) backendPlan(step *planStep, action, phase string, pkg *packageIden
 				append(deviations, "asmcheck compares generated assembly; only compiled mode produces one"))
 			return
 		case diagnostics:
+			if optimizerDiagnosticFlags(recipeFlags) {
+				step.backendErr = fmt.Errorf("Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning")
+				t.backendEvent(mode, action, phase, "unsupported", compileInputs, programArgv, recipeFlags, nativeArgv, nil, nil,
+					append(deviations, "optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning"))
+				return
+			}
 			*step.cmd = *directSourceCommand(step.cmd, tool, checkArgs...)
 			t.backendEvent(mode, action, phase, "check-diagnostics", compileInputs, programArgv, recipeFlags, nativeArgv, nil, nil,
 				append(deviations,
