@@ -203,7 +203,7 @@ Bash++ version `118bb3f`, and shell runtime commit
 
 On 2026-09-11 at 07:06Z, one authoritative Linux coordinator passed the exact
 reviewed candidate through `bashy gate` in 3m20.123s on
-`root@138.68.155.86`. It used:
+the authorized Linux host. It used:
 
 - Go 1.27 Linux/amd64 binary SHA-256
   `1db869c560a193573a71be466a34e0d4abb7792d78165c6102cdda069276a3a8`;
