@@ -1,0 +1,96 @@
+root	mode	first_line
+testdir:abi/fibish.go	interpreted	command exceeded time limit
+testdir:abi/fibish_closure.go	interpreted	command exceeded time limit
+testdir:abi/struct_lower_1.go	interpreted	unregistered bridge type "Struct6"
+testdir:abi/uglyfib.go	interpreted	command exceeded time limit
+testdir:atomicload.go	interpreted	command exceeded time limit
+testdir:closure.go	interpreted	command exceeded time limit
+testdir:const7.go	interpreted	gosource: fmt.Fprintf requires a dependency-owned writer; original Write callbacks are unsupported
+testdir:convert.go	interpreted	gosource: asynchronous or retained original function callbacks are unsupported for reflect.TypeOf
+testdir:convinline.go	interpreted	gosource: fmt.Fprintf requires a dependency-owned writer; original Write callbacks are unsupported
+testdir:deferfin.go	interpreted	command exceeded time limit
+testdir:fixedbugs/bug177.go	interpreted	unregistered bridge type "S2"
+testdir:fixedbugs/bug257.go	interpreted	fixedbugs/bug257.go:20059:2: unregistered bridge type "hash.Hash"
+testdir:fixedbugs/bug260.go	interpreted	exit status 1
+testdir:fixedbugs/bug352.go	interpreted	output should be empty when (optional) expected-output file fixedbugs/bug352.out is not present. Instead saw
+testdir:fixedbugs/bug367.go	compiled	panic: should not satisfy main.I
+testdir:fixedbugs/bug434.go	interpreted	panic: 0
+testdir:fixedbugs/bug461.go	interpreted	unregistered bridge type "*<unsupported embedded field>"
+testdir:fixedbugs/bug483.go	interpreted	gosource: fmt.Fprintf requires a dependency-owned writer; original Write callbacks are unsupported
+testdir:fixedbugs/bug510.go	interpreted	scalar call interrupted
+testdir:fixedbugs/gcc65755.go	interpreted	fixedbugs/gcc65755.go:19:9: unregistered bridge type "s"
+testdir:fixedbugs/issue11256.go	interpreted	command exceeded time limit
+testdir:fixedbugs/issue11771.go	interpreted	gosource: fmt.Fprintln requires a dependency-owned writer; original Write callbacks are unsupported
+testdir:fixedbugs/issue12577.go	interpreted	output should be empty when (optional) expected-output file fixedbugs/issue12577.out is not present. Instead saw
+testdir:fixedbugs/issue13160.go	interpreted	bash++: task failed: panic: reflect: call of reflect.Value.Interface on zero Value
+testdir:fixedbugs/issue14646.go	interpreted	output should be empty when (optional) expected-output file fixedbugs/issue14646.out is not present. Instead saw
+testdir:fixedbugs/issue15039.go	interpreted	panic: big != bad
+testdir:fixedbugs/issue16249.go	interpreted	command exceeded time limit
+testdir:fixedbugs/issue19028.go	interpreted	gosource: original method T.f is not supported by dependency transport
+testdir:fixedbugs/issue19658.go	interpreted	gosource: fmt.Fprintf requires a dependency-owned writer; original Write callbacks are unsupported
+testdir:fixedbugs/issue20014.go	interpreted	gosource: build dependency bridge: exit status 1: # command-line-arguments
+testdir:fixedbugs/issue20014.go	compiled	output does not match expected in fixedbugs/issue20014.out. Instead saw
+testdir:fixedbugs/issue20780b.go	interpreted	panic: interface conversion: interface {} is expand.invalidObject, not []interface {}
+testdir:fixedbugs/issue21120.go	interpreted	unregistered bridge type "<unsupported embedded field>"
+testdir:fixedbugs/issue22660.go	interpreted	gosource: fmt.Fprintf requires a dependency-owned writer; original Write callbacks are unsupported
+testdir:fixedbugs/issue22781.go	interpreted	command exceeded time limit
+testdir:fixedbugs/issue24419.go	interpreted	command exceeded time limit
+testdir:fixedbugs/issue24491a.go	interpreted	fixedbugs/issue24491a.go:20:27: gosource: original callback signature requires value-semantics parameters and supported results
+testdir:fixedbugs/issue24491b.go	interpreted	fixedbugs/issue24491b.go:45:6: scalar call interrupted
+testdir:fixedbugs/issue25897b.go	interpreted	gosource: original method T.Foo is not supported by dependency transport
+testdir:fixedbugs/issue26335.go	interpreted	fixedbugs/issue26335.go:28:18: gosource: original callback signature requires value-semantics parameters and supported results
+testdir:fixedbugs/issue27695.go	interpreted	command exceeded time limit
+testdir:fixedbugs/issue28748.go	interpreted	fixedbugs/issue28748.go:26:24: gosource: asynchronous or retained original function callbacks are unsupported for reflect.TypeOf
+testdir:fixedbugs/issue29190.go	interpreted	panic: runtime error: makeslice: len out of range
+testdir:fixedbugs/issue29919.go	interpreted	panic: missing a.go:15
+testdir:fixedbugs/issue29919.go	compiled	panic: missing a.init
+testdir:fixedbugs/issue30476.go	interpreted	fixedbugs/issue30476.go:15:26: gosource: original callback signature requires value-semantics parameters and supported results
+testdir:fixedbugs/issue33555.go	interpreted	gosource: fmt.Fprintf requires a dependency-owned writer; original Write callbacks are unsupported
+testdir:fixedbugs/issue36516.go	interpreted	gosource: asynchronous or retained original function callbacks are unsupported for testing.AllocsPerRun
+testdir:fixedbugs/issue42401.go	interpreted	panic: FAIL
+testdir:fixedbugs/issue42401.go	compiled	panic: FAIL
+testdir:fixedbugs/issue45045.go	interpreted	scalar call interrupted
+testdir:fixedbugs/issue4618.go	interpreted	gosource: asynchronous or retained original function callbacks are unsupported for testing.AllocsPerRun
+testdir:fixedbugs/issue4667.go	interpreted	gosource: asynchronous or retained original function callbacks are unsupported for testing.AllocsPerRun
+testdir:fixedbugs/issue47928.go	interpreted	panic: FAIL
+testdir:fixedbugs/issue52856.go	compiled	panic: 0
+testdir:fixedbugs/issue5493.go	interpreted	command exceeded time limit
+testdir:fixedbugs/issue57184.go	interpreted	fixedbugs/issue57184.go:26:36: gosource: asynchronous or retained original function callbacks are unsupported for reflect.TypeOf
+testdir:fixedbugs/issue58300.go	interpreted	fixedbugs/issue58300.go:23:35: gosource: asynchronous or retained original function callbacks are unsupported for reflect.ValueOf
+testdir:fixedbugs/issue58300b.go	interpreted	fixedbugs/issue58300b.go:34:44: gosource: original callback signature requires value-semantics parameters and supported results
+testdir:fixedbugs/issue5963.go	interpreted	command exceeded time limit
+testdir:fixedbugs/issue67255.go	interpreted	command exceeded time limit
+testdir:fixedbugs/issue73917.go	interpreted	output should be empty when (optional) expected-output file fixedbugs/issue73917.out is not present. Instead saw
+testdir:fixedbugs/issue73920.go	interpreted	output should be empty when (optional) expected-output file fixedbugs/issue73920.out is not present. Instead saw
+testdir:fixedbugs/issue7550.go	interpreted	panic: runtime error: makeslice: len out of range
+testdir:fixedbugs/issue7690.go	interpreted	output should be empty when (optional) expected-output file fixedbugs/issue7690.out is not present. Instead saw
+testdir:fixedbugs/issue77779.go	interpreted	fixedbugs/issue77779.go:39:5: unregistered bridge type "Container"
+testdir:fixedbugs/issue79186.go	interpreted	command exceeded time limit
+testdir:fixedbugs/issue8039.go	interpreted	command exceeded time limit
+testdir:fixedbugs/issue8047.go	interpreted	panic: defer of nil func didn't panic
+testdir:fixedbugs/issue8047b.go	interpreted	output should be empty when (optional) expected-output file fixedbugs/issue8047b.out is not present. Instead saw
+testdir:gcstring.go	interpreted	gcstring.go:41:31: gosource: original callback signature requires value-semantics parameters and supported results
+testdir:inline_callers.go	interpreted	output should be empty when (optional) expected-output file inline_callers.out is not present. Instead saw
+testdir:inline_literal.go	interpreted	gosource: asynchronous or retained original function callbacks are unsupported for reflect.ValueOf
+testdir:ken/divconst.go	interpreted	command exceeded time limit
+testdir:ken/modconst.go	interpreted	command exceeded time limit
+testdir:mallocfin.go	interpreted	mallocfin.go:60:27: gosource: original callback signature requires value-semantics parameters and supported results
+testdir:maymorestack.go	interpreted	panic: mayMoreStack not called
+testdir:peano.go	interpreted	command exceeded time limit
+testdir:rangegen.go	interpreted	gosource: fmt.Fprintf requires a dependency-owned writer; original Write callbacks are unsupported
+testdir:rangegen.go	compiled	command exceeded time limit
+testdir:recover1.go	interpreted	panic: 1
+testdir:reflectmethod2.go	interpreted	reflectmethod2.go:30:2: gosource: original method M.UniqueMethodName is not supported by dependency transport
+testdir:reflectmethod3.go	interpreted	reflectmethod3.go:30:2: gosource: original method M.UniqueMethodName is not supported by dependency transport
+testdir:reflectmethod7.go	interpreted	gosource: original method S.M is not supported by dependency transport
+testdir:stack.go	interpreted	command exceeded time limit
+testdir:stackobj2.go	interpreted	command exceeded time limit
+testdir:tinyfin.go	interpreted	tinyfin.go:28:27: gosource: original callback signature requires value-semantics parameters and supported results
+testdir:typeparam/issue47272.go	interpreted	unregistered bridge type "Option[int]"
+testdir:typeparam/issue48225.go	interpreted	panic: string
+testdir:typeparam/issue48317.go	interpreted	unregistered bridge type "*A[int]"
+testdir:typeparam/issue48598.go	interpreted	unregistered nil bridge type "IteratorFunc[int]"
+testdir:typeparam/issue48645a.go	interpreted	gosource: asynchronous or retained original function callbacks are unsupported for reflect.TypeOf
+testdir:typeparam/issue49547.go	interpreted	output should be empty when (optional) expected-output file typeparam/issue49547.out is not present. Instead saw
+testdir:typeparam/issue50481c.go	interpreted	unregistered bridge type "__gosource_pkg_0_T"
+testdir:uintptrescapes3.go	interpreted	uintptrescapes3.go:51:29: gosource: original callback signature requires value-semantics parameters and supported results
