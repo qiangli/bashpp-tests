@@ -1,0 +1,34 @@
+root	mode	first_line
+testdir:alias1.go	interpreted	panic: byte != uint8
+testdir:chan/sieve2.go	interpreted	bash++: task failed: exit status 1
+testdir:convert.go	interpreted	gosource: asynchronous or retained original function callbacks are unsupported for __gosource_import_0_0.TypeOf
+testdir:fixedbugs/bug510.go	interpreted	scalar call interrupted
+testdir:fixedbugs/issue19028.go	interpreted	gosource: original method T.f is not supported by dependency transport
+testdir:fixedbugs/issue19467.go	interpreted	gosource: native slice retention or mutation is unsupported for runtime.Callers
+testdir:fixedbugs/issue19467.go	compiled	2026/09/12 06:49:22 frame 0: got main.(*__gosource_pkg_0_WaitGroup).Add, want test/mysync.(*WaitGroup).Add
+testdir:fixedbugs/issue20014.go	interpreted	gosource: build dependency bridge: exit status 1: # command-line-arguments
+testdir:fixedbugs/issue20014.go	compiled	output does not match expected in fixedbugs/issue20014.out. Instead saw
+testdir:fixedbugs/issue21120.go	interpreted	unregistered bridge type "<unsupported embedded field>"
+testdir:fixedbugs/issue29919.go	interpreted	gosource: native slice retention or mutation is unsupported for runtime.Stack
+testdir:fixedbugs/issue29919.go	compiled	panic: missing a.init
+testdir:fixedbugs/issue42401.go	interpreted	panic: FAIL
+testdir:fixedbugs/issue42401.go	compiled	panic: FAIL
+testdir:fixedbugs/issue52856.go	interpreted	panic: 0
+testdir:fixedbugs/issue52856.go	compiled	panic: 0 [recovered, repanicked]
+testdir:fixedbugs/issue57184.go	interpreted	fixedbugs/issue57184.go:26:36: gosource: asynchronous or retained original function callbacks are unsupported for __gosource_import_0_1.TypeOf
+testdir:fixedbugs/issue67255.go	interpreted	command exceeded time limit
+testdir:rangegen.go	interpreted	gosource: fmt.Fprintf requires a dependency-owned writer; original Write callbacks are unsupported
+testdir:rangegen.go	compiled	command exceeded time limit
+testdir:stackobj2.go	interpreted	command exceeded time limit
+testdir:typeparam/boundmethod.go	interpreted	exit status 2
+testdir:typeparam/cons.go	interpreted	scalar call interrupted
+testdir:typeparam/issue48462.go	interpreted	test/typeparam/issue48462.dir/main.go:19:6: gosource: native slice retention or mutation is unsupported for reflect.DeepEqual
+testdir:typeparam/issue50419.go	interpreted	typeparam/issue50419.go:21:18: unregistered bridge type "*Foo[string, int]"
+testdir:typeparam/issue50481b.go	interpreted	test/typeparam/issue50481b.dir/main.go:20:18: unregistered bridge type "*__gosource_pkg_0_Foo[string, int]"
+testdir:typeparam/issue50481c.go	interpreted	unregistered bridge type "__gosource_pkg_0_T"
+testdir:typeparam/issue51219.go	interpreted	unregistered bridge type "__gosource_pkg_0_I[__gosource_pkg_0_JsonRaw]"
+testdir:typeparam/map.go	interpreted	typeparam/map.go:28:6: gosource: native slice retention or mutation is unsupported for reflect.DeepEqual
+testdir:typeparam/mapimp.go	interpreted	test/typeparam/mapimp.dir/main.go:17:6: gosource: native slice retention or mutation is unsupported for reflect.DeepEqual
+testdir:typeparam/stringerimp.go	interpreted	test/typeparam/stringerimp.dir/main.go:25:6: gosource: native slice retention or mutation is unsupported for reflect.DeepEqual
+testdir:uintptrescapes3.go	interpreted	uintptrescapes3.go:51:29: gosource: original callback signature requires value-semantics parameters and supported results
+testdir:uintptrescapes3.go	compiled	output should be empty when (optional) expected-output file uintptrescapes3.out is not present. Instead saw

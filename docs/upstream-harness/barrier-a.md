@@ -51,3 +51,24 @@ re-binds the 833 remaining roots to the five cards by first line: checker
 verdict 247 · evaluator builtins/collections/exprs 208 · generics/interfaces
 109 · pointers/nil/selectors 89 · bridge/import policy 43 · converter forms 39
 · goto/labels 38 · other 60.
+
+## Leaf 151, run 2 — after wave 3
+
+Same 955 roots, Bash++ `963ef4b` rebuilt on sh `e484a22b` (sha256
+`c877b61f…`), harness `e5214bc`, 2026-09-12 05:59Z–06:55Z, exit 3, zero seam
+failures, zero survivors. **197 PASS (both modes)** — 0 on the frozen
+candidate, 88 after wave 2, 197 after wave 3. Interpreted non-PASS 731 → 622
+(testdir), 99/101 typechecker, 25/25 packages; compiled 212 → 166. Partition
+of the 758 failing roots: 151: 698 · 152: 14 · 153: 26 · 154: 7 ·
+unclassified 13 (`leaf-151r2/`). Per run-1 cluster: checker verdict 247 →
+236 (28 are gc-only checks go/types cannot express; 99 are the typechecker
+harness's own `assert`/`trace` builtins and tab-indented notes; 3 wording →
+154) · evaluator builtins/collections/exprs 208 → 203 · generics/interfaces
+109 → 71 · pointers/nil/selectors 89 → 75 (23 need nil-deref to enter the Go
+panic/recover path, 13 nil into scalar-only consumers) · bridge/import policy
+43 → 43 · converter forms 39 → 32 · goto/labels 38 → 6 (2 body-less
+declarations, 3 multi-package compiledir, 1 other) · other 60 → 57.
+Per-cluster findings: `sh/gosource/testdata/sprint151/{checker,generics,
+pointers,goto}/FINDINGS.md`. Rows that left 151 did so through these
+manifests; the 698 that remain are Sprint 151's recorded residue for the
+151–154 integration run.

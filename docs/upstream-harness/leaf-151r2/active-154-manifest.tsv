@@ -1,0 +1,10 @@
+root	mode	first_line
+testdir:defererrcheck.go	interpreted	defererrcheck.go:20: missing error "open-coded defer"
+testdir:defererrcheck.go	compiled	defererrcheck.go:20: missing error "open-coded defer"
+testdir:escape5.go	interpreted	escape5.go:17: missing error "p does not escape"
+testdir:escape_closure.go	interpreted	escape_closure.go:15: missing error "p does not escape"
+testdir:escape_goto.go	interpreted	escape_goto.go:21: missing error "escapes to heap"
+testdir:index1.go	interpreted	// errorcheck
+testdir:index2.go	interpreted	// errorcheck
+testdir:prove.go	interpreted	prove.go:18: missing error "Proved IsInBounds$"
+testdir:prove.go	compiled	prove.go:18: missing error "Proved IsInBounds$"
