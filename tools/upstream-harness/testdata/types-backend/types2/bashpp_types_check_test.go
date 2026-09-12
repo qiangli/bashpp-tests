@@ -58,7 +58,7 @@ func bashppTypesCheck(t *testing.T, filenames []string, srcs [][]byte, lang stri
 	if lang != "" {
 		args = append(args, "--go-version", lang)
 	}
-	args = append(args, "--go-test-builtins")
+	args = append(args, "--go-test-builtins", "--go-checker-branch-errors", "--go-check-after-syntax-errors")
 	for _, name := range filenames {
 		args = append(args, "--go-file", name)
 	}
@@ -87,6 +87,7 @@ func bashppTypesCheck(t *testing.T, filenames []string, srcs [][]byte, lang stri
 		"upstream parse diagnostics are not merged: the check interface reports parse and type diagnostics itself",
 		"positioned secondary diagnostics whose message starts with a tab are folded into the previous types2 Error message to mirror upstream's multi-part diagnostic rendering",
 		"the check interface is passed --go-test-builtins to mirror upstream's in-process types.DefPredeclaredTestFuncs setup",
+		"the check interface is passed --go-checker-branch-errors (this runner parses without syntax.CheckBranches and leaves Config.IgnoreBranchErrors false, so label/goto/break errors are the checker's) and --go-check-after-syntax-errors (this runner type-checks the partial AST after parse errors and expects both)",
 	}
 	if fakeImportC {
 		deviations = append(deviations, "the check interface has no -fakeImportC; import \"C\" is checked as an ordinary import and any resulting mismatch is a retained product difference")
@@ -113,6 +114,21 @@ func bashppParseTypes2Diagnostics(known map[string]*syntax.PosBase, out string) 
 	unparsed := 0
 	for _, line := range strings.Split(strings.TrimRight(out, "\n"), "\n") {
 		if line == "" {
+			continue
+		}
+		// A TAB-prefixed line is gc's continuation of the previous error
+		// (the sub-error of a multi-part diagnostic, rendered as
+		// "\t<pos>: <msg>"); upstream errorCheck joins it the same way
+		// (cmd/internal/testdir/testdir_test.go:1169), and types2 itself
+		// carries the part inside one message joined by "\n\t".
+		if strings.HasPrefix(line, "\t") {
+			if n := len(errs); n > 0 {
+				prev := errs[n-1].(Error)
+				prev.Msg += "\n" + line
+				errs[n-1] = prev
+			} else {
+				unparsed++
+			}
 			continue
 		}
 		m := bashppDiagRx.FindStringSubmatch(line)

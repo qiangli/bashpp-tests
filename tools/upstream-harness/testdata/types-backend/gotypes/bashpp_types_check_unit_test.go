@@ -62,3 +62,17 @@ func TestBashppParseGotypesDropsTwoSecondaryDiagnostics(t *testing.T) {
 		t.Fatalf("len(errs) = %d, want 1: %v", len(errs), errs)
 	}
 }
+
+// Sprint: #154; Story: S154.1; Story-ID: 29abb27c8659
+// gc's own shape for a sub-error: a TAB-prefixed line carrying its position
+// is the secondary go/types ignores — never an error, never unattributed.
+func TestBashppParseGotypesDropsGcShapedContinuation(t *testing.T) {
+	fset, known := gotypesFixture()
+	errs, unparsed := bashppParseGotypesDiagnostics(fset, known, "file.go:4:5: x redeclared in this block\n\tfile.go:3:5: other declaration of x\n")
+	if unparsed != 0 || len(errs) != 1 {
+		t.Fatalf("errs, unparsed = %d, %d; want 1, 0: %v", len(errs), unparsed, errs)
+	}
+	if errs, unparsed := bashppParseGotypesDiagnostics(fset, known, "\tfile.go:3:5: other declaration of x\n"); len(errs) != 0 || unparsed != 1 {
+		t.Fatalf("leading continuation: errs, unparsed = %d, %d; want 0, 1", len(errs), unparsed)
+	}
+}

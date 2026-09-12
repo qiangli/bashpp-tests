@@ -59,3 +59,19 @@ func TestBashppParseTypes2JoinsTwoSecondaryDiagnostics(t *testing.T) {
 		t.Fatalf("Msg = %q, want %q", got, want)
 	}
 }
+
+// Sprint: #154; Story: S154.1; Story-ID: 29abb27c8659
+// gc's own shape for a sub-error: a TAB-prefixed line carrying its position.
+func TestBashppParseTypes2JoinsGcShapedContinuation(t *testing.T) {
+	errs, unparsed := bashppParseTypes2Diagnostics(types2Fixture(), "file.go:4:5: x redeclared in this block\n\tfile.go:3:5: other declaration of x\n")
+	if unparsed != 0 || len(errs) != 1 {
+		t.Fatalf("errs, unparsed = %d, %d; want 1, 0: %v", len(errs), unparsed, errs)
+	}
+	want := "x redeclared in this block\n\tfile.go:3:5: other declaration of x"
+	if got := errs[0].(Error).Msg; got != want {
+		t.Fatalf("Msg = %q, want %q", got, want)
+	}
+	if errs, unparsed := bashppParseTypes2Diagnostics(types2Fixture(), "\tfile.go:3:5: other declaration of x\n"); len(errs) != 0 || unparsed != 1 {
+		t.Fatalf("leading continuation: errs, unparsed = %d, %d; want 0, 1", len(errs), unparsed)
+	}
+}
