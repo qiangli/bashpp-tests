@@ -1,0 +1,833 @@
+package:cmd/compile	S151.5 bridge/import policy
+package:cmd/compile/internal/amd64	S151.5 bridge/import policy
+package:cmd/compile/internal/base	S151.5 bridge/import policy
+package:cmd/compile/internal/compare	S151.5 bridge/import policy
+package:cmd/compile/internal/devirtualize	S151.5 bridge/import policy
+package:cmd/compile/internal/dwarfgen	S151.5 bridge/import policy
+package:cmd/compile/internal/importer	S151.5 bridge/import policy
+package:cmd/compile/internal/inline/inlheur	S151.5 bridge/import policy
+package:cmd/compile/internal/ir	S151.5 bridge/import policy
+package:cmd/compile/internal/liveness	S151.5 bridge/import policy
+package:cmd/compile/internal/logopt	S151.5 bridge/import policy
+package:cmd/compile/internal/loopvar	S151.5 bridge/import policy
+package:cmd/compile/internal/noder	S151.5 bridge/import policy
+package:cmd/compile/internal/rangefunc	S151.5 bridge/import policy
+package:cmd/compile/internal/reflectdata	S151.5 bridge/import policy
+package:cmd/compile/internal/ssagen	S151.5 bridge/import policy
+package:cmd/compile/internal/syntax	S151.5 bridge/import policy
+package:cmd/compile/internal/test	S151.5 bridge/import policy
+package:cmd/compile/internal/typecheck	S151.5 bridge/import policy
+package:cmd/compile/internal/types	S151.5 bridge/import policy
+package:cmd/compile/internal/types2	S151.5 bridge/import policy
+package:cmd/internal/testdir	S151.5 bridge/import policy
+package:go/types	S151.5 bridge/import policy
+package:internal/types/errors	S151.5 bridge/import policy
+testdir:235.go	S151.5 evaluator builtins/collections/exprs
+testdir:abi/fuzz_trailing_zero_field.go	S151.5 checker verdict (false pos/neg)
+testdir:abi/leaf2.go	S151.5 evaluator builtins/collections/exprs
+testdir:abi/map.go	S151.5 evaluator builtins/collections/exprs
+testdir:abi/part_live.go	S151.5 evaluator builtins/collections/exprs
+testdir:abi/part_live_2.go	S151.5 evaluator builtins/collections/exprs
+testdir:abi/spills3.go	S151.5 evaluator builtins/collections/exprs
+testdir:abi/spills4.go	S151.5 evaluator builtins/collections/exprs
+testdir:append.go	S151.5 evaluator builtins/collections/exprs
+testdir:bigalg.go	S151.5 evaluator builtins/collections/exprs
+testdir:bigmap.go	S151.5 checker verdict (false pos/neg)
+testdir:chan/doubleselect.go	S151.5 other
+testdir:chan/nonblock.go	S151.5 evaluator builtins/collections/exprs
+testdir:chan/powser1.go	S151.3 pointers/nil/selectors
+testdir:chan/select.go	S151.5 other
+testdir:chan/select2.go	S151.3 pointers/nil/selectors
+testdir:chan/select3.go	S151.5 evaluator builtins/collections/exprs
+testdir:chan/select4.go	S151.5 evaluator builtins/collections/exprs
+testdir:chan/select5.go	S151.3 pointers/nil/selectors
+testdir:chan/sieve2.go	S151.5 other
+testdir:chan/zerosize.go	S151.5 evaluator builtins/collections/exprs
+testdir:chancap.go	S151.5 evaluator builtins/collections/exprs
+testdir:chanlinear.go	S151.5 evaluator builtins/collections/exprs
+testdir:clear.go	S151.5 checker verdict (false pos/neg)
+testdir:closedchan.go	S151.5 evaluator builtins/collections/exprs
+testdir:closure2.go	S151.5 evaluator builtins/collections/exprs
+testdir:closure4.go	S151.5 bridge/import policy
+testdir:cmp.go	S151.3 pointers/nil/selectors
+testdir:cmplxdivide.go	S151.5 checker verdict (false pos/neg)
+testdir:codegen/alloc.go	S151.5 other
+testdir:complit.go	S151.5 evaluator builtins/collections/exprs
+testdir:complit2.go	S151.5 other
+testdir:const.go	S151.5 checker verdict (false pos/neg)
+testdir:const4.go	S151.5 other
+testdir:convert4.go	S151.3 pointers/nil/selectors
+testdir:convert5.go	S151.5 evaluator builtins/collections/exprs
+testdir:copy.go	S151.5 evaluator builtins/collections/exprs
+testdir:ddd.go	S151.5 checker verdict (false pos/neg)
+testdir:defer.go	S151.5 other
+testdir:defererrcheck.go	S151.4 converter: goto/labels
+testdir:deferprint.go	S151.3 pointers/nil/selectors
+testdir:devirtualization_nil_panics.go	S151.5 other
+testdir:directive.go	S151.5 checker verdict (false pos/neg)
+testdir:directive2.go	S151.5 checker verdict (false pos/neg)
+testdir:divmod.go	S151.5 evaluator builtins/collections/exprs
+testdir:embedfunc.go	S151.5 checker verdict (false pos/neg)
+testdir:embedvers.go	S151.5 checker verdict (false pos/neg)
+testdir:escape.go	S151.5 evaluator builtins/collections/exprs
+testdir:escape2.go	S151.4 converter: goto/labels
+testdir:escape2n.go	S151.4 converter: goto/labels
+testdir:escape_goto.go	S151.4 converter: goto/labels
+testdir:escape_runtime_atomic.go	S151.5 bridge/import policy
+testdir:finprofiled.go	S151.3 pointers/nil/selectors
+testdir:fixedbugs/bug005.go	S151.4 converter: goto/labels
+testdir:fixedbugs/bug027.go	S151.5 other
+testdir:fixedbugs/bug039.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/bug040.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/bug045.go	S151.3 pointers/nil/selectors
+testdir:fixedbugs/bug047.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/bug054.go	S151.5 other
+testdir:fixedbugs/bug059.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/bug075.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/bug076.go	S151.4 converter: goto/labels
+testdir:fixedbugs/bug077.go	S151.4 converter: goto/labels
+testdir:fixedbugs/bug099.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/bug113.go	S151.5 other
+testdir:fixedbugs/bug115.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/bug126.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/bug13343.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/bug137.go	S151.4 converter: goto/labels
+testdir:fixedbugs/bug140.go	S151.4 converter: goto/labels
+testdir:fixedbugs/bug148.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/bug178.go	S151.4 converter: goto/labels
+testdir:fixedbugs/bug184.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/bug191.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/bug192.go	S151.5 other
+testdir:fixedbugs/bug195.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/bug196.go	S151.5 other
+testdir:fixedbugs/bug203.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/bug206.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/bug223.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/bug225.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/bug242.go	S151.3 pointers/nil/selectors
+testdir:fixedbugs/bug243.go	S151.5 bridge/import policy
+testdir:fixedbugs/bug246.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/bug248.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/bug251.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/bug254.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/bug262.go	S151.3 pointers/nil/selectors
+testdir:fixedbugs/bug269.go	S151.2 generics/interfaces
+testdir:fixedbugs/bug272.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/bug273.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/bug279.go	S151.5 bridge/import policy
+testdir:fixedbugs/bug285.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/bug286.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/bug292.go	S151.5 bridge/import policy
+testdir:fixedbugs/bug294.go	S151.4 converter: other forms
+testdir:fixedbugs/bug312.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/bug321.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/bug324.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/bug327.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/bug328.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/bug329.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/bug331.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/bug336.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/bug339.go	S151.5 bridge/import policy
+testdir:fixedbugs/bug341.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/bug342.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/bug347.go	S151.3 pointers/nil/selectors
+testdir:fixedbugs/bug348.go	S151.3 pointers/nil/selectors
+testdir:fixedbugs/bug364.go	S151.5 other
+testdir:fixedbugs/bug372.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/bug385_64.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/bug398.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/bug401.go	S151.5 other
+testdir:fixedbugs/bug424.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/bug433.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/bug441.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/bug442.go	S151.5 other
+testdir:fixedbugs/bug444.go	S151.3 pointers/nil/selectors
+testdir:fixedbugs/bug446.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/bug447.go	S151.3 pointers/nil/selectors
+testdir:fixedbugs/bug449.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/bug450.go	S151.3 pointers/nil/selectors
+testdir:fixedbugs/bug454.go	S151.5 other
+testdir:fixedbugs/bug459.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/bug463.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/bug465.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/bug466.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/bug470.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/bug473.go	S151.5 other
+testdir:fixedbugs/bug474.go	S151.3 pointers/nil/selectors
+testdir:fixedbugs/bug494.go	S151.2 generics/interfaces
+testdir:fixedbugs/bug495.go	S151.4 converter: goto/labels
+testdir:fixedbugs/bug499.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/bug513.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/dse_move_auxint.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/gcc61244.go	S151.4 converter: other forms
+testdir:fixedbugs/gcc61253.go	S151.5 other
+testdir:fixedbugs/gcc61258.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue10253.go	S151.3 pointers/nil/selectors
+testdir:fixedbugs/issue10486.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue10975.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/issue11053.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue11326b.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue11369.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/issue11614.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/issue11656.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue11945.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/issue12226.go	S151.3 pointers/nil/selectors
+testdir:fixedbugs/issue1304.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue13162.go	S151.3 pointers/nil/selectors
+testdir:fixedbugs/issue13169.go	S151.3 pointers/nil/selectors
+testdir:fixedbugs/issue13684.go	S151.4 converter: goto/labels
+testdir:fixedbugs/issue14591.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue14651.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/issue14999.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/issue15252.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue15277.go	S151.5 other
+testdir:fixedbugs/issue15281.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue15329.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue15528.go	S151.2 generics/interfaces
+testdir:fixedbugs/issue15585.go	S151.4 converter: goto/labels
+testdir:fixedbugs/issue15646.go	S151.3 pointers/nil/selectors
+testdir:fixedbugs/issue15838.go	S151.4 converter: goto/labels
+testdir:fixedbugs/issue15975.go	S151.5 other
+testdir:fixedbugs/issue15992.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue16016.go	S151.2 generics/interfaces
+testdir:fixedbugs/issue16037_run.go	S151.5 other
+testdir:fixedbugs/issue16095.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue16130.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue16369.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/issue16760.go	S151.5 other
+testdir:fixedbugs/issue16870.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue17381.go	S151.3 pointers/nil/selectors
+testdir:fixedbugs/issue17752.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue17758.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/issue18410.go	S151.4 converter: other forms
+testdir:fixedbugs/issue18459.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/issue18595.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue18882.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/issue18911.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue19040.go	S151.5 other
+testdir:fixedbugs/issue19078.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue19113.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue19246.go	S151.3 pointers/nil/selectors
+testdir:fixedbugs/issue19359.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue19678.go	S151.4 converter: goto/labels
+testdir:fixedbugs/issue19699.go	S151.4 converter: goto/labels
+testdir:fixedbugs/issue19710.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue19783.go	S151.4 converter: goto/labels
+testdir:fixedbugs/issue19799.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue19911.go	S151.3 pointers/nil/selectors
+testdir:fixedbugs/issue20027.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/issue20298.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/issue20415.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/issue20529.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/issue20530.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue20780.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/issue21048.go	S151.5 other
+testdir:fixedbugs/issue21221.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue21687.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue22083.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue22200.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/issue22200b.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/issue22326.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/issue22605.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue22881.go	S151.3 pointers/nil/selectors
+testdir:fixedbugs/issue22904.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/issue23017.go	S151.3 pointers/nil/selectors
+testdir:fixedbugs/issue23489.go	S151.5 other
+testdir:fixedbugs/issue23545.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue23609.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/issue23734.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue23814.go	S151.3 pointers/nil/selectors
+testdir:fixedbugs/issue23837.go	S151.3 pointers/nil/selectors
+testdir:fixedbugs/issue24488.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue24763.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue24937.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue25507.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/issue25897a.go	S151.3 pointers/nil/selectors
+testdir:fixedbugs/issue26094.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/issue2615.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/issue26416.go	S151.5 other
+testdir:fixedbugs/issue27201.go	S151.3 pointers/nil/selectors
+testdir:fixedbugs/issue27278.go	S151.4 converter: other forms
+testdir:fixedbugs/issue27289.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue27518a.go	S151.3 pointers/nil/selectors
+testdir:fixedbugs/issue27518b.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue27695b.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue27695c.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue27718.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue27961.go	S151.4 converter: other forms
+testdir:fixedbugs/issue28390.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue28445.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/issue28616.go	S151.4 converter: goto/labels
+testdir:fixedbugs/issue28797.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue29013a.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue29013b.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue29264.go	S151.5 other
+testdir:fixedbugs/issue29304.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue29312.go	S151.5 other
+testdir:fixedbugs/issue29329.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/issue29362.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue29362b.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue29504.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue29612.go	S151.4 converter: other forms
+testdir:fixedbugs/issue30041.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue30116.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue30116u.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/issue30862.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue30908.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue31419.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue31747.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/issue32187.go	S151.5 other
+testdir:fixedbugs/issue32288.go	S151.3 pointers/nil/selectors
+testdir:fixedbugs/issue32477.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue32595.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue33062.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue33724.go	S151.3 pointers/nil/selectors
+testdir:fixedbugs/issue33739.go	S151.4 converter: other forms
+testdir:fixedbugs/issue34123.go	S151.3 pointers/nil/selectors
+testdir:fixedbugs/issue34329.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/issue34395.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/issue35027.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue35073a.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue35576.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue37716.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue37975.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue38125.go	S151.4 converter: other forms
+testdir:fixedbugs/issue38496.go	S151.3 pointers/nil/selectors
+testdir:fixedbugs/issue39541.go	S151.3 pointers/nil/selectors
+testdir:fixedbugs/issue40252.go	S151.3 pointers/nil/selectors
+testdir:fixedbugs/issue40367.go	S151.4 converter: goto/labels
+testdir:fixedbugs/issue40629.go	S151.3 pointers/nil/selectors
+testdir:fixedbugs/issue4066.go	S151.5 other
+testdir:fixedbugs/issue4085b.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue40917.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue41575.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/issue42058a.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/issue42058b.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/issue4252.go	S151.3 pointers/nil/selectors
+testdir:fixedbugs/issue42703.go	S151.4 converter: other forms
+testdir:fixedbugs/issue43111.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue4316.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue43164.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/issue4323.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/issue43292.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue43444.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue4353.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue43570.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue43619.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/issue43633.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue43835.go	S151.3 pointers/nil/selectors
+testdir:fixedbugs/issue43942.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue44355.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/issue44465.go	S151.4 converter: goto/labels
+testdir:fixedbugs/issue44830.go	S151.3 pointers/nil/selectors
+testdir:fixedbugs/issue4495.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue4510.go	S151.5 other
+testdir:fixedbugs/issue4518.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue4562.go	S151.3 pointers/nil/selectors
+testdir:fixedbugs/issue4585.go	S151.3 pointers/nil/selectors
+testdir:fixedbugs/issue4590.go	S151.2 generics/interfaces
+testdir:fixedbugs/issue45947.go	S151.4 converter: goto/labels
+testdir:fixedbugs/issue45948.go	S151.4 converter: goto/labels
+testdir:fixedbugs/issue46304.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue46525.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/issue46725.go	S151.5 other
+testdir:fixedbugs/issue46938.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue47068.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue47201.go	S151.5 other
+testdir:fixedbugs/issue4748.go	S151.4 converter: goto/labels
+testdir:fixedbugs/issue48097.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/issue48230.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/issue4847.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/issue48473.go	S151.3 pointers/nil/selectors
+testdir:fixedbugs/issue48476.go	S151.3 pointers/nil/selectors
+testdir:fixedbugs/issue48536.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue48898.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue49145.go	S151.4 converter: goto/labels
+testdir:fixedbugs/issue49368.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/issue49512.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue49767.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/issue49814.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/issue50190.go	S151.5 other
+testdir:fixedbugs/issue50671.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/issue50672.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue50788.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/issue51401.go	S151.3 pointers/nil/selectors
+testdir:fixedbugs/issue51531.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/issue51913.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue52072.go	S151.5 other
+testdir:fixedbugs/issue52278.go	S151.4 converter: goto/labels
+testdir:fixedbugs/issue52279.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue52612.go	S151.3 pointers/nil/selectors
+testdir:fixedbugs/issue52697.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/issue52788.go	S151.3 pointers/nil/selectors
+testdir:fixedbugs/issue52788a.go	S151.3 pointers/nil/selectors
+testdir:fixedbugs/issue52856.go	S151.5 other
+testdir:fixedbugs/issue53137.go	S151.2 generics/interfaces
+testdir:fixedbugs/issue53309.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue53635.go	S151.3 pointers/nil/selectors
+testdir:fixedbugs/issue5373.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue53982.go	S151.4 converter: other forms
+testdir:fixedbugs/issue54220.go	S151.5 bridge/import policy
+testdir:fixedbugs/issue54307.go	S151.4 converter: other forms
+testdir:fixedbugs/issue54343.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue54467.go	S151.3 pointers/nil/selectors
+testdir:fixedbugs/issue54632.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue54911.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/issue54912.go	S151.4 converter: other forms
+testdir:fixedbugs/issue55122.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue55122b.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue5515.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue56103.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/issue56778.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/issue57309.go	S151.4 converter: other forms
+testdir:fixedbugs/issue57778.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/issue5809.go	S151.3 pointers/nil/selectors
+testdir:fixedbugs/issue5856.go	S151.5 other
+testdir:fixedbugs/issue58671.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/issue59293.go	S151.5 bridge/import policy
+testdir:fixedbugs/issue59338.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue59404part2.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue59411.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue59680.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/issue59709.go	S151.2 generics/interfaces
+testdir:fixedbugs/issue6055.go	S151.5 other
+testdir:fixedbugs/issue60601.go	S151.5 bridge/import policy
+testdir:fixedbugs/issue62203.go	S151.5 bridge/import policy
+testdir:fixedbugs/issue6269.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue63333.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/issue63489a.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/issue63489b.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/issue63955.go	S151.4 converter: goto/labels
+testdir:fixedbugs/issue65417.go	S151.2 generics/interfaces
+testdir:fixedbugs/issue65957.go	S151.4 converter: other forms
+testdir:fixedbugs/issue65962.go	S151.5 other
+testdir:fixedbugs/issue6703a.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/issue6703b.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/issue6703c.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/issue6703d.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/issue6703e.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/issue6703f.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/issue6703g.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/issue6703h.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/issue6703i.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/issue6703j.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/issue6703k.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/issue6703l.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/issue6703m.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/issue6703n.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/issue6703o.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/issue6703p.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/issue6703q.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/issue6703r.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/issue6703s.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/issue6703t.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/issue6703u.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/issue6703v.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/issue6703w.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/issue6703x.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/issue6703y.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/issue6703z.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/issue67190.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue6772.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/issue68227.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/issue68415.go	S151.5 bridge/import policy
+testdir:fixedbugs/issue6847.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/issue68526.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue68816.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue70175.go	S151.4 converter: goto/labels
+testdir:fixedbugs/issue70189.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue7023.go	S151.4 converter: goto/labels
+testdir:fixedbugs/issue71225.go	S151.5 bridge/import policy
+testdir:fixedbugs/issue71226.go	S151.5 bridge/import policy
+testdir:fixedbugs/issue71759.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue71857.go	S151.5 other
+testdir:fixedbugs/issue72063.go	S151.2 generics/interfaces
+testdir:fixedbugs/issue72844.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue72860.go	S151.3 pointers/nil/selectors
+testdir:fixedbugs/issue73476.go	S151.3 pointers/nil/selectors
+testdir:fixedbugs/issue73748a.go	S151.3 pointers/nil/selectors
+testdir:fixedbugs/issue73748b.go	S151.3 pointers/nil/selectors
+testdir:fixedbugs/issue73888.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue73888b.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue73916.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue73916b.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue74379.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue74379b.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue74379c.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue74626.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/issue75022.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/issue75327.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue75365.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue7538b.go	S151.4 converter: goto/labels
+testdir:fixedbugs/issue75569.go	S151.4 converter: goto/labels
+testdir:fixedbugs/issue76008.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue76950.go	S151.4 converter: goto/labels
+testdir:fixedbugs/issue78081.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue78295.go	S151.4 converter: other forms
+testdir:fixedbugs/issue78297.go	S151.4 converter: other forms
+testdir:fixedbugs/issue78303_1.go	S151.3 pointers/nil/selectors
+testdir:fixedbugs/issue78303_2.go	S151.3 pointers/nil/selectors
+testdir:fixedbugs/issue78355.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/issue78408.go	S151.4 converter: goto/labels
+testdir:fixedbugs/issue7863.go	S151.3 pointers/nil/selectors
+testdir:fixedbugs/issue79197.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue79236.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue79236b.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue79258.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/issue79762.go	S151.4 converter: other forms
+testdir:fixedbugs/issue79812.go	S151.2 generics/interfaces
+testdir:fixedbugs/issue79874.go	S151.3 pointers/nil/selectors
+testdir:fixedbugs/issue79960.go	S151.4 converter: other forms
+testdir:fixedbugs/issue80004.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue8004.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue80097.go	S151.4 converter: goto/labels
+testdir:fixedbugs/issue80188.go	S151.3 pointers/nil/selectors
+testdir:fixedbugs/issue80196.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue8036.go	S151.3 pointers/nil/selectors
+testdir:fixedbugs/issue8042.go	S151.4 converter: goto/labels
+testdir:fixedbugs/issue8048.go	S151.3 pointers/nil/selectors
+testdir:fixedbugs/issue80517_1.go	S151.4 converter: other forms
+testdir:fixedbugs/issue80517_2.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue80517_3.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue8076.go	S151.4 converter: goto/labels
+testdir:fixedbugs/issue8132.go	S151.3 pointers/nil/selectors
+testdir:fixedbugs/issue8325.go	S151.3 pointers/nil/selectors
+testdir:fixedbugs/issue8336.go	S151.3 pointers/nil/selectors
+testdir:fixedbugs/issue8347.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue8606.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue8606b.go	S151.3 pointers/nil/selectors
+testdir:fixedbugs/issue8613.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue8620.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue8947.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/issue9006.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/issue9110.go	S151.3 pointers/nil/selectors
+testdir:fixedbugs/issue9604b.go	S151.5 evaluator builtins/collections/exprs
+testdir:fixedbugs/notinheap.go	S151.5 checker verdict (false pos/neg)
+testdir:fixedbugs/notinheap2.go	S151.4 converter: other forms
+testdir:fixedbugs/walk_bounded_overshift_empty_bound.go	S151.5 evaluator builtins/collections/exprs
+testdir:float_lit.go	S151.5 checker verdict (false pos/neg)
+testdir:float_lit2.go	S151.5 checker verdict (false pos/neg)
+testdir:floatcmp.go	S151.5 evaluator builtins/collections/exprs
+testdir:func1.go	S151.5 checker verdict (false pos/neg)
+testdir:func5.go	S151.5 evaluator builtins/collections/exprs
+testdir:func6.go	S151.5 evaluator builtins/collections/exprs
+testdir:funcdup.go	S151.5 checker verdict (false pos/neg)
+testdir:funcdup2.go	S151.5 checker verdict (false pos/neg)
+testdir:gc2.go	S151.3 pointers/nil/selectors
+testdir:gcgort.go	S151.5 other
+testdir:genmeth.go	S151.2 generics/interfaces
+testdir:genmeth1.go	S151.4 converter: other forms
+testdir:genmeth2.go	S151.5 other
+testdir:goprint.go	S151.5 other
+testdir:heapsampling.go	S151.4 converter: other forms
+testdir:import1.go	S151.5 checker verdict (false pos/neg)
+testdir:init1.go	S151.3 pointers/nil/selectors
+testdir:initexp.go	S151.5 checker verdict (false pos/neg)
+testdir:initialize.go	S151.5 checker verdict (false pos/neg)
+testdir:initloop.go	S151.5 checker verdict (false pos/neg)
+testdir:inline.go	S151.4 converter: goto/labels
+testdir:interface/convert.go	S151.5 evaluator builtins/collections/exprs
+testdir:interface/embed3.go	S151.5 other
+testdir:interface/fail.go	S151.5 other
+testdir:interface/noeq.go	S151.5 other
+testdir:interface/receiver.go	S151.3 pointers/nil/selectors
+testdir:interface/returntype.go	S151.5 other
+testdir:intrinsic.go	S151.5 bridge/import policy
+testdir:ken/array.go	S151.5 evaluator builtins/collections/exprs
+testdir:ken/chan.go	S151.5 evaluator builtins/collections/exprs
+testdir:ken/convert.go	S151.5 checker verdict (false pos/neg)
+testdir:ken/cplx3.go	S151.3 pointers/nil/selectors
+testdir:ken/cplx5.go	S151.5 evaluator builtins/collections/exprs
+testdir:ken/embed.go	S151.5 evaluator builtins/collections/exprs
+testdir:ken/label.go	S151.4 converter: goto/labels
+testdir:ken/ptrfun.go	S151.5 evaluator builtins/collections/exprs
+testdir:ken/rob1.go	S151.3 pointers/nil/selectors
+testdir:ken/rob2.go	S151.5 evaluator builtins/collections/exprs
+testdir:ken/simparray.go	S151.5 evaluator builtins/collections/exprs
+testdir:ken/simpbool.go	S151.5 evaluator builtins/collections/exprs
+testdir:ken/slicearray.go	S151.5 evaluator builtins/collections/exprs
+testdir:ken/sliceslice.go	S151.5 evaluator builtins/collections/exprs
+testdir:ken/string.go	S151.3 pointers/nil/selectors
+testdir:linkname3.go	S151.5 checker verdict (false pos/neg)
+testdir:linkx_run.go	S151.3 pointers/nil/selectors
+testdir:literal.go	S151.5 evaluator builtins/collections/exprs
+testdir:live_regabi.go	S151.5 other
+testdir:makeslice.go	S151.5 evaluator builtins/collections/exprs
+testdir:map.go	S151.5 evaluator builtins/collections/exprs
+testdir:maplinear.go	S151.5 evaluator builtins/collections/exprs
+testdir:method.go	S151.5 evaluator builtins/collections/exprs
+testdir:method1.go	S151.5 checker verdict (false pos/neg)
+testdir:method3.go	S151.5 evaluator builtins/collections/exprs
+testdir:method4.go	S151.4 converter: other forms
+testdir:method5.go	S151.5 evaluator builtins/collections/exprs
+testdir:method7.go	S151.4 converter: other forms
+testdir:named.go	S151.5 other
+testdir:nil.go	S151.5 evaluator builtins/collections/exprs
+testdir:nilptr2.go	S151.5 other
+testdir:noinit.go	S151.5 evaluator builtins/collections/exprs
+testdir:nosplit.go	S151.5 other
+testdir:nowritebarrier.go	S151.5 checker verdict (false pos/neg)
+testdir:nul1.go	S151.3 pointers/nil/selectors
+testdir:print.go	S151.3 pointers/nil/selectors
+testdir:prove.go	S151.4 converter: goto/labels
+testdir:range4.go	S151.5 evaluator builtins/collections/exprs
+testdir:rangegen.go	S151.5 other
+testdir:recover.go	S151.5 other
+testdir:recover2.go	S151.5 evaluator builtins/collections/exprs
+testdir:recover3.go	S151.5 evaluator builtins/collections/exprs
+testdir:reflectmethod1.go	S151.4 converter: other forms
+testdir:reflectmethod4.go	S151.4 converter: other forms
+testdir:reflectmethod5.go	S151.5 bridge/import policy
+testdir:reflectmethod6.go	S151.5 bridge/import policy
+testdir:reorder2.go	S151.4 converter: other forms
+testdir:shift3.go	S151.5 evaluator builtins/collections/exprs
+testdir:simassign.go	S151.5 evaluator builtins/collections/exprs
+testdir:slice3.go	S151.3 pointers/nil/selectors
+testdir:slicecap.go	S151.3 pointers/nil/selectors
+testdir:stackobj.go	S151.5 evaluator builtins/collections/exprs
+testdir:stackobj2.go	S151.3 pointers/nil/selectors
+testdir:stackobj3.go	S151.5 evaluator builtins/collections/exprs
+testdir:strcopy.go	S151.3 pointers/nil/selectors
+testdir:struct0.go	S151.5 evaluator builtins/collections/exprs
+testdir:switch.go	S151.3 pointers/nil/selectors
+testdir:turing.go	S151.5 other
+testdir:typecheckloop.go	S151.5 checker verdict (false pos/neg)
+testdir:typeparam/absdiff2.go	S151.2 generics/interfaces
+testdir:typeparam/absdiff3.go	S151.2 generics/interfaces
+testdir:typeparam/absdiffimp2.go	S151.2 generics/interfaces
+testdir:typeparam/append.go	S151.5 evaluator builtins/collections/exprs
+testdir:typeparam/boundmethod.go	S151.2 generics/interfaces
+testdir:typeparam/chans.go	S151.2 generics/interfaces
+testdir:typeparam/chansimp.go	S151.2 generics/interfaces
+testdir:typeparam/combine.go	S151.4 converter: other forms
+testdir:typeparam/cons.go	S151.2 generics/interfaces
+testdir:typeparam/devirtualize1.go	S151.4 converter: other forms
+testdir:typeparam/devirtualize2.go	S151.4 converter: other forms
+testdir:typeparam/dictionaryCapture-noinline.go	S151.3 pointers/nil/selectors
+testdir:typeparam/dictionaryCapture.go	S151.3 pointers/nil/selectors
+testdir:typeparam/dottype.go	S151.2 generics/interfaces
+testdir:typeparam/eface.go	S151.2 generics/interfaces
+testdir:typeparam/equal.go	S151.2 generics/interfaces
+testdir:typeparam/fact.go	S151.2 generics/interfaces
+testdir:typeparam/factimp.go	S151.2 generics/interfaces
+testdir:typeparam/gencrawler.go	S151.2 generics/interfaces
+testdir:typeparam/genembed.go	S151.2 generics/interfaces
+testdir:typeparam/geninline.go	S151.2 generics/interfaces
+testdir:typeparam/graph.go	S151.2 generics/interfaces
+testdir:typeparam/ifaceconv.go	S151.2 generics/interfaces
+testdir:typeparam/index.go	S151.2 generics/interfaces
+testdir:typeparam/index2.go	S151.2 generics/interfaces
+testdir:typeparam/interfacearg.go	S151.2 generics/interfaces
+testdir:typeparam/issue23536.go	S151.2 generics/interfaces
+testdir:typeparam/issue376214.go	S151.2 generics/interfaces
+testdir:typeparam/issue42758.go	S151.2 generics/interfaces
+testdir:typeparam/issue44688.go	S151.3 pointers/nil/selectors
+testdir:typeparam/issue45722.go	S151.2 generics/interfaces
+testdir:typeparam/issue46472.go	S151.2 generics/interfaces
+testdir:typeparam/issue46591.go	S151.2 generics/interfaces
+testdir:typeparam/issue47258.go	S151.2 generics/interfaces
+testdir:typeparam/issue47676.go	S151.2 generics/interfaces
+testdir:typeparam/issue47684c.go	S151.4 converter: other forms
+testdir:typeparam/issue47713.go	S151.2 generics/interfaces
+testdir:typeparam/issue47716.go	S151.5 bridge/import policy
+testdir:typeparam/issue47723.go	S151.2 generics/interfaces
+testdir:typeparam/issue47740b.go	S151.2 generics/interfaces
+testdir:typeparam/issue47775b.go	S151.2 generics/interfaces
+testdir:typeparam/issue47877.go	S151.2 generics/interfaces
+testdir:typeparam/issue47901.go	S151.2 generics/interfaces
+testdir:typeparam/issue47925.go	S151.4 converter: other forms
+testdir:typeparam/issue47925b.go	S151.2 generics/interfaces
+testdir:typeparam/issue47925c.go	S151.2 generics/interfaces
+testdir:typeparam/issue47925d.go	S151.2 generics/interfaces
+testdir:typeparam/issue48016.go	S151.5 other
+testdir:typeparam/issue48030.go	S151.2 generics/interfaces
+testdir:typeparam/issue48094.go	S151.5 bridge/import policy
+testdir:typeparam/issue48137.go	S151.2 generics/interfaces
+testdir:typeparam/issue48185b.go	S151.2 generics/interfaces
+testdir:typeparam/issue48253.go	S151.4 converter: other forms
+testdir:typeparam/issue48337b.go	S151.5 checker verdict (false pos/neg)
+testdir:typeparam/issue48344.go	S151.5 checker verdict (false pos/neg)
+testdir:typeparam/issue48424.go	S151.2 generics/interfaces
+testdir:typeparam/issue48453.go	S151.2 generics/interfaces
+testdir:typeparam/issue48602.go	S151.2 generics/interfaces
+testdir:typeparam/issue48617.go	S151.2 generics/interfaces
+testdir:typeparam/issue48645b.go	S151.2 generics/interfaces
+testdir:typeparam/issue48716.go	S151.2 generics/interfaces
+testdir:typeparam/issue48962.go	S151.2 generics/interfaces
+testdir:typeparam/issue49295.go	S151.2 generics/interfaces
+testdir:typeparam/issue49309.go	S151.2 generics/interfaces
+testdir:typeparam/issue49659b.go	S151.2 generics/interfaces
+testdir:typeparam/issue50002.go	S151.5 other
+testdir:typeparam/issue50109.go	S151.2 generics/interfaces
+testdir:typeparam/issue50264.go	S151.2 generics/interfaces
+testdir:typeparam/issue50419.go	S151.2 generics/interfaces
+testdir:typeparam/issue50481b.go	S151.2 generics/interfaces
+testdir:typeparam/issue50481c.go	S151.2 generics/interfaces
+testdir:typeparam/issue50642.go	S151.2 generics/interfaces
+testdir:typeparam/issue50690a.go	S151.2 generics/interfaces
+testdir:typeparam/issue50690b.go	S151.2 generics/interfaces
+testdir:typeparam/issue50690c.go	S151.2 generics/interfaces
+testdir:typeparam/issue50833.go	S151.2 generics/interfaces
+testdir:typeparam/issue51236.go	S151.2 generics/interfaces
+testdir:typeparam/issue51303.go	S151.2 generics/interfaces
+testdir:typeparam/issue51521.go	S151.4 converter: other forms
+testdir:typeparam/issue51522b.go	S151.5 other
+testdir:typeparam/issue51700.go	S151.3 pointers/nil/selectors
+testdir:typeparam/issue52026.go	S151.2 generics/interfaces
+testdir:typeparam/issue52228.go	S151.3 pointers/nil/selectors
+testdir:typeparam/issue53087.go	S151.2 generics/interfaces
+testdir:typeparam/issue53477.go	S151.2 generics/interfaces
+testdir:typeparam/issue54456.go	S151.2 generics/interfaces
+testdir:typeparam/issue54535.go	S151.2 generics/interfaces
+testdir:typeparam/issue54537.go	S151.2 generics/interfaces
+testdir:typeparam/issue54765.go	S151.5 checker verdict (false pos/neg)
+testdir:typeparam/issue58513.go	S151.2 generics/interfaces
+testdir:typeparam/list.go	S151.2 generics/interfaces
+testdir:typeparam/list2.go	S151.2 generics/interfaces
+testdir:typeparam/listimp.go	S151.2 generics/interfaces
+testdir:typeparam/listimp2.go	S151.2 generics/interfaces
+testdir:typeparam/map.go	S151.2 generics/interfaces
+testdir:typeparam/mapimp.go	S151.2 generics/interfaces
+testdir:typeparam/maps.go	S151.2 generics/interfaces
+testdir:typeparam/mapsimp.go	S151.2 generics/interfaces
+testdir:typeparam/mdempsky/14.go	S151.4 converter: other forms
+testdir:typeparam/mdempsky/15.go	S151.2 generics/interfaces
+testdir:typeparam/mdempsky/16.go	S151.2 generics/interfaces
+testdir:typeparam/mdempsky/17.go	S151.4 converter: other forms
+testdir:typeparam/mdempsky/18.go	S151.5 evaluator builtins/collections/exprs
+testdir:typeparam/mdempsky/19.go	S151.2 generics/interfaces
+testdir:typeparam/mdempsky/20.go	S151.2 generics/interfaces
+testdir:typeparam/metrics.go	S151.2 generics/interfaces
+testdir:typeparam/min.go	S151.5 checker verdict (false pos/neg)
+testdir:typeparam/minimp.go	S151.5 checker verdict (false pos/neg)
+testdir:typeparam/nested.go	S151.2 generics/interfaces
+testdir:typeparam/ordered.go	S151.5 checker verdict (false pos/neg)
+testdir:typeparam/orderedmap.go	S151.5 other
+testdir:typeparam/orderedmapsimp.go	S151.5 other
+testdir:typeparam/pair.go	S151.2 generics/interfaces
+testdir:typeparam/pairimp.go	S151.2 generics/interfaces
+testdir:typeparam/select.go	S151.2 generics/interfaces
+testdir:typeparam/sets.go	S151.2 generics/interfaces
+testdir:typeparam/setsimp.go	S151.2 generics/interfaces
+testdir:typeparam/settable.go	S151.2 generics/interfaces
+testdir:typeparam/shape1.go	S151.2 generics/interfaces
+testdir:typeparam/shape_assert.go	S151.2 generics/interfaces
+testdir:typeparam/sliceimp.go	S151.5 checker verdict (false pos/neg)
+testdir:typeparam/slices.go	S151.5 checker verdict (false pos/neg)
+testdir:typeparam/smallest.go	S151.2 generics/interfaces
+testdir:typeparam/smoketest.go	S151.4 converter: other forms
+testdir:typeparam/sum.go	S151.2 generics/interfaces
+testdir:typeparam/tparam1.go	S151.2 generics/interfaces
+testdir:typeparam/valimp.go	S151.2 generics/interfaces
+testdir:typeparam/value.go	S151.2 generics/interfaces
+testdir:typeswitch.go	S151.2 generics/interfaces
+testdir:typeswitch1.go	S151.2 generics/interfaces
+testdir:uintptrescapes.go	S151.3 pointers/nil/selectors
+testdir:uintptrkeepalive.go	S151.5 checker verdict (false pos/neg)
+testdir:unsafe_slice_data.go	S151.3 pointers/nil/selectors
+testdir:unsafe_string.go	S151.5 bridge/import policy
+testdir:unsafe_string_data.go	S151.5 evaluator builtins/collections/exprs
+testdir:unsafebuiltins.go	S151.5 evaluator builtins/collections/exprs
+testdir:utf.go	S151.5 evaluator builtins/collections/exprs
+testdir:zerodivide.go	S151.5 checker verdict (false pos/neg)
+typechecker:cmd/compile/internal/types2/TestCheck/builtins0.go	S151.5 checker verdict (false pos/neg)
+typechecker:cmd/compile/internal/types2/TestCheck/builtins1.go	S151.5 checker verdict (false pos/neg)
+typechecker:cmd/compile/internal/types2/TestCheck/const0.go	S151.5 checker verdict (false pos/neg)
+typechecker:cmd/compile/internal/types2/TestCheck/const1.go	S151.5 checker verdict (false pos/neg)
+typechecker:cmd/compile/internal/types2/TestCheck/constdecl.go	S151.5 checker verdict (false pos/neg)
+typechecker:cmd/compile/internal/types2/TestCheck/conversions0.go	S151.5 checker verdict (false pos/neg)
+typechecker:cmd/compile/internal/types2/TestCheck/cycles0.go	S151.5 checker verdict (false pos/neg)
+typechecker:cmd/compile/internal/types2/TestCheck/cycles2.go	S151.5 checker verdict (false pos/neg)
+typechecker:cmd/compile/internal/types2/TestCheck/cycles3.go	S151.5 checker verdict (false pos/neg)
+typechecker:cmd/compile/internal/types2/TestCheck/cycles5.go	S151.5 checker verdict (false pos/neg)
+typechecker:cmd/compile/internal/types2/TestCheck/cycles6.go	S151.5 checker verdict (false pos/neg)
+typechecker:cmd/compile/internal/types2/TestCheck/decls0.go	S151.5 checker verdict (false pos/neg)
+typechecker:cmd/compile/internal/types2/TestCheck/decls2	S151.5 checker verdict (false pos/neg)
+typechecker:cmd/compile/internal/types2/TestCheck/decls3.go	S151.5 checker verdict (false pos/neg)
+typechecker:cmd/compile/internal/types2/TestCheck/decls4.go	S151.5 checker verdict (false pos/neg)
+typechecker:cmd/compile/internal/types2/TestCheck/expr3.go	S151.5 checker verdict (false pos/neg)
+typechecker:cmd/compile/internal/types2/TestCheck/go1_13.go	S151.5 checker verdict (false pos/neg)
+typechecker:cmd/compile/internal/types2/TestCheck/importdecl0	S151.5 checker verdict (false pos/neg)
+typechecker:cmd/compile/internal/types2/TestCheck/init0.go	S151.5 checker verdict (false pos/neg)
+typechecker:cmd/compile/internal/types2/TestCheck/init1.go	S151.5 checker verdict (false pos/neg)
+typechecker:cmd/compile/internal/types2/TestCheck/init2.go	S151.5 checker verdict (false pos/neg)
+typechecker:cmd/compile/internal/types2/TestCheck/labels.go	S151.5 checker verdict (false pos/neg)
+typechecker:cmd/compile/internal/types2/TestCheck/literals.go	S151.5 checker verdict (false pos/neg)
+typechecker:cmd/compile/internal/types2/TestCheck/main0.go	S151.5 checker verdict (false pos/neg)
+typechecker:cmd/compile/internal/types2/TestCheck/stmt0.go	S151.5 checker verdict (false pos/neg)
+typechecker:cmd/compile/internal/types2/TestCheck/typeparams.go	S151.5 checker verdict (false pos/neg)
+typechecker:cmd/compile/internal/types2/TestExamples/types.go	S151.5 checker verdict (false pos/neg)
+typechecker:cmd/compile/internal/types2/TestFixedbugs/issue39634.go	S151.5 checker verdict (false pos/neg)
+typechecker:cmd/compile/internal/types2/TestFixedbugs/issue39938.go	S151.5 checker verdict (false pos/neg)
+typechecker:cmd/compile/internal/types2/TestFixedbugs/issue41124.go	S151.5 checker verdict (false pos/neg)
+typechecker:cmd/compile/internal/types2/TestFixedbugs/issue42758.go	S151.5 checker verdict (false pos/neg)
+typechecker:cmd/compile/internal/types2/TestFixedbugs/issue48018.go	S151.5 checker verdict (false pos/neg)
+typechecker:cmd/compile/internal/types2/TestFixedbugs/issue48234.go	S151.5 checker verdict (false pos/neg)
+typechecker:cmd/compile/internal/types2/TestFixedbugs/issue48582.go	S151.5 checker verdict (false pos/neg)
+typechecker:cmd/compile/internal/types2/TestFixedbugs/issue48656.go	S151.5 checker verdict (false pos/neg)
+typechecker:cmd/compile/internal/types2/TestFixedbugs/issue48962.go	S151.5 checker verdict (false pos/neg)
+typechecker:cmd/compile/internal/types2/TestFixedbugs/issue48974.go	S151.5 checker verdict (false pos/neg)
+typechecker:cmd/compile/internal/types2/TestFixedbugs/issue49043.go	S151.5 checker verdict (false pos/neg)
+typechecker:cmd/compile/internal/types2/TestFixedbugs/issue49276.go	S151.5 checker verdict (false pos/neg)
+typechecker:cmd/compile/internal/types2/TestFixedbugs/issue51503.go	S151.5 checker verdict (false pos/neg)
+typechecker:cmd/compile/internal/types2/TestFixedbugs/issue52698.go	S151.5 checker verdict (false pos/neg)
+typechecker:cmd/compile/internal/types2/TestFixedbugs/issue59958.go	S151.4 converter: other forms
+typechecker:cmd/compile/internal/types2/TestFixedbugs/issue65711.go	S151.5 checker verdict (false pos/neg)
+typechecker:cmd/compile/internal/types2/TestFixedbugs/issue66285.go	S151.5 checker verdict (false pos/neg)
+typechecker:cmd/compile/internal/types2/TestFixedbugs/issue6977.go	S151.5 checker verdict (false pos/neg)
+typechecker:cmd/compile/internal/types2/TestFixedbugs/issue75918.go	S151.5 checker verdict (false pos/neg)
+typechecker:cmd/compile/internal/types2/TestFixedbugs/issue76478.go	S151.5 checker verdict (false pos/neg)
+typechecker:cmd/compile/internal/types2/TestFixedbugs/issue79265.go	S151.5 checker verdict (false pos/neg)
+typechecker:cmd/compile/internal/types2/TestFixedbugs/issue80172.go	S151.5 checker verdict (false pos/neg)
+typechecker:cmd/compile/internal/types2/TestLocal/issue47996.go	S151.5 checker verdict (false pos/neg)
+typechecker:cmd/compile/internal/types2/TestLocal/issue68183.go	S151.5 checker verdict (false pos/neg)
+typechecker:cmd/compile/internal/types2/TestLocal/issue71254.go	S151.5 checker verdict (false pos/neg)
+typechecker:go/types/TestCheck/builtins0.go	S151.5 checker verdict (false pos/neg)
+typechecker:go/types/TestCheck/builtins1.go	S151.5 checker verdict (false pos/neg)
+typechecker:go/types/TestCheck/const0.go	S151.5 checker verdict (false pos/neg)
+typechecker:go/types/TestCheck/const1.go	S151.5 checker verdict (false pos/neg)
+typechecker:go/types/TestCheck/constdecl.go	S151.5 checker verdict (false pos/neg)
+typechecker:go/types/TestCheck/conversions0.go	S151.5 checker verdict (false pos/neg)
+typechecker:go/types/TestCheck/cycles0.go	S151.5 checker verdict (false pos/neg)
+typechecker:go/types/TestCheck/cycles2.go	S151.5 checker verdict (false pos/neg)
+typechecker:go/types/TestCheck/cycles3.go	S151.5 checker verdict (false pos/neg)
+typechecker:go/types/TestCheck/cycles5.go	S151.5 checker verdict (false pos/neg)
+typechecker:go/types/TestCheck/cycles6.go	S151.5 checker verdict (false pos/neg)
+typechecker:go/types/TestCheck/decls0.go	S151.5 checker verdict (false pos/neg)
+typechecker:go/types/TestCheck/decls2	S151.5 checker verdict (false pos/neg)
+typechecker:go/types/TestCheck/decls3.go	S151.5 checker verdict (false pos/neg)
+typechecker:go/types/TestCheck/decls4.go	S151.5 checker verdict (false pos/neg)
+typechecker:go/types/TestCheck/expr3.go	S151.5 checker verdict (false pos/neg)
+typechecker:go/types/TestCheck/go1_13.go	S151.5 checker verdict (false pos/neg)
+typechecker:go/types/TestCheck/importdecl0	S151.5 checker verdict (false pos/neg)
+typechecker:go/types/TestCheck/init0.go	S151.5 checker verdict (false pos/neg)
+typechecker:go/types/TestCheck/init1.go	S151.5 checker verdict (false pos/neg)
+typechecker:go/types/TestCheck/init2.go	S151.5 checker verdict (false pos/neg)
+typechecker:go/types/TestCheck/labels.go	S151.5 checker verdict (false pos/neg)
+typechecker:go/types/TestCheck/literals.go	S151.5 checker verdict (false pos/neg)
+typechecker:go/types/TestCheck/main0.go	S151.5 checker verdict (false pos/neg)
+typechecker:go/types/TestCheck/stmt0.go	S151.5 checker verdict (false pos/neg)
+typechecker:go/types/TestCheck/typeparams.go	S151.5 checker verdict (false pos/neg)
+typechecker:go/types/TestExamples/types.go	S151.5 checker verdict (false pos/neg)
+typechecker:go/types/TestFixedbugs/issue39634.go	S151.5 checker verdict (false pos/neg)
+typechecker:go/types/TestFixedbugs/issue39938.go	S151.5 checker verdict (false pos/neg)
+typechecker:go/types/TestFixedbugs/issue41124.go	S151.5 checker verdict (false pos/neg)
+typechecker:go/types/TestFixedbugs/issue42758.go	S151.5 checker verdict (false pos/neg)
+typechecker:go/types/TestFixedbugs/issue48018.go	S151.5 checker verdict (false pos/neg)
+typechecker:go/types/TestFixedbugs/issue48234.go	S151.5 checker verdict (false pos/neg)
+typechecker:go/types/TestFixedbugs/issue48582.go	S151.5 checker verdict (false pos/neg)
+typechecker:go/types/TestFixedbugs/issue48656.go	S151.5 checker verdict (false pos/neg)
+typechecker:go/types/TestFixedbugs/issue48962.go	S151.5 checker verdict (false pos/neg)
+typechecker:go/types/TestFixedbugs/issue48974.go	S151.5 checker verdict (false pos/neg)
+typechecker:go/types/TestFixedbugs/issue49043.go	S151.5 checker verdict (false pos/neg)
+typechecker:go/types/TestFixedbugs/issue49276.go	S151.5 checker verdict (false pos/neg)
+typechecker:go/types/TestFixedbugs/issue51503.go	S151.5 checker verdict (false pos/neg)
+typechecker:go/types/TestFixedbugs/issue52698.go	S151.5 checker verdict (false pos/neg)
+typechecker:go/types/TestFixedbugs/issue59958.go	S151.4 converter: other forms
+typechecker:go/types/TestFixedbugs/issue65711.go	S151.5 checker verdict (false pos/neg)
+typechecker:go/types/TestFixedbugs/issue66285.go	S151.5 checker verdict (false pos/neg)
+typechecker:go/types/TestFixedbugs/issue6977.go	S151.5 checker verdict (false pos/neg)
+typechecker:go/types/TestFixedbugs/issue75918.go	S151.5 checker verdict (false pos/neg)
+typechecker:go/types/TestFixedbugs/issue76478.go	S151.5 checker verdict (false pos/neg)
+typechecker:go/types/TestFixedbugs/issue79265.go	S151.5 checker verdict (false pos/neg)
+typechecker:go/types/TestFixedbugs/issue80172.go	S151.5 checker verdict (false pos/neg)

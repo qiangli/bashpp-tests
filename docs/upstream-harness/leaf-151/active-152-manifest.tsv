@@ -1,0 +1,17 @@
+root	mode	first_line
+testdir:alias3.go	interpreted	test/alias3.dir/a.go:14:1: undefined type: IntAlias
+testdir:alias3.go	compiled	test/alias3.dir/a.go:14:1: LOWER-EUNDEFINED: undefined: IntAlias
+testdir:codegen/moveload.go	interpreted	linux/amd64/v1
+testdir:codegen/moveload.go	compiled	codegen/moveload.go:31: linux/amd64/v1: opcode not found: `^MOVBLZX`
+testdir:codegen/shape_assert.go	interpreted	linux/amd64/v1
+testdir:codegen/switch.go	interpreted	linux/amd64/v1
+testdir:codegen/switch.go	compiled	codegen/switch.go:30: linux/amd64/v1: opcode not found: `^JMP \(.*\)\(.*\)$`
+testdir:codegen/typeswitch.go	interpreted	linux/amd64/v1
+testdir:codegen/typeswitch.go	compiled	codegen/typeswitch.go:40: linux/amd64/v1: opcode not found: `^.*assertE2I2`
+testdir:escape_slice.go	interpreted	escape_slice.go:21: missing error "moved to heap: i"
+testdir:escape_slice.go	compiled	# bashpp_s1572
+testdir:fixedbugs/bug367.go	interpreted	panic: should not satisfy main.I
+testdir:fixedbugs/bug367.go	compiled	test/fixedbugs/bug367.dir/prog.go:24:2: LOWER-ETYPE: assignment mismatch: 2 variables but __bpp0_rt.MustValue returns 1 value
+testdir:fixedbugs/bug479.go	compiled	test/fixedbugs/bug479.dir/a.go:7:1: LOWER-ETYPE: "unsafe" imported as __gosource_import_0_0 and not used
+testdir:fixedbugs/issue37837.go	interpreted	a.go:7: missing error "can inline F"
+testdir:fixedbugs/issue37837.go	compiled	# bashpp_s1572

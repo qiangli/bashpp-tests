@@ -1,0 +1,5 @@
+root	mode	first_line
+testdir:escape5.go	interpreted	escape5.go:17: missing error "p does not escape"
+testdir:escape_closure.go	interpreted	escape_closure.go:15: missing error "p does not escape"
+testdir:index1.go	interpreted	// errorcheck
+testdir:index2.go	interpreted	// errorcheck

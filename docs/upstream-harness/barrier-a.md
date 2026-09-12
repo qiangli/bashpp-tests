@@ -35,3 +35,19 @@ unclassified, 0 PASS — the frozen candidate is the Sprint 142 one for them.
 Evidence: `/srv/sprint151/barrier-a/{evidence,logs,manifests-v4}` (build
 caches removed). The Sprint 151 leaf runs on the new candidate use
 `BASHPP_CORPUS_ROOTS=docs/upstream-harness/active-151-manifest.tsv`.
+
+## Leaf 151, run 1 — the Sprint 151 candidate
+
+`BASHPP_CORPUS_ROOTS=active-151-manifest.tsv` (955 roots) on Bash++
+`963ef4b` (sha256 `45ac52dc…`) / sh `180852d0`, harness `65c5c20`, same
+host and knobs, 2026-09-12 03:08Z–04:04Z, exit 3, zero seam failures, zero
+survivors. Native lane 829 / 101 / 25 (one package root of the 26 is not in
+this leaf). Result: **88 PASS (both modes)**; interpreted non-PASS 829 → 731
+(testdir), compiled 829 → 212; typechecker 101/101 and packages 25/25 still
+non-PASS. Partition of the 867 failing roots: 151: 833 · 152: 9 · 153: 16 ·
+154: 4 · unclassified 5 (`leaf-151/`). The package-map refusal class
+(140 roots at Barrier A) is gone — S151.1's mechanism. `leaf-151/rebind.tsv`
+re-binds the 833 remaining roots to the five cards by first line: checker
+verdict 247 · evaluator builtins/collections/exprs 208 · generics/interfaces
+109 · pointers/nil/selectors 89 · bridge/import policy 43 · converter forms 39
+· goto/labels 38 · other 60.
