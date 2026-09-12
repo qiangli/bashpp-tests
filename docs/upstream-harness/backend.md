@@ -398,3 +398,34 @@ changed is the partition and the product.
   runs (`atomicload.go`, `fixedbugs/issue22781.go`) — the same
   load-sensitivity the S157 `issue21808.go` canary showed. A leaf's PASS count
   is therefore quoted as "pass both runs", never as one run's count.
+
+## Sprint 154 — diagnostic fidelity and parser audit
+
+Partition v10 (S154.0): every active row carries a `verdict` column read
+from the upstream errorCheck output already in the go-test stream
+(`missing=<n>;wording=<n>;extra=<n>;class=…`); rules key on the backend
+event's `recipe_flags` and the verdict shape, never on expected strings.
+Interpreted rows of `-m`/`-live`/`-d=<diagnostic>` errorcheck recipes are a
+declared `unsupported` disposition ("optimizer diagnostics are a compiler
+artifact") → `retained` (v10.1: `-d=ssa/check/on`, which upstream appends
+to every errorcheck compile, and `-d=panic` carry no expectation; v10.2:
+`-race` alone is not an optimizer recipe); a compiled `-m`/`-live` row with a
+verdict is a lowering row (v10.3, measured: the generated module's notes
+differ by `//line` position and emitted symbol name only); run-family rows
+never fail on a diagnostic (v10.4). Typechecker rows whose extra message is
+a tab-continuation or `undefined: assert|trace` are 154 (D2).
+
+The typechecker runners (`testdata/types-backend/`) apply upstream
+check_test's own secondary-error rule (`": \t"`, gotypes), join sub-errors
+into types2's one-message shape, take a TAB-prefixed line as gc's
+continuation, and pass `--go-test-builtins`, `--go-checker-branch-errors`
+and `--go-check-after-syntax-errors` — the three facts of the runners'
+environment the out-of-process check interface cannot know
+(DefPredeclaredTestFuncs; parsing without CheckBranches; type-checking the
+partial AST after parse errors). Unit tests run under the frozen Go 1.27
+through the gate's overlay (`-run '^TestBashppParse'`).
+
+Product (sh): gc's `cmd/compile/internal/syntax` is vendored as
+`gosource/internal/gcsyntax` and is the syntax verdict; a multi-part
+go/types sub-error renders in gc's shape. Leaf runs r0 → r1c
+(`leaf-154r{0,1a,1b,1c}/`): 317 roots, 12 → 182 PASS; 154 = 160 → 4.

@@ -1,0 +1,18 @@
+root	mode	first_line	verdict
+testdir:defernil.go	interpreted	defernil.go:31:8: nilf: command not found	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue15002.go	interpreted	fixedbugs/issue15002.go:56:31: index out of range [1] with length 1	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue18661.go	interpreted	fixedbugs/issue18661.go:17:6: fixedbugs/issue18661.go:17:6: Go interface comparison requires represented dynamic values	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue30606b.go	interpreted	fixedbugs/issue30606b.go:21:1: string not assignable to reflect.Type	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue5793.go	interpreted	complex requires 2 arguments	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue71675.go	interpreted	f recover:called	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue7740.go	interpreted	fixedbugs/issue7740.go:31:11: gosource: invalid native scalar	missing=0;wording=0;extra=0;class=-
+testdir:nilptr.go	interpreted	fatal error: runtime: out of memory	missing=0;wording=0;extra=0;class=-
+testdir:typeparam/mdempsky/13.go	interpreted	gosource: bridge accepts evaluated values, not argument source "Mer(3)"	missing=0;wording=0;extra=0;class=-
+testdir:typeparam/subdict.go	interpreted	typeparam/subdict.go:17:1: undefined type: comparable	missing=0;wording=0;extra=0;class=-
+testdir:zerosize.go	interpreted	p= q= p==q = false	missing=0;wording=0;extra=0;class=-
+typechecker:go/types/TestCheck/decls2	interpreted	check_test.go:288: ../../internal/types/testdata/check/decls2/decls2a.go:89:47: got col = 47; want 6	missing=0;wording=0;extra=0;class=-
+typechecker:go/types/TestCheck/decls2	compiled	check_test.go:288: ../../internal/types/testdata/check/decls2/decls2a.go:89:47: got col = 47; want 6	missing=0;wording=0;extra=0;class=-
+typechecker:go/types/TestCheck/expr3.go	interpreted	check_test.go:288: ../../internal/types/testdata/check/expr3.go:22:46: got col = 46; want 8	missing=0;wording=0;extra=0;class=-
+typechecker:go/types/TestCheck/expr3.go	compiled	check_test.go:288: ../../internal/types/testdata/check/expr3.go:22:46: got col = 46; want 8	missing=0;wording=0;extra=0;class=-
+typechecker:go/types/TestCheck/stmt0.go	interpreted	check_test.go:288: ../../internal/types/testdata/check/stmt0.go:803:53: got col = 53; want 22	missing=0;wording=0;extra=0;class=-
+typechecker:go/types/TestCheck/stmt0.go	compiled	check_test.go:288: ../../internal/types/testdata/check/stmt0.go:803:53: got col = 53; want 22	missing=0;wording=0;extra=0;class=-

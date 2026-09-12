@@ -1,0 +1,318 @@
+root	mode	first_line
+testdir:abi/convT64_criteria.go	interpreted	unknown field _ of main.MyStruct
+testdir:abi/method_wrapper.go	interpreted	assignment mismatch: 5 variable(s) but 1 value(s)
+testdir:abi/result_live.go	interpreted	result_live.go:13: missing error "live at call to g: r"
+testdir:bloop.go	interpreted	bloop.go:14: missing error "can inline caninline"
+testdir:bombad.go	interpreted	test/bombad.go:14:2: expected statement, found 'ILLEGAL'
+testdir:bounds.go	interpreted	bounds.go:64: missing error "index bounds check elided"
+testdir:char_lit1.go	interpreted	test/char_lit1.go:16:8: escape sequence is invalid Unicode code point
+testdir:checkbce.go	interpreted	checkbce.go:17: missing error "Found IsInBounds$"
+testdir:closure3.go	interpreted	main.go:15: missing error "can inline main.func1"
+testdir:const3.go	interpreted	type info didn't propagate in const: got T2 4 16 256 65536
+testdir:defererrcheck.go	interpreted	defererrcheck.go:20: missing error "open-coded defer"
+testdir:defernil.go	interpreted	defernil.go:31:8: nilf: command not found
+testdir:devirt.go	interpreted	devirt.go:30: missing error "de-virtualizing call$"
+testdir:devirtualization.go	interpreted	devirtualization.go:17: missing error "can inline \\(\\*Impl\\).M$"
+testdir:devirtualization_with_type_assertions_interleaved.go	interpreted	devirtualization_with_type_assertions_interleaved.go:20: missing error "can inline \\(\\*hash\\).Sum$"
+testdir:escape2.go	interpreted	escape2.go:21: missing error "moved to heap: x$"
+testdir:escape2n.go	interpreted	escape2n.go:21: missing error "moved to heap: x$"
+testdir:escape4.go	interpreted	escape4.go:16: missing error "can inline alloc"
+testdir:escape5.go	interpreted	escape5.go:17: missing error "p does not escape"
+testdir:escape6.go	interpreted	escape6.go:16: missing error "leaking param: v"
+testdir:escape_array.go	interpreted	escape_array.go:15: missing error "leaking param: a to result ~r0 level=0$"
+testdir:escape_bloop.go	interpreted	escape_bloop.go:18: missing error "can inline NewX"
+testdir:escape_calls.go	interpreted	escape_calls.go:14: missing error "leaking param: buf to result ~r0 level=0$"
+testdir:escape_closure.go	interpreted	escape_closure.go:15: missing error "p does not escape"
+testdir:escape_field.go	interpreted	escape_field.go:24: missing error "moved to heap: i$"
+testdir:escape_goto.go	interpreted	escape_goto.go:21: missing error "escapes to heap"
+testdir:escape_iface.go	interpreted	escape_iface.go:17: missing error "leaking param: m"
+testdir:escape_iface_data.go	interpreted	escape_iface_data.go:15: missing error "using global for interface value"
+testdir:escape_indir.go	interpreted	escape_indir.go:25: missing error "moved to heap: i"
+testdir:escape_level.go	interpreted	escape_level.go:14: missing error "moved to heap: i"
+testdir:escape_make_non_const.go	interpreted	escape_make_non_const.go:17: missing error "make\\(\\[\\]byte, 128\\) does not escape"
+testdir:escape_map.go	interpreted	escape_map.go:14: missing error "make\\(map\\[\\*int\\]\\*int\\) does not escape"
+testdir:escape_mutations.go	interpreted	escape_mutations.go:17: missing error "mutates param: b derefs=0"
+testdir:escape_param.go	interpreted	escape_param.go:19: missing error "leaking param: p to result ~r0"
+testdir:escape_reflect.go	interpreted	escape_reflect.go:19: missing error "x does not escape"
+testdir:escape_selfassign.go	interpreted	escape_selfassign.go:18: missing error "leaking param: p"
+testdir:escape_slice.go	interpreted	escape_slice.go:21: missing error "moved to heap: i"
+testdir:escape_struct_param1.go	interpreted	escape_struct_param1.go:25: missing error "leaking param: u to result ~r0 level=1$"
+testdir:escape_struct_param2.go	interpreted	escape_struct_param2.go:25: missing error "leaking param: u to result ~r0 level=0$"
+testdir:escape_struct_return.go	interpreted	escape_struct_return.go:18: missing error "leaking param: sp to result ~r0 level=0$"
+testdir:escape_sync_atomic.go	interpreted	escape_sync_atomic.go:17: missing error "leaking param: addr$"
+testdir:escape_unique.go	interpreted	escape_unique.go:15: missing error "s does not escape$"
+testdir:escape_unsafe.go	interpreted	escape_unsafe.go:18: missing error "leaking param: p to result ~r0 level=0$"
+testdir:fixedbugs/bug014.go	interpreted	test/fixedbugs/bug014.go:10:21: illegal character U+0027 ''' in escape sequence
+testdir:fixedbugs/bug050.go	interpreted	test/fixedbugs/bug050.go:7:1: expected 'package', found 'func'
+testdir:fixedbugs/bug068.go	interpreted	test/fixedbugs/bug068.go:12:13: unknown escape sequence
+testdir:fixedbugs/bug121.go	interpreted	test/fixedbugs/bug121.go:12:3: expected ';', found ','
+testdir:fixedbugs/bug132.go	interpreted	test/fixedbugs/bug132.go:10:5: x redeclared
+testdir:fixedbugs/bug136.go	interpreted	test/fixedbugs/bug136.go:13:9: invalid break label L
+testdir:fixedbugs/bug163.go	interpreted	test/fixedbugs/bug163.go:9:6: expected type, found 'ILLEGAL'
+testdir:fixedbugs/bug169.go	interpreted	test/fixedbugs/bug169.go:8:9: illegal rune literal
+testdir:fixedbugs/bug179.go	interpreted	test/fixedbugs/bug179.go:13:10: invalid break label L2
+testdir:fixedbugs/bug200.go	interpreted	test/fixedbugs/bug200.go:17:7: duplicate case func(f int) in type switch
+testdir:fixedbugs/bug228.go	interpreted	test/fixedbugs/bug228.go:11:27: invalid use of ...
+testdir:fixedbugs/bug274.go	interpreted	test/fixedbugs/bug274.go:24:2: expected statement, found 'case'
+testdir:fixedbugs/bug295.go	interpreted	fixedbugs/bug295.go:11:1: undefined type: B
+testdir:fixedbugs/bug300.go	interpreted	test/fixedbugs/bug300.go:23:7: cannot parenthesize type in composite literal
+testdir:fixedbugs/bug349.go	interpreted	test/fixedbugs/bug349.go:12:14: expected ';', found 2.01
+testdir:fixedbugs/bug388.go	interpreted	test/fixedbugs/bug388.go:12:10: missing parameter name
+testdir:fixedbugs/bug412.go	interpreted	test/fixedbugs/bug412.go:11:2: x redeclared
+testdir:fixedbugs/bug416.go	interpreted	test/fixedbugs/bug416.go:13:13: field and method with the same name X
+testdir:fixedbugs/bug435.go	interpreted	test/fixedbugs/bug435.go:15:48: expected ')', found 'EOF'
+testdir:fixedbugs/issue11359.go	interpreted	test/fixedbugs/issue11359.go:11:5: expected 'IDENT', found 'ILLEGAL'
+testdir:fixedbugs/issue11362.go	interpreted	test/fixedbugs/issue11362.go:11:10: could not import unicode//utf8 (package "unicode//utf8" not found in go list output)
+testdir:fixedbugs/issue11610.go	interpreted	test/fixedbugs/issue11610.go:11:4: expected 'IDENT', found 'ILLEGAL'
+testdir:fixedbugs/issue12006.go	interpreted	issue12006.go:11: missing error "vals does not escape"
+testdir:fixedbugs/issue12588.go	interpreted	issue12588.go:29: missing error "a does not escape"
+testdir:fixedbugs/issue13248.go	interpreted	test/fixedbugs/issue13248.go:13:1: expected operand, found '}'
+testdir:fixedbugs/issue13266.go	interpreted	test/fixedbugs/issue13266.go:10:8: expected 'IDENT', found '%'
+testdir:fixedbugs/issue13273.go	interpreted	test/fixedbugs/issue13273.go:50:11: expected 'chan', found '<-'
+testdir:fixedbugs/issue13274.go	interpreted	test/fixedbugs/issue13274.go:11:58: expected ';', found 'EOF'
+testdir:fixedbugs/issue13319.go	interpreted	test/fixedbugs/issue13319.go:12:72: missing ',' before newline in argument list
+testdir:fixedbugs/issue13587.go	interpreted	issue13587.go:18: missing error "write barrier"
+testdir:fixedbugs/issue13799.go	interpreted	issue13799.go:23: missing error "iter escapes to heap$"
+testdir:fixedbugs/issue14006.go	interpreted	test/fixedbugs/issue14006.go:24:4: illegal label declaration
+testdir:fixedbugs/issue14520.go	interpreted	test/fixedbugs/issue14520.go:9:49: missing ',' before newline in parameter list
+testdir:fixedbugs/issue15002.go	interpreted	fixedbugs/issue15002.go:56:31: index out of range [1] with length 1
+testdir:fixedbugs/issue15091.go	compiled	link: reference to undefined builtin "runtime.racefuncenter" from package "main"
+testdir:fixedbugs/issue15611.go	interpreted	test/fixedbugs/issue15611.go:11: rune literal not terminated
+testdir:fixedbugs/issue15747.go	interpreted	issue15747.go:22: missing error "live at call to (newobject|mallocgcSmallScanNoHeaderSC[0-9]+): xx$"
+testdir:fixedbugs/issue15898.go	interpreted	test/fixedbugs/issue15898.go:11:12: duplicate case nil in type switch
+testdir:fixedbugs/issue16241.go	interpreted	issue16241.go:11: missing error "x does not escape$"
+testdir:fixedbugs/issue16241_64.go	interpreted	issue16241_64.go:13: missing error "x does not escape$"
+testdir:fixedbugs/issue17318.go	interpreted	issue17318.go:25: missing error "... argument does not escape$"
+testdir:fixedbugs/issue17328.go	interpreted	test/fixedbugs/issue17328.go:11:13: expected '{', found ')'
+testdir:fixedbugs/issue17449.go	compiled	link: reference to undefined builtin "runtime.racefuncenter" from package "main"
+testdir:fixedbugs/issue18092.go	interpreted	test/fixedbugs/issue18092.go:14:38: expected ':', found newline
+testdir:fixedbugs/issue18661.go	interpreted	fixedbugs/issue18661.go:17:6: fixedbugs/issue18661.go:17:6: Go interface comparison requires represented dynamic values
+testdir:fixedbugs/issue18747.go	interpreted	test/fixedbugs/issue18747.go:10:5: missing condition in if statement
+testdir:fixedbugs/issue18895.go	interpreted	p.go:7: missing error "can inline"
+testdir:fixedbugs/issue18915.go	interpreted	test/fixedbugs/issue18915.go:13:5: expected boolean expression, found assignment (missing parentheses around composite literal?)
+testdir:fixedbugs/issue19168.go	interpreted	issue19168.go:19: missing error "write barrier"
+testdir:fixedbugs/issue19261.go	interpreted	p.go:7: missing error "can inline F"
+testdir:fixedbugs/issue19667.go	interpreted	test/fixedbugs/issue19667.go:13:1: expected operand, found '}'
+testdir:fixedbugs/issue19743.go	interpreted	issue19743.go:19: missing error "leaking param: b$"
+testdir:fixedbugs/issue20250.go	interpreted	issue20250.go:19: missing error "live at entry to f: a$"
+testdir:fixedbugs/issue20789.go	interpreted	test/fixedbugs/issue20789.go:13:13: expected channel type
+testdir:fixedbugs/issue21709.go	interpreted	issue21709.go:13: missing error "s does not escape"
+testdir:fixedbugs/issue22164.go	interpreted	test/fixedbugs/issue22164.go:12:42: missing ',' before newline in argument list
+testdir:fixedbugs/issue22581.go	interpreted	test/fixedbugs/issue22581.go:10:13: expected ';', found ')'
+testdir:fixedbugs/issue23521.go	interpreted	issue23521.go:16: missing error "can inline f"
+testdir:fixedbugs/issue23586.go	interpreted	test/fixedbugs/issue23586.go:21:32: expression in defer must be function call
+testdir:fixedbugs/issue23587.go	interpreted	test/fixedbugs/issue23587.go:14:8: expected ';', found '~'
+testdir:fixedbugs/issue23664.go	interpreted	test/fixedbugs/issue23664.go:12:9: expected ';', found true
+testdir:fixedbugs/issue24159.go	interpreted	test/fixedbugs/issue24159.go:14:7: duplicate case byte(0) (constant 0 of type byte) in expression switch
+testdir:fixedbugs/issue24547.go	interpreted	string for fmt.Stringer
+testdir:fixedbugs/issue24651a.go	interpreted	issue24651a.go:12: missing error "cannot inline Foo: marked go:norace with -race compilation$"
+testdir:fixedbugs/issue24651b.go	interpreted	issue24651b.go:10: missing error "can inline Foo with cost .* as: func\\(int\\) int { return x \\* \\(x \\+ 1\\) \\* \\(x \\+ 2\\) }$"
+testdir:fixedbugs/issue27557.go	interpreted	issue27557.go:13: missing error "t.noescape does not escape"
+testdir:fixedbugs/issue27732a.go	interpreted	issue27732a.go:21: missing error "moved to heap: c$"
+testdir:fixedbugs/issue28085.go	interpreted	test/fixedbugs/issue28085.go:11:2: duplicate key 0 in map literal
+testdir:fixedbugs/issue28268.go	interpreted	test/fixedbugs/issue28268.go:19:10: field and method with the same name b
+testdir:fixedbugs/issue30606b.go	interpreted	fixedbugs/issue30606b.go:21:1: string for reflect.Type
+testdir:fixedbugs/issue30722.go	interpreted	test/fixedbugs/issue30722.go:12:7: '_' must separate successive digits
+testdir:fixedbugs/issue30898.go	interpreted	issue30898.go:11: missing error "can inline debugf"
+testdir:fixedbugs/issue31546.go	interpreted	unknown field _ of struct { a int; _ int; c int }
+testdir:fixedbugs/issue31573.go	interpreted	issue31573.go:13: missing error "... argument does not escape$"
+testdir:fixedbugs/issue32133.go	interpreted	test/fixedbugs/issue32133.go:10:8: string literal not terminated
+testdir:fixedbugs/issue33386.go	interpreted	test/fixedbugs/issue33386.go:16:2: expected operand, found '}'
+testdir:fixedbugs/issue33460.go	interpreted	test/fixedbugs/issue33460.go:34:2: duplicate key "a" in map literal
+testdir:fixedbugs/issue34723.go	interpreted	issue34723.go:66: missing error "write barrier"
+testdir:fixedbugs/issue35073b.go	interpreted	issue35073b.go:18: missing error "moved to heap: n"
+testdir:fixedbugs/issue35518.go	interpreted	issue35518.go:22: missing error "."
+testdir:fixedbugs/issue37837.go	interpreted	a.go:7: missing error "can inline F"
+testdir:fixedbugs/issue39292.go	interpreted	issue39292.go:15: missing error "t{}.f escapes to heap"
+testdir:fixedbugs/issue4099.go	interpreted	issue4099.go:26: missing error "moved to heap: buf2"
+testdir:fixedbugs/issue41635.go	interpreted	issue41635.go:9: missing error ""
+testdir:fixedbugs/issue42284.go	interpreted	a.go:10: missing error "can inline T.M"
+testdir:fixedbugs/issue4405.go	interpreted	test/fixedbugs/issue4405.go:11:3: expected ';', found 'ILLEGAL'
+testdir:fixedbugs/issue4776.go	interpreted	test/fixedbugs/issue4776.go:9:1: expected 'package', found 'type'
+testdir:fixedbugs/issue49665.go	interpreted	string for interface {}
+testdir:fixedbugs/issue50372.go	interpreted	test/fixedbugs/issue50372.go:16:19: expected at most 2 expressions
+testdir:fixedbugs/issue52193.go	interpreted	issue52193.go:12: missing error "can inline f"
+testdir:fixedbugs/issue54159.go	interpreted	issue54159.go:10: missing error "cannot inline run: marked go:noinline"
+testdir:fixedbugs/issue5793.go	interpreted	complex requires 2 arguments
+testdir:fixedbugs/issue63657.go	interpreted	f: expected 3 argument(s), got 0
+testdir:fixedbugs/issue6899.go	interpreted	output does not match expected in fixedbugs/issue6899.out. Instead saw
+testdir:fixedbugs/issue6977.go	interpreted	test/fixedbugs/issue6977.go:37:26: duplicate method m
+testdir:fixedbugs/issue70156.go	interpreted	string for interface {}
+testdir:fixedbugs/issue71675.go	interpreted	f recover:called
+testdir:fixedbugs/issue75278.go	interpreted	issue75278.go:11: missing error "can inline NoIndices with cost 4 as:.*"
+testdir:fixedbugs/issue7538a.go	interpreted	test/fixedbugs/issue7538a.go:14:7: label _ not declared
+testdir:fixedbugs/issue7740.go	interpreted	fixedbugs/issue7740.go:31:11: gosource: invalid native scalar
+testdir:fixedbugs/issue7921.go	interpreted	issue7921.go:22: missing error "\\[\\]byte{...} does not escape$"
+testdir:fixedbugs/notinheap3.go	interpreted	notinheap3.go:47: missing error "write barrier"
+testdir:fuse.go	interpreted	fuse.go:16: missing error "Redirect Eq64 based on Eq64$"
+testdir:goto.go	interpreted	test/goto.go:42:7: goto L jumps over variable declaration at line 43
+testdir:import6.go	interpreted	test/import6.go:17:8: invalid import path (empty string)
+testdir:index1.go	interpreted	// errorcheck
+testdir:index2.go	interpreted	// errorcheck
+testdir:inline.go	interpreted	inline.go:20: missing error "can inline add2"
+testdir:inline_big.go	interpreted	inline_big.go:12: missing error "can inline small with cost .* as:.*"
+testdir:inline_caller.go	interpreted	panic: skip=0 expected line 36, got line 586
+testdir:inline_endian.go	interpreted	inline_endian.go:19: missing error "can inline endian"
+testdir:inline_math_bits_rotate.go	interpreted	inline_math_bits_rotate.go:23: missing error "can inline f"
+testdir:inline_sync.go	interpreted	inline_sync.go:26: missing error "can inline small5"
+testdir:inline_variadic.go	interpreted	inline_variadic.go:12: missing error "can inline head"
+testdir:interface/assertinline.go	interpreted	assertinline.go:10: missing error "type assertion inlined"
+testdir:internal/runtime/sys/inlinegcpc.go	interpreted	inlinegcpc.go:19: missing error "can inline cpc"
+testdir:intrinsic_atomic.go	interpreted	intrinsic_atomic.go:16: missing error "intrinsic substitution for LoadUint32"
+testdir:known_bits.go	interpreted	known_bits.go:16: missing error "known value of v[0-9]+ \\(And64\\): 1$"
+testdir:label.go	interpreted	test/label.go:31:1: label L6 already declared
+testdir:label1.go	interpreted	test/label1.go:18:3: continue not in for statement
+testdir:linkname.go	interpreted	linkname1.go:3: missing error "xs does not escape"
+testdir:live2.go	interpreted	live2.go:25: missing error "live at call to makemap: &ret$"
+testdir:live_uintptrkeepalive.go	interpreted	live_uintptrkeepalive.go:25: missing error "assuming ~p0 is unsafe uintptr"
+testdir:loopbce.go	interpreted	loopbce.go:11: missing error "Induction variable: limits \\[0,\\?\\), increment 1$"
+testdir:mainsig.go	interpreted	test/mainsig.go:9:6: func main must have no arguments and no return values
+testdir:mapclear.go	interpreted	var after range with side-effect = 0 want 42
+testdir:nilcheck.go	interpreted	nilcheck.go:43: missing error "nil check"
+testdir:nilptr.go	interpreted	fatal error: runtime: out of memory
+testdir:nilptr3.go	interpreted	nilptr3.go:45: missing error "generated nil check"
+testdir:nilptr5.go	interpreted	nilptr5.go:15: missing error "removed nil check"
+testdir:opt_branchlikely.go	interpreted	opt_branchlikely.go:15: missing error "Branch prediction rule stay in loop"
+testdir:phiopt.go	interpreted	phiopt.go:19: missing error "converted OpPhi to Copy$"
+testdir:prove.go	interpreted	prove.go:18: missing error "Proved IsInBounds$"
+testdir:prove_constant_folding.go	interpreted	prove_constant_folding.go:13: missing error "Proved.+is constant 20$"
+testdir:prove_invert_loop_with_unused_iterators.go	interpreted	prove_invert_loop_with_unused_iterators.go:8: missing error "(Inverted loop iteration|Induction variable: limits \\[0,\\?\\), increment 1)"
+testdir:recover4.go	interpreted	unexpected fault address 0x749697223000
+testdir:sliceopt.go	interpreted	sliceopt.go:12: missing error "append: len-only update \\(in local slice\\)$"
+testdir:stringrange.go	interpreted	unexpected offset 4 not 6
+testdir:switch2.go	interpreted	test/switch2.go:14:8: expected ':', found ';'
+testdir:switch5.go	interpreted	test/switch5.go:15:7: duplicate case 0 (constant of type int) in expression switch
+testdir:switch7.go	interpreted	test/switch7.go:18:7: duplicate case int in type switch
+testdir:syntax/chan.go	interpreted	test/syntax/chan.go:11:1: expected type, found '}'
+testdir:syntax/chan1.go	interpreted	test/syntax/chan1.go:13:5: expected boolean expression, found simple statement (missing parentheses around composite literal?)
+testdir:syntax/composite.go	interpreted	test/syntax/composite.go:10:98: missing ',' before newline in composite literal
+testdir:syntax/ddd.go	interpreted	test/syntax/ddd.go:10:6: expected selector or type assertion, found .3
+testdir:syntax/else.go	interpreted	test/syntax/else.go:11:9: expected if statement or block, found ';'
+testdir:syntax/import.go	interpreted	test/syntax/import.go:10:6: expected ';', found ','
+testdir:syntax/initvar.go	interpreted	test/syntax/initvar.go:10:9: var declaration not allowed in if initializer
+testdir:syntax/semi1.go	interpreted	test/syntax/semi1.go:10:62: expected '{', found newline
+testdir:syntax/semi2.go	interpreted	test/syntax/semi2.go:10:68: expected '{', found newline
+testdir:syntax/semi3.go	interpreted	test/syntax/semi3.go:10:66: expected '{', found newline
+testdir:syntax/semi4.go	interpreted	test/syntax/semi4.go:11:2: expected operand, found '{'
+testdir:syntax/semi5.go	interpreted	test/syntax/semi5.go:10:1: unexpected semicolon or newline before {
+testdir:syntax/semi6.go	interpreted	test/syntax/semi6.go:9:47: expected type, found newline
+testdir:syntax/semi7.go	interpreted	test/syntax/semi7.go:11:2: expected statement, found 'else'
+testdir:syntax/topexpr.go	interpreted	test/syntax/topexpr.go:9:1: expected declaration, found fmt
+testdir:syntax/typesw.go	interpreted	test/syntax/typesw.go:10:2: invalid syntax tree: incorrect form of type switch guard
+testdir:syntax/vareq.go	interpreted	test/syntax/vareq.go:10:25: expected ';', found '{'
+testdir:syntax/vareq1.go	interpreted	test/syntax/vareq1.go:9:24: expected ';', found '{'
+testdir:tailcall.go	interpreted	tailcall.go:19: missing error "tail call emitted for the method \\(\\*Foo\\).Get2Vals wrapper"
+testdir:typeparam/issue48711.go	interpreted	test/typeparam/issue48711.go:9:8: instantiation cycle:
+testdir:typeparam/issue54497.go	interpreted	issue54497.go:13: missing error "can inline isAligned\\[uint\\]"
+testdir:typeparam/mdempsky/13.go	interpreted	gosource: bridge accepts evaluated values, not argument source "Mer(3)"
+testdir:typeparam/pragma.go	interpreted	pragma.go:17: missing error "can inline main"
+testdir:typeparam/subdict.go	interpreted	typeparam/subdict.go:17:1: undefined type: comparable
+testdir:typeparam/typeswitch3.go	interpreted	output does not match expected in typeparam/typeswitch3.out. Instead saw
+testdir:typeparam/typeswitch4.go	interpreted	output does not match expected in typeparam/typeswitch4.out. Instead saw
+testdir:typeswitch2.go	interpreted	test/typeswitch2.go:18:7: duplicate case int in type switch
+testdir:uintptrescapes2.go	interpreted	uintptrescapes2.go:16: missing error "escaping uintptr"
+testdir:writebarrier.go	interpreted	writebarrier.go:17: missing error "write barrier"
+testdir:zerosize.go	interpreted	p= q= p==q = false
+typechecker:cmd/compile/internal/types2/TestCheck/builtins0.go	interpreted	check_test.go:256: ../../../../internal/types/testdata/check/builtins0.go:91:2: no error expected: "undefined: assert"
+typechecker:cmd/compile/internal/types2/TestCheck/builtins1.go	interpreted	check_test.go:256: ../../../../internal/types/testdata/check/builtins1.go:257:2: no error expected: "undefined: assert"
+typechecker:cmd/compile/internal/types2/TestCheck/const0.go	interpreted	check_test.go:256: ../../../../internal/types/testdata/check/const0.go:195:8: no error expected: "undefined: assert"
+typechecker:cmd/compile/internal/types2/TestCheck/const1.go	interpreted	check_test.go:256: ../../../../internal/types/testdata/check/const1.go:57:6: no error expected: "undefined: assert"
+typechecker:cmd/compile/internal/types2/TestCheck/constdecl.go	interpreted	check_test.go:256: ../../../../internal/types/testdata/check/constdecl.go:150:2: no error expected: "undefined: assert"
+typechecker:cmd/compile/internal/types2/TestCheck/conversions0.go	interpreted	check_test.go:256: ../../../../internal/types/testdata/check/conversions0.go:21:2: no error expected: "undefined: assert"
+typechecker:cmd/compile/internal/types2/TestCheck/cycles0.go	interpreted	check_test.go:256: ../../../../internal/types/testdata/check/cycles0.go:14:2: no error expected: "\tT3 refers to T4"
+typechecker:cmd/compile/internal/types2/TestCheck/cycles2.go	interpreted	check_test.go:256: ../../../../internal/types/testdata/check/cycles2.go:73:6: no error expected: "\tT1 refers to x1"
+typechecker:cmd/compile/internal/types2/TestCheck/cycles3.go	interpreted	check_test.go:256: ../../../../internal/types/testdata/check/cycles3.go:51:2: no error expected: "\tU refers to V"
+typechecker:cmd/compile/internal/types2/TestCheck/cycles5.go	interpreted	check_test.go:256: ../../../../internal/types/testdata/check/cycles5.go:106:2: no error expected: "\tT4 refers to T5"
+typechecker:cmd/compile/internal/types2/TestCheck/cycles6.go	interpreted	check_test.go:256: ../../../../internal/types/testdata/check/cycles6.go:51:6: no error expected: "\tT6 refers to T7"
+typechecker:cmd/compile/internal/types2/TestCheck/decls0.go	interpreted	check_test.go:256: ../../../../internal/types/testdata/check/decls0.go:74:2: no error expected: "\tother declaration of a"
+typechecker:cmd/compile/internal/types2/TestCheck/decls2	interpreted	check_test.go:256: ../../../../internal/types/testdata/check/decls2/decls2a.go:108:7: no error expected: "\tother declaration of c_double"
+typechecker:cmd/compile/internal/types2/TestCheck/decls3.go	interpreted	check_test.go:256: ../../../../internal/types/testdata/check/decls3.go:101:50: no error expected: "\tother declaration of Pointer"
+typechecker:cmd/compile/internal/types2/TestCheck/decls4.go	interpreted	check_test.go:256: ../../../../internal/types/testdata/check/decls4.go:124:2: no error expected: "\tC3 refers to C4"
+typechecker:cmd/compile/internal/types2/TestCheck/expr3.go	interpreted	check_test.go:256: ../../../../internal/types/testdata/check/expr3.go:251:2: no error expected: "undefined: assert"
+typechecker:cmd/compile/internal/types2/TestCheck/go1_13.go	interpreted	check_test.go:256: ../../../../internal/types/testdata/check/go1_13.go:16:2: no error expected: "\tother declaration of method m"
+typechecker:cmd/compile/internal/types2/TestCheck/importC.go	interpreted	check_test.go:256: ../../../../internal/types/testdata/check/importC.go:9:8: no error expected: "could not import C (go list failed using go SDK go1.27.0 at /srv/sprint151/barrier-a/evidence/goroot/bin/go (GOROOT=/srv/sprint151/barrier-a/evidence/goroot, found via GOROOT, meets go1.27.0): exit status 1\nunknown import path \"C\": internal error: module loader did not resolve import\n)"
+typechecker:cmd/compile/internal/types2/TestCheck/importdecl0	interpreted	check_test.go:256: ../../../../internal/types/testdata/check/importdecl0/importdecl0a.go:15:2: no error expected: "\tother declaration of reflect"
+typechecker:cmd/compile/internal/types2/TestCheck/init0.go	interpreted	check_test.go:256: ../../../../internal/types/testdata/check/init0.go:13:2: no error expected: "\tx0 refers to y0"
+typechecker:cmd/compile/internal/types2/TestCheck/init1.go	interpreted	check_test.go:256: ../../../../internal/types/testdata/check/init1.go:17:5: no error expected: "\ty0 refers to m"
+typechecker:cmd/compile/internal/types2/TestCheck/init2.go	interpreted	check_test.go:256: ../../../../internal/types/testdata/check/init2.go:12:5: no error expected: "\tx1 refers to f1"
+typechecker:cmd/compile/internal/types2/TestCheck/labels.go	interpreted	check_test.go:256: ../../../../internal/types/testdata/check/labels.go:27:1: no error expected: "\tother declaration of L6"
+typechecker:cmd/compile/internal/types2/TestCheck/literals.go	interpreted	check_test.go:256: ../../../../internal/types/testdata/check/literals.go:13:2: no error expected: "undefined: assert"
+typechecker:cmd/compile/internal/types2/TestCheck/main0.go	interpreted	check_test.go:256: ../../../../internal/types/testdata/check/main0.go:7:6: no error expected: "\tother declaration of main"
+typechecker:cmd/compile/internal/types2/TestCheck/stmt0.go	interpreted	check_test.go:256: ../../../../internal/types/testdata/check/stmt0.go:395:8: no error expected: "\tinner declaration of var a int"
+typechecker:cmd/compile/internal/types2/TestCheck/typeparams.go	interpreted	check_test.go:256: ../../../../internal/types/testdata/check/typeparams.go:17:8: no error expected: "\tother declaration of T"
+typechecker:cmd/compile/internal/types2/TestExamples/types.go	interpreted	check_test.go:256: ../../../../internal/types/testdata/examples/types.go:149:38: no error expected: "\tother declaration of int8"
+typechecker:cmd/compile/internal/types2/TestFixedbugs/issue39634.go	interpreted	check_test.go:256: ../../../../internal/types/testdata/fixedbugs/issue39634.go:18:11: no error expected: "\tother declaration of e"
+typechecker:cmd/compile/internal/types2/TestFixedbugs/issue39938.go	interpreted	check_test.go:256: ../../../../internal/types/testdata/fixedbugs/issue39938.go:26:6: no error expected: "\tT2 refers to E2[T2]"
+typechecker:cmd/compile/internal/types2/TestFixedbugs/issue41124.go	interpreted	check_test.go:256: ../../../../internal/types/testdata/fixedbugs/issue41124.go:9:6: no error expected: "\tNat refers to Succ"
+typechecker:cmd/compile/internal/types2/TestFixedbugs/issue42758.go	interpreted	check_test.go:256: ../../../../internal/types/testdata/fixedbugs/issue42758.go:14:7: no error expected: "\tprevious case"
+typechecker:cmd/compile/internal/types2/TestFixedbugs/issue48018.go	interpreted	check_test.go:256: ../../../../internal/types/testdata/fixedbugs/issue48018.go:15:9: no error expected: "\tA instantiated as Box[A]"
+typechecker:cmd/compile/internal/types2/TestFixedbugs/issue48234.go	interpreted	check_test.go:256: ../../../../internal/types/testdata/fixedbugs/issue48234.go:8:2: no error expected: "\tother declaration of method m"
+typechecker:cmd/compile/internal/types2/TestFixedbugs/issue48582.go	interpreted	check_test.go:256: ../../../../internal/types/testdata/fixedbugs/issue48582.go:11:6: no error expected: "\tA refers to B"
+typechecker:cmd/compile/internal/types2/TestFixedbugs/issue48656.go	interpreted	check_test.go:256: ../../../../internal/types/testdata/fixedbugs/issue48656.go:12:9: no error expected: "\tP instantiated as *P"
+typechecker:cmd/compile/internal/types2/TestFixedbugs/issue48962.go	interpreted	check_test.go:256: ../../../../internal/types/testdata/fixedbugs/issue48962.go:11:6: no error expected: "\tT1 refers to T0[T1]"
+typechecker:cmd/compile/internal/types2/TestFixedbugs/issue48974.go	interpreted	check_test.go:256: ../../../../internal/types/testdata/fixedbugs/issue48974.go:15:41: no error expected: "\tF instantiated as *FooerImpl[F]"
+typechecker:cmd/compile/internal/types2/TestFixedbugs/issue49043.go	interpreted	check_test.go:256: ../../../../internal/types/testdata/fixedbugs/issue49043.go:9:11: no error expected: "\tM[P] refers to N[P]"
+typechecker:cmd/compile/internal/types2/TestFixedbugs/issue49276.go	interpreted	check_test.go:256: ../../../../internal/types/testdata/fixedbugs/issue49276.go:9:6: no error expected: "\tS refers to s"
+typechecker:cmd/compile/internal/types2/TestFixedbugs/issue51503.go	interpreted	check_test.go:256: ../../../../internal/types/testdata/fixedbugs/issue51503.go:14:38: no error expected: "\tother declaration of r"
+typechecker:cmd/compile/internal/types2/TestFixedbugs/issue52698.go	interpreted	check_test.go:256: ../../../../internal/types/testdata/fixedbugs/issue52698.go:12:6: no error expected: "\tS refers to T[S]"
+typechecker:cmd/compile/internal/types2/TestFixedbugs/issue59958.go	interpreted	check_test.go:256: ../../../../internal/types/testdata/fixedbugs/issue59958.go:15:4: no error expected: "gosource: unsupported expression *ast.IndexListExpr"
+typechecker:cmd/compile/internal/types2/TestFixedbugs/issue65711.go	interpreted	check_test.go:256: ../../../../internal/types/testdata/fixedbugs/issue65711.go:11:6: no error expected: "\tC refers to B[C]"
+typechecker:cmd/compile/internal/types2/TestFixedbugs/issue66285.go	interpreted	check_test.go:256: ../../../../internal/types/testdata/fixedbugs/issue66285.go:16:2: no error expected: "\tother declaration of method Read"
+typechecker:cmd/compile/internal/types2/TestFixedbugs/issue6977.go	interpreted	check_test.go:256: ../../../../internal/types/testdata/fixedbugs/issue6977.go:35:21: no error expected: "\tother declaration of method m"
+typechecker:cmd/compile/internal/types2/TestFixedbugs/issue75918.go	interpreted	check_test.go:256: ../../../../internal/types/testdata/fixedbugs/issue75918.go:9:6: no error expected: "\tA refers to S"
+typechecker:cmd/compile/internal/types2/TestFixedbugs/issue76478.go	interpreted	check_test.go:256: ../../../../internal/types/testdata/fixedbugs/issue76478.go:18:6: no error expected: "\tE refers to F"
+typechecker:cmd/compile/internal/types2/TestFixedbugs/issue79265.go	interpreted	check_test.go:256: ../../../../internal/types/testdata/fixedbugs/issue79265.go:10:6: no error expected: "\tA refers to T"
+typechecker:cmd/compile/internal/types2/TestFixedbugs/issue80172.go	interpreted	check_test.go:256: ../../../../internal/types/testdata/fixedbugs/issue80172.go:9:30: no error expected: "\tP instantiated as List[P]"
+typechecker:cmd/compile/internal/types2/TestLocal/issue47996.go	interpreted	check_test.go:256: testdata/local/issue47996.go:8:56: no error expected: "expected '(', found m"
+typechecker:cmd/compile/internal/types2/TestLocal/issue68183.go	interpreted	check_test.go:256: testdata/local/issue68183.go:13:2: no error expected: "expected 'IDENT', found 'ILLEGAL'"
+typechecker:cmd/compile/internal/types2/TestLocal/issue71254.go	interpreted	check_test.go:256: testdata/local/issue71254.go:9:2: no error expected: "initialization cycle for A"
+typechecker:go/types/TestCheck/builtins0.go	interpreted	check_test.go:271: ../../internal/types/testdata/check/builtins0.go:91:2: no error expected: "undefined: assert"
+typechecker:go/types/TestCheck/builtins1.go	interpreted	check_test.go:271: ../../internal/types/testdata/check/builtins1.go:257:2: no error expected: "undefined: assert"
+typechecker:go/types/TestCheck/const0.go	interpreted	check_test.go:271: ../../internal/types/testdata/check/const0.go:195:8: no error expected: "undefined: assert"
+typechecker:go/types/TestCheck/const1.go	interpreted	check_test.go:271: ../../internal/types/testdata/check/const1.go:57:6: no error expected: "undefined: assert"
+typechecker:go/types/TestCheck/constdecl.go	interpreted	check_test.go:271: ../../internal/types/testdata/check/constdecl.go:150:2: no error expected: "undefined: assert"
+typechecker:go/types/TestCheck/conversions0.go	interpreted	check_test.go:271: ../../internal/types/testdata/check/conversions0.go:21:2: no error expected: "undefined: assert"
+typechecker:go/types/TestCheck/cycles0.go	interpreted	check_test.go:271: ../../internal/types/testdata/check/cycles0.go:14:2: no error expected: "\tT3 refers to T4"
+typechecker:go/types/TestCheck/cycles2.go	interpreted	check_test.go:271: ../../internal/types/testdata/check/cycles2.go:73:6: no error expected: "\tT1 refers to x1"
+typechecker:go/types/TestCheck/cycles3.go	interpreted	check_test.go:271: ../../internal/types/testdata/check/cycles3.go:51:2: no error expected: "\tU refers to V"
+typechecker:go/types/TestCheck/cycles5.go	interpreted	check_test.go:271: ../../internal/types/testdata/check/cycles5.go:106:2: no error expected: "\tT4 refers to T5"
+typechecker:go/types/TestCheck/cycles6.go	interpreted	check_test.go:271: ../../internal/types/testdata/check/cycles6.go:51:6: no error expected: "\tT6 refers to T7"
+typechecker:go/types/TestCheck/decls0.go	interpreted	check_test.go:271: ../../internal/types/testdata/check/decls0.go:74:2: no error expected: "\tother declaration of a"
+typechecker:go/types/TestCheck/decls2	interpreted	check_test.go:271: ../../internal/types/testdata/check/decls2/decls2a.go:108:7: no error expected: "\tother declaration of c_double"
+typechecker:go/types/TestCheck/decls3.go	interpreted	check_test.go:271: ../../internal/types/testdata/check/decls3.go:101:50: no error expected: "\tother declaration of Pointer"
+typechecker:go/types/TestCheck/decls4.go	interpreted	check_test.go:271: ../../internal/types/testdata/check/decls4.go:124:2: no error expected: "\tC3 refers to C4"
+typechecker:go/types/TestCheck/expr3.go	interpreted	check_test.go:271: ../../internal/types/testdata/check/expr3.go:251:2: no error expected: "undefined: assert"
+typechecker:go/types/TestCheck/go1_13.go	interpreted	check_test.go:271: ../../internal/types/testdata/check/go1_13.go:16:2: no error expected: "\tother declaration of method m"
+typechecker:go/types/TestCheck/importC.go	interpreted	check_test.go:271: ../../internal/types/testdata/check/importC.go:9:8: no error expected: "could not import C (go list failed using go SDK go1.27.0 at /srv/sprint151/barrier-a/evidence/goroot/bin/go (GOROOT=/srv/sprint151/barrier-a/evidence/goroot, found via GOROOT, meets go1.27.0): exit status 1\nunknown import path \"C\": internal error: module loader did not resolve import\n)"
+typechecker:go/types/TestCheck/importdecl0	interpreted	check_test.go:271: ../../internal/types/testdata/check/importdecl0/importdecl0a.go:15:2: no error expected: "\tother declaration of reflect"
+typechecker:go/types/TestCheck/init0.go	interpreted	check_test.go:271: ../../internal/types/testdata/check/init0.go:13:2: no error expected: "\tx0 refers to y0"
+typechecker:go/types/TestCheck/init1.go	interpreted	check_test.go:271: ../../internal/types/testdata/check/init1.go:17:5: no error expected: "\ty0 refers to m"
+typechecker:go/types/TestCheck/init2.go	interpreted	check_test.go:271: ../../internal/types/testdata/check/init2.go:12:5: no error expected: "\tx1 refers to f1"
+typechecker:go/types/TestCheck/labels.go	interpreted	check_test.go:271: ../../internal/types/testdata/check/labels.go:27:1: no error expected: "\tother declaration of L6"
+typechecker:go/types/TestCheck/literals.go	interpreted	check_test.go:271: ../../internal/types/testdata/check/literals.go:13:2: no error expected: "undefined: assert"
+typechecker:go/types/TestCheck/main0.go	interpreted	check_test.go:271: ../../internal/types/testdata/check/main0.go:7:6: no error expected: "\tother declaration of main"
+typechecker:go/types/TestCheck/stmt0.go	interpreted	check_test.go:271: ../../internal/types/testdata/check/stmt0.go:395:8: no error expected: "\tinner declaration of var a int"
+typechecker:go/types/TestCheck/typeparams.go	interpreted	check_test.go:271: ../../internal/types/testdata/check/typeparams.go:17:8: no error expected: "\tother declaration of T"
+typechecker:go/types/TestExamples/types.go	interpreted	check_test.go:271: ../../internal/types/testdata/examples/types.go:149:38: no error expected: "\tother declaration of int8"
+typechecker:go/types/TestFixedbugs/issue39634.go	interpreted	check_test.go:271: ../../internal/types/testdata/fixedbugs/issue39634.go:18:11: no error expected: "\tother declaration of e"
+typechecker:go/types/TestFixedbugs/issue39938.go	interpreted	check_test.go:271: ../../internal/types/testdata/fixedbugs/issue39938.go:26:6: no error expected: "\tT2 refers to E2[T2]"
+typechecker:go/types/TestFixedbugs/issue41124.go	interpreted	check_test.go:271: ../../internal/types/testdata/fixedbugs/issue41124.go:9:6: no error expected: "\tNat refers to Succ"
+typechecker:go/types/TestFixedbugs/issue42758.go	interpreted	check_test.go:271: ../../internal/types/testdata/fixedbugs/issue42758.go:14:7: no error expected: "\tprevious case"
+typechecker:go/types/TestFixedbugs/issue48018.go	interpreted	check_test.go:271: ../../internal/types/testdata/fixedbugs/issue48018.go:15:9: no error expected: "\tA instantiated as Box[A]"
+typechecker:go/types/TestFixedbugs/issue48234.go	interpreted	check_test.go:271: ../../internal/types/testdata/fixedbugs/issue48234.go:8:2: no error expected: "\tother declaration of method m"
+typechecker:go/types/TestFixedbugs/issue48582.go	interpreted	check_test.go:271: ../../internal/types/testdata/fixedbugs/issue48582.go:11:6: no error expected: "\tA refers to B"
+typechecker:go/types/TestFixedbugs/issue48656.go	interpreted	check_test.go:271: ../../internal/types/testdata/fixedbugs/issue48656.go:12:9: no error expected: "\tP instantiated as *P"
+typechecker:go/types/TestFixedbugs/issue48962.go	interpreted	check_test.go:271: ../../internal/types/testdata/fixedbugs/issue48962.go:11:6: no error expected: "\tT1 refers to T0[T1]"
+typechecker:go/types/TestFixedbugs/issue48974.go	interpreted	check_test.go:271: ../../internal/types/testdata/fixedbugs/issue48974.go:15:41: no error expected: "\tF instantiated as *FooerImpl[F]"
+typechecker:go/types/TestFixedbugs/issue49043.go	interpreted	check_test.go:271: ../../internal/types/testdata/fixedbugs/issue49043.go:9:11: no error expected: "\tM[P] refers to N[P]"
+typechecker:go/types/TestFixedbugs/issue49276.go	interpreted	check_test.go:271: ../../internal/types/testdata/fixedbugs/issue49276.go:9:6: no error expected: "\tS refers to s"
+typechecker:go/types/TestFixedbugs/issue51503.go	interpreted	check_test.go:271: ../../internal/types/testdata/fixedbugs/issue51503.go:14:38: no error expected: "\tother declaration of r"
+typechecker:go/types/TestFixedbugs/issue52698.go	interpreted	check_test.go:271: ../../internal/types/testdata/fixedbugs/issue52698.go:12:6: no error expected: "\tS refers to T[S]"
+typechecker:go/types/TestFixedbugs/issue59958.go	interpreted	check_test.go:271: ../../internal/types/testdata/fixedbugs/issue59958.go:15:4: no error expected: "gosource: unsupported expression *ast.IndexListExpr"
+typechecker:go/types/TestFixedbugs/issue65711.go	interpreted	check_test.go:271: ../../internal/types/testdata/fixedbugs/issue65711.go:11:6: no error expected: "\tC refers to B[C]"
+typechecker:go/types/TestFixedbugs/issue66285.go	interpreted	check_test.go:271: ../../internal/types/testdata/fixedbugs/issue66285.go:16:2: no error expected: "\tother declaration of method Read"
+typechecker:go/types/TestFixedbugs/issue6977.go	interpreted	check_test.go:271: ../../internal/types/testdata/fixedbugs/issue6977.go:35:21: no error expected: "\tother declaration of method m"
+typechecker:go/types/TestFixedbugs/issue75918.go	interpreted	check_test.go:271: ../../internal/types/testdata/fixedbugs/issue75918.go:9:6: no error expected: "\tA refers to S"
+typechecker:go/types/TestFixedbugs/issue76478.go	interpreted	check_test.go:271: ../../internal/types/testdata/fixedbugs/issue76478.go:18:6: no error expected: "\tE refers to F"
+typechecker:go/types/TestFixedbugs/issue79265.go	interpreted	check_test.go:271: ../../internal/types/testdata/fixedbugs/issue79265.go:10:6: no error expected: "\tA refers to T"
+typechecker:go/types/TestFixedbugs/issue80172.go	interpreted	check_test.go:271: ../../internal/types/testdata/fixedbugs/issue80172.go:9:30: no error expected: "\tP instantiated as List[P]"

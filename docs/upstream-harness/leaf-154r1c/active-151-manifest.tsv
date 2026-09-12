@@ -1,0 +1,15 @@
+root	mode	first_line	verdict
+testdir:abi/convT64_criteria.go	interpreted	unknown field _ of main.MyStruct	missing=0;wording=0;extra=0;class=-
+testdir:abi/method_wrapper.go	interpreted	BASHPP-ECOLLECTION-ELEMENT: cannot use string value as float64	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue24547.go	interpreted	unknown imported symbol or method: String	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue31546.go	interpreted	unknown field _ of struct { a int; _ int; c int }	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestCheck/decls2	interpreted	check_test.go:256: ../../../../internal/types/testdata/check/decls2/decls2a.go:89:6: no error expected: "method has no receiver"	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestCheck/decls2	compiled	check_test.go:256: ../../../../internal/types/testdata/check/decls2/decls2a.go:89:6: no error expected: "method has no receiver"	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestCheck/stmt0.go	interpreted	check_test.go:256: ../../../../internal/types/testdata/check/stmt0.go:803:22: no error expected: "cannot declare in post statement"	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestCheck/stmt0.go	compiled	check_test.go:256: ../../../../internal/types/testdata/check/stmt0.go:803:22: no error expected: "cannot declare in post statement"	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestLocal/issue47996.go	interpreted	check_test.go:256: testdata/local/issue47996.go:8:31: no error expected: "undefined: P"	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestLocal/issue47996.go	compiled	check_test.go:256: testdata/local/issue47996.go:8:31: no error expected: "undefined: P"	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestLocal/issue68183.go	interpreted	check_test.go:256: testdata/local/issue68183.go:13:5: no error expected: "undefined: x"	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestLocal/issue68183.go	compiled	check_test.go:256: testdata/local/issue68183.go:13:5: no error expected: "undefined: x"	missing=0;wording=0;extra=0;class=-
+typechecker:go/types/TestFixedbugs/issue39634.go	interpreted	check_test.go:271: ../../internal/types/testdata/fixedbugs/issue39634.go:73:25: no error expected: "too many arguments in call to F20"	missing=0;wording=0;extra=0;class=-
+typechecker:go/types/TestFixedbugs/issue39634.go	compiled	check_test.go:271: ../../internal/types/testdata/fixedbugs/issue39634.go:73:25: no error expected: "too many arguments in call to F20"	missing=0;wording=0;extra=0;class=-

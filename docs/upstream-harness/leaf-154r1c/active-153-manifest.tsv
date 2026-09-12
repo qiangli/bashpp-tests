@@ -1,0 +1,9 @@
+root	mode	first_line	verdict
+testdir:fixedbugs/issue63657.go	interpreted	f: expected 3 argument(s), got 0	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue6899.go	interpreted	output does not match expected in fixedbugs/issue6899.out. Instead saw	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue70156.go	interpreted	panic: 1	missing=0;wording=0;extra=0;class=-
+testdir:index1.go	interpreted	// errorcheck	missing=0;wording=0;extra=0;class=-
+testdir:index2.go	interpreted	// errorcheck	missing=0;wording=0;extra=0;class=-
+testdir:inline_caller.go	interpreted	panic: skip=0 expected line 36, got line 586	missing=0;wording=0;extra=0;class=-
+testdir:recover4.go	interpreted	unexpected fault address 0x7a5ac0a2d000	missing=0;wording=0;extra=0;class=-
+testdir:stringrange.go	interpreted	unexpected offset 4 not 6	missing=0;wording=0;extra=0;class=-

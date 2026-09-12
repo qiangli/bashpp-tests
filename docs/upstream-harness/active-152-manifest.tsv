@@ -106,8 +106,18 @@ testdir:codegen/zerosize.go	interpreted	linux/amd64/v1	missing=0;wording=0;extra
 testdir:codegen/zerosize.go	compiled	codegen/zerosize.go:16: linux/amd64/v1: opcode not found: `^MOVQ \$0, command-line-arguments\.s\+56\(SP\)`	missing=0;wording=0;extra=0;class=-
 testdir:devirtualization.go	interpreted	devirtualization.go:17: missing error "can inline \\(\\*Impl\\).M$"	missing=527;wording=0;extra=0;class=missing
 testdir:devirtualization.go	compiled	test/devirtualization.go:156:3: LOWER-ETYPE: assignment mismatch: 2 variables but __bpp0_rt.MustValue returns 1 value	missing=0;wording=0;extra=0;class=-
+testdir:devirtualization_with_type_assertions_interleaved.go	interpreted	devirtualization_with_type_assertions_interleaved.go:20: missing error "can inline \\(\\*hash\\).Sum$"	missing=89;wording=0;extra=0;class=missing
+testdir:devirtualization_with_type_assertions_interleaved.go	compiled	test/devirtualization_with_type_assertions_interleaved.go:20:6: can inline (*hash).Sum	missing=39;wording=13;extra=0;class=wording
 testdir:dwarf/dwarf.go	compiled	test/dwarf/dwarf.dir/main.go:35:78: invalid column number: 0	missing=0;wording=0;extra=0;class=-
 testdir:dwarf/linedirectives.go	compiled	main.go:5:35: invalid column number: 0	missing=0;wording=0;extra=0;class=-
+testdir:escape_array.go	interpreted	escape_array.go:15: missing error "leaking param: a to result ~r0 level=0$"	missing=37;wording=0;extra=0;class=missing
+testdir:escape_array.go	compiled	test/escape_array.go:15:10: leaking param: a to result ~r0 level=0	missing=0;wording=1;extra=0;class=wording
+testdir:escape_iface.go	interpreted	escape_iface.go:17: missing error "leaking param: m"	missing=46;wording=0;extra=0;class=missing
+testdir:escape_iface.go	compiled	test/escape_iface.go:64:8: devirtualizing x.M to M0	missing=0;wording=2;extra=0;class=wording
+testdir:escape_param.go	interpreted	escape_param.go:19: missing error "leaking param: p to result ~r0"	missing=104;wording=0;extra=0;class=missing
+testdir:escape_param.go	compiled	test/escape_param.go:19:13: leaking param: p to result ~r0 level=0	missing=0;wording=10;extra=0;class=wording
+testdir:escape_reflect.go	interpreted	escape_reflect.go:19: missing error "x does not escape"	missing=134;wording=0;extra=0;class=missing
+testdir:escape_reflect.go	compiled	test/escape_reflect.go:354:73: 0 does not escape	missing=4;wording=0;extra=0;class=missing
 testdir:fixedbugs/bug088.go	compiled	main.go:4:8: "./bug0" is relative, but relative import paths are not supported in module mode	missing=0;wording=0;extra=0;class=-
 testdir:fixedbugs/bug106.go	compiled	main.go:4:8: "./bug0" is relative, but relative import paths are not supported in module mode	missing=0;wording=0;extra=0;class=-
 testdir:fixedbugs/bug133.go	compiled	main.go:4:8: "./bug0" is relative, but relative import paths are not supported in module mode	missing=0;wording=0;extra=0;class=-
@@ -146,6 +156,8 @@ testdir:fixedbugs/issue15550.go	compiled	fixedbugs/issue15550.go:9:1: LOWER-ETYP
 testdir:fixedbugs/issue15572.go	compiled	main.go:4:8: "./a" is relative, but relative import paths are not supported in module mode	missing=0;wording=0;extra=0;class=-
 testdir:fixedbugs/issue15602.go	compiled	test/fixedbugs/issue15602.go:10:2: LOWER-ETYPE: assignment mismatch: 2 variables but __bpp0_rt.MustValue returns 1 value	missing=0;wording=0;extra=0;class=-
 testdir:fixedbugs/issue15604.go	compiled	test/fixedbugs/issue15604.go:13:2: LOWER-ETYPE: assignment mismatch: 2 variables but __bpp0_rt.MustValue returns 1 value	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue15747.go	interpreted	issue15747.go:22: missing error "live at call to (newobject|mallocgcSmallScanNoHeaderSC[0-9]+): xx$"	missing=5;wording=0;extra=0;class=missing
+testdir:fixedbugs/issue15747.go	compiled	test/fixedbugs/issue15747.go:22:6: live at entry to f1: xx	missing=0;wording=1;extra=0;class=wording
 testdir:fixedbugs/issue15920.go	compiled	main.go:4:8: "./a" is relative, but relative import paths are not supported in module mode	missing=0;wording=0;extra=0;class=-
 testdir:fixedbugs/issue16133.go	compiled	main.go:4:8: "./a2" is relative, but relative import paths are not supported in module mode	missing=0;wording=0;extra=0;class=-
 testdir:fixedbugs/issue16317.go	compiled	main.go:4:8: "./a" is relative, but relative import paths are not supported in module mode	missing=0;wording=0;extra=0;class=-
@@ -158,11 +170,15 @@ testdir:fixedbugs/issue18895.go	compiled	main.go:4:8: "./p" is relative, but rel
 testdir:fixedbugs/issue19261.go	interpreted	p.go:7: missing error "can inline F"	missing=2;wording=0;extra=0;class=missing
 testdir:fixedbugs/issue19261.go	compiled	main.go:4:8: "./p" is relative, but relative import paths are not supported in module mode	missing=0;wording=0;extra=0;class=-
 testdir:fixedbugs/issue20682.go	compiled	main.go:4:8: "./p" is relative, but relative import paths are not supported in module mode	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue21709.go	interpreted	issue21709.go:13: missing error "s does not escape"	missing=5;wording=0;extra=0;class=missing
+testdir:fixedbugs/issue21709.go	compiled	test/fixedbugs/issue21709.go:13:7: s does not escape	missing=2;wording=0;extra=0;class=missing
 testdir:fixedbugs/issue22344.go	compiled	test/fixedbugs/issue22344.go:10:1: LOWER-ETYPE: "unsafe" imported as __gosource_import_0_0 and not used	missing=0;wording=0;extra=0;class=-
 testdir:fixedbugs/issue22662.go	interpreted	panic: got /srv/sprint151/barrier-a/evidence/goroot/src/reflect/value.go:369; want ??:1 (or suffix /??)	missing=0;wording=0;extra=0;class=-
 testdir:fixedbugs/issue22662.go	compiled	./fixedbugs/issue22662.go:38:34: invalid column number: 0	missing=0;wording=0;extra=0;class=-
 testdir:fixedbugs/issue22962.go	compiled	main.go:4:8: "./a" is relative, but relative import paths are not supported in module mode	missing=0;wording=0;extra=0;class=-
 testdir:fixedbugs/issue23179.go	compiled	main.go:4:8: "./a" is relative, but relative import paths are not supported in module mode	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue24651b.go	interpreted	issue24651b.go:10: missing error "can inline Foo with cost .* as: func\\(int\\) int { return x \\* \\(x \\+ 1\\) \\* \\(x \\+ 2\\) }$"	missing=5;wording=0;extra=0;class=missing
+testdir:fixedbugs/issue24651b.go	compiled	test/fixedbugs/issue24651b.go:10:6: can inline Foo with cost 10 as: func(int) int { return x * (x + 1) * (x + 2) }	missing=0;wording=1;extra=0;class=wording
 testdir:fixedbugs/issue24761.go	compiled	main.go:4:8: "./a" is relative, but relative import paths are not supported in module mode	missing=0;wording=0;extra=0;class=-
 testdir:fixedbugs/issue24801.go	compiled	test/fixedbugs/issue24801.dir/a.go:7:1: LOWER-ETYPE: cannot declare main - must be func	missing=0;wording=0;extra=0;class=-
 testdir:fixedbugs/issue25055.go	compiled	main.go:7:8: "./a" is relative, but relative import paths are not supported in module mode	missing=0;wording=0;extra=0;class=-
@@ -190,6 +206,8 @@ testdir:fixedbugs/issue35586.go	compiled	main.go:4:8: "./a" is relative, but rel
 testdir:fixedbugs/issue35739.go	compiled	main.go:4:8: "./a" is relative, but relative import paths are not supported in module mode	missing=0;wording=0;extra=0;class=-
 testdir:fixedbugs/issue36085.go	compiled	main.go:4:8: "./a" is relative, but relative import paths are not supported in module mode	missing=0;wording=0;extra=0;class=-
 testdir:fixedbugs/issue38698.go	compiled	test/fixedbugs/issue38698.go:13:81: invalid column number: 0	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue39292.go	interpreted	issue39292.go:15: missing error "t{}.f escapes to heap"	missing=7;wording=0;extra=0;class=missing
+testdir:fixedbugs/issue39292.go	compiled	test/fixedbugs/issue39292.go:11:7: __bpp0_unnamed0 does not escape	missing=0;wording=1;extra=0;class=wording
 testdir:fixedbugs/issue4167.go	interpreted	exit status 2	missing=0;wording=0;extra=0;class=-
 testdir:fixedbugs/issue4167.go	compiled	fixedbugs/issue4167.go:17:2: LOWER-ETYPE: no new variables on left side of :=	missing=0;wording=0;extra=0;class=-
 testdir:fixedbugs/issue42284.go	interpreted	a.go:10: missing error "can inline T.M"	missing=13;wording=0;extra=0;class=missing
@@ -214,6 +232,8 @@ testdir:fixedbugs/issue52128.go	compiled	main.go:7:8: "./a" is relative, but rel
 testdir:fixedbugs/issue5259.go	compiled	main.go:4:8: "./bug" is relative, but relative import paths are not supported in module mode	missing=0;wording=0;extra=0;class=-
 testdir:fixedbugs/issue52590.go	compiled	main.go:4:8: "./a" is relative, but relative import paths are not supported in module mode	missing=0;wording=0;extra=0;class=-
 testdir:fixedbugs/issue52862.go	compiled	main.go:4:8: "./a" is relative, but relative import paths are not supported in module mode	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue54159.go	interpreted	issue54159.go:10: missing error "cannot inline run: marked go:noinline"	missing=8;wording=0;extra=0;class=missing
+testdir:fixedbugs/issue54159.go	compiled	test/fixedbugs/issue54159.go:19:6: can inline g with cost 0 as: func() {  }	missing=0;wording=2;extra=0;class=wording
 testdir:fixedbugs/issue5470.go	compiled	main.go:4:8: "./a" is relative, but relative import paths are not supported in module mode	missing=0;wording=0;extra=0;class=-
 testdir:fixedbugs/issue5614.go	compiled	main.go:4:8: "./rethinkgo" is relative, but relative import paths are not supported in module mode	missing=0;wording=0;extra=0;class=-
 testdir:fixedbugs/issue56280.go	interpreted	a.go:7: missing error "can inline F"	missing=5;wording=0;extra=0;class=missing
@@ -260,3 +280,7 @@ testdir:typeparam/mdempsky/1.go	compiled	main.go:4:8: "./a" is relative, but rel
 testdir:typeparam/mdempsky/3.go	compiled	main.go:4:8: "./a" is relative, but relative import paths are not supported in module mode	missing=0;wording=0;extra=0;class=-
 testdir:typeparam/mdempsky/7.go	compiled	main.go:7:8: "./a" is relative, but relative import paths are not supported in module mode	missing=0;wording=0;extra=0;class=-
 testdir:typeparam/mutualimp.go	compiled	main.go:4:8: "./a" is relative, but relative import paths are not supported in module mode	missing=0;wording=0;extra=0;class=-
+testdir:typeparam/pragma.go	interpreted	pragma.go:17: missing error "can inline main"	missing=1;wording=0;extra=0;class=missing
+testdir:typeparam/pragma.go	compiled	test/typeparam/pragma.go:13:6: can inline f[go.shape.int]	missing=0;wording=1;extra=0;class=wording
+testdir:uintptrescapes2.go	interpreted	uintptrescapes2.go:16: missing error "escaping uintptr"	missing=30;wording=0;extra=0;class=missing
+testdir:uintptrescapes2.go	compiled	test/uintptrescapes2.go:19:9: a does not escape	missing=15;wording=15;extra=0;class=wording

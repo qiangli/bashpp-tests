@@ -1,0 +1,9 @@
+root	mode	first_line	verdict
+testdir:fixedbugs/issue11362.go	interpreted	test/fixedbugs/issue11362.go:11:10: could not import unicode//utf8 (package "unicode//utf8" not found in go list output)	missing=0;wording=1;extra=1;class=wording
+testdir:fixedbugs/issue11362.go	compiled	test/fixedbugs/issue11362.go:11:10: could not import unicode//utf8 (package "unicode//utf8" not found in go list output)	missing=0;wording=1;extra=1;class=wording
+testdir:fixedbugs/issue23586.go	interpreted	test/fixedbugs/issue23586.go:21:32: expression in defer must be function call	missing=0;wording=0;extra=3;class=extra
+testdir:fixedbugs/issue23586.go	compiled	test/fixedbugs/issue23586.go:21:32: expression in defer must be function call	missing=0;wording=0;extra=3;class=extra
+testdir:fixedbugs/issue50372.go	interpreted	test/fixedbugs/issue50372.go:16:19: expected at most 2 expressions	missing=0;wording=4;extra=4;class=wording
+testdir:fixedbugs/issue50372.go	compiled	test/fixedbugs/issue50372.go:16:19: expected at most 2 expressions	missing=0;wording=4;extra=4;class=wording
+testdir:import6.go	interpreted	test/import6.go:17:8: invalid import path (empty string)	missing=0;wording=1;extra=1;class=wording
+testdir:import6.go	compiled	test/import6.go:17:8: invalid import path (empty string)	missing=0;wording=1;extra=1;class=wording

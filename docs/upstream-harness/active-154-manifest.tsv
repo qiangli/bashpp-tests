@@ -3,16 +3,6 @@ testdir:bombad.go	interpreted	test/bombad.go:14:2: expected statement, found 'IL
 testdir:bombad.go	compiled	test/bombad.go:14:2: expected statement, found 'ILLEGAL'	missing=0;wording=4;extra=7;class=wording
 testdir:char_lit1.go	interpreted	test/char_lit1.go:16:8: escape sequence is invalid Unicode code point	missing=0;wording=0;extra=8;class=multiplicity
 testdir:char_lit1.go	compiled	test/char_lit1.go:16:8: escape sequence is invalid Unicode code point	missing=0;wording=0;extra=8;class=multiplicity
-testdir:devirtualization_with_type_assertions_interleaved.go	interpreted	devirtualization_with_type_assertions_interleaved.go:20: missing error "can inline \\(\\*hash\\).Sum$"	missing=89;wording=0;extra=0;class=missing
-testdir:devirtualization_with_type_assertions_interleaved.go	compiled	test/devirtualization_with_type_assertions_interleaved.go:20:6: can inline (*hash).Sum	missing=39;wording=13;extra=0;class=wording
-testdir:escape_array.go	interpreted	escape_array.go:15: missing error "leaking param: a to result ~r0 level=0$"	missing=37;wording=0;extra=0;class=missing
-testdir:escape_array.go	compiled	test/escape_array.go:15:10: leaking param: a to result ~r0 level=0	missing=0;wording=1;extra=0;class=wording
-testdir:escape_iface.go	interpreted	escape_iface.go:17: missing error "leaking param: m"	missing=46;wording=0;extra=0;class=missing
-testdir:escape_iface.go	compiled	test/escape_iface.go:64:8: devirtualizing x.M to M0	missing=0;wording=2;extra=0;class=wording
-testdir:escape_param.go	interpreted	escape_param.go:19: missing error "leaking param: p to result ~r0"	missing=104;wording=0;extra=0;class=missing
-testdir:escape_param.go	compiled	test/escape_param.go:19:13: leaking param: p to result ~r0 level=0	missing=0;wording=10;extra=0;class=wording
-testdir:escape_reflect.go	interpreted	escape_reflect.go:19: missing error "x does not escape"	missing=134;wording=0;extra=0;class=missing
-testdir:escape_reflect.go	compiled	test/escape_reflect.go:354:73: 0 does not escape	missing=4;wording=0;extra=0;class=missing
 testdir:fixedbugs/bug014.go	interpreted	test/fixedbugs/bug014.go:10:21: illegal character U+0027 ''' in escape sequence	missing=0;wording=0;extra=4;class=multiplicity
 testdir:fixedbugs/bug014.go	compiled	test/fixedbugs/bug014.go:10:21: illegal character U+0027 ''' in escape sequence	missing=0;wording=0;extra=4;class=multiplicity
 testdir:fixedbugs/bug050.go	interpreted	test/fixedbugs/bug050.go:7:1: expected 'package', found 'func'	missing=0;wording=0;extra=1;class=multiplicity
@@ -71,8 +61,6 @@ testdir:fixedbugs/issue14520.go	interpreted	test/fixedbugs/issue14520.go:9:49: m
 testdir:fixedbugs/issue14520.go	compiled	test/fixedbugs/issue14520.go:9:49: missing ',' before newline in parameter list	missing=0;wording=1;extra=1;class=wording
 testdir:fixedbugs/issue15611.go	interpreted	test/fixedbugs/issue15611.go:11: rune literal not terminated	missing=0;wording=3;extra=8;class=wording
 testdir:fixedbugs/issue15611.go	compiled	test/fixedbugs/issue15611.go:11: rune literal not terminated	missing=0;wording=3;extra=8;class=wording
-testdir:fixedbugs/issue15747.go	interpreted	issue15747.go:22: missing error "live at call to (newobject|mallocgcSmallScanNoHeaderSC[0-9]+): xx$"	missing=5;wording=0;extra=0;class=missing
-testdir:fixedbugs/issue15747.go	compiled	test/fixedbugs/issue15747.go:22:6: live at entry to f1: xx	missing=0;wording=1;extra=0;class=wording
 testdir:fixedbugs/issue15898.go	interpreted	test/fixedbugs/issue15898.go:11:12: duplicate case nil in type switch	missing=0;wording=0;extra=2;class=extra
 testdir:fixedbugs/issue15898.go	compiled	test/fixedbugs/issue15898.go:11:12: duplicate case nil in type switch	missing=0;wording=0;extra=2;class=extra
 testdir:fixedbugs/issue17328.go	interpreted	test/fixedbugs/issue17328.go:11:13: expected '{', found ')'	missing=0;wording=0;extra=2;class=multiplicity
@@ -87,8 +75,6 @@ testdir:fixedbugs/issue19667.go	interpreted	test/fixedbugs/issue19667.go:13:1: e
 testdir:fixedbugs/issue19667.go	compiled	test/fixedbugs/issue19667.go:13:1: expected operand, found '}'	missing=0;wording=0;extra=6;class=multiplicity
 testdir:fixedbugs/issue20789.go	interpreted	test/fixedbugs/issue20789.go:13:13: expected channel type	missing=0;wording=1;extra=17;class=wording
 testdir:fixedbugs/issue20789.go	compiled	test/fixedbugs/issue20789.go:13:13: expected channel type	missing=0;wording=1;extra=17;class=wording
-testdir:fixedbugs/issue21709.go	interpreted	issue21709.go:13: missing error "s does not escape"	missing=5;wording=0;extra=0;class=missing
-testdir:fixedbugs/issue21709.go	compiled	test/fixedbugs/issue21709.go:13:7: s does not escape	missing=2;wording=0;extra=0;class=missing
 testdir:fixedbugs/issue22164.go	interpreted	test/fixedbugs/issue22164.go:12:42: missing ',' before newline in argument list	missing=2;wording=1;extra=14;class=position
 testdir:fixedbugs/issue22164.go	compiled	test/fixedbugs/issue22164.go:12:42: missing ',' before newline in argument list	missing=2;wording=1;extra=14;class=position
 testdir:fixedbugs/issue22581.go	interpreted	test/fixedbugs/issue22581.go:10:13: expected ';', found ')'	missing=0;wording=6;extra=23;class=wording
@@ -103,8 +89,6 @@ testdir:fixedbugs/issue24159.go	interpreted	test/fixedbugs/issue24159.go:14:7: d
 testdir:fixedbugs/issue24159.go	compiled	test/fixedbugs/issue24159.go:14:7: duplicate case byte(0) (constant 0 of type byte) in expression switch	missing=0;wording=0;extra=3;class=extra
 testdir:fixedbugs/issue24651a.go	interpreted	issue24651a.go:12: missing error "cannot inline Foo: marked go:norace with -race compilation$"	missing=4;wording=0;extra=0;class=missing
 testdir:fixedbugs/issue24651a.go	compiled	test/fixedbugs/issue24651a.go:12:6: can inline Foo with cost 10 as: func(int) int { return x * (x + 1) * (x + 2) }	missing=0;wording=0;extra=0;class=-
-testdir:fixedbugs/issue24651b.go	interpreted	issue24651b.go:10: missing error "can inline Foo with cost .* as: func\\(int\\) int { return x \\* \\(x \\+ 1\\) \\* \\(x \\+ 2\\) }$"	missing=5;wording=0;extra=0;class=missing
-testdir:fixedbugs/issue24651b.go	compiled	test/fixedbugs/issue24651b.go:10:6: can inline Foo with cost 10 as: func(int) int { return x * (x + 1) * (x + 2) }	missing=0;wording=1;extra=0;class=wording
 testdir:fixedbugs/issue28085.go	interpreted	test/fixedbugs/issue28085.go:11:2: duplicate key 0 in map literal	missing=0;wording=0;extra=1;class=extra
 testdir:fixedbugs/issue28085.go	compiled	test/fixedbugs/issue28085.go:11:2: duplicate key 0 in map literal	missing=0;wording=0;extra=1;class=extra
 testdir:fixedbugs/issue28268.go	interpreted	test/fixedbugs/issue28268.go:19:10: field and method with the same name b	missing=0;wording=0;extra=2;class=extra
@@ -117,16 +101,12 @@ testdir:fixedbugs/issue33386.go	interpreted	test/fixedbugs/issue33386.go:16:2: e
 testdir:fixedbugs/issue33386.go	compiled	test/fixedbugs/issue33386.go:16:2: expected operand, found '}'	missing=3;wording=0;extra=10;class=position
 testdir:fixedbugs/issue33460.go	interpreted	test/fixedbugs/issue33460.go:34:2: duplicate key "a" in map literal	missing=0;wording=0;extra=3;class=extra
 testdir:fixedbugs/issue33460.go	compiled	test/fixedbugs/issue33460.go:34:2: duplicate key "a" in map literal	missing=0;wording=0;extra=3;class=extra
-testdir:fixedbugs/issue39292.go	interpreted	issue39292.go:15: missing error "t{}.f escapes to heap"	missing=7;wording=0;extra=0;class=missing
-testdir:fixedbugs/issue39292.go	compiled	test/fixedbugs/issue39292.go:11:7: __bpp0_unnamed0 does not escape	missing=0;wording=1;extra=0;class=wording
 testdir:fixedbugs/issue4405.go	interpreted	test/fixedbugs/issue4405.go:11:3: expected ';', found 'ILLEGAL'	missing=0;wording=0;extra=3;class=multiplicity
 testdir:fixedbugs/issue4405.go	compiled	test/fixedbugs/issue4405.go:11:3: expected ';', found 'ILLEGAL'	missing=0;wording=0;extra=3;class=multiplicity
 testdir:fixedbugs/issue4776.go	interpreted	test/fixedbugs/issue4776.go:9:1: expected 'package', found 'type'	missing=0;wording=1;extra=2;class=wording
 testdir:fixedbugs/issue4776.go	compiled	test/fixedbugs/issue4776.go:9:1: expected 'package', found 'type'	missing=0;wording=1;extra=2;class=wording
 testdir:fixedbugs/issue50372.go	interpreted	test/fixedbugs/issue50372.go:16:19: expected at most 2 expressions	missing=0;wording=4;extra=4;class=wording
 testdir:fixedbugs/issue50372.go	compiled	test/fixedbugs/issue50372.go:16:19: expected at most 2 expressions	missing=0;wording=4;extra=4;class=wording
-testdir:fixedbugs/issue54159.go	interpreted	issue54159.go:10: missing error "cannot inline run: marked go:noinline"	missing=8;wording=0;extra=0;class=missing
-testdir:fixedbugs/issue54159.go	compiled	test/fixedbugs/issue54159.go:19:6: can inline g with cost 0 as: func() {  }	missing=0;wording=2;extra=0;class=wording
 testdir:fixedbugs/issue6977.go	interpreted	test/fixedbugs/issue6977.go:37:26: duplicate method m	missing=0;wording=0;extra=4;class=multiplicity
 testdir:fixedbugs/issue6977.go	compiled	test/fixedbugs/issue6977.go:37:26: duplicate method m	missing=0;wording=0;extra=4;class=multiplicity
 testdir:fixedbugs/issue7538a.go	interpreted	test/fixedbugs/issue7538a.go:14:7: label _ not declared	missing=0;wording=1;extra=1;class=wording
@@ -185,12 +165,8 @@ testdir:syntax/vareq1.go	interpreted	test/syntax/vareq1.go:9:24: expected ';', f
 testdir:syntax/vareq1.go	compiled	test/syntax/vareq1.go:9:24: expected ';', found '{'	missing=0;wording=1;extra=1;class=wording
 testdir:typeparam/issue48711.go	interpreted	test/typeparam/issue48711.go:9:8: instantiation cycle:	missing=0;wording=0;extra=1;class=extra
 testdir:typeparam/issue48711.go	compiled	test/typeparam/issue48711.go:9:8: instantiation cycle:	missing=0;wording=0;extra=1;class=extra
-testdir:typeparam/pragma.go	interpreted	pragma.go:17: missing error "can inline main"	missing=1;wording=0;extra=0;class=missing
-testdir:typeparam/pragma.go	compiled	test/typeparam/pragma.go:13:6: can inline f[go.shape.int]	missing=0;wording=1;extra=0;class=wording
 testdir:typeswitch2.go	interpreted	test/typeswitch2.go:18:7: duplicate case int in type switch	missing=0;wording=0;extra=3;class=extra
 testdir:typeswitch2.go	compiled	test/typeswitch2.go:18:7: duplicate case int in type switch	missing=0;wording=0;extra=3;class=extra
-testdir:uintptrescapes2.go	interpreted	uintptrescapes2.go:16: missing error "escaping uintptr"	missing=30;wording=0;extra=0;class=missing
-testdir:uintptrescapes2.go	compiled	test/uintptrescapes2.go:19:9: a does not escape	missing=15;wording=15;extra=0;class=wording
 typechecker:cmd/compile/internal/types2/TestCheck/builtins0.go	interpreted	check_test.go:256: ../../../../internal/types/testdata/check/builtins0.go:91:2: no error expected: "undefined: assert"	missing=0;wording=0;extra=0;class=-
 typechecker:cmd/compile/internal/types2/TestCheck/builtins0.go	compiled	check_test.go:256: ../../../../internal/types/testdata/check/builtins0.go:91:2: no error expected: "undefined: assert"	missing=0;wording=0;extra=0;class=-
 typechecker:cmd/compile/internal/types2/TestCheck/builtins1.go	interpreted	check_test.go:256: ../../../../internal/types/testdata/check/builtins1.go:257:2: no error expected: "undefined: assert"	missing=0;wording=0;extra=0;class=-
