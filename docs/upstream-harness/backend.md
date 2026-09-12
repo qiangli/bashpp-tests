@@ -353,3 +353,24 @@ One flake was observed and is recorded rather than hidden: the S157
 interleave differed) and passed on the immediate re-run and on every other
 run of the day. The canary is load-sensitive on the 2-core host; it is not
 a seam defect of this sprint.
+
+## Sprint 151 corpus lane and deadline
+
+The seam is unchanged in meaning; Sprint 151 adds one bound and one lane.
+
+- **Deadline (backend lanes only).** Upstream bounds a command only when the
+  recipe says `-t N`; every other phase is `cmd.Run()` with no limit, which is
+  right for the native compiler and wrong for a product under test that can
+  hang — the first full-corpus attempt found `test/deferfin.go` running for an
+  hour in interpreted mode. `backendPlan` now sets `planStep.deadline` (60 s;
+  `BASHPP_TESTDIR_DEADLINE` overrides) and the backend patch feeds it to
+  upstream's own timer when `tim == 0`, so a timed-out root ends as upstream's
+  `errTimeout` ("command exceeded time limit"): a product row, owner 153,
+  never a seam error. The native lane never sees the field.
+- **Corpus lane.** `corpus-gate.sh` runs the three runners without a
+  selector (see `README.md` §Sprint 151). Its native lane is the count
+  authority: 2,726 testdir, 899 typechecker, 26 package roots; the backend
+  lanes must produce the same counts. The Sprint 151 candidate on `main` is
+  Bash++ `963ef4b` (bashy) on sh `0e9ee20f`; Barrier A itself ran on the
+  frozen Sprint 150 candidate `be20731`/`828e5b33` with the pins overridden
+  for that run only (recorded in the run's `status.txt`).

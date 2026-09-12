@@ -122,3 +122,23 @@ retained) with the seven-line patch and overlay bridge under
 `testdata/go-backend/` — built through `-overlay` and proven native-equivalent
 with the backend off before the 26 packages are replayed; `package-verify.go`
 is its verifier. `residuals.tsv` carries every non-green root of both sprints.
+
+## Sprint 151 corpus gate and partition
+
+`tools/upstream-harness/corpus-gate.sh` is Barrier A: the whole Go 1.27
+corpus through the three frozen upstream runners (`cmd/internal/testdir`,
+`go/types` + `types2` `check_test`, patched `cmd/go`) in three lanes —
+**native** (backend unset; the count authority and the reauthentication of
+the native oracle), then Bash++ **interpreted** and **compiled**. It is the
+packet-gate shape with the per-packet selector dropped; each backend lane's
+terminal count must equal the native lane's. `BASHPP_CORPUS_ROOTS=<active
+manifest>` is the leaf form (per-runner `-run` selectors derived from the
+root ids, counts authenticated against the manifest); `BASHPP_CORPUS_SMOKE`
+exercises the plumbing and never yields a verdict. `partition-emit.go` turns
+the per-mode `go test -json` streams into `active-15N-manifest.tsv`
+(151–154 + `unclassified`) by first-line rule and writes `active-summary.tsv`;
+root ids are `testdir:<path>`, `typechecker:<package>/<Test>/<file>`,
+`package:<importpath>`. Under the exact upstream runners the corpus is
+2,726 + 899 + 26 = **3,651** roots (the Sprint 142 inventory selected 743 of
+the 899 typechecker leaves). `backend.md` §Sprint 151 describes the
+backend-lane deadline.
