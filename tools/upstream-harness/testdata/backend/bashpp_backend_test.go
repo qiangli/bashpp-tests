@@ -578,13 +578,20 @@ func (t test) backendPlan(step *planStep, action, phase string, pkg *packageIden
 			// package. Retain it as evidence only. Errorcheck's -e/-d/-C
 			// are compile-tool diagnostics flags with the same problem.
 			var gcflags []string
+			raceBuild := false
 			for _, flag := range recipeFlags {
 				if !strings.HasPrefix(flag, "-p=") && !(diagnostics && (flag == "-e" || flag == "-C" || strings.HasPrefix(flag, "-d="))) {
 					gcflags = append(gcflags, flag)
+					if diagnostics && flag == "-race" {
+						raceBuild = true
+					}
 				}
 			}
 			transpileArgs = append(transpileArgs, "--map", sourceMap)
 			buildArgs := []string{goTool, "build", "-C", moduleDir}
+			if raceBuild {
+				buildArgs = append(buildArgs, "-race")
+			}
 			if len(gcflags) != 0 {
 				buildArgs = append(buildArgs, "-gcflags="+strings.Join(gcflags, " "))
 			}
@@ -603,6 +610,9 @@ func (t test) backendPlan(step *planStep, action, phase string, pkg *packageIden
 			case diagnostics:
 				disposition = "transpile-build-diagnostics"
 				compileDeviations = append(compileDeviations, "transpile and build diagnostics are emitted on the exact upstream input path via //line directives; upstream errorCheck applies its own expectations unchanged")
+				if raceBuild {
+					compileDeviations = append(compileDeviations, "a -race compiler recipe is built with go build -race so the generated program's link pairs with its instrumented compile; upstream compiles only")
+				}
 			case directory:
 				disposition = "transpile-build-package-map"
 				compileDeviations = append(compileDeviations, "the generated module receives no dependency packages; a lowered relative import that does not build is a retained lowering product failure")
