@@ -105,40 +105,35 @@ INV="${WORK}/inv.tsv"
 PIN="${WORK}/pin.tsv"
 CPIN="${WORK}/corpus.tsv"
 
-inventory_rows() {
-  ruby -rdigest - "${MINI}/_content/tour" <<'RUBY'
-tour = ARGV[0]
-rows = []
-{
-  "alpha.go" => "lesson_play_program",
-  "beta.go"  => "lesson_play_program",
-  "gamma.go" => "lesson_play_program",
-}.each do |f, kind|
-  path = "_content/tour/#{f}"
-  text = File.binread(File.join(tour, f))
-  tag = text.lines.first
-  appl =
-    if tag.include?("nobuild") then "excluded_fragment"
-    elsif tag.include?("norun") then "build_only_go_program"
-    else "applicable_go_program"
-    end
-  exc = appl == "excluded_fragment" ? "fragment" : "none"
-  schema =
-    case appl
-    when "applicable_go_program" then "baseline:go-run;bpp_interpreted:parse-run;bpp_compiled:transpile-build-run"
-    when "build_only_go_program" then "baseline:go-test-or-build;bpp_interpreted:parse-or-run;bpp_compiled:transpile-build-run"
-    else "baseline:syntax-context-only;bpp_interpreted:not-run;bpp_compiled:not-run"
-    end
-  rows << [path, kind, "n/a", appl, "exception:#{exc}", schema, text.bytesize, Digest::SHA256.hexdigest(text)]
-end
-inline = "\tInline prose: never executed by the tour.\n"
-rows << ["_content/tour/basics.article#inline-01-L1", "article_inline_block", "1",
-         "excluded_fragment", "exception:fragment",
-         "baseline:syntax-context-only;bpp_interpreted:not-run;bpp_compiled:not-run",
-         inline.bytesize, Digest::SHA256.hexdigest(inline)]
-rows.sort_by!(&:first)
-rows.each { |r| puts r.join("\t") }
-RUBY
+inventory_rows() { # appends the well-formed mini inventory to stdout
+  # Pure Bash + shasum: Sprint 155 / S155.9 / 43af37063b09 retired the inline
+  # Ruby fixture builder this replaces (same rows, same classification rule).
+  local f path text tag appl exc schema bytes sha inline
+  {
+    for f in alpha.go beta.go gamma.go; do
+      path="_content/tour/${f}"
+      tag="$(head -n 1 "${MINI}/_content/tour/${f}")"
+      case "${tag}" in
+        *nobuild*) appl="excluded_fragment" ;;
+        *norun*)   appl="build_only_go_program" ;;
+        *)         appl="applicable_go_program" ;;
+      esac
+      case "${appl}" in
+        excluded_fragment) exc="fragment"; schema="baseline:syntax-context-only;bpp_interpreted:not-run;bpp_compiled:not-run" ;;
+        build_only_go_program) exc="none"; schema="baseline:go-test-or-build;bpp_interpreted:parse-or-run;bpp_compiled:transpile-build-run" ;;
+        *) exc="none"; schema="baseline:go-run;bpp_interpreted:parse-run;bpp_compiled:transpile-build-run" ;;
+      esac
+      bytes="$(wc -c < "${MINI}/_content/tour/${f}" | tr -d ' ')"
+      sha="$(shasum -a 256 "${MINI}/_content/tour/${f}" | awk '{print $1}')"
+      printf '%s\tlesson_play_program\tn/a\t%s\texception:%s\t%s\t%s\t%s\n' "${path}" "${appl}" "${exc}" "${schema}" "${bytes}" "${sha}"
+    done
+    inline=$'\tInline prose: never executed by the tour.\n'
+    bytes="$(printf '%s' "${inline}" | wc -c | tr -d ' ')"
+    sha="$(printf '%s' "${inline}" | shasum -a 256 | awk '{print $1}')"
+    printf '%s\tarticle_inline_block\t1\texcluded_fragment\texception:fragment\t%s\t%s\t%s\n' \
+      "_content/tour/basics.article#inline-01-L1" \
+      "baseline:syntax-context-only;bpp_interpreted:not-run;bpp_compiled:not-run" "${bytes}" "${sha}"
+  } | LC_ALL=C sort -t "$(printf '\t')" -k1,1
 }
 
 write_inventory() {

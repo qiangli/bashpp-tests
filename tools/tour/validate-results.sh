@@ -25,6 +25,10 @@ set -euo pipefail
 export LC_ALL=C
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+# The strict UTF-8 gate is the Go harness (`tour utf8-check`); Sprint 155 /
+# S155.9 / 43af37063b09 retired the inline Ruby probe it replaces.
+. "${ROOT}/tools/tour/tour-build.sh"
+tour_build
 PIN="${ROOT}/docs/tour/pin.tsv"
 TOOLCHAIN="${ROOT}/docs/tour/toolchain.tsv"
 HELPERS="${ROOT}/docs/tour/helpers.tsv"
@@ -115,7 +119,7 @@ case "${header_rows}" in ''|*[!0-9]*) die "results records header must be an int
 grep -n 'PLANNED' "${RESULTS}" >/dev/null 2>&1 && die "PLANNED is not a valid tour baseline state"
 
 # Strict UTF-8 for the whole results file — reject, never replace.
-ruby -e 's = STDIN.read.b; s.force_encoding("UTF-8"); abort("FATAL: results file is not strict UTF-8") unless s.valid_encoding?' < "${RESULTS}"
+"${TOUR_BIN}" utf8-check "${RESULTS}" || die "results file is not strict UTF-8"
 
 # Coverage + per-record semantics, joined against the inventory. Every
 # executable inventory row and every record path pass through one awk pass,

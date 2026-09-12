@@ -176,6 +176,12 @@ tools/tour/executor-tamper-tests.sh                      # sprint 118 real-ledge
 
 ## Sprint 118 three-mode executor (`tour-executor/v2`)
 
+Since Sprint 155 (Story S155.9, Story-ID `43af37063b09`) every tool under
+`tools/tour/` is one Go program built by `tools/tour/tour-build.sh` with the
+pinned Go toolchain; the `.sh` entry points below keep their names and CLIs
+and exec it. No Ruby remains under `tools/tour/`. See
+[`executor.md`](executor.md) § "Sprint 155" for what each ledger binds.
+
 Story #4 / Story-ID `759341a95870`. Full documentation:
 [`executor.md`](executor.md). The Sprint 98 `tour-evidence/v2` runner it
 supersedes is documented further down; its ledger `tests/tour/evidence.jsonl`
@@ -206,11 +212,12 @@ observations. What changed from `tour-evidence/v2`:
   execution, enforced by the gate;
 - the Go baseline is `go build` + native artifact, never `go run`, so a
   wrapper exit cannot misreport `os.Exit`/panic;
-- every subprocess goes through the shared `Corpus.capture` primitive in
-  `tools/corpus/executor.rb`; there is no private capture path and no fallback,
-  and the gate rejects a ledger that claims one;
+- every subprocess goes through the `Capture` primitive in
+  `tools/tour/capture.go` (the port of the shared `Corpus.capture`); there is
+  no private capture path and no fallback, and the gate rejects a ledger that
+  claims one;
 - the candidate is authenticated against the **manager-supplied build manifest
-  verbatim** (`Corpus.authenticate_candidate`), binding the launcher and
+  verbatim** (`AuthenticateCandidate`), binding the launcher and
   `.real` payload digests and every replaced dependency — `bashy`, `sh`,
   `coreutils`, `readline` and `filebrowser` — at a clean revision. This
   replaces both the release-tag-only rule that made Makefile-built candidates
@@ -220,7 +227,7 @@ observations. What changed from `tour-evidence/v2`:
   inventory schema is preserved and joined to the current phase contract by
   `docs/tour/phase-migration.tsv`, whose *both ends* the gate enforces;
 - the ten measurably nondeterministic rows are adjudicated by reviewed narrow
-  semantic comparators (`docs/tour/semantics.tsv`, `tools/tour/semantics.rb`)
+  semantic comparators (`docs/tour/semantics.tsv`, `tools/tour/semantics.go`)
   against repeated observations of the freshly built native binary, not against
   the frozen historical draw. Exit status and stderr stay byte-exact; the gate
   recomputes every comparator verdict itself;
@@ -228,10 +235,17 @@ observations. What changed from `tour-evidence/v2`:
   fresh `HOME`/`TMPDIR`/artifact/runtime directory; all 97 sources are
   re-verified after every mode.
 
-**Current result: FAIL, accurately.** Against the manifest-authenticated
-diagnostic candidate (`gosource-v1`), all 97 baselines pass, 23 of 93 rows pass
-interpreted and 54 of 97 pass compiled. The remaining 117 observations are real
-product defects recorded per stage with their real diagnostics. Nothing is
+**Current result: PASS, 291/291.** `tests/tour/executor-results.jsonl` is the
+Sprint 155 (S155.9) run of the Go-ported executor on novidesign.local against a
+clean rebuild of the Sprint 118 candidate017 revision set (bashy `fdd3fac9`,
+sh `037aaf86`, coreutils `ec91ea45`, readline `b958823b`, filebrowser
+`cde11469`): baseline 97, interpreted 97, compiled 97, 11 semantic rows, 77
+native oracle runs, root `f065adee…`. Its derived mode and inventory ledgers
+are byte-identical to the retained `docs/tour/sprint118-candidate017-ledger.tsv`
+and `-inventory-ledger.tsv`. The earlier FAIL ledger for the published
+candidate-002 diagnostic (baseline 97, interpreted 39, compiled 97; 117 real
+product defects recorded per stage) is retained unchanged as
+`tests/tour/executor-results-published-candidate-002.jsonl`. Nothing is
 masked, skipped or marked not-applicable.
 
 ## Three-mode JSONL evidence (Sprint 98, superseded)

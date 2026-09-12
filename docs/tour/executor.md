@@ -11,20 +11,37 @@ one of the **291** observations.
 
 ## Current status — read this first
 
-The gate **FAILS**, and that is the accurate result. The failures are real
-product failures on a real, manifest-authenticated candidate, and they are
-retained verbatim.
+The committed ledger `tests/tour/executor-results.jsonl` **PASSES** the gate.
+It was produced on novidesign.local by the Go-ported executor (Sprint 155 /
+S155.9) against a clean rebuild of the Sprint 118 candidate017 revision set
+(`docs/tour/sprint118-candidate017-receipt.json`: bashy `fdd3fac9`, sh
+`037aaf86`, coreutils `ec91ea45`, readline `b958823b`, filebrowser
+`cde11469`), authenticated against a manifest written for that rebuild:
 
 ```
-tour-executor/v2 FAIL: 291/291 observations
+tour-executor/v2 PASS: 291/291 observations
   baseline     PASS=97
-  interpreted  PASS=23  FAIL:run:exit:2=45  FAIL:run:exit:1=29
-  compiled     PASS=54  FAIL:build:exit:1=27  FAIL:transpile:exit:2=16
+  interpreted  PASS=97
+  compiled     PASS=97
   candidate: authenticated
-  semantic:  10 rows, 70 native oracle runs
+  semantic:  11 rows, 77 native oracle runs
+  root f065adee2d24bebd0c43066d47cf26c8c03edf7909d863d35212349d5383a8c9
 ```
 
-What that says:
+The mode ledger and inventory ledger derived from it are byte-identical to
+the retained `docs/tour/sprint118-candidate017-ledger.tsv` (`d24acf38…`) and
+`sprint118-candidate017-inventory-ledger.tsv` (`47469757…`). The receipt's
+`root_sha256` (`33c8721e…`) is not reproducible by construction: the canonical
+root covers every stage's `started_at`/`finished_at`, the run and comparison
+windows, host paths (`evidence_root`, `manifest_path`, `go.path`, repository
+paths, `helper_module.materialized_dir`), the rebuilt launcher/payload
+digests and manifest digest, and the harness-implementation bindings that
+moved from Ruby to Go — none of which a comparator was loosened to hide.
+
+The earlier ledger — the published candidate-002 diagnostic, `FAIL`, baseline
+97 / interpreted 39 / compiled 97, sealed by the Ruby harness with
+`tour-semantics/v1` — is retained unchanged as
+`tests/tour/executor-results-published-candidate-002.jsonl`. It documented:
 
 1. **The Go-source frontend exists and works.** Against the diagnostic
    candidate (`frontend_version: gosource-v1`), `bashy --bashpp --source=go`,
@@ -43,7 +60,7 @@ What that says:
 
 The historical failure evidence for this story — `tests/tour/evidence.jsonl`,
 produced by the superseded `tour-evidence/v2` runner — is **untouched**. The
-new ledger is a separate artifact, `tests/tour/executor-results.jsonl`.
+executor ledger is a separate artifact, `tests/tour/executor-results.jsonl`.
 
 ## Running it
 
@@ -86,37 +103,80 @@ bash tools/tour/executor-tamper-tests.sh
 | `docs/tour/candidate.tsv` | which components the build manifest must bind, and how the launcher/payload pair is digested |
 | `docs/tour/volatility.tsv` | the measured nondeterminism record |
 | `docs/tour/semantics.tsv` | the reviewed comparator bound to each of those eleven rows |
-| `tools/tour/semantics.rb` | the comparators themselves |
-| `tools/tour/executor.rb` | contract, scoring, candidate authentication, normalization audit, and the thin adapter over the shared capture primitive |
-| `tools/tour/executor-runner.rb` | produces `tests/tour/executor-results.jsonl` |
-| `tools/tour/executor-gate.rb` | offline gate |
-| `tools/tour/executor-selftests.rb` | unit + end-to-end gate tests on a synthetic fixture |
-| `tools/tour/semantics-selftests.rb` | negative-first comparator tests |
-| `tools/tour/executor-tamper-tests.sh` | differential tamper probes against the real ledger |
+| `tools/tour/semantics.go` | the comparators themselves (`tour-semantics/v2`; its SHA-256 is bound as `semantics.library_sha256`) |
+| `tools/tour/executor.go` | contract, scoring, candidate authentication, normalization audit, and the thin adapter over the capture primitive |
+| `tools/tour/capture.go` | the capture primitive (own process group, monotonic deadline, file-backed streams, descendant sweep, lineage receipt) and manifest authentication; bound as `capture_implementation` / `capture_library_sha256` |
+| `tools/tour/normalize.go` | the pinned `tour-normalizer/v1` rules; bound as `normalizer.sha256` |
+| `tools/tour/executor_runner.go` | `tour executor` — produces `tests/tour/executor-results.jsonl` |
+| `tools/tour/executor_gate.go` | `tour validate-executor` — offline gate |
+| `tools/tour/executor_selftests.go` | `tour executor-selftests` — unit + end-to-end gate tests on a synthetic fixture |
+| `tools/tour/semantics_selftests.go` | `tour semantics-selftests` — negative-first comparator tests |
+| `tools/tour/executor_tamper.go` | `tour executor-tamper-tests` — differential tamper probes against the real ledger |
+| `tools/tour/tour-build.sh` | builds the single `tour` binary with the pinned Go toolchain; every `tools/tour/*.sh` wrapper sources it and execs the binary |
 | `tests/tour/executor-results.jsonl` | the `tour-executor/v2` ledger |
 
 Unchanged and deliberately preserved: `tests/tour/inventory.tsv`,
 `tests/tour/results.tsv`, `tests/tour/evidence.jsonl`, `tour/` (the corpus),
-`docs/tour/pin.tsv`, `docs/tour/differential-schema.tsv`,
-`tools/tour/normalize.rb`, and the whole `evidence.rb` / `evidence-runner.rb` /
-`evidence-validator.rb` family.
+`docs/tour/pin.tsv`, `docs/tour/differential-schema.tsv`, the
+`tour-normalizer/v1` rules, and the whole `tour-evidence/v2` family
+(`evidence.go` / `evidence_runner.go` / `evidence_validator.go`).
+
+## Sprint 155: the harness is Go, the Ruby files are gone
+
+Sprint 155 / Story S155.9 / Story-ID `43af37063b09` ported every Ruby file
+under `tools/tour/` to one Go program (`tools/tour/*.go`, package `main`,
+subcommands `executor`, `validate-executor`, `executor-selftests`,
+`executor-tamper-tests`, `semantics-selftests`, `evidence`,
+`validate-evidence`, `evidence-selftests`, `evidence-tamper-tests`,
+`normalize`, `utf8-check`, `refresh-inventory`) and deleted the `.rb` files.
+Every `.sh` wrapper keeps its name and CLI and execs the binary, which
+`tools/tour/tour-build.sh` builds with the pinned Go toolchain the same way
+`tools/go-by-example/launch.go` is built. The contracts are unchanged:
+
+- the canonical JSON layer reproduces Ruby's `JSON.generate` byte for byte
+  (sorted keys, `510.0` floats, Ruby string escapes), so root digests of
+  Ruby-era ledgers still recompute; `tools/tour/jsonc_test.go` round-trips
+  every line of the two retained ledgers;
+- every comparator finding string is rendered exactly as before (Ruby
+  `inspect` and `Float#to_s` renderings), so `semantic_forged:` still
+  recomputes to the identical verdict;
+- the pinned TSVs (`executor-contract.tsv`, `semantics.tsv`,
+  `volatility.tsv`, `phase-migration.tsv`, `candidate.tsv`, …) are byte-for-byte
+  untouched — their digests are bound into every ledger — so their comments
+  still name the retired `.rb` files; read those names as the Go files above.
+
+What a ledger binds changed only where the implementation moved. A Go-produced
+ledger binds `normalizer.path = tools/tour/normalize.go`,
+`semantics.library_sha256 = sha256(tools/tour/semantics.go)` and
+`capture_implementation = tools/tour/capture.go:Capture` with
+`capture_library_sha256 = sha256(tools/tour/capture.go)`, all re-hashed from
+disk by the gate. A ledger sealed by the retired Ruby harness is still
+authenticable without executing any Ruby: the gates accept exactly the frozen
+digests of the final retired implementations for exactly their old paths
+(`normalize.rb` `7802ad55…`, `semantics.rb` `ac6ffe65…`,
+`tools/corpus/executor.rb` `04916fdf…`) and nothing else — the same pattern
+the gate already used for the `tour-semantics/v1` library digest.
+
+The candidate is authenticated by `AuthenticateCandidate` in
+`tools/tour/capture.go` (the port of `Corpus.authenticate_candidate`):
+launcher digest, adjacent `.real` payload digest, and every listed repository
+at its stated revision with a clean tree including untracked files.
 
 ## The shared capture primitive is mandatory
 
-Every subprocess this corpus runs goes through `Corpus.capture` in
-`tools/corpus/executor.rb` (W2, Story-ID `e29305614139`): argv with no shell, an
-explicit environment with `unsetenv_others`, file-backed raw streams, a
-monotonic deadline, its own process group, a swept group and a
-surviving-descendant check.
+Every subprocess this corpus runs goes through `Capture` in
+`tools/tour/capture.go` — the Go port of `Corpus.capture` /
+`ProcessLineage.run` from the retired `tools/corpus/executor.rb` (W2, Story-ID
+`e29305614139`): argv with no shell, an explicit environment and nothing
+inherited, file-backed raw streams, a monotonic deadline, its own process
+group, a swept group, a surviving-descendant check and an append-only lineage
+receipt per launch.
 
-`tools/tour/executor.rb` contains **no capture implementation and no fallback**.
-If the shared library is absent or does not expose `Corpus.capture` /
-`Corpus.authenticate_candidate`, the corpus aborts — a ledger produced by an
-unreviewed capture path is not evidence. `TourExecutor.run` is a thin adapter:
-it calls the primitive, reads back the file-backed `.stdout`/`.stderr` logs,
-**re-checks each against the digest the shared library recorded**, and converts
-them into the normalized, base64-bound data the ledger needs. It does not
-duplicate spawning, deadline enforcement or process cleanup.
+`tools/tour/executor.go` contains **no capture implementation and no fallback**.
+`run` is a thin adapter: it calls the primitive, reads back the file-backed
+`.stdout`/`.stderr` logs, **re-checks each against the digest the primitive
+recorded**, and converts them into the normalized, base64-bound data the ledger
+needs. It does not duplicate spawning, deadline enforcement or process cleanup.
 
 The manifest binds `capture_implementation` and the SHA-256 of the shared
 library itself, and the gate rejects a ledger that claims any other capture
@@ -138,7 +198,7 @@ files**. Authentication failure aborts the run.
 Two rules were superseded:
 
 * the `tour-evidence/v2` rule that a candidate had to be a **published release
-  tag** (`tools/tour/evidence-runner.rb` still aborts without one), which made
+  tag** (`tour evidence`, the port of `evidence-runner.rb`, still aborts without one), which made
   a Makefile build untestable; and
 * the first `tour-executor` draft's **derived** binding, which resolved sibling
   worktrees by convention and compared them to the commit stamped in
@@ -167,7 +227,7 @@ build; not final default candidate`, and the ledger carries that string.
 
 Eleven rows of the denominator cannot reproduce a byte-exact digest. They are
 measured in `docs/tour/volatility.tsv` and adjudicated by
-`docs/tour/semantics.tsv` + `tools/tour/semantics.rb`.
+`docs/tour/semantics.tsv` + `tools/tour/semantics.go`.
 
 **The anchor is a fresh native oracle, not the frozen baseline.** For each of
 them the runner executes the very native binary the baseline stage just
@@ -221,7 +281,7 @@ and requires it to sit inside the manifest's run window
 (`semantic_window_forged:`, `semantic_window_length:`,
 `semantic_window_outside_run:`).
 
-`tools/tour/semantics-selftests.rb` drives every comparator with wrong values,
+`tour semantics-selftests` (`tools/tour/semantics_selftests.go`) drives every comparator with wrong values,
 wrong counts, wrong sets, wrong order, wrong exit status, wrong stderr, wrong
 timing, degenerate oracles and **every other row's output**, and requires
 rejection: 185 checks.
@@ -267,7 +327,7 @@ Every body stage records that exact scope:
 > interpreted mode necessarily retains its own source/module context;
 > no OS sandbox
 
-This is **cwd and command-lookup isolation**. Ruby does not deny a program
+This is **cwd and command-lookup isolation**. The harness does not deny a program
 access to an absolute path, and no container or seccomp policy is in play, so
 no source-inaccessibility certification is claimed. The gate rejects a stage or
 a manifest that claims an OS sandbox (`input_absence:os_sandbox_claimed`), a
@@ -310,7 +370,7 @@ the ledger's base64 copy of the same bytes.
 
 ## The normalizer is unchanged, and the gate audits it
 
-`tools/tour/normalize.rb` keeps its `tour-normalizer/v1` rules exactly as
+`tools/tour/normalize.go` keeps its `tour-normalizer/v1` rules exactly as
 pinned: a strict UTF-8 gate (invalid bytes are rejected, never transliterated),
 CRLF/CR → LF, and pointer-sized (≥8 hex digit) values → `0xADDR`. Nothing else.
 Timestamps, random draws, goroutine interleavings and scratch paths are **not**
@@ -355,7 +415,7 @@ gate failure.
 | native oracle | `oracle:row_set`, `oracle:repeats:`, `oracle:source_binding:`, `oracle:run_not_clean:`, `oracle_binary_mismatch:` |
 | binding/integrity | `binding:*`, `toolchain:*`, `helper:*`, `duplicate:`, `root:tampered`, `verdict:forged` |
 
-`tools/tour/executor-selftests.rb` builds a synthetic 97-row / 291-observation
+`tour executor-selftests` builds a synthetic 97-row / 291-observation
 fixture **with a real oracle record and a real comparator verdict** that
 **passes** — proving the gate is capable of passing and is not merely always
 red — and then mutates exactly one thing per case, requiring the expected

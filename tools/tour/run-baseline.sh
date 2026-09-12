@@ -48,6 +48,10 @@ set -m # every background job gets its own process group so -PGID kills the tree
 export LC_ALL=C
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+# The strict UTF-8 gate is the Go harness (`tour utf8-check`); Sprint 155 /
+# S155.9 / 43af37063b09 retired the inline Ruby probe it replaces.
+. "${ROOT}/tools/tour/tour-build.sh"
+tour_build
 PIN="${ROOT}/docs/tour/pin.tsv"
 TOOLCHAIN="${ROOT}/docs/tour/toolchain.tsv"
 HELPERS="${ROOT}/docs/tour/helpers.tsv"
@@ -211,7 +215,7 @@ bounded_run() { # bounded_run <timeout_s> <grace_s> <cmd...>
 bounded_run_probe() { bounded_run "$@"; } # alias kept for symmetry with the probe below
 
 utf8_strict() { # <file> -> 0 iff bytes are strict UTF-8 (reject, never replace)
-  ruby -e 's = STDIN.read.b; s.force_encoding("UTF-8"); exit(s.valid_encoding? ? 0 : 1)' < "$1"
+  "${TOUR_BIN}" utf8-check "$1"
 }
 
 # Provision the official helper module dependency from the pinned sums
