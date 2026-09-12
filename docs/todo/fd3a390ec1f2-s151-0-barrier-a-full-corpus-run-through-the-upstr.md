@@ -3,11 +3,12 @@ id: fd3a390ec1f2
 kind: task
 title: S151.0 Barrier A — full-corpus run through the upstream Go harness, active 151–154 manifests
 seq: 58
-status: assigned
+status: done
 priority: p0
 created: 2026-09-11T23:15:16.554779Z
 assignee: sprint151-manager
 sprint: 151
+closed: 2026-09-12T02:55:17.991956Z
 ---
 
 Entry gate for Sprint 151 (docs/sprint-151-handoff.md §Entry gate; docs/sprint-151-master-execution-plan.md step 1). Authority: the exact upstream Go 1.27 harness (cmd/internal/testdir, go/types + types2 check_test, patched cmd/go) through the accepted 149/150 backend seam. Go or Bash only.
