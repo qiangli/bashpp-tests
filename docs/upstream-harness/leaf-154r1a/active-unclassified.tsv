@@ -1,0 +1,14 @@
+root	mode	first_line	verdict
+testdir:defernil.go	interpreted	defernil.go:31:8: nilf: command not found	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue15002.go	interpreted	fixedbugs/issue15002.go:56:31: index out of range [1] with length 1	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue15091.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue17449.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue18661.go	interpreted	fixedbugs/issue18661.go:17:6: fixedbugs/issue18661.go:17:6: Go interface comparison requires represented dynamic values	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue30606b.go	interpreted	fixedbugs/issue30606b.go:21:1: string not assignable to reflect.Type	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue5793.go	interpreted	complex requires 2 arguments	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue71675.go	interpreted	f recover:called	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue7740.go	interpreted	fixedbugs/issue7740.go:31:11: gosource: invalid native scalar	missing=0;wording=0;extra=0;class=-
+testdir:nilptr.go	interpreted	fatal error: runtime: out of memory	missing=0;wording=0;extra=0;class=-
+testdir:typeparam/mdempsky/13.go	interpreted	gosource: bridge accepts evaluated values, not argument source "Mer(3)"	missing=0;wording=0;extra=0;class=-
+testdir:typeparam/subdict.go	interpreted	typeparam/subdict.go:17:1: undefined type: comparable	missing=0;wording=0;extra=0;class=-
+testdir:zerosize.go	interpreted	p= q= p==q = false	missing=0;wording=0;extra=0;class=-

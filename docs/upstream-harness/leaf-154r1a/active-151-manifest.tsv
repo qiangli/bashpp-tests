@@ -1,0 +1,9 @@
+root	mode	first_line	verdict
+testdir:abi/convT64_criteria.go	interpreted	unknown field _ of main.MyStruct	missing=0;wording=0;extra=0;class=-
+testdir:abi/method_wrapper.go	interpreted	BASHPP-ECOLLECTION-ELEMENT: cannot use string value as float64	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue24547.go	interpreted	unknown imported symbol or method: String	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue31546.go	interpreted	unknown field _ of struct { a int; _ int; c int }	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestLocal/issue47996.go	interpreted	check_test.go:256: testdata/local/issue47996.go:8:56: no error expected: "expected '(', found m"	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestLocal/issue47996.go	compiled	check_test.go:256: testdata/local/issue47996.go:8:56: no error expected: "expected '(', found m"	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestLocal/issue68183.go	interpreted	check_test.go:256: testdata/local/issue68183.go:13:2: no error expected: "expected 'IDENT', found 'ILLEGAL'"	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestLocal/issue68183.go	compiled	check_test.go:256: testdata/local/issue68183.go:13:2: no error expected: "expected 'IDENT', found 'ILLEGAL'"	missing=0;wording=0;extra=0;class=-

@@ -1,0 +1,186 @@
+root	mode	first_line	verdict
+testdir:bombad.go	interpreted	test/bombad.go:14:2: expected statement, found 'ILLEGAL'	missing=0;wording=4;extra=7;class=wording
+testdir:bombad.go	compiled	test/bombad.go:14:2: expected statement, found 'ILLEGAL'	missing=0;wording=4;extra=7;class=wording
+testdir:char_lit1.go	interpreted	test/char_lit1.go:16:8: escape sequence is invalid Unicode code point	missing=0;wording=0;extra=8;class=multiplicity
+testdir:char_lit1.go	compiled	test/char_lit1.go:16:8: escape sequence is invalid Unicode code point	missing=0;wording=0;extra=8;class=multiplicity
+testdir:devirtualization.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:devirtualization.go	compiled	test/devirtualization.go:17:6: can inline (*Impl).M	missing=2;wording=0;extra=0;class=missing
+testdir:escape_reflect.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:escape_reflect.go	compiled	test/escape_reflect.go:354:32: 0 does not escape	missing=4;wording=0;extra=0;class=missing
+testdir:escape_slice.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:escape_slice.go	compiled	test/escape_slice.go:140:12: make(IP, 16) escapes to heap	missing=3;wording=0;extra=0;class=missing
+testdir:fixedbugs/bug014.go	interpreted	test/fixedbugs/bug014.go:10:21: illegal character U+0027 ''' in escape sequence	missing=0;wording=0;extra=4;class=multiplicity
+testdir:fixedbugs/bug014.go	compiled	test/fixedbugs/bug014.go:10:21: illegal character U+0027 ''' in escape sequence	missing=0;wording=0;extra=4;class=multiplicity
+testdir:fixedbugs/bug050.go	interpreted	test/fixedbugs/bug050.go:7:1: expected 'package', found 'func'	missing=0;wording=0;extra=1;class=multiplicity
+testdir:fixedbugs/bug050.go	compiled	test/fixedbugs/bug050.go:7:1: expected 'package', found 'func'	missing=0;wording=0;extra=1;class=multiplicity
+testdir:fixedbugs/bug068.go	interpreted	test/fixedbugs/bug068.go:12:13: unknown escape sequence	missing=0;wording=0;extra=1;class=multiplicity
+testdir:fixedbugs/bug068.go	compiled	test/fixedbugs/bug068.go:12:13: unknown escape sequence	missing=0;wording=0;extra=1;class=multiplicity
+testdir:fixedbugs/bug121.go	interpreted	test/fixedbugs/bug121.go:12:3: expected ';', found ','	missing=0;wording=2;extra=6;class=wording
+testdir:fixedbugs/bug121.go	compiled	test/fixedbugs/bug121.go:12:3: expected ';', found ','	missing=0;wording=2;extra=6;class=wording
+testdir:fixedbugs/bug132.go	interpreted	test/fixedbugs/bug132.go:10:5: x redeclared	missing=0;wording=0;extra=1;class=multiplicity
+testdir:fixedbugs/bug132.go	compiled	test/fixedbugs/bug132.go:10:5: x redeclared	missing=0;wording=0;extra=1;class=multiplicity
+testdir:fixedbugs/bug136.go	interpreted	test/fixedbugs/bug136.go:13:9: invalid break label L	missing=0;wording=0;extra=2;class=extra
+testdir:fixedbugs/bug136.go	compiled	test/fixedbugs/bug136.go:13:9: invalid break label L	missing=0;wording=0;extra=2;class=extra
+testdir:fixedbugs/bug163.go	interpreted	test/fixedbugs/bug163.go:9:6: expected type, found 'ILLEGAL'	missing=0;wording=1;extra=2;class=wording
+testdir:fixedbugs/bug163.go	compiled	test/fixedbugs/bug163.go:9:6: expected type, found 'ILLEGAL'	missing=0;wording=1;extra=2;class=wording
+testdir:fixedbugs/bug169.go	interpreted	test/fixedbugs/bug169.go:8:9: illegal rune literal	missing=0;wording=0;extra=1;class=multiplicity
+testdir:fixedbugs/bug169.go	compiled	test/fixedbugs/bug169.go:8:9: illegal rune literal	missing=0;wording=0;extra=1;class=multiplicity
+testdir:fixedbugs/bug179.go	interpreted	test/fixedbugs/bug179.go:13:10: invalid break label L2	missing=0;wording=0;extra=1;class=extra
+testdir:fixedbugs/bug179.go	compiled	test/fixedbugs/bug179.go:13:10: invalid break label L2	missing=0;wording=0;extra=1;class=extra
+testdir:fixedbugs/bug200.go	interpreted	test/fixedbugs/bug200.go:17:7: duplicate case func(f int) in type switch	missing=0;wording=0;extra=1;class=extra
+testdir:fixedbugs/bug200.go	compiled	test/fixedbugs/bug200.go:17:7: duplicate case func(f int) in type switch	missing=0;wording=0;extra=1;class=extra
+testdir:fixedbugs/bug228.go	interpreted	test/fixedbugs/bug228.go:11:27: invalid use of ...	missing=0;wording=0;extra=1;class=multiplicity
+testdir:fixedbugs/bug228.go	compiled	test/fixedbugs/bug228.go:11:27: invalid use of ...	missing=0;wording=0;extra=1;class=multiplicity
+testdir:fixedbugs/bug274.go	interpreted	test/fixedbugs/bug274.go:24:2: expected statement, found 'case'	missing=1;wording=1;extra=2;class=position
+testdir:fixedbugs/bug274.go	compiled	test/fixedbugs/bug274.go:24:2: expected statement, found 'case'	missing=1;wording=1;extra=2;class=position
+testdir:fixedbugs/bug300.go	interpreted	test/fixedbugs/bug300.go:23:7: cannot parenthesize type in composite literal	missing=0;wording=0;extra=1;class=multiplicity
+testdir:fixedbugs/bug300.go	compiled	test/fixedbugs/bug300.go:23:7: cannot parenthesize type in composite literal	missing=0;wording=0;extra=1;class=multiplicity
+testdir:fixedbugs/bug349.go	interpreted	test/fixedbugs/bug349.go:12:14: expected ';', found 2.01	missing=0;wording=1;extra=4;class=wording
+testdir:fixedbugs/bug349.go	compiled	test/fixedbugs/bug349.go:12:14: expected ';', found 2.01	missing=0;wording=1;extra=4;class=wording
+testdir:fixedbugs/bug388.go	interpreted	test/fixedbugs/bug388.go:12:10: missing parameter name	missing=0;wording=0;extra=3;class=extra
+testdir:fixedbugs/bug388.go	compiled	test/fixedbugs/bug388.go:12:10: missing parameter name	missing=0;wording=0;extra=3;class=extra
+testdir:fixedbugs/bug412.go	interpreted	test/fixedbugs/bug412.go:11:2: x redeclared	missing=0;wording=0;extra=1;class=extra
+testdir:fixedbugs/bug412.go	compiled	test/fixedbugs/bug412.go:11:2: x redeclared	missing=0;wording=0;extra=1;class=extra
+testdir:fixedbugs/bug416.go	interpreted	test/fixedbugs/bug416.go:13:13: field and method with the same name X	missing=0;wording=0;extra=1;class=extra
+testdir:fixedbugs/bug416.go	compiled	test/fixedbugs/bug416.go:13:13: field and method with the same name X	missing=0;wording=0;extra=1;class=extra
+testdir:fixedbugs/bug435.go	interpreted	test/fixedbugs/bug435.go:15:48: expected ')', found 'EOF'	missing=0;wording=0;extra=4;class=multiplicity
+testdir:fixedbugs/bug435.go	compiled	test/fixedbugs/bug435.go:15:48: expected ')', found 'EOF'	missing=0;wording=0;extra=4;class=multiplicity
+testdir:fixedbugs/issue11359.go	interpreted	test/fixedbugs/issue11359.go:11:5: expected 'IDENT', found 'ILLEGAL'	missing=0;wording=1;extra=2;class=wording
+testdir:fixedbugs/issue11359.go	compiled	test/fixedbugs/issue11359.go:11:5: expected 'IDENT', found 'ILLEGAL'	missing=0;wording=1;extra=2;class=wording
+testdir:fixedbugs/issue11362.go	interpreted	test/fixedbugs/issue11362.go:11:10: could not import unicode//utf8 (package "unicode//utf8" not found in go list output)	missing=0;wording=1;extra=1;class=wording
+testdir:fixedbugs/issue11362.go	compiled	test/fixedbugs/issue11362.go:11:10: could not import unicode//utf8 (package "unicode//utf8" not found in go list output)	missing=0;wording=1;extra=1;class=wording
+testdir:fixedbugs/issue11610.go	interpreted	test/fixedbugs/issue11610.go:11:4: expected 'IDENT', found 'ILLEGAL'	missing=0;wording=1;extra=2;class=wording
+testdir:fixedbugs/issue11610.go	compiled	test/fixedbugs/issue11610.go:11:4: expected 'IDENT', found 'ILLEGAL'	missing=0;wording=1;extra=2;class=wording
+testdir:fixedbugs/issue13248.go	interpreted	test/fixedbugs/issue13248.go:13:1: expected operand, found '}'	missing=0;wording=0;extra=5;class=extra
+testdir:fixedbugs/issue13248.go	compiled	test/fixedbugs/issue13248.go:13:1: expected operand, found '}'	missing=0;wording=0;extra=5;class=extra
+testdir:fixedbugs/issue13266.go	interpreted	test/fixedbugs/issue13266.go:10:8: expected 'IDENT', found '%'	missing=0;wording=1;extra=2;class=wording
+testdir:fixedbugs/issue13266.go	compiled	test/fixedbugs/issue13266.go:10:8: expected 'IDENT', found '%'	missing=0;wording=1;extra=2;class=wording
+testdir:fixedbugs/issue13273.go	interpreted	test/fixedbugs/issue13273.go:50:11: expected 'chan', found '<-'	missing=0;wording=2;extra=9;class=wording
+testdir:fixedbugs/issue13273.go	compiled	test/fixedbugs/issue13273.go:50:11: expected 'chan', found '<-'	missing=0;wording=2;extra=9;class=wording
+testdir:fixedbugs/issue13274.go	interpreted	test/fixedbugs/issue13274.go:11:58: expected ';', found 'EOF'	missing=0;wording=0;extra=1;class=multiplicity
+testdir:fixedbugs/issue13274.go	compiled	test/fixedbugs/issue13274.go:11:58: expected ';', found 'EOF'	missing=0;wording=0;extra=1;class=multiplicity
+testdir:fixedbugs/issue13319.go	interpreted	test/fixedbugs/issue13319.go:12:72: missing ',' before newline in argument list	missing=1;wording=1;extra=12;class=position
+testdir:fixedbugs/issue13319.go	compiled	test/fixedbugs/issue13319.go:12:72: missing ',' before newline in argument list	missing=1;wording=1;extra=12;class=position
+testdir:fixedbugs/issue14006.go	interpreted	test/fixedbugs/issue14006.go:24:4: illegal label declaration	missing=0;wording=7;extra=18;class=wording
+testdir:fixedbugs/issue14006.go	compiled	test/fixedbugs/issue14006.go:24:4: illegal label declaration	missing=0;wording=7;extra=18;class=wording
+testdir:fixedbugs/issue14520.go	interpreted	test/fixedbugs/issue14520.go:9:49: missing ',' before newline in parameter list	missing=0;wording=1;extra=1;class=wording
+testdir:fixedbugs/issue14520.go	compiled	test/fixedbugs/issue14520.go:9:49: missing ',' before newline in parameter list	missing=0;wording=1;extra=1;class=wording
+testdir:fixedbugs/issue15611.go	interpreted	test/fixedbugs/issue15611.go:11: rune literal not terminated	missing=0;wording=3;extra=8;class=wording
+testdir:fixedbugs/issue15611.go	compiled	test/fixedbugs/issue15611.go:11: rune literal not terminated	missing=0;wording=3;extra=8;class=wording
+testdir:fixedbugs/issue15898.go	interpreted	test/fixedbugs/issue15898.go:11:12: duplicate case nil in type switch	missing=0;wording=0;extra=2;class=extra
+testdir:fixedbugs/issue15898.go	compiled	test/fixedbugs/issue15898.go:11:12: duplicate case nil in type switch	missing=0;wording=0;extra=2;class=extra
+testdir:fixedbugs/issue17328.go	interpreted	test/fixedbugs/issue17328.go:11:13: expected '{', found ')'	missing=0;wording=0;extra=2;class=multiplicity
+testdir:fixedbugs/issue17328.go	compiled	test/fixedbugs/issue17328.go:11:13: expected '{', found ')'	missing=0;wording=0;extra=2;class=multiplicity
+testdir:fixedbugs/issue18092.go	interpreted	test/fixedbugs/issue18092.go:14:38: expected ':', found newline	missing=0;wording=1;extra=4;class=wording
+testdir:fixedbugs/issue18092.go	compiled	test/fixedbugs/issue18092.go:14:38: expected ':', found newline	missing=0;wording=1;extra=4;class=wording
+testdir:fixedbugs/issue18747.go	interpreted	test/fixedbugs/issue18747.go:10:5: missing condition in if statement	missing=0;wording=1;extra=6;class=wording
+testdir:fixedbugs/issue18747.go	compiled	test/fixedbugs/issue18747.go:10:5: missing condition in if statement	missing=0;wording=1;extra=6;class=wording
+testdir:fixedbugs/issue18895.go	interpreted	p.go:7: missing error "can inline"	missing=3;wording=0;extra=0;class=missing
+testdir:fixedbugs/issue18895.go	compiled	test/fixedbugs/issue18895.dir/p.go:14:6: can inline __gosource_pkg_0_t.m	missing=0;wording=1;extra=0;class=wording
+testdir:fixedbugs/issue18915.go	interpreted	test/fixedbugs/issue18915.go:13:5: expected boolean expression, found assignment (missing parentheses around composite literal?)	missing=0;wording=3;extra=3;class=wording
+testdir:fixedbugs/issue18915.go	compiled	test/fixedbugs/issue18915.go:13:5: expected boolean expression, found assignment (missing parentheses around composite literal?)	missing=0;wording=3;extra=3;class=wording
+testdir:fixedbugs/issue19261.go	interpreted	p.go:7: missing error "can inline F"	missing=2;wording=0;extra=0;class=missing
+testdir:fixedbugs/issue19261.go	compiled	test/fixedbugs/issue19261.dir/p.go:7:6: can inline __gosource_pkg_0_F	missing=0;wording=1;extra=0;class=wording
+testdir:fixedbugs/issue19667.go	interpreted	test/fixedbugs/issue19667.go:13:1: expected operand, found '}'	missing=0;wording=0;extra=6;class=multiplicity
+testdir:fixedbugs/issue19667.go	compiled	test/fixedbugs/issue19667.go:13:1: expected operand, found '}'	missing=0;wording=0;extra=6;class=multiplicity
+testdir:fixedbugs/issue20789.go	interpreted	test/fixedbugs/issue20789.go:13:13: expected channel type	missing=0;wording=1;extra=17;class=wording
+testdir:fixedbugs/issue20789.go	compiled	test/fixedbugs/issue20789.go:13:13: expected channel type	missing=0;wording=1;extra=17;class=wording
+testdir:fixedbugs/issue21709.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue21709.go	compiled	test/fixedbugs/issue21709.go:13:7: s does not escape	missing=2;wording=0;extra=0;class=missing
+testdir:fixedbugs/issue22164.go	interpreted	test/fixedbugs/issue22164.go:12:42: missing ',' before newline in argument list	missing=2;wording=1;extra=14;class=position
+testdir:fixedbugs/issue22164.go	compiled	test/fixedbugs/issue22164.go:12:42: missing ',' before newline in argument list	missing=2;wording=1;extra=14;class=position
+testdir:fixedbugs/issue22581.go	interpreted	test/fixedbugs/issue22581.go:10:13: expected ';', found ')'	missing=0;wording=6;extra=23;class=wording
+testdir:fixedbugs/issue22581.go	compiled	test/fixedbugs/issue22581.go:10:13: expected ';', found ')'	missing=0;wording=6;extra=23;class=wording
+testdir:fixedbugs/issue23586.go	interpreted	test/fixedbugs/issue23586.go:21:32: expression in defer must be function call	missing=0;wording=0;extra=3;class=extra
+testdir:fixedbugs/issue23586.go	compiled	test/fixedbugs/issue23586.go:21:32: expression in defer must be function call	missing=0;wording=0;extra=3;class=extra
+testdir:fixedbugs/issue23587.go	interpreted	test/fixedbugs/issue23587.go:14:8: expected ';', found '~'	missing=0;wording=1;extra=4;class=wording
+testdir:fixedbugs/issue23587.go	compiled	test/fixedbugs/issue23587.go:14:8: expected ';', found '~'	missing=0;wording=1;extra=4;class=wording
+testdir:fixedbugs/issue23664.go	interpreted	test/fixedbugs/issue23664.go:12:9: expected ';', found true	missing=0;wording=2;extra=5;class=wording
+testdir:fixedbugs/issue23664.go	compiled	test/fixedbugs/issue23664.go:12:9: expected ';', found true	missing=0;wording=2;extra=5;class=wording
+testdir:fixedbugs/issue24159.go	interpreted	test/fixedbugs/issue24159.go:14:7: duplicate case byte(0) (constant 0 of type byte) in expression switch	missing=0;wording=0;extra=3;class=extra
+testdir:fixedbugs/issue24159.go	compiled	test/fixedbugs/issue24159.go:14:7: duplicate case byte(0) (constant 0 of type byte) in expression switch	missing=0;wording=0;extra=3;class=extra
+testdir:fixedbugs/issue28085.go	interpreted	test/fixedbugs/issue28085.go:11:2: duplicate key 0 in map literal	missing=0;wording=0;extra=1;class=extra
+testdir:fixedbugs/issue28085.go	compiled	test/fixedbugs/issue28085.go:11:2: duplicate key 0 in map literal	missing=0;wording=0;extra=1;class=extra
+testdir:fixedbugs/issue28268.go	interpreted	test/fixedbugs/issue28268.go:19:10: field and method with the same name b	missing=0;wording=0;extra=2;class=extra
+testdir:fixedbugs/issue28268.go	compiled	test/fixedbugs/issue28268.go:19:10: field and method with the same name b	missing=0;wording=0;extra=2;class=extra
+testdir:fixedbugs/issue30722.go	interpreted	test/fixedbugs/issue30722.go:12:7: '_' must separate successive digits	missing=0;wording=0;extra=5;class=multiplicity
+testdir:fixedbugs/issue30722.go	compiled	test/fixedbugs/issue30722.go:12:7: '_' must separate successive digits	missing=0;wording=0;extra=5;class=multiplicity
+testdir:fixedbugs/issue32133.go	interpreted	test/fixedbugs/issue32133.go:10:8: string literal not terminated	missing=0;wording=4;extra=13;class=wording
+testdir:fixedbugs/issue32133.go	compiled	test/fixedbugs/issue32133.go:10:8: string literal not terminated	missing=0;wording=4;extra=13;class=wording
+testdir:fixedbugs/issue33386.go	interpreted	test/fixedbugs/issue33386.go:16:2: expected operand, found '}'	missing=3;wording=0;extra=10;class=position
+testdir:fixedbugs/issue33386.go	compiled	test/fixedbugs/issue33386.go:16:2: expected operand, found '}'	missing=3;wording=0;extra=10;class=position
+testdir:fixedbugs/issue33460.go	interpreted	test/fixedbugs/issue33460.go:34:2: duplicate key "a" in map literal	missing=0;wording=0;extra=3;class=extra
+testdir:fixedbugs/issue33460.go	compiled	test/fixedbugs/issue33460.go:34:2: duplicate key "a" in map literal	missing=0;wording=0;extra=3;class=extra
+testdir:fixedbugs/issue37837.go	interpreted	a.go:7: missing error "can inline F"	missing=9;wording=0;extra=0;class=missing
+testdir:fixedbugs/issue37837.go	compiled	test/fixedbugs/issue37837.dir/a.go:7:6: can inline __gosource_pkg_0_F	missing=0;wording=10;extra=0;class=wording
+testdir:fixedbugs/issue42284.go	interpreted	a.go:10: missing error "can inline T.M"	missing=13;wording=0;extra=0;class=missing
+testdir:fixedbugs/issue42284.go	compiled	test/fixedbugs/issue42284.dir/a.go:12:6: can inline __gosource_pkg_0_E	missing=0;wording=7;extra=0;class=wording
+testdir:fixedbugs/issue4405.go	interpreted	test/fixedbugs/issue4405.go:11:3: expected ';', found 'ILLEGAL'	missing=0;wording=0;extra=3;class=multiplicity
+testdir:fixedbugs/issue4405.go	compiled	test/fixedbugs/issue4405.go:11:3: expected ';', found 'ILLEGAL'	missing=0;wording=0;extra=3;class=multiplicity
+testdir:fixedbugs/issue4776.go	interpreted	test/fixedbugs/issue4776.go:9:1: expected 'package', found 'type'	missing=0;wording=1;extra=2;class=wording
+testdir:fixedbugs/issue4776.go	compiled	test/fixedbugs/issue4776.go:9:1: expected 'package', found 'type'	missing=0;wording=1;extra=2;class=wording
+testdir:fixedbugs/issue50372.go	interpreted	test/fixedbugs/issue50372.go:16:19: expected at most 2 expressions	missing=0;wording=4;extra=4;class=wording
+testdir:fixedbugs/issue50372.go	compiled	test/fixedbugs/issue50372.go:16:19: expected at most 2 expressions	missing=0;wording=4;extra=4;class=wording
+testdir:fixedbugs/issue6977.go	interpreted	test/fixedbugs/issue6977.go:37:26: duplicate method m	missing=0;wording=0;extra=4;class=multiplicity
+testdir:fixedbugs/issue6977.go	compiled	test/fixedbugs/issue6977.go:37:26: duplicate method m	missing=0;wording=0;extra=4;class=multiplicity
+testdir:fixedbugs/issue7538a.go	interpreted	test/fixedbugs/issue7538a.go:14:7: label _ not declared	missing=0;wording=1;extra=1;class=wording
+testdir:fixedbugs/issue7538a.go	compiled	test/fixedbugs/issue7538a.go:14:7: label _ not declared	missing=0;wording=1;extra=1;class=wording
+testdir:goto.go	interpreted	test/goto.go:42:7: goto L jumps over variable declaration at line 43	missing=0;wording=34;extra=34;class=wording
+testdir:goto.go	compiled	test/goto.go:42:7: goto L jumps over variable declaration at line 43	missing=0;wording=34;extra=34;class=wording
+testdir:import6.go	interpreted	test/import6.go:17:8: invalid import path (empty string)	missing=0;wording=1;extra=1;class=wording
+testdir:import6.go	compiled	test/import6.go:17:8: invalid import path (empty string)	missing=0;wording=1;extra=1;class=wording
+testdir:index1.go	interpreted	// errorcheck	missing=0;wording=0;extra=0;class=-
+testdir:index2.go	interpreted	// errorcheck	missing=0;wording=0;extra=0;class=-
+testdir:label.go	interpreted	test/label.go:31:1: label L6 already declared	missing=0;wording=8;extra=9;class=wording
+testdir:label.go	compiled	test/label.go:31:1: label L6 already declared	missing=0;wording=8;extra=9;class=wording
+testdir:label1.go	interpreted	test/label1.go:18:3: continue not in for statement	missing=0;wording=4;extra=4;class=wording
+testdir:label1.go	compiled	test/label1.go:18:3: continue not in for statement	missing=0;wording=4;extra=4;class=wording
+testdir:mainsig.go	interpreted	test/mainsig.go:9:6: func main must have no arguments and no return values	missing=0;wording=0;extra=1;class=multiplicity
+testdir:mainsig.go	compiled	test/mainsig.go:9:6: func main must have no arguments and no return values	missing=0;wording=0;extra=1;class=multiplicity
+testdir:stringrange.go	interpreted	unexpected offset 4 not 6	missing=0;wording=0;extra=0;class=-
+testdir:switch2.go	interpreted	test/switch2.go:14:8: expected ':', found ';'	missing=0;wording=5;extra=21;class=wording
+testdir:switch2.go	compiled	test/switch2.go:14:8: expected ':', found ';'	missing=0;wording=5;extra=21;class=wording
+testdir:switch5.go	interpreted	test/switch5.go:15:7: duplicate case 0 (constant of type int) in expression switch	missing=0;wording=0;extra=18;class=extra
+testdir:switch5.go	compiled	test/switch5.go:15:7: duplicate case 0 (constant of type int) in expression switch	missing=0;wording=0;extra=18;class=extra
+testdir:switch7.go	interpreted	test/switch7.go:18:7: duplicate case int in type switch	missing=0;wording=0;extra=4;class=extra
+testdir:switch7.go	compiled	test/switch7.go:18:7: duplicate case int in type switch	missing=0;wording=0;extra=4;class=extra
+testdir:syntax/chan.go	interpreted	test/syntax/chan.go:11:1: expected type, found '}'	missing=0;wording=3;extra=3;class=wording
+testdir:syntax/chan.go	compiled	test/syntax/chan.go:11:1: expected type, found '}'	missing=0;wording=3;extra=3;class=wording
+testdir:syntax/chan1.go	interpreted	test/syntax/chan1.go:13:5: expected boolean expression, found simple statement (missing parentheses around composite literal?)	missing=0;wording=2;extra=2;class=wording
+testdir:syntax/chan1.go	compiled	test/syntax/chan1.go:13:5: expected boolean expression, found simple statement (missing parentheses around composite literal?)	missing=0;wording=2;extra=2;class=wording
+testdir:syntax/composite.go	interpreted	test/syntax/composite.go:10:98: missing ',' before newline in composite literal	missing=0;wording=1;extra=1;class=wording
+testdir:syntax/composite.go	compiled	test/syntax/composite.go:10:98: missing ',' before newline in composite literal	missing=0;wording=1;extra=1;class=wording
+testdir:syntax/ddd.go	interpreted	test/syntax/ddd.go:10:6: expected selector or type assertion, found .3	missing=0;wording=1;extra=3;class=wording
+testdir:syntax/ddd.go	compiled	test/syntax/ddd.go:10:6: expected selector or type assertion, found .3	missing=0;wording=1;extra=3;class=wording
+testdir:syntax/else.go	interpreted	test/syntax/else.go:11:9: expected if statement or block, found ';'	missing=0;wording=1;extra=1;class=wording
+testdir:syntax/else.go	compiled	test/syntax/else.go:11:9: expected if statement or block, found ';'	missing=0;wording=1;extra=1;class=wording
+testdir:syntax/import.go	interpreted	test/syntax/import.go:10:6: expected ';', found ','	missing=0;wording=1;extra=3;class=wording
+testdir:syntax/import.go	compiled	test/syntax/import.go:10:6: expected ';', found ','	missing=0;wording=1;extra=3;class=wording
+testdir:syntax/initvar.go	interpreted	test/syntax/initvar.go:10:9: var declaration not allowed in if initializer	missing=0;wording=2;extra=12;class=wording
+testdir:syntax/initvar.go	compiled	test/syntax/initvar.go:10:9: var declaration not allowed in if initializer	missing=0;wording=2;extra=12;class=wording
+testdir:syntax/semi1.go	interpreted	test/syntax/semi1.go:10:62: expected '{', found newline	missing=0;wording=0;extra=8;class=extra
+testdir:syntax/semi1.go	compiled	test/syntax/semi1.go:10:62: expected '{', found newline	missing=0;wording=0;extra=8;class=extra
+testdir:syntax/semi2.go	interpreted	test/syntax/semi2.go:10:68: expected '{', found newline	missing=0;wording=0;extra=5;class=extra
+testdir:syntax/semi2.go	compiled	test/syntax/semi2.go:10:68: expected '{', found newline	missing=0;wording=0;extra=5;class=extra
+testdir:syntax/semi3.go	interpreted	test/syntax/semi3.go:10:66: expected '{', found newline	missing=0;wording=0;extra=8;class=extra
+testdir:syntax/semi3.go	compiled	test/syntax/semi3.go:10:66: expected '{', found newline	missing=0;wording=0;extra=8;class=extra
+testdir:syntax/semi4.go	interpreted	test/syntax/semi4.go:11:2: expected operand, found '{'	missing=0;wording=1;extra=9;class=wording
+testdir:syntax/semi4.go	compiled	test/syntax/semi4.go:11:2: expected operand, found '{'	missing=0;wording=1;extra=9;class=wording
+testdir:syntax/semi5.go	interpreted	test/syntax/semi5.go:10:1: unexpected semicolon or newline before {	missing=0;wording=0;extra=2;class=multiplicity
+testdir:syntax/semi5.go	compiled	test/syntax/semi5.go:10:1: unexpected semicolon or newline before {	missing=0;wording=0;extra=2;class=multiplicity
+testdir:syntax/semi6.go	interpreted	test/syntax/semi6.go:9:47: expected type, found newline	missing=0;wording=2;extra=2;class=wording
+testdir:syntax/semi6.go	compiled	test/syntax/semi6.go:9:47: expected type, found newline	missing=0;wording=2;extra=2;class=wording
+testdir:syntax/semi7.go	interpreted	test/syntax/semi7.go:11:2: expected statement, found 'else'	missing=0;wording=1;extra=4;class=wording
+testdir:syntax/semi7.go	compiled	test/syntax/semi7.go:11:2: expected statement, found 'else'	missing=0;wording=1;extra=4;class=wording
+testdir:syntax/topexpr.go	interpreted	test/syntax/topexpr.go:9:1: expected declaration, found fmt	missing=2;wording=0;extra=0;class=missing
+testdir:syntax/topexpr.go	compiled	test/syntax/topexpr.go:9:1: expected declaration, found fmt	missing=2;wording=0;extra=0;class=missing
+testdir:syntax/typesw.go	interpreted	test/syntax/typesw.go:10:2: invalid syntax tree: incorrect form of type switch guard	missing=0;wording=1;extra=1;class=wording
+testdir:syntax/typesw.go	compiled	test/syntax/typesw.go:10:2: invalid syntax tree: incorrect form of type switch guard	missing=0;wording=1;extra=1;class=wording
+testdir:syntax/vareq.go	interpreted	test/syntax/vareq.go:10:25: expected ';', found '{'	missing=0;wording=1;extra=4;class=wording
+testdir:syntax/vareq.go	compiled	test/syntax/vareq.go:10:25: expected ';', found '{'	missing=0;wording=1;extra=4;class=wording
+testdir:syntax/vareq1.go	interpreted	test/syntax/vareq1.go:9:24: expected ';', found '{'	missing=0;wording=1;extra=1;class=wording
+testdir:syntax/vareq1.go	compiled	test/syntax/vareq1.go:9:24: expected ';', found '{'	missing=0;wording=1;extra=1;class=wording
+testdir:typeparam/issue48711.go	interpreted	test/typeparam/issue48711.go:9:8: instantiation cycle:	missing=0;wording=0;extra=1;class=extra
+testdir:typeparam/issue48711.go	compiled	test/typeparam/issue48711.go:9:8: instantiation cycle:	missing=0;wording=0;extra=1;class=extra
+testdir:typeswitch2.go	interpreted	test/typeswitch2.go:18:7: duplicate case int in type switch	missing=0;wording=0;extra=3;class=extra
+testdir:typeswitch2.go	compiled	test/typeswitch2.go:18:7: duplicate case int in type switch	missing=0;wording=0;extra=3;class=extra
