@@ -721,6 +721,13 @@ func classify(line, mode string, hasDiagnostic bool, runner string, recipe recip
 	if owner == "unclassified" && verdictClass != "-" {
 		return "154"
 	}
+	// A run-family root with no errorCheck verdict never fails on a
+	// diagnostic: a 154 owner reached here came from a wording substring in
+	// PROGRAM output (stringrange.go's "unexpected offset 4 not 6"), which is
+	// a runtime result of the program's own self-check.
+	if (recipe.action == "run" || recipe.action == "errorcheckoutput") && verdictClass == "-" && owner == "154" {
+		return "153"
+	}
 	return owner
 }
 

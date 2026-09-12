@@ -429,6 +429,15 @@ func TestClassifyRecipeAndVerdictRules(t *testing.T) {
 			want:         "retained",
 		},
 		{
+			name:         "run root program output with a wording substring is not a diagnostic row",
+			line:         `unexpected offset 4 not 6`,
+			mode:         "interpreted",
+			runner:       "testdir",
+			recipe:       errorcheck("run"),
+			verdictClass: "-",
+			want:         "153",
+		},
+		{
 			name:         "D1 does not fire without optimizer flags",
 			line:         `plain.go:4: missing error "undefined"`,
 			mode:         "interpreted",
