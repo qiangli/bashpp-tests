@@ -374,3 +374,27 @@ The seam is unchanged in meaning; Sprint 151 adds one bound and one lane.
   Bash++ `963ef4b` (bashy) on sh `0e9ee20f`; Barrier A itself ran on the
   frozen Sprint 150 candidate `be20731`/`828e5b33` with the pins overridden
   for that run only (recorded in the run's `status.txt`).
+
+## Sprint 153 runtime lanes and partition v7–v9
+
+The seam is unchanged. Sprint 153 adds nothing to the backend patch; what
+changed is the partition and the product.
+
+- **Partition v7–v9** (`partition-emit.go`): cgo roots are the `retained`
+  disposition (`package requires cgo`, `unknown import path "C"` — also in
+  its JSON-escaped go-list form — and the checker's `could not import C`):
+  the pure-Go shell declares no cgo, and upstream's `shouldTest` includes
+  them only because the native host has gcc. The GOROOT prefix is stripped
+  from a LEADING path only — a goroot path quoted inside a message
+  (`could not import C (go list failed using … /goroot/bin/go …`) was cutting
+  the diagnostic down to `bin/go (GOROOT=…): exit status 1`, which misfiled
+  three cgo roots as 153 and two `package test/a is not in std` rows as 154.
+  Bridge writeback/mutation refusals and Go-stack exhaustion are 153 runtime
+  rows; `unknown field` is a checker verdict (151).
+- **Leaf form on the 153 denominator** (`docs/upstream-harness/leaf-153/`):
+  five runs, one coordinator, 24 min each; the 60 s deadline roots dominate
+  (17 × 60 s serial on two cores). Two roots that finish in ~9 s on a 12-core
+  darwin host sit at the bound on the 2-core Linux host and flip between
+  runs (`atomicload.go`, `fixedbugs/issue22781.go`) — the same
+  load-sensitivity the S157 `issue21808.go` canary showed. A leaf's PASS count
+  is therefore quoted as "pass both runs", never as one run's count.
