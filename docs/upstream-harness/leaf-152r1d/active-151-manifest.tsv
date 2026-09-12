@@ -1,0 +1,5 @@
+root	mode	first_line
+testdir:alias3.go	interpreted	BASHPP-EINTERFACE-SIGNATURE: __gosource_pkg_0_I1 method M1 has wrong signature
+testdir:fixedbugs/bug479.go	interpreted	test/fixedbugs/bug479.dir/a.go:11:7: BASHPP-ECONST-EXPR: const initializer is not a constant expression
+testdir:fixedbugs/issue15550.go	interpreted	fixedbugs/issue15550.go:12:2: BASHPP-ECONST-EXPR: const initializer is not a constant expression
+testdir:fixedbugs/issue30709.go	interpreted	fixedbugs/issue30709.go:15:2: BASHPP-ECONST-EXPR: const initializer is not a constant expression

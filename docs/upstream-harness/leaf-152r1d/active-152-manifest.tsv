@@ -1,0 +1,17 @@
+root	mode	first_line
+testdir:codegen/clobberdead.go	interpreted	linux/amd64/v1
+testdir:codegen/clobberdead.go	compiled	codegen/clobberdead.go:20: linux/amd64/v1: opcode not found: `^MOVL \$3735936685, command-line-arguments\.x`
+testdir:codegen/comparisons.go	interpreted	linux/amd64/v1
+testdir:codegen/comparisons.go	compiled	codegen/comparisons.go:54: linux/amd64/v1: opcode not found: `^CMPW command-line-arguments[.+_a-z0-9]+\(SP\), [A-Z]`
+testdir:codegen/issue60324.go	interpreted	linux/amd64/v1
+testdir:codegen/issue60324.go	compiled	codegen/issue60324.go:11: linux/amd64/v1: opcode not found: `^LEAQ command-line-arguments\.h\.func1`
+testdir:codegen/memops.go	interpreted	linux/amd64/v1
+testdir:codegen/memops.go	compiled	codegen/memops.go:17: linux/amd64/v1: opcode not found: `^CMPB command-line-arguments.x\+1\(SB\), [$]0`
+testdir:codegen/switch.go	interpreted	linux/amd64/v1
+testdir:codegen/switch.go	compiled	codegen/switch.go:249: linux/amd64/v1: opcode not found: `^CMPL \(.*\), \$1836345390$`
+testdir:codegen/zerosize.go	interpreted	linux/amd64/v1
+testdir:codegen/zerosize.go	compiled	codegen/zerosize.go:16: linux/amd64/v1: opcode not found: `^MOVQ \$0, command-line-arguments\.s\+56\(SP\)`
+testdir:fixedbugs/issue18149.go	interpreted	src/reflect/value.go:369; want /foo/bar.go:123 (or suffix /foo/bar.go)
+testdir:fixedbugs/issue22344.go	compiled	test/fixedbugs/issue22344.go:31:3: LOWER-ETYPE: declared and not used: x
+testdir:fixedbugs/issue22662.go	interpreted	src/reflect/value.go:369; want ??:1 (or suffix /??)
+testdir:fixedbugs/issue24801.go	compiled	test/fixedbugs/issue24801.dir/a.go:7:1: LOWER-ETYPE: cannot declare main - must be func
