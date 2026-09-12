@@ -501,7 +501,7 @@ func verifyAssemblyRow(row matrixRow, ev evidence, mode, goAction string) (strin
 		if len(backend.CompileInputs) != 1 || !strings.HasSuffix(backend.CompileInputs[0], "/"+row.Test) || len(backend.ProgramArgv) != 0 {
 			return "", true, fmt.Errorf("assembly phase %d must carry exactly the upstream root and no program argv", i)
 		}
-		if len(backend.Artifacts) != 2 || len(backend.Maps) != 1 {
+		if len(backend.Artifacts) != 3 || len(backend.Maps) != 1 {
 			return "", true, fmt.Errorf("assembly phase %d must transpile with a map and build only", i)
 		}
 	}
