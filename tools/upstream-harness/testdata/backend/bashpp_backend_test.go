@@ -539,7 +539,7 @@ func (t test) backendPlan(step *planStep, action, phase string, pkg *packageIden
 			gcflags, buildFlags := asmBuildArgs(recipeFlags)
 			buildArgs := []string{goTool, "build", "-C", moduleDir, "-gcflags=" + gcflags}
 			buildArgs = append(buildArgs, buildFlags...)
-			buildArgs = append(buildArgs, "-o", artifact, ".")
+			buildArgs = append(buildArgs, "-o", artifact, filepath.Base(generated))
 			listing := filepath.Join(moduleDir, "asm-listing.txt")
 			transpileCommand := append([]string{tool}, transpileArgs...)
 			quotedTranspile := make([]string, len(transpileCommand))
@@ -566,6 +566,7 @@ func (t test) backendPlan(step *planStep, action, phase string, pkg *packageIden
 				step.artifacts, step.maps,
 				append(deviations,
 					"the generated module is built with the upstream -S=2 listing request and the upstream asmcheck flag merge; its //line directives cite the exact upstream input path",
+					"the generated file is compiled as a file argument, so its symbols are qualified as command-line-arguments like upstream's compilation of the original",
 					"the -S listing's physical-position suffix (origin:line[generated:line]) is removed before upstream asmCheck indexes it, so the unchanged matcher keys generated code by origin file:line; the raw listing is retained as an artifact",
 					"the upstream-selected GOOS/GOARCH environment is preserved unchanged; the program is never executed"))
 			return
