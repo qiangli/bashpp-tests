@@ -1,0 +1,97 @@
+root	mode	first_line
+testdir:abi/convT64_criteria.go	interpreted	unknown field _ of main.MyStruct
+testdir:abi/method_wrapper.go	interpreted	assignment mismatch: 5 variable(s) but 1 value(s)
+testdir:asmhdr.go	interpreted	test/asmhdr.dir/main.s" is not a Go source file
+testdir:asmhdr.go	compiled	test/asmhdr.dir/main.s" is not a Go source file
+testdir:char_lit1.go	interpreted	test/char_lit1.go:16:8: escape sequence is invalid Unicode code point
+testdir:char_lit1.go	compiled	test/char_lit1.go:16:8: escape sequence is invalid Unicode code point
+testdir:const3.go	interpreted	type info didn't propagate in const: got T2 4 16 256 65536
+testdir:const3.go	compiled	type info didn't propagate in const: got T2 4 16 256 65536
+testdir:defernil.go	interpreted	defernil.go:31:8: nilf: command not found
+testdir:dwarf/linedirectives.go	compiled	main.go:5:35: invalid column number: 0
+testdir:fixedbugs/bug014.go	interpreted	test/fixedbugs/bug014.go:10:21: illegal character U+0027 ''' in escape sequence
+testdir:fixedbugs/bug014.go	compiled	test/fixedbugs/bug014.go:10:21: illegal character U+0027 ''' in escape sequence
+testdir:fixedbugs/bug132.go	interpreted	test/fixedbugs/bug132.go:10:5: x redeclared
+testdir:fixedbugs/bug132.go	compiled	test/fixedbugs/bug132.go:10:5: x redeclared
+testdir:fixedbugs/bug136.go	interpreted	test/fixedbugs/bug136.go:13:9: invalid break label L
+testdir:fixedbugs/bug136.go	compiled	test/fixedbugs/bug136.go:13:9: invalid break label L
+testdir:fixedbugs/bug169.go	interpreted	test/fixedbugs/bug169.go:8:9: illegal rune literal
+testdir:fixedbugs/bug169.go	compiled	test/fixedbugs/bug169.go:8:9: illegal rune literal
+testdir:fixedbugs/bug179.go	interpreted	test/fixedbugs/bug179.go:13:10: invalid break label L2
+testdir:fixedbugs/bug179.go	compiled	test/fixedbugs/bug179.go:13:10: invalid break label L2
+testdir:fixedbugs/bug228.go	interpreted	test/fixedbugs/bug228.go:11:27: invalid use of ...
+testdir:fixedbugs/bug228.go	compiled	test/fixedbugs/bug228.go:11:27: invalid use of ...
+testdir:fixedbugs/bug295.go	interpreted	fixedbugs/bug295.go:11:1: undefined type: B
+testdir:fixedbugs/bug300.go	interpreted	test/fixedbugs/bug300.go:23:7: cannot parenthesize type in composite literal
+testdir:fixedbugs/bug300.go	compiled	test/fixedbugs/bug300.go:23:7: cannot parenthesize type in composite literal
+testdir:fixedbugs/bug388.go	interpreted	test/fixedbugs/bug388.go:12:10: missing parameter name
+testdir:fixedbugs/bug388.go	compiled	test/fixedbugs/bug388.go:12:10: missing parameter name
+testdir:fixedbugs/bug412.go	interpreted	test/fixedbugs/bug412.go:11:2: x redeclared
+testdir:fixedbugs/bug412.go	compiled	test/fixedbugs/bug412.go:11:2: x redeclared
+testdir:fixedbugs/bug416.go	interpreted	test/fixedbugs/bug416.go:13:13: field and method with the same name X
+testdir:fixedbugs/bug416.go	compiled	test/fixedbugs/bug416.go:13:13: field and method with the same name X
+testdir:fixedbugs/issue11362.go	interpreted	test/fixedbugs/issue11362.go:11:10: could not import unicode//utf8 (package "unicode//utf8" not found in go list output)
+testdir:fixedbugs/issue11362.go	compiled	test/fixedbugs/issue11362.go:11:10: could not import unicode//utf8 (package "unicode//utf8" not found in go list output)
+testdir:fixedbugs/issue14006.go	interpreted	test/fixedbugs/issue14006.go:24:4: illegal label declaration
+testdir:fixedbugs/issue14006.go	compiled	test/fixedbugs/issue14006.go:24:4: illegal label declaration
+testdir:fixedbugs/issue15002.go	interpreted	fixedbugs/issue15002.go:56:31: index out of range [1] with length 1
+testdir:fixedbugs/issue15611.go	interpreted	test/fixedbugs/issue15611.go:11: rune literal not terminated
+testdir:fixedbugs/issue15611.go	compiled	test/fixedbugs/issue15611.go:11: rune literal not terminated
+testdir:fixedbugs/issue18661.go	interpreted	fixedbugs/issue18661.go:17:6: fixedbugs/issue18661.go:17:6: Go interface comparison requires represented dynamic values
+testdir:fixedbugs/issue18747.go	interpreted	test/fixedbugs/issue18747.go:10:5: missing condition in if statement
+testdir:fixedbugs/issue18747.go	compiled	test/fixedbugs/issue18747.go:10:5: missing condition in if statement
+testdir:fixedbugs/issue22877.go	interpreted	test/fixedbugs/issue22877.dir/p.s" is not a Go source file
+testdir:fixedbugs/issue22877.go	compiled	test/fixedbugs/issue22877.dir/p.s" is not a Go source file
+testdir:fixedbugs/issue23586.go	interpreted	test/fixedbugs/issue23586.go:21:32: expression in defer must be function call
+testdir:fixedbugs/issue23586.go	compiled	test/fixedbugs/issue23586.go:21:32: expression in defer must be function call
+testdir:fixedbugs/issue24547.go	interpreted	string for fmt.Stringer
+testdir:fixedbugs/issue28085.go	interpreted	test/fixedbugs/issue28085.go:11:2: duplicate key 0 in map literal
+testdir:fixedbugs/issue28085.go	compiled	test/fixedbugs/issue28085.go:11:2: duplicate key 0 in map literal
+testdir:fixedbugs/issue28268.go	interpreted	test/fixedbugs/issue28268.go:19:10: field and method with the same name b
+testdir:fixedbugs/issue28268.go	compiled	test/fixedbugs/issue28268.go:19:10: field and method with the same name b
+testdir:fixedbugs/issue30606b.go	interpreted	fixedbugs/issue30606b.go:21:1: string for reflect.Type
+testdir:fixedbugs/issue30722.go	interpreted	test/fixedbugs/issue30722.go:12:7: '_' must separate successive digits
+testdir:fixedbugs/issue30722.go	compiled	test/fixedbugs/issue30722.go:12:7: '_' must separate successive digits
+testdir:fixedbugs/issue31546.go	interpreted	unknown field _ of struct { a int; _ int; c int }
+testdir:fixedbugs/issue32133.go	interpreted	test/fixedbugs/issue32133.go:10:8: string literal not terminated
+testdir:fixedbugs/issue32133.go	compiled	test/fixedbugs/issue32133.go:10:8: string literal not terminated
+testdir:fixedbugs/issue33460.go	interpreted	test/fixedbugs/issue33460.go:34:2: duplicate key "a" in map literal
+testdir:fixedbugs/issue33460.go	compiled	test/fixedbugs/issue33460.go:34:2: duplicate key "a" in map literal
+testdir:fixedbugs/issue37513.go	interpreted	test/fixedbugs/issue37513.dir/sigill_amd64.s" is not a Go source file
+testdir:fixedbugs/issue37513.go	compiled	test/fixedbugs/issue37513.dir/sigill_amd64.s" is not a Go source file
+testdir:fixedbugs/issue47317.go	interpreted	test/fixedbugs/issue47317.dir/a.s" is not a Go source file
+testdir:fixedbugs/issue47317.go	compiled	test/fixedbugs/issue47317.dir/a.s" is not a Go source file
+testdir:fixedbugs/issue49665.go	interpreted	string for interface {}
+testdir:fixedbugs/issue5793.go	interpreted	complex requires 2 arguments
+testdir:fixedbugs/issue58563.go	compiled	src/test/a)
+testdir:fixedbugs/issue6977.go	interpreted	test/fixedbugs/issue6977.go:37:26: duplicate method m
+testdir:fixedbugs/issue6977.go	compiled	test/fixedbugs/issue6977.go:37:26: duplicate method m
+testdir:fixedbugs/issue70156.go	interpreted	string for interface {}
+testdir:fixedbugs/issue71675.go	interpreted	f recover:called
+testdir:fixedbugs/issue7538a.go	interpreted	test/fixedbugs/issue7538a.go:14:7: label _ not declared
+testdir:fixedbugs/issue7538a.go	compiled	test/fixedbugs/issue7538a.go:14:7: label _ not declared
+testdir:fixedbugs/issue7740.go	interpreted	fixedbugs/issue7740.go:31:11: gosource: invalid native scalar
+testdir:goto.go	interpreted	test/goto.go:42:7: goto L jumps over variable declaration at line 43
+testdir:goto.go	compiled	test/goto.go:42:7: goto L jumps over variable declaration at line 43
+testdir:import6.go	interpreted	test/import6.go:17:8: invalid import path (empty string)
+testdir:import6.go	compiled	test/import6.go:17:8: invalid import path (empty string)
+testdir:label.go	interpreted	test/label.go:31:1: label L6 already declared
+testdir:label.go	compiled	test/label.go:31:1: label L6 already declared
+testdir:label1.go	interpreted	test/label1.go:18:3: continue not in for statement
+testdir:label1.go	compiled	test/label1.go:18:3: continue not in for statement
+testdir:linknameasm.go	interpreted	test/linknameasm.dir/a_amd64.s" is not a Go source file
+testdir:linknameasm.go	compiled	test/linknameasm.dir/a_amd64.s" is not a Go source file
+testdir:mainsig.go	interpreted	test/mainsig.go:9:6: func main must have no arguments and no return values
+testdir:mainsig.go	compiled	test/mainsig.go:9:6: func main must have no arguments and no return values
+testdir:mapclear.go	interpreted	var after range with side-effect = 0 want 42
+testdir:mapclear.go	compiled	var after range with side-effect = 0 want 42
+testdir:nilptr.go	interpreted	fatal error: runtime: out of memory
+testdir:retjmp.go	interpreted	test/retjmp.dir/a.s" is not a Go source file
+testdir:retjmp.go	compiled	test/retjmp.dir/a.s" is not a Go source file
+testdir:syntax/typesw.go	interpreted	test/syntax/typesw.go:10:2: invalid syntax tree: incorrect form of type switch guard
+testdir:syntax/typesw.go	compiled	test/syntax/typesw.go:10:2: invalid syntax tree: incorrect form of type switch guard
+testdir:typeparam/issue48711.go	interpreted	test/typeparam/issue48711.go:9:8: instantiation cycle:
+testdir:typeparam/issue48711.go	compiled	test/typeparam/issue48711.go:9:8: instantiation cycle:
+testdir:typeparam/mdempsky/13.go	interpreted	gosource: bridge accepts evaluated values, not argument source "Mer(3)"
+testdir:typeparam/subdict.go	interpreted	typeparam/subdict.go:17:1: undefined type: comparable
+testdir:zerosize.go	interpreted	p= q= p==q = false

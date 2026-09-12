@@ -308,6 +308,7 @@ func exitStatus(line string) bool {
 // framingLine is go test's own narration of a test, never a diagnostic.
 func framingLine(line string) bool {
 	return strings.HasPrefix(line, "=== ") || strings.HasPrefix(line, "--- ") ||
+		strings.HasSuffix(line, "gc output:") ||
 		line == "PASS" || line == "FAIL" || strings.HasPrefix(line, "ok  ") ||
 		strings.HasPrefix(line, "FAIL\t")
 }
@@ -333,6 +334,13 @@ func firstLine(lines []string) (string, bool) {
 		if strings.HasPrefix(line, "testdir_test.go:") {
 			if i := strings.Index(line, ": "); i >= 0 {
 				line = strings.TrimSpace(line[i+2:])
+			} else {
+				// a bare "testdir_test.go:153:" attribution with the text on
+				// the following lines
+				continue
+			}
+			if line == "" {
+				continue
 			}
 		}
 		// "exit status N" is upstream's summary of the command; the
@@ -399,6 +407,40 @@ func classify(line, mode string, hasDiagnostic bool) string {
 	}
 	if contains("dependency transport") {
 		return "153"
+	}
+	// Measured on the Barrier A evidence (frozen Sprint 150 candidate).
+	for _, pattern := range []string{
+		"no error expected", "compilation succeeded unexpectedly", "invalid select case",
+		"requires one result", "redeclared in this session", "unknown imported symbol or method",
+		"has no method", "called using nil", "is not a structured value",
+	} {
+		if contains(pattern) {
+			return "151"
+		}
+	}
+	// Parser/wording diagnostics on errorcheck roots: the expected error is
+	// there, spelled differently — diagnostic fidelity.
+	for _, pattern := range []string{
+		"expected ", "found '", "missing ',' ", "duplicate case", "not allowed in",
+		"unknown escape", "missing return", "unexpected ", "syntax error",
+	} {
+		if contains(pattern) {
+			return "154"
+		}
+	}
+	for _, pattern := range []string{"opcode not found", "linux/amd64/v", "linux/386", "linux/arm64"} {
+		if contains(pattern) {
+			return "152"
+		}
+	}
+	for _, pattern := range []string{
+		"unregistered bridge type", "unregistered nil bridge type", "build dependency bridge",
+		"requires cgo", "output should be empty", "output does not match", "instead saw",
+		"scalar call interrupted", "original callback signature", "retained original function callbacks",
+	} {
+		if contains(pattern) {
+			return "153"
+		}
 	}
 	for _, pattern := range []string{
 		"require --check or --go-list", "gosource: unsupported", "could not import internal/",

@@ -1,0 +1,194 @@
+root	mode	first_line
+testdir:bloop.go	interpreted	bloop.go:14: missing error "can inline caninline"
+testdir:bombad.go	interpreted	test/bombad.go:14:2: expected statement, found 'ILLEGAL'
+testdir:bombad.go	compiled	test/bombad.go:14:2: expected statement, found 'ILLEGAL'
+testdir:bounds.go	interpreted	bounds.go:64: missing error "index bounds check elided"
+testdir:checkbce.go	interpreted	checkbce.go:17: missing error "Found IsInBounds$"
+testdir:checkbce.go	compiled	checkbce.go:17: missing error "Found IsInBounds$"
+testdir:devirt.go	interpreted	devirt.go:30: missing error "de-virtualizing call$"
+testdir:devirt.go	compiled	devirt.go:30: missing error "de-virtualizing call$"
+testdir:escape4.go	interpreted	escape4.go:16: missing error "can inline alloc"
+testdir:escape6.go	interpreted	escape6.go:16: missing error "leaking param: v"
+testdir:escape_bloop.go	interpreted	escape_bloop.go:18: missing error "can inline NewX"
+testdir:escape_field.go	interpreted	escape_field.go:24: missing error "moved to heap: i$"
+testdir:escape_iface_data.go	interpreted	escape_iface_data.go:15: missing error "using global for interface value"
+testdir:escape_iface_data.go	compiled	escape_iface_data.go:15: missing error "using global for interface value"
+testdir:escape_indir.go	interpreted	escape_indir.go:25: missing error "moved to heap: i"
+testdir:escape_level.go	interpreted	escape_level.go:14: missing error "moved to heap: i"
+testdir:escape_make_non_const.go	interpreted	escape_make_non_const.go:17: missing error "make\\(\\[\\]byte, 128\\) does not escape"
+testdir:escape_map.go	interpreted	escape_map.go:14: missing error "make\\(map\\[\\*int\\]\\*int\\) does not escape"
+testdir:escape_selfassign.go	interpreted	escape_selfassign.go:18: missing error "leaking param: p"
+testdir:escape_struct_param1.go	interpreted	escape_struct_param1.go:25: missing error "leaking param: u to result ~r0 level=1$"
+testdir:escape_struct_param2.go	interpreted	escape_struct_param2.go:25: missing error "leaking param: u to result ~r0 level=0$"
+testdir:escape_struct_return.go	interpreted	escape_struct_return.go:18: missing error "leaking param: sp to result ~r0 level=0$"
+testdir:escape_sync_atomic.go	interpreted	escape_sync_atomic.go:17: missing error "leaking param: addr$"
+testdir:escape_unique.go	interpreted	escape_unique.go:15: missing error "s does not escape$"
+testdir:escape_unsafe.go	interpreted	escape_unsafe.go:18: missing error "leaking param: p to result ~r0 level=0$"
+testdir:fixedbugs/bug050.go	interpreted	test/fixedbugs/bug050.go:7:1: expected 'package', found 'func'
+testdir:fixedbugs/bug050.go	compiled	test/fixedbugs/bug050.go:7:1: expected 'package', found 'func'
+testdir:fixedbugs/bug068.go	interpreted	test/fixedbugs/bug068.go:12:13: unknown escape sequence
+testdir:fixedbugs/bug068.go	compiled	test/fixedbugs/bug068.go:12:13: unknown escape sequence
+testdir:fixedbugs/bug121.go	interpreted	test/fixedbugs/bug121.go:12:3: expected ';', found ','
+testdir:fixedbugs/bug121.go	compiled	test/fixedbugs/bug121.go:12:3: expected ';', found ','
+testdir:fixedbugs/bug163.go	interpreted	test/fixedbugs/bug163.go:9:6: expected type, found 'ILLEGAL'
+testdir:fixedbugs/bug163.go	compiled	test/fixedbugs/bug163.go:9:6: expected type, found 'ILLEGAL'
+testdir:fixedbugs/bug200.go	interpreted	test/fixedbugs/bug200.go:17:7: duplicate case func(f int) in type switch
+testdir:fixedbugs/bug200.go	compiled	test/fixedbugs/bug200.go:17:7: duplicate case func(f int) in type switch
+testdir:fixedbugs/bug274.go	interpreted	test/fixedbugs/bug274.go:24:2: expected statement, found 'case'
+testdir:fixedbugs/bug274.go	compiled	test/fixedbugs/bug274.go:24:2: expected statement, found 'case'
+testdir:fixedbugs/bug349.go	interpreted	test/fixedbugs/bug349.go:12:14: expected ';', found 2.01
+testdir:fixedbugs/bug349.go	compiled	test/fixedbugs/bug349.go:12:14: expected ';', found 2.01
+testdir:fixedbugs/bug435.go	interpreted	test/fixedbugs/bug435.go:15:48: expected ')', found 'EOF'
+testdir:fixedbugs/bug435.go	compiled	test/fixedbugs/bug435.go:15:48: expected ')', found 'EOF'
+testdir:fixedbugs/issue11359.go	interpreted	test/fixedbugs/issue11359.go:11:5: expected 'IDENT', found 'ILLEGAL'
+testdir:fixedbugs/issue11359.go	compiled	test/fixedbugs/issue11359.go:11:5: expected 'IDENT', found 'ILLEGAL'
+testdir:fixedbugs/issue11610.go	interpreted	test/fixedbugs/issue11610.go:11:4: expected 'IDENT', found 'ILLEGAL'
+testdir:fixedbugs/issue11610.go	compiled	test/fixedbugs/issue11610.go:11:4: expected 'IDENT', found 'ILLEGAL'
+testdir:fixedbugs/issue12006.go	interpreted	issue12006.go:11: missing error "vals does not escape"
+testdir:fixedbugs/issue12588.go	interpreted	issue12588.go:29: missing error "a does not escape"
+testdir:fixedbugs/issue13248.go	interpreted	test/fixedbugs/issue13248.go:13:1: expected operand, found '}'
+testdir:fixedbugs/issue13248.go	compiled	test/fixedbugs/issue13248.go:13:1: expected operand, found '}'
+testdir:fixedbugs/issue13266.go	interpreted	test/fixedbugs/issue13266.go:10:8: expected 'IDENT', found '%'
+testdir:fixedbugs/issue13266.go	compiled	test/fixedbugs/issue13266.go:10:8: expected 'IDENT', found '%'
+testdir:fixedbugs/issue13273.go	interpreted	test/fixedbugs/issue13273.go:50:11: expected 'chan', found '<-'
+testdir:fixedbugs/issue13273.go	compiled	test/fixedbugs/issue13273.go:50:11: expected 'chan', found '<-'
+testdir:fixedbugs/issue13274.go	interpreted	test/fixedbugs/issue13274.go:11:58: expected ';', found 'EOF'
+testdir:fixedbugs/issue13274.go	compiled	test/fixedbugs/issue13274.go:11:58: expected ';', found 'EOF'
+testdir:fixedbugs/issue13319.go	interpreted	test/fixedbugs/issue13319.go:12:72: missing ',' before newline in argument list
+testdir:fixedbugs/issue13319.go	compiled	test/fixedbugs/issue13319.go:12:72: missing ',' before newline in argument list
+testdir:fixedbugs/issue13799.go	interpreted	issue13799.go:23: missing error "iter escapes to heap$"
+testdir:fixedbugs/issue14520.go	interpreted	test/fixedbugs/issue14520.go:9:49: missing ',' before newline in parameter list
+testdir:fixedbugs/issue14520.go	compiled	test/fixedbugs/issue14520.go:9:49: missing ',' before newline in parameter list
+testdir:fixedbugs/issue15898.go	interpreted	test/fixedbugs/issue15898.go:11:12: duplicate case nil in type switch
+testdir:fixedbugs/issue15898.go	compiled	test/fixedbugs/issue15898.go:11:12: duplicate case nil in type switch
+testdir:fixedbugs/issue16241.go	interpreted	issue16241.go:11: missing error "x does not escape$"
+testdir:fixedbugs/issue16241_64.go	interpreted	issue16241_64.go:13: missing error "x does not escape$"
+testdir:fixedbugs/issue17318.go	interpreted	issue17318.go:25: missing error "... argument does not escape$"
+testdir:fixedbugs/issue17328.go	interpreted	test/fixedbugs/issue17328.go:11:13: expected '{', found ')'
+testdir:fixedbugs/issue17328.go	compiled	test/fixedbugs/issue17328.go:11:13: expected '{', found ')'
+testdir:fixedbugs/issue18092.go	interpreted	test/fixedbugs/issue18092.go:14:38: expected ':', found newline
+testdir:fixedbugs/issue18092.go	compiled	test/fixedbugs/issue18092.go:14:38: expected ':', found newline
+testdir:fixedbugs/issue18915.go	interpreted	test/fixedbugs/issue18915.go:13:5: expected boolean expression, found assignment (missing parentheses around composite literal?)
+testdir:fixedbugs/issue18915.go	compiled	test/fixedbugs/issue18915.go:13:5: expected boolean expression, found assignment (missing parentheses around composite literal?)
+testdir:fixedbugs/issue19667.go	interpreted	test/fixedbugs/issue19667.go:13:1: expected operand, found '}'
+testdir:fixedbugs/issue19667.go	compiled	test/fixedbugs/issue19667.go:13:1: expected operand, found '}'
+testdir:fixedbugs/issue19743.go	interpreted	issue19743.go:19: missing error "leaking param: b$"
+testdir:fixedbugs/issue20250.go	interpreted	issue20250.go:19: missing error "live at entry to f: a$"
+testdir:fixedbugs/issue20789.go	interpreted	test/fixedbugs/issue20789.go:13:13: expected channel type
+testdir:fixedbugs/issue20789.go	compiled	test/fixedbugs/issue20789.go:13:13: expected channel type
+testdir:fixedbugs/issue22164.go	interpreted	test/fixedbugs/issue22164.go:12:42: missing ',' before newline in argument list
+testdir:fixedbugs/issue22164.go	compiled	test/fixedbugs/issue22164.go:12:42: missing ',' before newline in argument list
+testdir:fixedbugs/issue22581.go	interpreted	test/fixedbugs/issue22581.go:10:13: expected ';', found ')'
+testdir:fixedbugs/issue22581.go	compiled	test/fixedbugs/issue22581.go:10:13: expected ';', found ')'
+testdir:fixedbugs/issue23521.go	interpreted	issue23521.go:16: missing error "can inline f"
+testdir:fixedbugs/issue23587.go	interpreted	test/fixedbugs/issue23587.go:14:8: expected ';', found '~'
+testdir:fixedbugs/issue23587.go	compiled	test/fixedbugs/issue23587.go:14:8: expected ';', found '~'
+testdir:fixedbugs/issue23664.go	interpreted	test/fixedbugs/issue23664.go:12:9: expected ';', found true
+testdir:fixedbugs/issue23664.go	compiled	test/fixedbugs/issue23664.go:12:9: expected ';', found true
+testdir:fixedbugs/issue24159.go	interpreted	test/fixedbugs/issue24159.go:14:7: duplicate case byte(0) (constant 0 of type byte) in expression switch
+testdir:fixedbugs/issue24159.go	compiled	test/fixedbugs/issue24159.go:14:7: duplicate case byte(0) (constant 0 of type byte) in expression switch
+testdir:fixedbugs/issue27557.go	interpreted	issue27557.go:13: missing error "t.noescape does not escape"
+testdir:fixedbugs/issue27732a.go	interpreted	issue27732a.go:21: missing error "moved to heap: c$"
+testdir:fixedbugs/issue30898.go	interpreted	issue30898.go:11: missing error "can inline debugf"
+testdir:fixedbugs/issue31573.go	interpreted	issue31573.go:13: missing error "... argument does not escape$"
+testdir:fixedbugs/issue33386.go	interpreted	test/fixedbugs/issue33386.go:16:2: expected operand, found '}'
+testdir:fixedbugs/issue33386.go	compiled	test/fixedbugs/issue33386.go:16:2: expected operand, found '}'
+testdir:fixedbugs/issue34723.go	interpreted	issue34723.go:66: missing error "write barrier"
+testdir:fixedbugs/issue34723.go	compiled	issue34723.go:66: missing error "write barrier"
+testdir:fixedbugs/issue35073b.go	interpreted	issue35073b.go:18: missing error "moved to heap: n"
+testdir:fixedbugs/issue35518.go	interpreted	issue35518.go:22: missing error "."
+testdir:fixedbugs/issue41635.go	interpreted	issue41635.go:9: missing error ""
+testdir:fixedbugs/issue4405.go	interpreted	test/fixedbugs/issue4405.go:11:3: expected ';', found 'ILLEGAL'
+testdir:fixedbugs/issue4405.go	compiled	test/fixedbugs/issue4405.go:11:3: expected ';', found 'ILLEGAL'
+testdir:fixedbugs/issue4776.go	interpreted	test/fixedbugs/issue4776.go:9:1: expected 'package', found 'type'
+testdir:fixedbugs/issue4776.go	compiled	test/fixedbugs/issue4776.go:9:1: expected 'package', found 'type'
+testdir:fixedbugs/issue50372.go	interpreted	test/fixedbugs/issue50372.go:16:19: expected at most 2 expressions
+testdir:fixedbugs/issue50372.go	compiled	test/fixedbugs/issue50372.go:16:19: expected at most 2 expressions
+testdir:fixedbugs/issue52193.go	interpreted	issue52193.go:12: missing error "can inline f"
+testdir:fixedbugs/issue56280.go	interpreted	a.go:7: missing error "can inline F"
+testdir:fixedbugs/issue56280.go	compiled	src/test/a)
+testdir:fixedbugs/issue63657.go	interpreted	f: expected 3 argument(s), got 0
+testdir:fixedbugs/issue6899.go	interpreted	output does not match expected in fixedbugs/issue6899.out. Instead saw
+testdir:fixedbugs/issue75278.go	interpreted	issue75278.go:11: missing error "can inline NoIndices with cost 4 as:.*"
+testdir:fixedbugs/issue7921.go	interpreted	issue7921.go:22: missing error "\\[\\]byte{...} does not escape$"
+testdir:fixedbugs/notinheap3.go	interpreted	notinheap3.go:47: missing error "write barrier"
+testdir:fixedbugs/notinheap3.go	compiled	notinheap3.go:47: missing error "write barrier"
+testdir:fuse.go	interpreted	fuse.go:16: missing error "Redirect Eq64 based on Eq64$"
+testdir:fuse.go	compiled	fuse.go:16: missing error "Redirect Eq64 based on Eq64$"
+testdir:inline_big.go	interpreted	inline_big.go:12: missing error "can inline small with cost .* as:.*"
+testdir:inline_caller.go	interpreted	panic: skip=0 expected line 36, got line 586
+testdir:inline_caller.go	compiled	panic: skip=4 expected function main.main, got main.__bpp0_sourceMain [recovered, repanicked]
+testdir:inline_endian.go	interpreted	inline_endian.go:19: missing error "can inline endian"
+testdir:inline_math_bits_rotate.go	interpreted	inline_math_bits_rotate.go:23: missing error "can inline f"
+testdir:inline_sync.go	interpreted	inline_sync.go:26: missing error "can inline small5"
+testdir:inline_variadic.go	interpreted	inline_variadic.go:12: missing error "can inline head"
+testdir:interface/assertinline.go	interpreted	assertinline.go:10: missing error "type assertion inlined"
+testdir:interface/assertinline.go	compiled	assertinline.go:10: missing error "type assertion inlined"
+testdir:intrinsic_atomic.go	interpreted	intrinsic_atomic.go:16: missing error "intrinsic substitution for LoadUint32"
+testdir:intrinsic_atomic.go	compiled	intrinsic_atomic.go:16: missing error "intrinsic substitution for LoadUint32"
+testdir:known_bits.go	interpreted	known_bits.go:16: missing error "known value of v[0-9]+ \\(And64\\): 1$"
+testdir:known_bits.go	compiled	known_bits.go:16: missing error "known value of v[0-9]+ \\(And64\\): 1$"
+testdir:loopbce.go	interpreted	loopbce.go:11: missing error "Induction variable: limits \\[0,\\?\\), increment 1$"
+testdir:loopbce.go	compiled	loopbce.go:11: missing error "Induction variable: limits \\[0,\\?\\), increment 1$"
+testdir:nilptr5.go	interpreted	nilptr5.go:15: missing error "removed nil check"
+testdir:nilptr5.go	compiled	nilptr5.go:15: missing error "removed nil check"
+testdir:opt_branchlikely.go	interpreted	opt_branchlikely.go:15: missing error "Branch prediction rule stay in loop"
+testdir:opt_branchlikely.go	compiled	opt_branchlikely.go:15: missing error "Branch prediction rule stay in loop"
+testdir:phiopt.go	interpreted	phiopt.go:19: missing error "converted OpPhi to Copy$"
+testdir:phiopt.go	compiled	phiopt.go:19: missing error "converted OpPhi to Copy$"
+testdir:prove_constant_folding.go	interpreted	prove_constant_folding.go:13: missing error "Proved.+is constant 20$"
+testdir:prove_constant_folding.go	compiled	prove_constant_folding.go:13: missing error "Proved.+is constant 20$"
+testdir:prove_invert_loop_with_unused_iterators.go	interpreted	prove_invert_loop_with_unused_iterators.go:8: missing error "(Inverted loop iteration|Induction variable: limits \\[0,\\?\\), increment 1)"
+testdir:prove_invert_loop_with_unused_iterators.go	compiled	prove_invert_loop_with_unused_iterators.go:8: missing error "(Inverted loop iteration|Induction variable: limits \\[0,\\?\\), increment 1)"
+testdir:recover4.go	interpreted	unexpected fault address 0x749697223000
+testdir:sliceopt.go	interpreted	sliceopt.go:12: missing error "append: len-only update \\(in local slice\\)$"
+testdir:sliceopt.go	compiled	sliceopt.go:12: missing error "append: len-only update \\(in local slice\\)$"
+testdir:switch2.go	interpreted	test/switch2.go:14:8: expected ':', found ';'
+testdir:switch2.go	compiled	test/switch2.go:14:8: expected ':', found ';'
+testdir:switch5.go	interpreted	test/switch5.go:15:7: duplicate case 0 (constant of type int) in expression switch
+testdir:switch5.go	compiled	test/switch5.go:15:7: duplicate case 0 (constant of type int) in expression switch
+testdir:switch7.go	interpreted	test/switch7.go:18:7: duplicate case int in type switch
+testdir:switch7.go	compiled	test/switch7.go:18:7: duplicate case int in type switch
+testdir:syntax/chan.go	interpreted	test/syntax/chan.go:11:1: expected type, found '}'
+testdir:syntax/chan.go	compiled	test/syntax/chan.go:11:1: expected type, found '}'
+testdir:syntax/chan1.go	interpreted	test/syntax/chan1.go:13:5: expected boolean expression, found simple statement (missing parentheses around composite literal?)
+testdir:syntax/chan1.go	compiled	test/syntax/chan1.go:13:5: expected boolean expression, found simple statement (missing parentheses around composite literal?)
+testdir:syntax/composite.go	interpreted	test/syntax/composite.go:10:98: missing ',' before newline in composite literal
+testdir:syntax/composite.go	compiled	test/syntax/composite.go:10:98: missing ',' before newline in composite literal
+testdir:syntax/ddd.go	interpreted	test/syntax/ddd.go:10:6: expected selector or type assertion, found .3
+testdir:syntax/ddd.go	compiled	test/syntax/ddd.go:10:6: expected selector or type assertion, found .3
+testdir:syntax/else.go	interpreted	test/syntax/else.go:11:9: expected if statement or block, found ';'
+testdir:syntax/else.go	compiled	test/syntax/else.go:11:9: expected if statement or block, found ';'
+testdir:syntax/import.go	interpreted	test/syntax/import.go:10:6: expected ';', found ','
+testdir:syntax/import.go	compiled	test/syntax/import.go:10:6: expected ';', found ','
+testdir:syntax/initvar.go	interpreted	test/syntax/initvar.go:10:9: var declaration not allowed in if initializer
+testdir:syntax/initvar.go	compiled	test/syntax/initvar.go:10:9: var declaration not allowed in if initializer
+testdir:syntax/semi1.go	interpreted	test/syntax/semi1.go:10:62: expected '{', found newline
+testdir:syntax/semi1.go	compiled	test/syntax/semi1.go:10:62: expected '{', found newline
+testdir:syntax/semi2.go	interpreted	test/syntax/semi2.go:10:68: expected '{', found newline
+testdir:syntax/semi2.go	compiled	test/syntax/semi2.go:10:68: expected '{', found newline
+testdir:syntax/semi3.go	interpreted	test/syntax/semi3.go:10:66: expected '{', found newline
+testdir:syntax/semi3.go	compiled	test/syntax/semi3.go:10:66: expected '{', found newline
+testdir:syntax/semi4.go	interpreted	test/syntax/semi4.go:11:2: expected operand, found '{'
+testdir:syntax/semi4.go	compiled	test/syntax/semi4.go:11:2: expected operand, found '{'
+testdir:syntax/semi5.go	interpreted	test/syntax/semi5.go:10:1: unexpected semicolon or newline before {
+testdir:syntax/semi5.go	compiled	test/syntax/semi5.go:10:1: unexpected semicolon or newline before {
+testdir:syntax/semi6.go	interpreted	test/syntax/semi6.go:9:47: expected type, found newline
+testdir:syntax/semi6.go	compiled	test/syntax/semi6.go:9:47: expected type, found newline
+testdir:syntax/semi7.go	interpreted	test/syntax/semi7.go:11:2: expected statement, found 'else'
+testdir:syntax/semi7.go	compiled	test/syntax/semi7.go:11:2: expected statement, found 'else'
+testdir:syntax/topexpr.go	interpreted	test/syntax/topexpr.go:9:1: expected declaration, found fmt
+testdir:syntax/topexpr.go	compiled	test/syntax/topexpr.go:9:1: expected declaration, found fmt
+testdir:syntax/vareq.go	interpreted	test/syntax/vareq.go:10:25: expected ';', found '{'
+testdir:syntax/vareq.go	compiled	test/syntax/vareq.go:10:25: expected ';', found '{'
+testdir:syntax/vareq1.go	interpreted	test/syntax/vareq1.go:9:24: expected ';', found '{'
+testdir:syntax/vareq1.go	compiled	test/syntax/vareq1.go:9:24: expected ';', found '{'
+testdir:tailcall.go	interpreted	tailcall.go:19: missing error "tail call emitted for the method \\(\\*Foo\\).Get2Vals wrapper"
+testdir:tailcall.go	compiled	tailcall.go:19: missing error "tail call emitted for the method \\(\\*Foo\\).Get2Vals wrapper"
+testdir:typeparam/issue54497.go	interpreted	issue54497.go:13: missing error "can inline isAligned\\[uint\\]"
+testdir:typeparam/typeswitch3.go	interpreted	output does not match expected in typeparam/typeswitch3.out. Instead saw
+testdir:typeparam/typeswitch4.go	interpreted	output does not match expected in typeparam/typeswitch4.out. Instead saw
+testdir:typeswitch2.go	interpreted	test/typeswitch2.go:18:7: duplicate case int in type switch
+testdir:typeswitch2.go	compiled	test/typeswitch2.go:18:7: duplicate case int in type switch
+testdir:writebarrier.go	interpreted	writebarrier.go:17: missing error "write barrier"
+testdir:writebarrier.go	compiled	writebarrier.go:17: missing error "write barrier"

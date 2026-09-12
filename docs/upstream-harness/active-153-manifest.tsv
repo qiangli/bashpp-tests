@@ -1,0 +1,188 @@
+root	mode	first_line
+testdir:64bit.go	interpreted	command exceeded time limit
+testdir:abi/fibish.go	interpreted	command exceeded time limit
+testdir:abi/fibish_closure.go	interpreted	command exceeded time limit
+testdir:abi/idata.go	interpreted	gosource: build dependency bridge: exit status 1: # command-line-arguments
+testdir:abi/result_live.go	interpreted	result_live.go:13: missing error "live at call to g: r"
+testdir:abi/result_live.go	compiled	panic: runtime error: invalid memory address or nil pointer dereference
+testdir:abi/struct_lower_1.go	interpreted	unregistered bridge type "Struct6"
+testdir:abi/uglyfib.go	interpreted	command exceeded time limit
+testdir:atomicload.go	interpreted	command exceeded time limit
+testdir:blank.go	interpreted	gosource: build dependency bridge: exit status 1: # command-line-arguments
+testdir:chan/powser2.go	interpreted	gosource: build dependency bridge: exit status 1: # command-line-arguments
+testdir:closure.go	interpreted	command exceeded time limit
+testdir:const7.go	interpreted	gosource: fmt.Fprintf requires a dependency-owned writer; original Write callbacks are unsupported
+testdir:convinline.go	interpreted	gosource: fmt.Fprintf requires a dependency-owned writer; original Write callbacks are unsupported
+testdir:deferfin.go	interpreted	command exceeded time limit
+testdir:escape_calls.go	interpreted	escape_calls.go:14: missing error "leaking param: buf to result ~r0 level=0$"
+testdir:escape_calls.go	compiled	panic: runtime error: invalid memory address or nil pointer dereference
+testdir:fixedbugs/bug089.go	compiled	panic: runtime error: invalid memory address or nil pointer dereference
+testdir:fixedbugs/bug150.go	compiled	panic: runtime error: invalid memory address or nil pointer dereference
+testdir:fixedbugs/bug177.go	interpreted	unregistered bridge type "S2"
+testdir:fixedbugs/bug245.go	compiled	panic: runtime error: invalid memory address or nil pointer dereference
+testdir:fixedbugs/bug257.go	interpreted	fixedbugs/bug257.go:20059:2: unregistered bridge type "hash.Hash"
+testdir:fixedbugs/bug260.go	interpreted	exit status 1
+testdir:fixedbugs/bug352.go	interpreted	output should be empty when (optional) expected-output file fixedbugs/bug352.out is not present. Instead saw
+testdir:fixedbugs/bug369.go	interpreted	gosource: native slice retention or mutation is unsupported for os/exec.Command
+testdir:fixedbugs/bug392.go	compiled	panic: runtime error: invalid memory address or nil pointer dereference
+testdir:fixedbugs/bug434.go	interpreted	panic: 0
+testdir:fixedbugs/bug443.go	compiled	panic: runtime error: invalid memory address or nil pointer dereference
+testdir:fixedbugs/bug461.go	interpreted	unregistered bridge type "*<unsupported embedded field>"
+testdir:fixedbugs/bug483.go	interpreted	gosource: fmt.Fprintf requires a dependency-owned writer; original Write callbacks are unsupported
+testdir:fixedbugs/bug514.go	interpreted	bash++ import "runtime/cgo": package requires cgo, which this pure-Go shell does not provide
+testdir:fixedbugs/bug517.go	interpreted	gosource: build dependency bridge: exit status 1: # command-line-arguments
+testdir:fixedbugs/gcc65755.go	interpreted	exit status 2
+testdir:fixedbugs/issue10353.go	interpreted	bash++: task failed: exit status 1
+testdir:fixedbugs/issue11256.go	interpreted	command exceeded time limit
+testdir:fixedbugs/issue11286.go	interpreted	gosource: build dependency bridge: exit status 1: # command-line-arguments
+testdir:fixedbugs/issue11699.go	compiled	panic: runtime error: invalid memory address or nil pointer dereference
+testdir:fixedbugs/issue11771.go	interpreted	gosource: fmt.Fprintln requires a dependency-owned writer; original Write callbacks are unsupported
+testdir:fixedbugs/issue12577.go	interpreted	output should be empty when (optional) expected-output file fixedbugs/issue12577.out is not present. Instead saw
+testdir:fixedbugs/issue13160.go	interpreted	scalar call interrupted
+testdir:fixedbugs/issue13587.go	interpreted	issue13587.go:18: missing error "write barrier"
+testdir:fixedbugs/issue13587.go	compiled	panic: runtime error: invalid memory address or nil pointer dereference
+testdir:fixedbugs/issue14636.go	interpreted	fixedbugs/issue14636.go:43:15: gosource: native slice retention or mutation is unsupported for bytes.SplitN
+testdir:fixedbugs/issue14646.go	interpreted	output should be empty when (optional) expected-output file fixedbugs/issue14646.out is not present. Instead saw
+testdir:fixedbugs/issue15039.go	interpreted	panic: big != bad
+testdir:fixedbugs/issue16249.go	interpreted	command exceeded time limit
+testdir:fixedbugs/issue16331.go	interpreted	bash++: task failed: exit status 1
+testdir:fixedbugs/issue17596.go	compiled	panic: runtime error: invalid memory address or nil pointer dereference
+testdir:fixedbugs/issue19168.go	interpreted	issue19168.go:19: missing error "write barrier"
+testdir:fixedbugs/issue19168.go	compiled	panic: runtime error: invalid memory address or nil pointer dereference
+testdir:fixedbugs/issue19201.go	interpreted	fixedbugs/issue19201.go:13:1: gosource: native slice retention or mutation is unsupported for encoding/binary.bigEndian.Uint32
+testdir:fixedbugs/issue19658.go	interpreted	gosource: fmt.Fprintf requires a dependency-owned writer; original Write callbacks are unsupported
+testdir:fixedbugs/issue20780b.go	interpreted	gosource: build dependency bridge: exit status 1: # command-line-arguments
+testdir:fixedbugs/issue21576.go	interpreted	gosource: native slice retention or mutation is unsupported for io/ioutil.WriteFile
+testdir:fixedbugs/issue21879.go	interpreted	gosource: native slice retention or mutation is unsupported for runtime.Callers
+testdir:fixedbugs/issue21879.go	compiled	output does not match expected in fixedbugs/issue21879.out. Instead saw
+testdir:fixedbugs/issue22660.go	interpreted	gosource: fmt.Fprintf requires a dependency-owned writer; original Write callbacks are unsupported
+testdir:fixedbugs/issue22781.go	interpreted	command exceeded time limit
+testdir:fixedbugs/issue23188.go	interpreted	panic: [3]
+testdir:fixedbugs/issue23188.go	compiled	panic: ([]int) 0xbd5d6d08000
+testdir:fixedbugs/issue23311.go	compiled	panic: runtime error: invalid memory address or nil pointer dereference
+testdir:fixedbugs/issue24419.go	interpreted	command exceeded time limit
+testdir:fixedbugs/issue24491a.go	interpreted	exit status 2
+testdir:fixedbugs/issue24491a.go	compiled	panic: normal: p failed [recovered, repanicked]
+testdir:fixedbugs/issue24491b.go	interpreted	fixedbugs/issue24491b.go:45:6: scalar call interrupted
+testdir:fixedbugs/issue24491b.go	compiled	panic: GC early
+testdir:fixedbugs/issue25897b.go	interpreted	gosource: original method T.Foo is not supported by dependency transport
+testdir:fixedbugs/issue26335.go	interpreted	fixedbugs/issue26335.go:28:18: gosource: original callback signature requires value-semantics parameters and supported results
+testdir:fixedbugs/issue26411.go	interpreted	gosource: native slice retention or mutation is unsupported for io/ioutil.WriteFile
+testdir:fixedbugs/issue27695.go	interpreted	command exceeded time limit
+testdir:fixedbugs/issue28430.go	compiled	panic: runtime error: invalid memory address or nil pointer dereference
+testdir:fixedbugs/issue28748.go	interpreted	fixedbugs/issue28748.go:26:24: gosource: asynchronous or retained original function callbacks are unsupported for __gosource_import_0_1.TypeOf
+testdir:fixedbugs/issue29190.go	interpreted	panic: runtime error: makeslice: len out of range
+testdir:fixedbugs/issue29735.go	interpreted	gosource: native slice retention or mutation is unsupported for runtime.Callers
+testdir:fixedbugs/issue30061.go	compiled	panic: runtime error: invalid memory address or nil pointer dereference
+testdir:fixedbugs/issue30476.go	interpreted	fixedbugs/issue30476.go:15:26: gosource: original callback signature requires value-semantics parameters and supported results
+testdir:fixedbugs/issue30606.go	interpreted	fixedbugs/issue30606.go:15:1: fixedbugs/issue30606.go:15:38: gosource: native slice retention or mutation is unsupported for reflect.StructOf
+testdir:fixedbugs/issue31010.go	compiled	panic: runtime error: invalid memory address or nil pointer dereference
+testdir:fixedbugs/issue31915.go	compiled	panic: runtime error: invalid memory address or nil pointer dereference
+testdir:fixedbugs/issue33555.go	interpreted	gosource: fmt.Fprintf requires a dependency-owned writer; original Write callbacks are unsupported
+testdir:fixedbugs/issue34968.go	interpreted	bin/go (GOROOT=/srv/sprint151/barrier-a/evidence/goroot, found via GOROOT, meets go1.27.0): exit status 1
+testdir:fixedbugs/issue34968.go	compiled	bin/go (GOROOT=/srv/sprint151/barrier-a/evidence/goroot, found via GOROOT, meets go1.27.0): exit status 1
+testdir:fixedbugs/issue36516.go	interpreted	gosource: asynchronous or retained original function callbacks are unsupported for __gosource_import_0_1.AllocsPerRun
+testdir:fixedbugs/issue36705.go	interpreted	bin/go (GOROOT=/srv/sprint151/barrier-a/evidence/goroot, found via GOROOT, meets go1.27.0): exit status 1
+testdir:fixedbugs/issue36705.go	compiled	bin/go (GOROOT=/srv/sprint151/barrier-a/evidence/goroot, found via GOROOT, meets go1.27.0): exit status 1
+testdir:fixedbugs/issue40954.go	interpreted	bash++ import "runtime/cgo": package requires cgo, which this pure-Go shell does not provide
+testdir:fixedbugs/issue4099.go	interpreted	issue4099.go:26: missing error "moved to heap: buf2"
+testdir:fixedbugs/issue4099.go	compiled	panic: runtime error: invalid memory address or nil pointer dereference
+testdir:fixedbugs/issue42032.go	interpreted	bash++ import "runtime/cgo": package requires cgo, which this pure-Go shell does not provide
+testdir:fixedbugs/issue42076.go	interpreted	bash++ import "runtime/cgo": package requires cgo, which this pure-Go shell does not provide
+testdir:fixedbugs/issue42944.go	compiled	panic: runtime error: invalid memory address or nil pointer dereference
+testdir:fixedbugs/issue43479.go	compiled	panic: runtime error: invalid memory address or nil pointer dereference
+testdir:fixedbugs/issue43677.go	compiled	panic: runtime error: invalid memory address or nil pointer dereference
+testdir:fixedbugs/issue44823.go	interpreted	fixedbugs/issue44823.go:15:38: gosource: native slice retention or mutation is unsupported for encoding/binary.littleEndian.Uint64
+testdir:fixedbugs/issue45045.go	interpreted	scalar call interrupted
+testdir:fixedbugs/issue45323.go	compiled	panic: runtime error: invalid memory address or nil pointer dereference
+testdir:fixedbugs/issue45344.go	compiled	panic: runtime error: invalid memory address or nil pointer dereference
+testdir:fixedbugs/issue45851.go	interpreted	gosource: build dependency bridge: exit status 1: # command-line-arguments
+testdir:fixedbugs/issue4618.go	interpreted	gosource: asynchronous or retained original function callbacks are unsupported for __gosource_import_0_3.AllocsPerRun
+testdir:fixedbugs/issue4620.go	interpreted	panic: m[i] != 2
+testdir:fixedbugs/issue4620.go	compiled	map[0:1 1:2]
+testdir:fixedbugs/issue46234.go	interpreted	gosource: native slice retention or mutation is unsupported for io/ioutil.WriteFile
+testdir:fixedbugs/issue4667.go	interpreted	gosource: asynchronous or retained original function callbacks are unsupported for __gosource_import_0_2.AllocsPerRun
+testdir:fixedbugs/issue46903.go	interpreted	bash++ import "runtime/cgo": package requires cgo, which this pure-Go shell does not provide
+testdir:fixedbugs/issue47227.go	interpreted	bin/go (GOROOT=/srv/sprint151/barrier-a/evidence/goroot, found via GOROOT, meets go1.27.0): exit status 1
+testdir:fixedbugs/issue47227.go	compiled	bin/go (GOROOT=/srv/sprint151/barrier-a/evidence/goroot, found via GOROOT, meets go1.27.0): exit status 1
+testdir:fixedbugs/issue47928.go	interpreted	panic: FAIL
+testdir:fixedbugs/issue47928.go	compiled	panic: FAIL [recovered, repanicked]
+testdir:fixedbugs/issue49110.go	interpreted	gosource: native slice retention or mutation is unsupported for reflect.StructOf
+testdir:fixedbugs/issue51733.go	interpreted	bash++ import "runtime/cgo": package requires cgo, which this pure-Go shell does not provide
+testdir:fixedbugs/issue52127.go	interpreted	gosource: native slice retention or mutation is unsupported for os/exec.Command
+testdir:fixedbugs/issue53454.go	compiled	panic: runtime error: invalid memory address or nil pointer dereference
+testdir:fixedbugs/issue54542.go	interpreted	gosource: native slice retention or mutation is unsupported for os/exec.Command
+testdir:fixedbugs/issue5493.go	interpreted	command exceeded time limit
+testdir:fixedbugs/issue56990.go	interpreted	gosource: native slice retention or mutation is unsupported for *testing.T.Log
+testdir:fixedbugs/issue57823.go	interpreted	gosource: native slice retention or mutation is unsupported for unsafe.SliceData
+testdir:fixedbugs/issue58300.go	interpreted	fixedbugs/issue58300.go:23:35: gosource: asynchronous or retained original function callbacks are unsupported for __gosource_import_0_0.ValueOf
+testdir:fixedbugs/issue58300b.go	interpreted	fixedbugs/issue58300b.go:34:44: gosource: original callback signature requires value-semantics parameters and supported results
+testdir:fixedbugs/issue58826.go	compiled	panic: runtime error: invalid memory address or nil pointer dereference
+testdir:fixedbugs/issue59334.go	interpreted	gosource: native slice retention or mutation is unsupported for crypto/subtle.XORBytes
+testdir:fixedbugs/issue5963.go	interpreted	command exceeded time limit
+testdir:fixedbugs/issue69507.go	interpreted	exit status 2
+testdir:fixedbugs/issue71932.go	interpreted	gosource: build dependency bridge: exit status 1: # command-line-arguments
+testdir:fixedbugs/issue73917.go	interpreted	output should be empty when (optional) expected-output file fixedbugs/issue73917.out is not present. Instead saw
+testdir:fixedbugs/issue73920.go	interpreted	output should be empty when (optional) expected-output file fixedbugs/issue73920.out is not present. Instead saw
+testdir:fixedbugs/issue74836.go	compiled	panic: runtime error: invalid memory address or nil pointer dereference
+testdir:fixedbugs/issue7550.go	interpreted	panic: runtime error: makeslice: len out of range
+testdir:fixedbugs/issue75764.go	interpreted	gosource: native slice retention or mutation is unsupported for runtime.Callers
+testdir:fixedbugs/issue7690.go	interpreted	gosource: native slice retention or mutation is unsupported for runtime.Stack
+testdir:fixedbugs/issue7690.go	compiled	output should be empty when (optional) expected-output file fixedbugs/issue7690.out is not present. Instead saw
+testdir:fixedbugs/issue77779.go	interpreted	fixedbugs/issue77779.go:39:5: unregistered bridge type "Container"
+testdir:fixedbugs/issue79186.go	interpreted	command exceeded time limit
+testdir:fixedbugs/issue8039.go	interpreted	command exceeded time limit
+testdir:fixedbugs/issue8047.go	interpreted	panic: defer of nil func didn't panic
+testdir:fixedbugs/issue8047b.go	interpreted	output should be empty when (optional) expected-output file fixedbugs/issue8047b.out is not present. Instead saw
+testdir:fixedbugs/issue9355.go	interpreted	gosource: native slice retention or mutation is unsupported for os/exec.Command
+testdir:fixedbugs/issue9608.go	compiled	panic: runtime error: invalid memory address or nil pointer dereference
+testdir:func2.go	compiled	panic: runtime error: invalid memory address or nil pointer dereference
+testdir:gcstring.go	interpreted	gcstring.go:41:31: gosource: original callback signature requires value-semantics parameters and supported results
+testdir:import.go	compiled	panic: runtime error: invalid memory address or nil pointer dereference
+testdir:import2.go	compiled	panic: runtime error: invalid memory address or nil pointer dereference
+testdir:inline_callers.go	interpreted	gosource: native slice retention or mutation is unsupported for runtime.Callers
+testdir:inline_callers.go	compiled	output should be empty when (optional) expected-output file inline_callers.out is not present. Instead saw
+testdir:inline_literal.go	interpreted	gosource: asynchronous or retained original function callbacks are unsupported for __gosource_import_0_1.ValueOf
+testdir:internal/runtime/sys/inlinegcpc.go	interpreted	inlinegcpc.go:19: missing error "can inline cpc"
+testdir:internal/runtime/sys/inlinegcpc.go	compiled	panic: runtime error: invalid memory address or nil pointer dereference
+testdir:ken/divconst.go	interpreted	command exceeded time limit
+testdir:ken/modconst.go	interpreted	command exceeded time limit
+testdir:linkname.go	interpreted	linkname1.go:3: missing error "xs does not escape"
+testdir:linkname.go	compiled	panic: runtime error: invalid memory address or nil pointer dereference
+testdir:linkobj.go	interpreted	gosource: native slice retention or mutation is unsupported for io/ioutil.WriteFile
+testdir:live1.go	compiled	panic: runtime error: invalid memory address or nil pointer dereference
+testdir:live2.go	interpreted	live2.go:25: missing error "live at call to makemap: &ret$"
+testdir:live2.go	compiled	panic: runtime error: invalid memory address or nil pointer dereference
+testdir:live_uintptrkeepalive.go	interpreted	live_uintptrkeepalive.go:25: missing error "assuming ~p0 is unsafe uintptr"
+testdir:live_uintptrkeepalive.go	compiled	panic: runtime error: invalid memory address or nil pointer dereference
+testdir:mallocfin.go	interpreted	mallocfin.go:60:27: gosource: original callback signature requires value-semantics parameters and supported results
+testdir:maymorestack.go	interpreted	unregistered bridge type "[1 << 10]byte"
+testdir:maymorestack.go	compiled	65 != 128
+testdir:nilcheck.go	interpreted	nilcheck.go:43: missing error "nil check"
+testdir:nilcheck.go	compiled	panic: runtime error: invalid memory address or nil pointer dereference
+testdir:nilptr3.go	interpreted	nilptr3.go:45: missing error "generated nil check"
+testdir:nilptr3.go	compiled	panic: runtime error: invalid memory address or nil pointer dereference
+testdir:parentype.go	compiled	panic: runtime error: invalid memory address or nil pointer dereference
+testdir:peano.go	interpreted	command exceeded time limit
+testdir:recover1.go	interpreted	panic: 1
+testdir:reflectmethod2.go	interpreted	reflectmethod2.go:30:2: gosource: original method M.UniqueMethodName is not supported by dependency transport
+testdir:reflectmethod3.go	interpreted	reflectmethod3.go:30:2: gosource: original method M.UniqueMethodName is not supported by dependency transport
+testdir:reflectmethod7.go	interpreted	gosource: original method S.M is not supported by dependency transport
+testdir:sizeof.go	interpreted	gosource: build dependency bridge: exit status 1: # command-line-arguments
+testdir:stack.go	interpreted	command exceeded time limit
+testdir:tinyfin.go	interpreted	tinyfin.go:28:27: gosource: original callback signature requires value-semantics parameters and supported results
+testdir:typeparam/double.go	interpreted	typeparam/double.go:46:6: gosource: native slice retention or mutation is unsupported for reflect.DeepEqual
+testdir:typeparam/issue47272.go	interpreted	unregistered bridge type "Option[int]"
+testdir:typeparam/issue48042.go	interpreted	scalar call interrupted
+testdir:typeparam/issue48225.go	interpreted	panic: string
+testdir:typeparam/issue48317.go	interpreted	unregistered bridge type "*A[int]"
+testdir:typeparam/issue48318.go	interpreted	unregistered bridge type "*A[string, int]"
+testdir:typeparam/issue48598.go	interpreted	unregistered nil bridge type "IteratorFunc[R]"
+testdir:typeparam/issue48645a.go	interpreted	exit status 2
+testdir:typeparam/issue49547.go	interpreted	unregistered bridge type "F[foo]"
+testdir:typeparam/stringer.go	interpreted	typeparam/stringer.go:75:6: gosource: native slice retention or mutation is unsupported for reflect.DeepEqual
+testdir:typeparam/struct.go	interpreted	gosource: build dependency bridge: exit status 1: # command-line-arguments
+typechecker:cmd/compile/internal/types2/TestCheck/importC.go	interpreted	bin/go (GOROOT=/srv/sprint151/barrier-a/evidence/goroot, found via GOROOT, meets go1.27.0): exit status 1\nunknown import path \"C\": internal error: module loader did not resolve import\n)"
+typechecker:cmd/compile/internal/types2/TestCheck/importC.go	compiled	bin/go (GOROOT=/srv/sprint151/barrier-a/evidence/goroot, found via GOROOT, meets go1.27.0): exit status 1\nunknown import path \"C\": internal error: module loader did not resolve import\n)"
+typechecker:go/types/TestCheck/importC.go	interpreted	bin/go (GOROOT=/srv/sprint151/barrier-a/evidence/goroot, found via GOROOT, meets go1.27.0): exit status 1\nunknown import path \"C\": internal error: module loader did not resolve import\n)"
+typechecker:go/types/TestCheck/importC.go	compiled	bin/go (GOROOT=/srv/sprint151/barrier-a/evidence/goroot, found via GOROOT, meets go1.27.0): exit status 1\nunknown import path \"C\": internal error: module loader did not resolve import\n)"

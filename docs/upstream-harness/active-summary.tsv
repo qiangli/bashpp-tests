@@ -1,0 +1,13 @@
+runner	PASS	FAIL	SKIP	total
+testdir	1289	1400	37	2726
+typechecker	794	103	2	899
+package	0	26	0	26
+total	2083	1529	39	3651
+
+owner	count
+151	955
+152	234
+153	162
+154	120
+unclassified	58
+total	1529
