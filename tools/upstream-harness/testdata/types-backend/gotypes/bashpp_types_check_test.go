@@ -58,6 +58,7 @@ func bashppTypesCheck(t *testing.T, filenames []string, srcs [][]byte, lang stri
 	if lang != "" {
 		args = append(args, "--go-version", lang)
 	}
+	args = append(args, "--go-test-builtins")
 	for _, name := range filenames {
 		args = append(args, "--go-file", name)
 	}
@@ -87,9 +88,37 @@ func bashppTypesCheck(t *testing.T, filenames []string, srcs [][]byte, lang stri
 		}
 		return true
 	})
+	errs, unparsed := bashppParseGotypesDiagnostics(fset, known, string(out))
+	deviations := []string{
+		"the one upstream conf.Check call is replaced by the Bash++ check interface on the same files; upstream flag parsing, build constraints, ERROR-comment collection and matching are unchanged",
+		"upstream parse diagnostics are not merged: the check interface reports parse and type diagnostics itself",
+		"secondary go/types diagnostics are filtered with upstream's own `if !strings.Contains(err.Error(), \": \\t\")` rule after Bash++ diagnostic reconstruction",
+		"the check interface is passed --go-test-builtins to mirror upstream's in-process types.DefPredeclaredTestFuncs setup",
+	}
+	if fakeImportC {
+		deviations = append(deviations, "the check interface has no -fakeImportC; import \"C\" is checked as an ordinary import and any resulting mismatch is a retained product difference")
+	}
+	bashppTypesEmit(map[string]any{
+		"kind":          "types-backend",
+		"test":          t.Name(),
+		"tool":          map[string]string{"path": tool, "version": os.Getenv("BASHPP_TYPES_VERSION")},
+		"files":         filenames,
+		"lang":          lang,
+		"fake_import_c": fakeImportC,
+		"goexperiment":  goexperiment,
+		"argv":          append([]string{tool}, args...),
+		"exit":          exit,
+		"diagnostics":   len(errs),
+		"unparsed":      unparsed,
+		"deviations":    deviations,
+	})
+	return errs
+}
+
+func bashppParseGotypesDiagnostics(fset *token.FileSet, known map[string]*token.File, out string) ([]error, int) {
 	var errs []error
 	unparsed := 0
-	for _, line := range strings.Split(strings.TrimRight(string(out), "\n"), "\n") {
+	for _, line := range strings.Split(strings.TrimRight(out, "\n"), "\n") {
 		if line == "" {
 			continue
 		}
@@ -112,6 +141,10 @@ func bashppTypesCheck(t *testing.T, filenames []string, srcs [][]byte, lang stri
 			unparsed++
 			continue
 		}
+		if strings.HasPrefix(m[4], "\t") && len(errs) == 0 {
+			unparsed++
+			continue
+		}
 		ln, _ := strconv.Atoi(m[2])
 		col, _ := strconv.Atoi(m[3])
 		if ln < 1 || ln > file.LineCount() {
@@ -122,28 +155,11 @@ func bashppTypesCheck(t *testing.T, filenames []string, srcs [][]byte, lang stri
 		if col < 1 || int(pos) > file.Base()+file.Size() {
 			pos = file.LineStart(ln)
 		}
-		errs = append(errs, Error{Fset: fset, Pos: pos, Msg: m[4]})
+		err := Error{Fset: fset, Pos: pos, Msg: m[4]}
+		// Upstream check_test.go: `if !strings.Contains(err.Error(), ": \t")`.
+		if !strings.Contains(err.Error(), ": \t") {
+			errs = append(errs, err)
+		}
 	}
-	deviations := []string{
-		"the one upstream conf.Check call is replaced by the Bash++ check interface on the same files; upstream flag parsing, build constraints, ERROR-comment collection and matching are unchanged",
-		"upstream parse diagnostics are not merged: the check interface reports parse and type diagnostics itself",
-	}
-	if fakeImportC {
-		deviations = append(deviations, "the check interface has no -fakeImportC; import \"C\" is checked as an ordinary import and any resulting mismatch is a retained product difference")
-	}
-	bashppTypesEmit(map[string]any{
-		"kind":          "types-backend",
-		"test":          t.Name(),
-		"tool":          map[string]string{"path": tool, "version": os.Getenv("BASHPP_TYPES_VERSION")},
-		"files":         filenames,
-		"lang":          lang,
-		"fake_import_c": fakeImportC,
-		"goexperiment":  goexperiment,
-		"argv":          append([]string{tool}, args...),
-		"exit":          exit,
-		"diagnostics":   len(errs),
-		"unparsed":      unparsed,
-		"deviations":    deviations,
-	})
-	return errs
+	return errs, unparsed
 }

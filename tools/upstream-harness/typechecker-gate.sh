@@ -102,8 +102,8 @@ cp "$harness/testdata/upstream-types/types2/check_test.go" "$tmp/patched/src/cmd
 cp "$harness/testdata/upstream-types/gotypes/check_test.go" "$tmp/patched/src/go/types/check_test.go"
 patch -s -d "$tmp/patched" -p1 < "$harness/testdata/types-backend/types2/check_test.go.patch"
 patch -s -d "$tmp/patched" -p1 < "$harness/testdata/types-backend/gotypes/check_test.go.patch"
-printf '{"Replace":{"%s/src/cmd/compile/internal/types2/check_test.go":"%s/patched/src/cmd/compile/internal/types2/check_test.go","%s/src/cmd/compile/internal/types2/bashpp_types_check_test.go":"%s/testdata/types-backend/types2/bashpp_types_check_test.go","%s/src/go/types/check_test.go":"%s/patched/src/go/types/check_test.go","%s/src/go/types/bashpp_types_check_test.go":"%s/testdata/types-backend/gotypes/bashpp_types_check_test.go"}}\n' \
-	"$tmp/goroot" "$tmp" "$tmp/goroot" "$harness" "$tmp/goroot" "$tmp" "$tmp/goroot" "$harness" > "$tmp/overlay.json"
+printf '{"Replace":{"%s/src/cmd/compile/internal/types2/check_test.go":"%s/patched/src/cmd/compile/internal/types2/check_test.go","%s/src/cmd/compile/internal/types2/bashpp_types_check_test.go":"%s/testdata/types-backend/types2/bashpp_types_check_test.go","%s/src/cmd/compile/internal/types2/bashpp_types_check_unit_test.go":"%s/testdata/types-backend/types2/bashpp_types_check_unit_test.go","%s/src/go/types/check_test.go":"%s/patched/src/go/types/check_test.go","%s/src/go/types/bashpp_types_check_test.go":"%s/testdata/types-backend/gotypes/bashpp_types_check_test.go","%s/src/go/types/bashpp_types_check_unit_test.go":"%s/testdata/types-backend/gotypes/bashpp_types_check_unit_test.go"}}\n' \
+	"$tmp/goroot" "$tmp" "$tmp/goroot" "$harness" "$tmp/goroot" "$harness" "$tmp/goroot" "$tmp" "$tmp/goroot" "$harness" "$tmp/goroot" "$harness" > "$tmp/overlay.json"
 
 GOROOT="$tmp/goroot" GOTOOLCHAIN=local GOCACHE="$tmp/gocache" "$go127" build -o "$tmp/types-verify" "$harness/types-verify.go"
 
@@ -147,6 +147,7 @@ for entry in "cmd/compile/internal/types2 types2" "go/types gotypes"; do
 	fi
 	test "$native_count" = 10 || { printf 'FAIL %s: %s native terminals, want 10\n' "$1" "$native_count" >&2; exit 1; }
 	printf 'PASS %s: 10/10 native and instrumented terminal verdicts identical\n' "$1"
+	GOROOT="$tmp/goroot" GOTOOLCHAIN=local GOCACHE="$tmp/gocache" "$go127" test -overlay "$tmp/overlay.json" -count=1 -run '^TestBashppParse' "$1"
 done
 
 printf 'Bash++ interpreted mode: %s\n' "$bashpp_version"

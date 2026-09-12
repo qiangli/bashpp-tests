@@ -58,6 +58,7 @@ func bashppTypesCheck(t *testing.T, filenames []string, srcs [][]byte, lang stri
 	if lang != "" {
 		args = append(args, "--go-version", lang)
 	}
+	args = append(args, "--go-test-builtins")
 	for _, name := range filenames {
 		args = append(args, "--go-file", name)
 	}
@@ -80,38 +81,12 @@ func bashppTypesCheck(t *testing.T, filenames []string, srcs [][]byte, lang stri
 	for _, name := range filenames {
 		known[name] = syntax.NewFileBase(name)
 	}
-	var errs []error
-	unparsed := 0
-	for _, line := range strings.Split(strings.TrimRight(string(out), "\n"), "\n") {
-		if line == "" {
-			continue
-		}
-		m := bashppDiagRx.FindStringSubmatch(line)
-		if m == nil {
-			// A multi-line diagnostic continues the previous one (the
-			// importer's own explanation, say); only a line with no
-			// diagnostic to belong to is unattributed.
-			if n := len(errs); n > 0 {
-				prev := errs[n-1].(Error)
-				prev.Msg += "\n" + line
-				errs[n-1] = prev
-			} else {
-				unparsed++
-			}
-			continue
-		}
-		base, ok := known[m[1]]
-		if !ok {
-			unparsed++
-			continue
-		}
-		ln, _ := strconv.Atoi(m[2])
-		col, _ := strconv.Atoi(m[3])
-		errs = append(errs, Error{Pos: syntax.MakePos(base, uint(ln), uint(col)), Msg: m[4]})
-	}
+	errs, unparsed := bashppParseTypes2Diagnostics(known, string(out))
 	deviations := []string{
 		"the one upstream conf.Check call is replaced by the Bash++ check interface on the same files; upstream flag parsing, build constraints, ERROR-comment collection and matching are unchanged",
 		"upstream parse diagnostics are not merged: the check interface reports parse and type diagnostics itself",
+		"positioned secondary diagnostics whose message starts with a tab are folded into the previous types2 Error message to mirror upstream's multi-part diagnostic rendering",
+		"the check interface is passed --go-test-builtins to mirror upstream's in-process types.DefPredeclaredTestFuncs setup",
 	}
 	if fakeImportC {
 		deviations = append(deviations, "the check interface has no -fakeImportC; import \"C\" is checked as an ordinary import and any resulting mismatch is a retained product difference")
@@ -131,4 +106,47 @@ func bashppTypesCheck(t *testing.T, filenames []string, srcs [][]byte, lang stri
 		"deviations":    deviations,
 	})
 	return errs
+}
+
+func bashppParseTypes2Diagnostics(known map[string]*syntax.PosBase, out string) ([]error, int) {
+	var errs []error
+	unparsed := 0
+	for _, line := range strings.Split(strings.TrimRight(out, "\n"), "\n") {
+		if line == "" {
+			continue
+		}
+		m := bashppDiagRx.FindStringSubmatch(line)
+		if m == nil {
+			// A multi-line diagnostic continues the previous one (the
+			// importer's own explanation, say); only a line with no
+			// diagnostic to belong to is unattributed.
+			if n := len(errs); n > 0 {
+				prev := errs[n-1].(Error)
+				prev.Msg += "\n" + line
+				errs[n-1] = prev
+			} else {
+				unparsed++
+			}
+			continue
+		}
+		if strings.HasPrefix(m[4], "\t") {
+			if n := len(errs); n > 0 {
+				prev := errs[n-1].(Error)
+				prev.Msg += "\n\t" + m[1] + ":" + m[2] + ":" + m[3] + ": " + strings.TrimPrefix(m[4], "\t")
+				errs[n-1] = prev
+			} else {
+				unparsed++
+			}
+			continue
+		}
+		base, ok := known[m[1]]
+		if !ok {
+			unparsed++
+			continue
+		}
+		ln, _ := strconv.Atoi(m[2])
+		col, _ := strconv.Atoi(m[3])
+		errs = append(errs, Error{Pos: syntax.MakePos(base, uint(ln), uint(col)), Msg: m[4]})
+	}
+	return errs, unparsed
 }
