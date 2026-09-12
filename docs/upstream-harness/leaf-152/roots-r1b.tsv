@@ -1,0 +1,147 @@
+root	mode	first_line
+testdir:alias3.go	interpreted	test/alias3.dir/a.go:14:1: undefined type: IntAlias
+testdir:alias3.go	compiled	test/alias3.dir/a.go:14:1: LOWER-EUNDEFINED: undefined: IntAlias
+testdir:closure3.go	interpreted	main.go:15: missing error "can inline main.func1"
+testdir:closure3.go	compiled	test/closure3.dir/main.go:154:3: LOWER-ETYPE: assignment mismatch: 2 variables but __bpp0_rt.MustValue returns 1 value
+testdir:codegen/addrcalc.go	interpreted	linux/amd64/v1
+testdir:codegen/addrcalc.go	compiled	codegen/addrcalc.go:13: linux/amd64/v1: opcode not found: `^ADDQ`
+testdir:codegen/append.go	interpreted	linux/amd64/v1
+testdir:codegen/append.go	compiled	codegen/append.go:15: linux/amd64/v1: opcode not found: `^.*growslice\b`
+testdir:codegen/arithmetic.go	interpreted	linux/amd64/v1
+testdir:codegen/arithmetic.go	compiled	codegen/arithmetic.go:64: linux/amd64/v1: opcode not found: `^SUBQ [A-Z]+, 16\([A-Z]+\)`
+testdir:codegen/atomics.go	interpreted	linux/amd64/v1
+testdir:codegen/atomics.go	compiled	codegen/atomics.go:26: linux/amd64/v1: opcode not found: `^LOCK`
+testdir:codegen/bits.go	interpreted	linux/amd64/v1
+testdir:codegen/bits.go	compiled	codegen/bits.go:20: linux/amd64/v1: opcode not found: `^BTQ [$]63,`
+testdir:codegen/bmi.go	interpreted	linux/amd64/v3
+testdir:codegen/bmi.go	compiled	codegen/bmi.go:11: linux/amd64/v3: opcode not found: `^ANDNQ`
+testdir:codegen/bool.go	interpreted	linux/amd64/v1
+testdir:codegen/bool.go	compiled	codegen/bool.go:18: linux/amd64/v1: opcode not found: `^ANDL [$]1`
+testdir:codegen/clobberdead.go	interpreted	linux/amd64/v1
+testdir:codegen/clobberdead.go	compiled	codegen/clobberdead.go:20: linux/amd64/v1: opcode not found: `^MOVL \$3735936685, command-line-arguments\.x`
+testdir:codegen/clobberdeadreg.go	interpreted	linux/amd64/v1
+testdir:codegen/clobberdeadreg.go	compiled	codegen/clobberdeadreg.go:22: linux/amd64/v1: opcode not found: `^MOVQ \$-2401018187971961171, DX`
+testdir:codegen/comparisons.go	interpreted	linux/amd64/v1
+testdir:codegen/comparisons.go	compiled	codegen/comparisons.go:28: linux/amd64/v1: opcode not found: `^CMPW \(.*\), [$]`
+testdir:codegen/condmove.go	interpreted	linux/amd64/v1
+testdir:codegen/condmove.go	compiled	codegen/condmove.go:23: linux/amd64/v1: opcode not found: `^CMOVQLT`
+testdir:codegen/deadstore.go	interpreted	linux/amd64/v1
+testdir:codegen/deadstore.go	compiled	codegen/deadstore.go:24: linux/amd64/v1: opcode not found: `^MOVQ \$3`
+testdir:codegen/floats.go	interpreted	linux/amd64/v1
+testdir:codegen/floats.go	compiled	codegen/floats.go:27: linux/amd64/v1: opcode not found: `^ADDSD`
+testdir:codegen/fuse.go	interpreted	linux/amd64/v1
+testdir:codegen/fuse.go	compiled	codegen/fuse.go:24: linux/amd64/v1: opcode not found: `^CMPQ .+, [$]256`
+testdir:codegen/ifaces.go	interpreted	linux/amd64/v1
+testdir:codegen/ifaces.go	compiled	codegen/ifaces.go:26: linux/amd64/v1: opcode not found: `^CALL runtime.typeAssert`
+testdir:codegen/issue22703.go	interpreted	linux/amd64/v1
+testdir:codegen/issue22703.go	compiled	codegen/issue22703.go:534: linux/amd64/v1: opcode not found: `^TESTB`
+testdir:codegen/issue48054.go	interpreted	linux/amd64/v1
+testdir:codegen/issue48054.go	compiled	codegen/issue48054.go:27: linux/amd64/v1: opcode not found: `^TESTQ`
+testdir:codegen/issue52635.go	interpreted	linux/amd64/v1
+testdir:codegen/issue52635.go	compiled	codegen/issue52635.go:22: linux/amd64/v1: opcode not found: `^MOVUPS X15,`
+testdir:codegen/issue54467.go	interpreted	linux/amd64/v1
+testdir:codegen/issue54467.go	compiled	codegen/issue54467.go:11: linux/amd64/v1: opcode not found: `^.*memmove`
+testdir:codegen/issue56440.go	interpreted	linux/amd64/v1
+testdir:codegen/issue56440.go	compiled	codegen/issue56440.go:17: linux/amd64/v1: opcode not found: `^MOVQ 40\(.*\),`
+testdir:codegen/issue58166.go	interpreted	linux/amd64/v1
+testdir:codegen/issue58166.go	compiled	codegen/issue58166.go:17: linux/amd64/v1: opcode not found: `^INCQ`
+testdir:codegen/issue59297.go	interpreted	linux/amd64/v1
+testdir:codegen/issue59297.go	compiled	codegen/issue59297.go:11: linux/amd64/v1: opcode not found: `^MOVQ AX, BX`
+testdir:codegen/issue60324.go	interpreted	linux/amd64/v1
+testdir:codegen/issue60324.go	compiled	codegen/issue60324.go:11: linux/amd64/v1: opcode not found: `^LEAQ command-line-arguments\.h\.func1`
+testdir:codegen/issue69635.go	interpreted	linux/amd64/v1
+testdir:codegen/issue69635.go	compiled	codegen/issue69635.go:12: linux/amd64/v1: opcode not found: `^SHRQ \$17, AX$`
+testdir:codegen/issue72832.go	interpreted	linux/amd64/v1
+testdir:codegen/issue72832.go	compiled	codegen/issue72832.go:17: linux/amd64/v1: opcode not found: `^MOVQ`
+testdir:codegen/issue74485.go	interpreted	linux/amd64/v1
+testdir:codegen/issue74485.go	compiled	codegen/issue74485.go:11: linux/amd64/v1: opcode not found: `^SHRQ [$]63, AX`
+testdir:codegen/issue74788.go	interpreted	linux/amd64/v1
+testdir:codegen/issue74788.go	compiled	codegen/issue74788.go:11: linux/amd64/v1: wrong number of opcodes: `^MOVUPS[^,]+, X[0-9]+$`
+testdir:codegen/issue75203.go	interpreted	linux/amd64/v1
+testdir:codegen/issue75203.go	compiled	codegen/issue75203.go:14: linux/amd64/v1: opcode not found: `^LEAQ type:\*int\(SB\)`
+testdir:codegen/load_type_from_itab.go	interpreted	linux/amd64/v1
+testdir:codegen/load_type_from_itab.go	compiled	codegen/load_type_from_itab.go:23: linux/amd64/v1: opcode not found: `^LEAQ type:.*Impl`
+testdir:codegen/logic.go	interpreted	linux/amd64/v1
+testdir:codegen/logic.go	compiled	codegen/logic.go:15: linux/amd64/v1: opcode not found: `^TESTQ (AX, AX|BX, BX|CX, CX|DX, DX|SI, SI|DI, DI|R8, R8|R9, R9|R10, R10|R11, R11|R12, R12|R13, R13|R15, R15)`
+testdir:codegen/mapaccess.go	interpreted	linux/amd64/v1
+testdir:codegen/mapaccess.go	compiled	codegen/mapaccess.go:267: linux/amd64/v1: opcode not found: `^.*mapaccess`
+testdir:codegen/maps.go	interpreted	linux/amd64/v1
+testdir:codegen/maps.go	compiled	codegen/maps.go:20: linux/amd64/v1: opcode not found: `^MOV[LQ] [$]5`
+testdir:codegen/math.go	interpreted	linux/amd64/v1
+testdir:codegen/math.go	compiled	codegen/math.go:20: linux/amd64/v1: opcode not found: `^ROUNDSD [$]2`
+testdir:codegen/mathbits.go	interpreted	linux/amd64/v1
+testdir:codegen/mathbits.go	compiled	codegen/mathbits.go:188: linux/amd64/v1: opcode not found: `^POPCNTQ`
+testdir:codegen/memcombine.go	interpreted	linux/amd64/v1
+testdir:codegen/memcombine.go	compiled	codegen/memcombine.go:25: linux/amd64/v1: opcode not found: `^MOVQ \(.*\),`
+testdir:codegen/memops.go	interpreted	linux/amd64/v1
+testdir:codegen/memops.go	compiled	codegen/memops.go:17: linux/amd64/v1: opcode not found: `^CMPB command-line-arguments.x\+1\(SB\), [$]0`
+testdir:codegen/moveload.go	interpreted	linux/amd64/v1
+testdir:codegen/moveload.go	compiled	codegen/moveload.go:31: linux/amd64/v1: opcode not found: `^MOVBLZX`
+testdir:codegen/multiply.go	interpreted	linux/amd64/v1
+testdir:codegen/multiply.go	compiled	codegen/multiply.go:16: linux/amd64/v1: opcode not found: `^XORL`
+testdir:codegen/reflect_type.go	interpreted	linux/amd64/v1
+testdir:codegen/reflect_type.go	compiled	codegen/reflect_type.go:14: linux/amd64/v1: opcode not found: `^MOVL [$]8,`
+testdir:codegen/regabi_regalloc.go	interpreted	linux/amd64/v1
+testdir:codegen/regabi_regalloc.go	compiled	codegen/regabi_regalloc.go:12: linux/amd64/v1: opcode not found: `^MOVQ BX, CX`
+testdir:codegen/retpoline.go	interpreted	linux/amd64/v1
+testdir:codegen/retpoline.go	compiled	codegen/retpoline.go:9: linux/amd64/v1: opcode not found: `^CALL runtime.retpoline`
+testdir:codegen/rotate.go	interpreted	linux/amd64/v1
+testdir:codegen/rotate.go	compiled	codegen/rotate.go:22: linux/amd64/v1: opcode not found: `^ROLQ [$]7`
+testdir:codegen/schedule.go	interpreted	linux/amd64/v1
+testdir:codegen/schedule.go	compiled	codegen/schedule.go:15: linux/amd64/v1: opcode not found: `^INCQ`
+testdir:codegen/shift.go	interpreted	linux/amd64/v1
+testdir:codegen/shift.go	compiled	codegen/shift.go:72: linux/amd64/v1: opcode not found: `^ADDL`
+testdir:codegen/slices.go	interpreted	linux/amd64/v1
+testdir:codegen/slices.go	compiled	codegen/slices.go:24: linux/amd64/v1: opcode not found: `^.*memclrNoHeapPointers`
+testdir:codegen/smallintiface.go	interpreted	linux/amd64/v1
+testdir:codegen/smallintiface.go	compiled	codegen/smallintiface.go:11: linux/amd64/v1: opcode not found: `^LEAQ runtime.staticuint64s\+8\(SB\)`
+testdir:codegen/spectre.go	interpreted	linux/amd64/v1
+testdir:codegen/spectre.go	compiled	codegen/spectre.go:13: linux/amd64/v1: opcode not found: `^CMOVQCC`
+testdir:codegen/stack.go	interpreted	linux/amd64/v1
+testdir:codegen/stack.go	compiled	codegen/stack.go:26: linux/amd64/v1: opcode not found: `^TEXT .*, [$]0-`
+testdir:codegen/strings.go	interpreted	linux/amd64/v1
+testdir:codegen/strings.go	compiled	codegen/strings.go:16: linux/amd64/v1: opcode not found: `^.*countrunes`
+testdir:codegen/structs.go	interpreted	linux/amd64/v1
+testdir:codegen/structs.go	compiled	codegen/structs.go:24: linux/amd64/v1: opcode not found: `^MOVUPS X[0-9]+, \(.*\)`
+testdir:codegen/switch.go	interpreted	linux/amd64/v1
+testdir:codegen/switch.go	compiled	codegen/switch.go:30: linux/amd64/v1: opcode not found: `^JMP \(.*\)\(.*\)$`
+testdir:codegen/typeswitch.go	interpreted	linux/amd64/v1
+testdir:codegen/typeswitch.go	compiled	codegen/typeswitch.go:40: linux/amd64/v1: opcode not found: `^.*assertE2I2`
+testdir:codegen/unsafe.go	interpreted	linux/amd64/v1
+testdir:codegen/unsafe.go	compiled	codegen/unsafe.go:15: linux/amd64/v1: opcode not found: `^MOVQ \(.*\)\(.*\*1\), `
+testdir:codegen/writebarrier.go	interpreted	linux/amd64/v1
+testdir:codegen/writebarrier.go	compiled	codegen/writebarrier.go:12: linux/amd64/v1: opcode not found: `^.*runtime[.]gcWriteBarrier4\(SB\)`
+testdir:codegen/zerosize.go	interpreted	linux/amd64/v1
+testdir:codegen/zerosize.go	compiled	codegen/zerosize.go:16: linux/amd64/v1: opcode not found: `^MOVQ \$0, command-line-arguments\.s\+56\(SP\)`
+testdir:devirtualization.go	interpreted	devirtualization.go:17: missing error "can inline \\(\\*Impl\\).M$"
+testdir:devirtualization.go	compiled	test/devirtualization.go:156:3: LOWER-ETYPE: assignment mismatch: 2 variables but __bpp0_rt.MustValue returns 1 value
+testdir:dwarf/dwarf.go	compiled	test/dwarf/dwarf.dir/main.go:35:76: invalid column number: 0
+testdir:dwarf/linedirectives.go	compiled	main.go:5:35: invalid column number: 0
+testdir:fixedbugs/bug338.go	compiled	test/fixedbugs/bug338.go:11:1: LOWER-ETYPE: "unsafe" imported as __gosource_import_0_0 and not used
+testdir:fixedbugs/bug367.go	interpreted	panic: should not satisfy main.I
+testdir:fixedbugs/bug367.go	compiled	test/fixedbugs/bug367.dir/prog.go:24:2: LOWER-ETYPE: assignment mismatch: 2 variables but __bpp0_rt.MustValue returns 1 value
+testdir:fixedbugs/bug420.go	compiled	test/fixedbugs/bug420.go:13:7: LOWER-EUNDEFINED: undefined: _
+testdir:fixedbugs/bug439.go	compiled	test/fixedbugs/bug439.go:21:2: LOWER-ETYPE: C2.P undefined (type untyped int has no field or method P)
+testdir:fixedbugs/bug458.go	compiled	test/fixedbugs/bug458.go:11:1: LOWER-ETYPE: "unsafe" imported as __gosource_import_0_0 and not used
+testdir:fixedbugs/bug479.go	compiled	test/fixedbugs/bug479.dir/a.go:7:1: LOWER-ETYPE: "unsafe" imported as __gosource_import_0_0 and not used
+testdir:fixedbugs/issue15550.go	compiled	fixedbugs/issue15550.go:9:1: LOWER-ETYPE: "unsafe" imported as __gosource_import_0_0 and not used
+testdir:fixedbugs/issue15602.go	compiled	test/fixedbugs/issue15602.go:10:2: LOWER-ETYPE: assignment mismatch: 2 variables but __bpp0_rt.MustValue returns 1 value
+testdir:fixedbugs/issue15604.go	compiled	test/fixedbugs/issue15604.go:13:2: LOWER-ETYPE: assignment mismatch: 2 variables but __bpp0_rt.MustValue returns 1 value
+testdir:fixedbugs/issue17270.go	compiled	test/fixedbugs/issue17270.go:9:1: LOWER-ETYPE: "unsafe" imported as __gosource_import_0_0 and not used
+testdir:fixedbugs/issue18149.go	interpreted	src/reflect/value.go:369; want /foo/bar.go:123 (or suffix /foo/bar.go)
+testdir:fixedbugs/issue18149.go	compiled	./fixedbugs/issue18149.go:39:36: invalid column number: 0
+testdir:fixedbugs/issue22344.go	compiled	test/fixedbugs/issue22344.go:10:1: LOWER-ETYPE: "unsafe" imported as __gosource_import_0_0 and not used
+testdir:fixedbugs/issue22662.go	interpreted	src/reflect/value.go:369; want ??:1 (or suffix /??)
+testdir:fixedbugs/issue22662.go	compiled	./fixedbugs/issue22662.go:38:34: invalid column number: 0
+testdir:fixedbugs/issue24801.go	compiled	test/fixedbugs/issue24801.dir/a.go:7:1: LOWER-ETYPE: cannot declare main - must be func
+testdir:fixedbugs/issue28601.go	compiled	test/fixedbugs/issue28601.go:11:1: LOWER-ETYPE: "unsafe" imported as __gosource_import_0_0 and not used
+testdir:fixedbugs/issue30709.go	compiled	fixedbugs/issue30709.go:12:1: LOWER-ETYPE: "unsafe" imported as __gosource_import_0_0 and not used
+testdir:fixedbugs/issue38698.go	compiled	test/fixedbugs/issue38698.go:13:79: invalid column number: 0
+testdir:fixedbugs/issue63436.go	compiled	test/fixedbugs/issue63436.go:9:10: LOWER-EUNDEFINED: undefined: new
+testdir:fixedbugs/issue8475.go	compiled	test/fixedbugs/issue8475.go:18:2: LOWER-ETYPE: assignment mismatch: 2 variables but __bpp0_rt.MustValue returns 1 value
+testdir:rename.go	compiled	rename.go:17:2: LOWER-ETYPE: invalid operation: cannot call int (untyped int constant 15): untyped int is not a function
+testdir:reorder.go	interpreted	panic: failed
+testdir:reorder.go	compiled	reorder.go:140:2: LOWER-ETYPE: assignment mismatch: 2 variables but __bpp0_rt.MustValue returns 1 value
+testdir:typeparam/issue52026.go	compiled	typeparam/issue52026.go:37:2: LOWER-EUNDEFINED: undefined: T
+testdir:typeparam/issue52228.go	compiled	typeparam/issue52228.go:19:3: LOWER-ETYPE: assignment mismatch: 2 variables but __bpp0_rt.MustValue returns 1 value
+testdir:typeparam/issue53762.go	compiled	test/typeparam/issue53762.go:13:2: LOWER-ETYPE: assignment mismatch: 2 variables but __bpp0_rt.MustValue returns 1 value

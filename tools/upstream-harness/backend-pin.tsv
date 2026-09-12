@@ -1,7 +1,7 @@
 # key	sha256-or-value
 go_release	go1.27.0
 bashpp_version	bashy, GNU Bash 5.3 compatible, version 5.3.0(1)-bashy-dev (963ef4b)
-shellrt_commit	e484a22be44614b044836940e0e865cf64e6d34d
+shellrt_commit	074f29aa02e0126a53a6a2c790517eeef65ae84b
 upstream	54900709a1fae5f469aa7bf59b22660f6fb9eb169e84f9c0d9760f0fe38444f4
 instrumentation_patch	f425729a52ca9e8e80f7c85ef188f93f7a94ab75bd6094990a842710fef9a277
 instrumentation_hook	1de35c8302b07a8b53f48e4355a17c891a85570374926387231f1cc24f638b46
