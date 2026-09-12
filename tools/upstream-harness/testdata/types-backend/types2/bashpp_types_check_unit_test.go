@@ -11,7 +11,7 @@ func types2Fixture() map[string]*syntax.PosBase {
 	return map[string]*syntax.PosBase{"file.go": syntax.NewFileBase("file.go")}
 }
 
-func TestBashppTypes2JoinsSecondaryDiagnostics(t *testing.T) {
+func TestBashppParseTypes2JoinsSecondaryDiagnostics(t *testing.T) {
 	errs, unparsed := bashppParseTypes2Diagnostics(types2Fixture(), "file.go:4:5: x redeclared in this block\nfile.go:3:5: \tother declaration of x\n")
 	if unparsed != 0 {
 		t.Fatalf("unparsed = %d, want 0", unparsed)
@@ -29,14 +29,14 @@ func TestBashppTypes2JoinsSecondaryDiagnostics(t *testing.T) {
 	}
 }
 
-func TestBashppTypes2LeadingTabFirstIsUnparsed(t *testing.T) {
+func TestBashppParseTypes2LeadingTabFirstIsUnparsed(t *testing.T) {
 	errs, unparsed := bashppParseTypes2Diagnostics(types2Fixture(), "file.go:3:5: \tother declaration of x\n")
 	if len(errs) != 0 || unparsed != 1 {
 		t.Fatalf("errs, unparsed = %d, %d; want 0, 1", len(errs), unparsed)
 	}
 }
 
-func TestBashppTypes2KeepsIndependentPrimaries(t *testing.T) {
+func TestBashppParseTypes2KeepsIndependentPrimaries(t *testing.T) {
 	errs, unparsed := bashppParseTypes2Diagnostics(types2Fixture(), "file.go:3:5: first primary\nfile.go:4:5: second primary\n")
 	if unparsed != 0 {
 		t.Fatalf("unparsed = %d, want 0", unparsed)
@@ -46,7 +46,7 @@ func TestBashppTypes2KeepsIndependentPrimaries(t *testing.T) {
 	}
 }
 
-func TestBashppTypes2JoinsTwoSecondaryDiagnostics(t *testing.T) {
+func TestBashppParseTypes2JoinsTwoSecondaryDiagnostics(t *testing.T) {
 	errs, unparsed := bashppParseTypes2Diagnostics(types2Fixture(), "file.go:4:5: x redeclared in this block\nfile.go:3:5: \tother declaration of x\nfile.go:2:5: \tprevious case\n")
 	if unparsed != 0 {
 		t.Fatalf("unparsed = %d, want 0", unparsed)

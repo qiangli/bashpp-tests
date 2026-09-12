@@ -15,7 +15,7 @@ func gotypesFixture() (*token.FileSet, map[string]*token.File) {
 	return fset, map[string]*token.File{"file.go": file}
 }
 
-func TestBashppGotypesDropsSecondaryDiagnostics(t *testing.T) {
+func TestBashppParseGotypesDropsSecondaryDiagnostics(t *testing.T) {
 	fset, known := gotypesFixture()
 	errs, unparsed := bashppParseGotypesDiagnostics(fset, known, "file.go:4:5: x redeclared in this block\nfile.go:3:5: \tother declaration of x\n")
 	if unparsed != 0 {
@@ -33,7 +33,7 @@ func TestBashppGotypesDropsSecondaryDiagnostics(t *testing.T) {
 	}
 }
 
-func TestBashppGotypesLeadingTabFirstIsUnparsed(t *testing.T) {
+func TestBashppParseGotypesLeadingTabFirstIsUnparsed(t *testing.T) {
 	fset, known := gotypesFixture()
 	errs, unparsed := bashppParseGotypesDiagnostics(fset, known, "file.go:3:5: \tother declaration of x\n")
 	if len(errs) != 0 || unparsed != 1 {
@@ -41,7 +41,7 @@ func TestBashppGotypesLeadingTabFirstIsUnparsed(t *testing.T) {
 	}
 }
 
-func TestBashppGotypesKeepsIndependentPrimaries(t *testing.T) {
+func TestBashppParseGotypesKeepsIndependentPrimaries(t *testing.T) {
 	fset, known := gotypesFixture()
 	errs, unparsed := bashppParseGotypesDiagnostics(fset, known, "file.go:3:5: first primary\nfile.go:4:5: second primary\n")
 	if unparsed != 0 {
@@ -52,7 +52,7 @@ func TestBashppGotypesKeepsIndependentPrimaries(t *testing.T) {
 	}
 }
 
-func TestBashppGotypesDropsTwoSecondaryDiagnostics(t *testing.T) {
+func TestBashppParseGotypesDropsTwoSecondaryDiagnostics(t *testing.T) {
 	fset, known := gotypesFixture()
 	errs, unparsed := bashppParseGotypesDiagnostics(fset, known, "file.go:4:5: x redeclared in this block\nfile.go:3:5: \tother declaration of x\nfile.go:2:5: \tprevious case\n")
 	if unparsed != 0 {
