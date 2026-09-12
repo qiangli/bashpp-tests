@@ -207,6 +207,20 @@ func TestPartitionRuleChanges(t *testing.T) {
 			wantOwner: "retained",
 		},
 		{
+			name:      "bridge writeback refusal is a 153 runtime row",
+			lines:     []string{"gosource: invalid native slice writeback: gosource: native callback field belongs to another dependency session"},
+			mode:      "interpreted",
+			wantLine:  "gosource: invalid native slice writeback: gosource: native callback field belongs to another dependency session",
+			wantOwner: "153",
+		},
+		{
+			name:      "bridge mutation refusal is a 153 runtime row",
+			lines:     []string{"typeparam/double.go:46:6: gosource: dependency mutation of interpreter-owned references is unsupported for reflect.DeepEqual"},
+			mode:      "interpreted",
+			wantLine:  "typeparam/double.go:46:6: gosource: dependency mutation of interpreter-owned references is unsupported for reflect.DeepEqual",
+			wantOwner: "153",
+		},
+		{
 			name:      "unknown import C compiled",
 			lines:     []string{`unknown import path "C"`},
 			mode:      "compiled",

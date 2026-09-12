@@ -503,6 +503,9 @@ func classify(line, mode string, hasDiagnostic bool) string {
 	}
 	for _, pattern := range []string{
 		"unregistered bridge type", "unregistered nil bridge type", "build dependency bridge",
+		// Sprint 153 bridge value-transport refusals (writeback and mutation
+		// policy): runtime rows of the dependency bridge, never a checker verdict.
+		"invalid native slice writeback", "dependency mutation of interpreter-owned references",
 		"output should be empty", "output does not match", "instead saw",
 		"scalar call interrupted", "original callback signature", "retained original function callbacks",
 	} {
