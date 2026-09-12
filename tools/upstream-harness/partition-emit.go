@@ -494,7 +494,7 @@ func classify(line, mode string, hasDiagnostic bool) string {
 	}
 	for _, pattern := range []string{
 		"unregistered bridge type", "unregistered nil bridge type", "build dependency bridge",
-		"requires cgo", "output should be empty", "output does not match", "instead saw",
+		"output should be empty", "output does not match", "instead saw",
 		"scalar call interrupted", "original callback signature", "retained original function callbacks",
 	} {
 		if contains(pattern) {
