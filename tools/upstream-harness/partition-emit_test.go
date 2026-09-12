@@ -393,31 +393,40 @@ func TestClassifyRecipeAndVerdictRules(t *testing.T) {
 			want:         "retained",
 		},
 		{
-			name:         "D1 compiled -m stays 154",
+			name:         "D1 compiled -m is a lowering row (152)",
 			line:         `esc.go:10: missing error "escapes to heap"`,
 			mode:         "compiled",
 			runner:       "testdir",
 			recipe:       errorcheck("errorcheck", "-0", "-m", "-l"),
 			verdictClass: "missing",
-			want:         "154",
+			want:         "152",
 		},
 		{
-			name:         "D1 compiled -live stays 154",
+			name:         "D1 compiled -live is a lowering row (152)",
 			line:         `live.go:15: missing error "live at entry"`,
 			mode:         "compiled",
 			runner:       "testdir",
 			recipe:       errorcheck("errorcheckdir", "-0", "-live"),
 			verdictClass: "missing",
-			want:         "154",
+			want:         "152",
 		},
 		{
-			name:         "D1 compiled -race -m stays 154",
+			name:         "D1 compiled -race -m is a lowering row (152)",
 			line:         `race.go:9: missing error "write barrier"`,
 			mode:         "compiled",
 			runner:       "testdir",
 			recipe:       errorcheck("errorcheckandrundir", "-race", "-m"),
 			verdictClass: "missing",
-			want:         "154",
+			want:         "152",
+		},
+		{
+			name:         "compiled -m with no verdict (transpile failed) is left to the line rules",
+			line:         `esc.go:12:1: LOWER-EUNSUPPORTED: function declaration without body`,
+			mode:         "compiled",
+			runner:       "testdir",
+			recipe:       errorcheck("errorcheck", "-0", "-m", "-l"),
+			verdictClass: "-",
+			want:         "retained",
 		},
 		{
 			name:         "D1 does not fire without optimizer flags",
@@ -615,15 +624,22 @@ func TestRecipeFlagRootsAcrossModes(t *testing.T) {
 	if strings.Contains(string(retained), "testdir:mflagreal.go") {
 		t.Errorf("mixed root mflagreal.go must not be retained:\n%s", retained)
 	}
+	// The real compiled -m failure is the generated module's optimizer notes
+	// (a lowering row): the mixed root follows it to 152, never to retained
+	// and never to 154.
+	lowering, err := os.ReadFile(filepath.Join(out, "active-152-manifest.tsv"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(lowering), "testdir:mflagreal.go") {
+		t.Errorf("mixed root mflagreal.go must stay with the real compiled failure in 152:\n%s", lowering)
+	}
 	fidelity, err := os.ReadFile(filepath.Join(out, "active-154-manifest.tsv"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(string(fidelity), "testdir:mflagreal.go") {
-		t.Errorf("mixed root mflagreal.go must stay with the real compiled failure in 154:\n%s", fidelity)
-	}
-	if strings.Contains(string(fidelity), "testdir:mflag.go\t") || strings.Contains(string(fidelity), "testdir:dflag.go") {
-		t.Errorf("retained roots leaked into 154:\n%s", fidelity)
+	if strings.Contains(string(fidelity), "testdir:mflag.go\t") || strings.Contains(string(fidelity), "testdir:dflag.go") || strings.Contains(string(fidelity), "testdir:mflagreal.go") {
+		t.Errorf("retained or lowering roots leaked into 154:\n%s", fidelity)
 	}
 }
 

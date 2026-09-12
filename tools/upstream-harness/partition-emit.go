@@ -670,15 +670,29 @@ func classify(line, mode string, hasDiagnostic bool, runner string, recipe recip
 	// D1: optimizer diagnostics are a compiler artifact; the check interface
 	// has no inliner, escape analysis, or SSA — the same shape as interpreted
 	// asmcheck. A compiled -d= row is retained too (the seam drops -d= as
-	// evidence only, see the backend's compileDeviations); compiled
-	// -m/-live rows stay 154. As with retained generally, a real
-	// failure in the other mode still wins (ownerRank).
+	// evidence only, see the backend's compileDeviations); a compiled
+	// -m/-live row with a verdict is a lowering row (152, below). As with
+	// retained generally, a real failure in the other mode still wins
+	// (ownerRank).
 	if recipe.errorcheckFamily() {
 		if mode == "interpreted" && optimizerDiagnosticFlags(recipe.flags) {
 			return "retained"
 		}
 		if mode == "compiled" && debugDiagnosticFlags(recipe.flags) {
 			return "retained"
+		}
+		// A compiled -m/-live row that carries an errorCheck verdict is the
+		// generated module's optimizer notes compared against the original's.
+		// Sprint 154 measured every such row (mclass-r0, 13 roots): no diff is
+		// a diagnostic-policy defect — the notes differ by //line POSITION
+		// (the source map is statement-granular; gc attributes escape notes to
+		// the expression's own line inside a multi-line statement) or by the
+		// emitted SYMBOL NAME (__gosource_pkg_N_F, __bppN_…), and a row whose
+		// transpile failed is already retained above. Both mechanisms are the
+		// lowering's (152.4 source map / 152.1 fidelity), so the row moves
+		// there by this rule rather than in place.
+		if mode == "compiled" && optimizerDiagnosticFlags(recipe.flags) && verdictClass != "-" {
+			return "152"
 		}
 	}
 	// D2: diagnostic multiplicity (a tab-continuation of a multi-part
