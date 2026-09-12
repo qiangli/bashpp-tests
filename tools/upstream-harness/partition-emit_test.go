@@ -193,6 +193,13 @@ func TestPartitionRuleChanges(t *testing.T) {
 			wantOwner: "retained",
 		},
 		{
+			name:      "unknown import C json-escaped (typechecker go-list stderr)",
+			lines:     []string{`bin/go (GOROOT=/x, found via GOROOT, meets go1.27.0): exit status 1\nunknown import path \"C\": internal error: module loader did not resolve import\n)"`},
+			mode:      "compiled",
+			wantLine:  `bin/go (GOROOT=/x, found via GOROOT, meets go1.27.0): exit status 1\nunknown import path \"C\": internal error: module loader did not resolve import\n)"`,
+			wantOwner: "retained",
+		},
+		{
 			name:      "unknown import C compiled",
 			lines:     []string{`unknown import path "C"`},
 			mode:      "compiled",

@@ -487,6 +487,9 @@ func classify(line, mode string, hasDiagnostic bool) string {
 	for _, pattern := range []string{
 		"package requires cgo, which this pure-Go shell does not provide",
 		`unknown import path "C"`,
+		// The typechecker lanes carry the go-list stderr JSON-escaped, so
+		// the same message arrives as \"C\".
+		`unknown import path \"C\"`,
 	} {
 		if contains(pattern) {
 			return "retained"

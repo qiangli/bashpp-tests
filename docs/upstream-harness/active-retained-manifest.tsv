@@ -21,19 +21,29 @@ testdir:codegen/race.go	interpreted	linux/amd64/v1
 testdir:codegen/select.go	interpreted	linux/amd64/v1
 testdir:codegen/shortcircuit.go	interpreted	linux/amd64/v1
 testdir:codegen/unique.go	interpreted	linux/amd64/v1
+testdir:fixedbugs/bug514.go	interpreted	bash++ import "runtime/cgo": package requires cgo, which this pure-Go shell does not provide
 testdir:fixedbugs/issue15609.go	interpreted	Bash++ backend unsupported execute phase: module package issue15609.dir has non-Go inputs [call_amd64.s]
 testdir:fixedbugs/issue15609.go	compiled	Bash++ backend unsupported execute phase: module package issue15609.dir has non-Go inputs [call_amd64.s]
 testdir:fixedbugs/issue22877.go	interpreted	test/fixedbugs/issue22877.dir/p.s" is not a Go source file
 testdir:fixedbugs/issue22877.go	compiled	test/fixedbugs/issue22877.dir/p.s" is not a Go source file
 testdir:fixedbugs/issue37513.go	interpreted	test/fixedbugs/issue37513.dir/sigill_amd64.s" is not a Go source file
 testdir:fixedbugs/issue37513.go	compiled	test/fixedbugs/issue37513.dir/sigill_amd64.s" is not a Go source file
+testdir:fixedbugs/issue40954.go	interpreted	bash++ import "runtime/cgo": package requires cgo, which this pure-Go shell does not provide
+testdir:fixedbugs/issue42032.go	interpreted	bash++ import "runtime/cgo": package requires cgo, which this pure-Go shell does not provide
+testdir:fixedbugs/issue42076.go	interpreted	bash++ import "runtime/cgo": package requires cgo, which this pure-Go shell does not provide
+testdir:fixedbugs/issue46903.go	interpreted	bash++ import "runtime/cgo": package requires cgo, which this pure-Go shell does not provide
 testdir:fixedbugs/issue47185.go	interpreted	Bash++ backend unsupported execute phase: module package issue47185.dir/bad has non-Go inputs [bad.go]
 testdir:fixedbugs/issue47185.go	compiled	Bash++ backend unsupported execute phase: module package issue47185.dir/bad has non-Go inputs [bad.go]
 testdir:fixedbugs/issue47317.go	interpreted	test/fixedbugs/issue47317.dir/a.s" is not a Go source file
 testdir:fixedbugs/issue47317.go	compiled	test/fixedbugs/issue47317.dir/a.s" is not a Go source file
+testdir:fixedbugs/issue51733.go	interpreted	bash++ import "runtime/cgo": package requires cgo, which this pure-Go shell does not provide
 testdir:fixedbugs/issue74648.go	interpreted	Bash++ backend unsupported execute phase: module package issue74648.dir has non-Go inputs [a.s]
 testdir:fixedbugs/issue74648.go	compiled	Bash++ backend unsupported execute phase: module package issue74648.dir has non-Go inputs [a.s]
 testdir:linknameasm.go	interpreted	test/linknameasm.dir/a_amd64.s" is not a Go source file
 testdir:linknameasm.go	compiled	test/linknameasm.dir/a_amd64.s" is not a Go source file
 testdir:retjmp.go	interpreted	test/retjmp.dir/a.s" is not a Go source file
 testdir:retjmp.go	compiled	test/retjmp.dir/a.s" is not a Go source file
+typechecker:cmd/compile/internal/types2/TestCheck/importC.go	interpreted	bin/go (GOROOT=/srv/sprint151/barrier-a/evidence/goroot, found via GOROOT, meets go1.27.0): exit status 1\nunknown import path \"C\": internal error: module loader did not resolve import\n)"
+typechecker:cmd/compile/internal/types2/TestCheck/importC.go	compiled	bin/go (GOROOT=/srv/sprint151/barrier-a/evidence/goroot, found via GOROOT, meets go1.27.0): exit status 1\nunknown import path \"C\": internal error: module loader did not resolve import\n)"
+typechecker:go/types/TestCheck/importC.go	interpreted	bin/go (GOROOT=/srv/sprint151/barrier-a/evidence/goroot, found via GOROOT, meets go1.27.0): exit status 1\nunknown import path \"C\": internal error: module loader did not resolve import\n)"
+typechecker:go/types/TestCheck/importC.go	compiled	bin/go (GOROOT=/srv/sprint151/barrier-a/evidence/goroot, found via GOROOT, meets go1.27.0): exit status 1\nunknown import path \"C\": internal error: module loader did not resolve import\n)"

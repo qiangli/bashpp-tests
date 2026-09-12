@@ -29,7 +29,6 @@ testdir:fixedbugs/bug434.go	interpreted	panic: 0
 testdir:fixedbugs/bug443.go	compiled	panic: runtime error: invalid memory address or nil pointer dereference
 testdir:fixedbugs/bug461.go	interpreted	unregistered bridge type "*<unsupported embedded field>"
 testdir:fixedbugs/bug483.go	interpreted	gosource: fmt.Fprintf requires a dependency-owned writer; original Write callbacks are unsupported
-testdir:fixedbugs/bug514.go	interpreted	bash++ import "runtime/cgo": package requires cgo, which this pure-Go shell does not provide
 testdir:fixedbugs/bug517.go	interpreted	gosource: build dependency bridge: exit status 1: # command-line-arguments
 testdir:fixedbugs/gcc65755.go	interpreted	exit status 2
 testdir:fixedbugs/issue10353.go	interpreted	bash++: task failed: exit status 1
@@ -84,11 +83,8 @@ testdir:fixedbugs/issue34968.go	compiled	bin/go (GOROOT=/srv/sprint151/barrier-a
 testdir:fixedbugs/issue36516.go	interpreted	gosource: asynchronous or retained original function callbacks are unsupported for __gosource_import_0_1.AllocsPerRun
 testdir:fixedbugs/issue36705.go	interpreted	bin/go (GOROOT=/srv/sprint151/barrier-a/evidence/goroot, found via GOROOT, meets go1.27.0): exit status 1
 testdir:fixedbugs/issue36705.go	compiled	bin/go (GOROOT=/srv/sprint151/barrier-a/evidence/goroot, found via GOROOT, meets go1.27.0): exit status 1
-testdir:fixedbugs/issue40954.go	interpreted	bash++ import "runtime/cgo": package requires cgo, which this pure-Go shell does not provide
 testdir:fixedbugs/issue4099.go	interpreted	issue4099.go:26: missing error "moved to heap: buf2"
 testdir:fixedbugs/issue4099.go	compiled	panic: runtime error: invalid memory address or nil pointer dereference
-testdir:fixedbugs/issue42032.go	interpreted	bash++ import "runtime/cgo": package requires cgo, which this pure-Go shell does not provide
-testdir:fixedbugs/issue42076.go	interpreted	bash++ import "runtime/cgo": package requires cgo, which this pure-Go shell does not provide
 testdir:fixedbugs/issue42944.go	compiled	panic: runtime error: invalid memory address or nil pointer dereference
 testdir:fixedbugs/issue43479.go	compiled	panic: runtime error: invalid memory address or nil pointer dereference
 testdir:fixedbugs/issue43677.go	compiled	panic: runtime error: invalid memory address or nil pointer dereference
@@ -102,13 +98,11 @@ testdir:fixedbugs/issue4620.go	interpreted	panic: m[i] != 2
 testdir:fixedbugs/issue4620.go	compiled	map[0:1 1:2]
 testdir:fixedbugs/issue46234.go	interpreted	gosource: native slice retention or mutation is unsupported for io/ioutil.WriteFile
 testdir:fixedbugs/issue4667.go	interpreted	gosource: asynchronous or retained original function callbacks are unsupported for __gosource_import_0_2.AllocsPerRun
-testdir:fixedbugs/issue46903.go	interpreted	bash++ import "runtime/cgo": package requires cgo, which this pure-Go shell does not provide
 testdir:fixedbugs/issue47227.go	interpreted	bin/go (GOROOT=/srv/sprint151/barrier-a/evidence/goroot, found via GOROOT, meets go1.27.0): exit status 1
 testdir:fixedbugs/issue47227.go	compiled	bin/go (GOROOT=/srv/sprint151/barrier-a/evidence/goroot, found via GOROOT, meets go1.27.0): exit status 1
 testdir:fixedbugs/issue47928.go	interpreted	panic: FAIL
 testdir:fixedbugs/issue47928.go	compiled	panic: FAIL [recovered, repanicked]
 testdir:fixedbugs/issue49110.go	interpreted	gosource: native slice retention or mutation is unsupported for reflect.StructOf
-testdir:fixedbugs/issue51733.go	interpreted	bash++ import "runtime/cgo": package requires cgo, which this pure-Go shell does not provide
 testdir:fixedbugs/issue52127.go	interpreted	gosource: native slice retention or mutation is unsupported for os/exec.Command
 testdir:fixedbugs/issue53454.go	compiled	panic: runtime error: invalid memory address or nil pointer dereference
 testdir:fixedbugs/issue54542.go	interpreted	gosource: native slice retention or mutation is unsupported for os/exec.Command
@@ -182,7 +176,3 @@ testdir:typeparam/issue48645a.go	interpreted	exit status 2
 testdir:typeparam/issue49547.go	interpreted	unregistered bridge type "F[foo]"
 testdir:typeparam/stringer.go	interpreted	typeparam/stringer.go:75:6: gosource: native slice retention or mutation is unsupported for reflect.DeepEqual
 testdir:typeparam/struct.go	interpreted	gosource: build dependency bridge: exit status 1: # command-line-arguments
-typechecker:cmd/compile/internal/types2/TestCheck/importC.go	interpreted	bin/go (GOROOT=/srv/sprint151/barrier-a/evidence/goroot, found via GOROOT, meets go1.27.0): exit status 1\nunknown import path \"C\": internal error: module loader did not resolve import\n)"
-typechecker:cmd/compile/internal/types2/TestCheck/importC.go	compiled	bin/go (GOROOT=/srv/sprint151/barrier-a/evidence/goroot, found via GOROOT, meets go1.27.0): exit status 1\nunknown import path \"C\": internal error: module loader did not resolve import\n)"
-typechecker:go/types/TestCheck/importC.go	interpreted	bin/go (GOROOT=/srv/sprint151/barrier-a/evidence/goroot, found via GOROOT, meets go1.27.0): exit status 1\nunknown import path \"C\": internal error: module loader did not resolve import\n)"
-typechecker:go/types/TestCheck/importC.go	compiled	bin/go (GOROOT=/srv/sprint151/barrier-a/evidence/goroot, found via GOROOT, meets go1.27.0): exit status 1\nunknown import path \"C\": internal error: module loader did not resolve import\n)"
