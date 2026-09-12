@@ -1,5 +1,6 @@
 // Copyright 2026 The bashpp-tests Authors. All rights reserved.
 // Sprint: #151; Story: #58; Story-ID: fd3a390ec1f2
+// Sprint: #154; Story: S154.0; Story-ID: 4877afd3a207
 //
 // partition-emit turns the two corpus evidence lanes into the active product
 // manifests. The go test streams remain the authority for root identity,
@@ -56,7 +57,7 @@ type modeEvidence struct {
 }
 
 type manifestRow struct {
-	root, mode, firstLine string
+	root, mode, firstLine, verdict string
 }
 
 var evidenceStreams = []struct {
@@ -138,17 +139,18 @@ func emitPartitions(interpreted, compiled, out string, stdout io.Writer) (bool, 
 				continue
 			}
 			line, diagnostic := firstLine(me.lines)
+			column := errorCheckVerdictOf(me.lines)
 			candidate := classify(line, mode, diagnostic)
 			if ownerRank(candidate) < ownerRank(owner) {
 				owner = candidate
 			}
-			failing = append(failing, manifestRow{root, mode, line})
+			failing = append(failing, manifestRow{root, mode, line, column.column()})
 		}
 		// PASS/SKIP is still a FAIL verdict by definition. Keep the observed
 		// modes without fabricating a diagnostic so the root remains visible.
 		if len(failing) == 0 {
 			for _, mode := range modes {
-				failing = append(failing, manifestRow{root, mode, ""})
+				failing = append(failing, manifestRow{root, mode, "", errorCheckVerdictOf(ev.modes[mode].lines).column()})
 			}
 		}
 		if owner == "" {
@@ -303,6 +305,135 @@ func readEventStream(dir string) error {
 		return fmt.Errorf("%s: %w", name, err)
 	}
 	return nil
+}
+
+// The three verdict shapes upstream errorCheck emits into the go-test Output
+// stream (testdir_test.go:1226): `<file>:<line>: missing error "<regex>"`,
+// "<file>:<line>: no match for `<regex>` in:" followed by tab-indented
+// got-lines, and `Unmatched Errors:` followed by the extra diagnostic lines.
+// A tab-prefixed line continues the previous error (testdir_test.go:1169).
+var (
+	missingVerdictRe = regexp.MustCompile(`^([^\s:]+):[0-9]+: missing error "`)
+	wordingVerdictRe = regexp.MustCompile(`^[^\s:]+:[0-9]+: no match for `)
+	diagnosticPosRe  = regexp.MustCompile(`^([^\s:]+):([0-9]+)(:[0-9]+)?: `)
+)
+
+// errorCheckVerdict is one mode's upstream errorCheck verdict, counted from
+// the go-test Output lines already collected in modeEvidence.lines. It never
+// reads test source or corpus files and never decides a recipe.
+type errorCheckVerdict struct {
+	missing, wording, extra int
+	class                   string
+}
+
+func (v errorCheckVerdict) column() string {
+	return fmt.Sprintf("missing=%d;wording=%d;extra=%d;class=%s", v.missing, v.wording, v.extra, v.class)
+}
+
+// errorCheckVerdictOf classifies one mode's errorCheck verdict shape:
+// position (a missing error whose diagnostic surfaced elsewhere in the same
+// file), wording (the diagnostic is there, spelled differently),
+// multiplicity (only extra diagnostics, every one on a line that also
+// matched — the matched sibling is visible in the verbose "gc output:"
+// block), missing, extra, or "-" when the row carries no errorCheck verdict
+// at all (a runtime or build failure).
+func errorCheckVerdictOf(lines []string) errorCheckVerdict {
+	v := errorCheckVerdict{}
+	missingFiles := map[string]bool{}
+	// gcSeen counts diagnostics per base-name:line in the "gc output:" block
+	// (the raw compiler output carries full paths; the verdict lines carry
+	// upstream's directory-cut short names).
+	gcSeen := map[string]int{}
+	type entry struct{ file, key string }
+	var unmatched []entry
+	inUnmatched, inGcOutput := false, false
+	for _, raw := range lines {
+		content := strings.TrimLeft(raw, " ")
+		if strings.HasPrefix(content, "\t") {
+			// A tab-prefixed line continues the previous error: wording
+			// got-lines and multi-line diagnostics never count as entries.
+			continue
+		}
+		line := strings.TrimSpace(content)
+		if strings.HasPrefix(line, "testdir_test.go:") {
+			// A new log message: upstream's attribution prefix, with the text
+			// after it (or on the following lines).
+			inUnmatched, inGcOutput = false, false
+			if i := strings.Index(line, ": "); i >= 0 {
+				line = strings.TrimSpace(line[i+2:])
+			} else {
+				continue
+			}
+		}
+		if line == "" {
+			continue
+		}
+		if strings.HasSuffix(line, "gc output:") {
+			inUnmatched, inGcOutput = false, true
+			continue
+		}
+		if framingLine(line) {
+			inUnmatched, inGcOutput = false, false
+			continue
+		}
+		if inGcOutput {
+			if m := diagnosticPosRe.FindStringSubmatch(line); m != nil {
+				gcSeen[baseName(m[1])+":"+m[2]]++
+			}
+			continue
+		}
+		switch {
+		case missingVerdictRe.MatchString(line):
+			v.missing++
+			missingFiles[missingVerdictRe.FindStringSubmatch(line)[1]] = true
+			inUnmatched = false
+		case wordingVerdictRe.MatchString(line):
+			v.wording++
+			inUnmatched = false
+		case line == "Unmatched Errors:":
+			inUnmatched = true
+		case inUnmatched:
+			m := diagnosticPosRe.FindStringSubmatch(line)
+			if m == nil {
+				inUnmatched = false
+				continue
+			}
+			v.extra++
+			unmatched = append(unmatched, entry{file: m[1], key: baseName(m[1]) + ":" + m[2]})
+		}
+	}
+
+	positionHit := false
+	allSiblings := len(unmatched) > 0
+	for _, e := range unmatched {
+		if missingFiles[e.file] {
+			positionHit = true
+		}
+		// The unmatched diagnostic is itself part of the gc output, so a line
+		// that also matched shows at least two diagnostics at the position.
+		if gcSeen[e.key] < 2 {
+			allSiblings = false
+		}
+	}
+	switch {
+	case v.missing == 0 && v.wording == 0 && v.extra == 0:
+		v.class = "-"
+	case v.missing > 0 && positionHit:
+		v.class = "position"
+	case v.wording > 0:
+		v.class = "wording"
+	case v.missing > 0 && v.extra == 0:
+		v.class = "missing"
+	case v.missing == 0 && allSiblings:
+		v.class = "multiplicity"
+	default:
+		v.class = "extra"
+	}
+	return v
+}
+
+func baseName(file string) string {
+	return file[strings.LastIndexByte(file, '/')+1:]
 }
 
 func exitStatus(line string) bool {
@@ -613,9 +744,9 @@ func manifestName(owner string) string {
 
 func writeManifest(name string, rows []manifestRow) error {
 	var b strings.Builder
-	b.WriteString("root\tmode\tfirst_line\n")
+	b.WriteString("root\tmode\tfirst_line\tverdict\n")
 	for _, row := range rows {
-		fmt.Fprintf(&b, "%s\t%s\t%s\n", row.root, row.mode, row.firstLine)
+		fmt.Fprintf(&b, "%s\t%s\t%s\t%s\n", row.root, row.mode, row.firstLine, row.verdict)
 	}
 	return os.WriteFile(name, []byte(b.String()), 0o644)
 }

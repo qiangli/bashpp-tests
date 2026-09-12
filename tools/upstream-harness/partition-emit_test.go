@@ -1,5 +1,6 @@
 // Copyright 2026 The bashpp-tests Authors. All rights reserved.
 // Sprint: #151; Story: #58; Story-ID: fd3a390ec1f2
+// Sprint: #154; Story: S154.0; Story-ID: 4877afd3a207
 package main
 
 import (
@@ -67,25 +68,26 @@ func TestEmitPartitions(t *testing.T) {
 		t.Fatal("emitPartitions reported no failures")
 	}
 
+	noVerdict := "missing=0;wording=0;extra=0;class=-"
 	wantFiles := map[string]string{
-		"active-151-manifest.tsv": "root\tmode\tfirst_line\n" +
-			"testdir:s151.go\tinterpreted\ttest/s151.go:4: gosource: unsupported LabeledStmt\n" +
-			"testdir:s151.go\tcompiled\tgosource: unsupported RangeStmt\n",
-		"active-152-manifest.tsv": "root\tmode\tfirst_line\n" +
-			"testdir:mixed.go\tinterpreted\tpanic: interpreted failure\n" +
-			"testdir:mixed.go\tcompiled\tBASHPP-EEXPR: compiled failure\n" +
-			"testdir:s152.go\tinterpreted\tLOWER-ETYPE: cannot lower expression\n" +
-			"testdir:s152.go\tcompiled\tLOWER-ETYPE: compiled failure\n",
-		"active-153-manifest.tsv": "root\tmode\tfirst_line\n" +
-			"typechecker:go/types/TestCheck/runtime.go\tinterpreted\tpanic: runtime error: boom\n" +
-			"typechecker:go/types/TestCheck/runtime.go\tcompiled\truntime error: boom\n",
-		"active-154-manifest.tsv": "root\tmode\tfirst_line\n" +
-			"typechecker:go/types/TestCheck/escape.go\tinterpreted\tescape.go:8: missing error \"x does not escape\"\n" +
-			"typechecker:go/types/TestCheck/escape.go\tcompiled\tescape.go:8: wrong error\n",
-		"active-unclassified.tsv": "root\tmode\tfirst_line\n" +
-			"package:example/unclassified\tinterpreted\tmystery product limitation\n",
-		"active-retained-manifest.tsv": "root\tmode\tfirst_line\n" +
-			"testdir:kept.go\tinterpreted\tBash++ backend unsupported execute phase: module package kept.dir has non-Go inputs [a.s]\n",
+		"active-151-manifest.tsv": "root\tmode\tfirst_line\tverdict\n" +
+			"testdir:s151.go\tinterpreted\ttest/s151.go:4: gosource: unsupported LabeledStmt\t" + noVerdict + "\n" +
+			"testdir:s151.go\tcompiled\tgosource: unsupported RangeStmt\t" + noVerdict + "\n",
+		"active-152-manifest.tsv": "root\tmode\tfirst_line\tverdict\n" +
+			"testdir:mixed.go\tinterpreted\tpanic: interpreted failure\t" + noVerdict + "\n" +
+			"testdir:mixed.go\tcompiled\tBASHPP-EEXPR: compiled failure\t" + noVerdict + "\n" +
+			"testdir:s152.go\tinterpreted\tLOWER-ETYPE: cannot lower expression\t" + noVerdict + "\n" +
+			"testdir:s152.go\tcompiled\tLOWER-ETYPE: compiled failure\t" + noVerdict + "\n",
+		"active-153-manifest.tsv": "root\tmode\tfirst_line\tverdict\n" +
+			"typechecker:go/types/TestCheck/runtime.go\tinterpreted\tpanic: runtime error: boom\t" + noVerdict + "\n" +
+			"typechecker:go/types/TestCheck/runtime.go\tcompiled\truntime error: boom\t" + noVerdict + "\n",
+		"active-154-manifest.tsv": "root\tmode\tfirst_line\tverdict\n" +
+			"typechecker:go/types/TestCheck/escape.go\tinterpreted\tescape.go:8: missing error \"x does not escape\"\tmissing=1;wording=0;extra=0;class=missing\n" +
+			"typechecker:go/types/TestCheck/escape.go\tcompiled\tescape.go:8: wrong error\t" + noVerdict + "\n",
+		"active-unclassified.tsv": "root\tmode\tfirst_line\tverdict\n" +
+			"package:example/unclassified\tinterpreted\tmystery product limitation\t" + noVerdict + "\n",
+		"active-retained-manifest.tsv": "root\tmode\tfirst_line\tverdict\n" +
+			"testdir:kept.go\tinterpreted\tBash++ backend unsupported execute phase: module package kept.dir has non-Go inputs [a.s]\t" + noVerdict + "\n",
 		"active-summary.tsv": "runner\tPASS\tFAIL\tSKIP\ttotal\n" +
 			"testdir\t1\t4\t1\t6\n" +
 			"typechecker\t0\t2\t0\t2\n" +
@@ -302,6 +304,95 @@ func TestCgoRootWithCrossModeRuntimeFailure(t *testing.T) {
 	}
 	if strings.Contains(string(retained), "testdir:cgo_cross.go") {
 		t.Fatalf("cgo_cross.go should not be in retained manifest:\n%s", retained)
+	}
+}
+
+// TestErrorCheckVerdictColumn drives the verdict column with literal go-test
+// Output lines in the three upstream errorCheck shapes (testdir_test.go:1226):
+// `missing error "…"`, "no match for `…` in:" with tab-indented got-lines, and
+// `Unmatched Errors:` with the extra diagnostics. A tab-prefixed line
+// continues the previous error (testdir_test.go:1169) and must never count as
+// a separate entry.
+func TestErrorCheckVerdictColumn(t *testing.T) {
+	tests := []struct {
+		name  string
+		lines []string
+		want  string
+	}{
+		{
+			name: "missing",
+			lines: []string{
+				"=== RUN   Test/miss.go",
+				"    testdir_test.go:1257: miss.go:8: missing error \"undefined\"",
+				"--- FAIL: Test/miss.go (0.01s)",
+			},
+			want: "missing=1;wording=0;extra=0;class=missing",
+		},
+		{
+			name: "wording",
+			lines: []string{
+				"=== RUN   Test/word.go",
+				"    testdir_test.go:1276: word.go:4: no match for `cannot use` in:",
+				"        \tword.go:4:2: BASHPP-ETYPE: value mismatch",
+				"--- FAIL: Test/word.go (0.01s)",
+			},
+			want: "missing=0;wording=1;extra=0;class=wording",
+		},
+		{
+			name: "extra with a tab continuation that is not a second entry",
+			lines: []string{
+				"=== RUN   Test/extra.go",
+				"    testdir_test.go:1300: ",
+				"        Unmatched Errors:",
+				"        extra.go:9:2: gosource: unexpected declaration",
+				"        \textra.go:9:2: continued detail of the same error",
+				"--- FAIL: Test/extra.go (0.01s)",
+			},
+			want: "missing=0;wording=0;extra=1;class=extra",
+		},
+		{
+			name: "position: the missing diagnostic surfaced elsewhere in the same file",
+			lines: []string{
+				"=== RUN   Test/pos.go",
+				"    testdir_test.go:1226: ",
+				"        pos.go:4: missing error \"undefined: x\"",
+				"        Unmatched Errors:",
+				"        pos.go:6:2: undefined: x",
+				"--- FAIL: Test/pos.go (0.01s)",
+			},
+			want: "missing=1;wording=0;extra=1;class=position",
+		},
+		{
+			name: "multiplicity: every extra is on a line that also matched (gc output sibling)",
+			lines: []string{
+				"=== RUN   Test/multi.go",
+				"    testdir_test.go:1233: gc output:",
+				"        /work/goroot/test/multi.go:7:2: undefined: y",
+				"        /work/goroot/test/multi.go:7:9: BASHPP-EDUP: second diagnostic for y",
+				"    testdir_test.go:1300: ",
+				"        Unmatched Errors:",
+				"        multi.go:7:9: BASHPP-EDUP: second diagnostic for y",
+				"--- FAIL: Test/multi.go (0.01s)",
+			},
+			want: "missing=0;wording=0;extra=1;class=multiplicity",
+		},
+		{
+			name: "no errorCheck verdict at all (runtime failure)",
+			lines: []string{
+				"=== RUN   Test/crash.go",
+				"    testdir_test.go:153: exit status 2",
+				"        panic: runtime error: index out of range",
+				"--- FAIL: Test/crash.go (0.01s)",
+			},
+			want: "missing=0;wording=0;extra=0;class=-",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := errorCheckVerdictOf(tt.lines).column(); got != tt.want {
+				t.Fatalf("errorCheckVerdictOf = %q, want %q", got, tt.want)
+			}
+		})
 	}
 }
 
