@@ -1,0 +1,6 @@
+root	mode	first_line
+testdir:64bit.go	interpreted	64bit.go:523:14: BASHPP-EASSIGN-UNDECLARED: RHS true is not declared
+testdir:fixedbugs/issue47087.go	interpreted	test/fixedbugs/issue47087.dir/main.go:13:7: BASHPP-ECOMPARE-NONCOMPARABLE: slice values can only be compared to nil
+testdir:fixedbugs/issue47087.go	compiled	panic: runtime error: comparing uncomparable type struct { _ []int }
+testdir:reorder.go	interpreted	reorder.go:135:7: BASHPP-EASSIGN-ARITY: 2 variable(s) but 1 value(s)
+testdir:typeparam/issue48042.go	interpreted	BASHPP-EPOINTER-TYPE: undefined type: T

@@ -200,6 +200,13 @@ func TestPartitionRuleChanges(t *testing.T) {
 			wantOwner: "retained",
 		},
 		{
+			name:      "could not import C keeps the diagnostic past a quoted goroot path",
+			lines:     []string{"testdir_test.go:153: exit status 2", "/srv/x/goroot/test/fixedbugs/issue34968.go:12:8: could not import C (go list failed using go SDK go1.27.0 at /srv/x/goroot/bin/go (GOROOT=/srv/x/goroot, found via GOROOT, meets go1.27.0): exit status 1"},
+			mode:      "compiled",
+			wantLine:  "test/fixedbugs/issue34968.go:12:8: could not import C (go list failed using go SDK go1.27.0 at /srv/x/goroot/bin/go (GOROOT=/srv/x/goroot, found via GOROOT, meets go1.27.0): exit status 1",
+			wantOwner: "retained",
+		},
+		{
 			name:      "unknown import C compiled",
 			lines:     []string{`unknown import path "C"`},
 			mode:      "compiled",

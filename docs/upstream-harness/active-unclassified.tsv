@@ -56,7 +56,6 @@ testdir:fixedbugs/issue33460.go	interpreted	test/fixedbugs/issue33460.go:34:2: d
 testdir:fixedbugs/issue33460.go	compiled	test/fixedbugs/issue33460.go:34:2: duplicate key "a" in map literal
 testdir:fixedbugs/issue49665.go	interpreted	string for interface {}
 testdir:fixedbugs/issue5793.go	interpreted	complex requires 2 arguments
-testdir:fixedbugs/issue58563.go	compiled	src/test/a)
 testdir:fixedbugs/issue6977.go	interpreted	test/fixedbugs/issue6977.go:37:26: duplicate method m
 testdir:fixedbugs/issue6977.go	compiled	test/fixedbugs/issue6977.go:37:26: duplicate method m
 testdir:fixedbugs/issue70156.go	interpreted	string for interface {}

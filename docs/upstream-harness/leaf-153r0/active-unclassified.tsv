@@ -1,0 +1,4 @@
+root	mode	first_line
+testdir:blank.go	interpreted	gosource: package-level name T._ declared twice in the lowered file
+testdir:blank.go	compiled	gosource: package-level name T._ declared twice in the lowered file
+testdir:fixedbugs/issue56990.go	interpreted	value.go:586: Hello World

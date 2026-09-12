@@ -1,0 +1,39 @@
+root	mode	first_line
+testdir:fixedbugs/bug089.go	compiled	test/fixedbugs/bug089.go:12:1: LOWER-EUNSUPPORTED: function declaration without body
+testdir:fixedbugs/bug150.go	compiled	test/fixedbugs/bug150.go:10:1: LOWER-EUNSUPPORTED: function declaration without body
+testdir:fixedbugs/bug245.go	compiled	test/fixedbugs/bug245.go:10:1: LOWER-EUNSUPPORTED: function declaration without body
+testdir:fixedbugs/bug392.go	compiled	test/fixedbugs/bug392.dir/pkg2.go:25:1: LOWER-EUNSUPPORTED: function declaration without body
+testdir:fixedbugs/bug443.go	compiled	test/fixedbugs/bug443.go:16:1: LOWER-EUNSUPPORTED: function declaration without body
+testdir:fixedbugs/bug514.go	interpreted	bash++ import "runtime/cgo": package requires cgo, which this pure-Go shell does not provide
+testdir:fixedbugs/issue11699.go	compiled	test/fixedbugs/issue11699.go:11:1: LOWER-EUNSUPPORTED: function declaration without body
+testdir:fixedbugs/issue17596.go	compiled	test/fixedbugs/issue17596.go:13:1: LOWER-EUNSUPPORTED: function declaration without body
+testdir:fixedbugs/issue23311.go	compiled	test/fixedbugs/issue23311.dir/main.go:10:1: LOWER-EUNSUPPORTED: function declaration without body
+testdir:fixedbugs/issue28430.go	compiled	test/fixedbugs/issue28430.go:12:1: LOWER-EUNSUPPORTED: function declaration without body
+testdir:fixedbugs/issue30061.go	compiled	test/fixedbugs/issue30061.go:14:1: LOWER-EUNSUPPORTED: function declaration without body
+testdir:fixedbugs/issue31010.go	compiled	test/fixedbugs/issue31010.go:14:1: LOWER-EUNSUPPORTED: function declaration without body
+testdir:fixedbugs/issue31915.go	compiled	test/fixedbugs/issue31915.go:9:1: LOWER-EUNSUPPORTED: function declaration without body
+testdir:fixedbugs/issue34968.go	interpreted	fixedbugs/issue34968.go:12:8: could not import C (go list failed using go SDK go1.27.0 at /srv/sprint153/leaf-r0/evidence/goroot/bin/go (GOROOT=/srv/sprint153/leaf-r0/evidence/goroot, found via GOROOT, meets go1.27.0): exit status 1
+testdir:fixedbugs/issue34968.go	compiled	fixedbugs/issue34968.go:12:8: could not import C (go list failed using go SDK go1.27.0 at /srv/sprint153/leaf-r0/evidence/goroot/bin/go (GOROOT=/srv/sprint153/leaf-r0/evidence/goroot, found via GOROOT, meets go1.27.0): exit status 1
+testdir:fixedbugs/issue36705.go	interpreted	fixedbugs/issue36705.go:13:8: could not import C (go list failed using go SDK go1.27.0 at /srv/sprint153/leaf-r0/evidence/goroot/bin/go (GOROOT=/srv/sprint153/leaf-r0/evidence/goroot, found via GOROOT, meets go1.27.0): exit status 1
+testdir:fixedbugs/issue36705.go	compiled	fixedbugs/issue36705.go:13:8: could not import C (go list failed using go SDK go1.27.0 at /srv/sprint153/leaf-r0/evidence/goroot/bin/go (GOROOT=/srv/sprint153/leaf-r0/evidence/goroot, found via GOROOT, meets go1.27.0): exit status 1
+testdir:fixedbugs/issue40954.go	interpreted	bash++ import "runtime/cgo": package requires cgo, which this pure-Go shell does not provide
+testdir:fixedbugs/issue42032.go	interpreted	bash++ import "runtime/cgo": package requires cgo, which this pure-Go shell does not provide
+testdir:fixedbugs/issue42076.go	interpreted	bash++ import "runtime/cgo": package requires cgo, which this pure-Go shell does not provide
+testdir:fixedbugs/issue42944.go	compiled	test/fixedbugs/issue42944.go:23:1: LOWER-EUNSUPPORTED: function declaration without body
+testdir:fixedbugs/issue43479.go	compiled	test/fixedbugs/issue43479.dir/a.go:11:1: LOWER-EUNSUPPORTED: function declaration without body
+testdir:fixedbugs/issue43677.go	compiled	test/fixedbugs/issue43677.go:12:1: LOWER-EUNSUPPORTED: function declaration without body
+testdir:fixedbugs/issue45323.go	compiled	test/fixedbugs/issue45323.go:9:1: LOWER-EUNSUPPORTED: function declaration without body
+testdir:fixedbugs/issue45344.go	compiled	test/fixedbugs/issue45344.go:20:1: LOWER-EUNSUPPORTED: function declaration without body
+testdir:fixedbugs/issue46903.go	interpreted	bash++ import "runtime/cgo": package requires cgo, which this pure-Go shell does not provide
+testdir:fixedbugs/issue47227.go	interpreted	fixedbugs/issue47227.go:12:8: could not import C (go list failed using go SDK go1.27.0 at /srv/sprint153/leaf-r0/evidence/goroot/bin/go (GOROOT=/srv/sprint153/leaf-r0/evidence/goroot, found via GOROOT, meets go1.27.0): exit status 1
+testdir:fixedbugs/issue47227.go	compiled	fixedbugs/issue47227.go:12:8: could not import C (go list failed using go SDK go1.27.0 at /srv/sprint153/leaf-r0/evidence/goroot/bin/go (GOROOT=/srv/sprint153/leaf-r0/evidence/goroot, found via GOROOT, meets go1.27.0): exit status 1
+testdir:fixedbugs/issue51733.go	interpreted	bash++ import "runtime/cgo": package requires cgo, which this pure-Go shell does not provide
+testdir:fixedbugs/issue53454.go	compiled	test/fixedbugs/issue53454.go:89:1: LOWER-EUNSUPPORTED: function declaration without body
+testdir:fixedbugs/issue58826.go	compiled	test/fixedbugs/issue58826.go:23:1: LOWER-EUNSUPPORTED: function declaration without body
+testdir:fixedbugs/issue74836.go	compiled	test/fixedbugs/issue74836.go:17:1: LOWER-EUNSUPPORTED: function declaration without body
+testdir:fixedbugs/issue9608.go	compiled	test/fixedbugs/issue9608.dir/issue9608.go:7:1: LOWER-EUNSUPPORTED: function declaration without body
+testdir:func2.go	compiled	test/func2.go:16:1: LOWER-EUNSUPPORTED: function declaration without body
+testdir:import.go	compiled	test/import.go:16:1: LOWER-EUNSUPPORTED: function declaration without body
+testdir:import2.go	compiled	test/import2.dir/import2.go:41:1: LOWER-EUNSUPPORTED: function declaration without body
+testdir:live1.go	compiled	test/live1.go:30:1: LOWER-EUNSUPPORTED: function declaration without body
+testdir:parentype.go	compiled	test/parentype.go:11:1: LOWER-EUNSUPPORTED: function declaration without body

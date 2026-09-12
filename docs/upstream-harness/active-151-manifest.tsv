@@ -632,7 +632,7 @@ testdir:fixedbugs/issue54467.go	interpreted	BASHPP-ESELECTOR-EXPR: unsupported s
 testdir:fixedbugs/issue54632.go	interpreted	fixedbugs/issue54632.go:21:7: BASHPP-EASSIGN-UNDECLARED: RHS pass is not declared
 testdir:fixedbugs/issue54911.go	compiled	test/fixedbugs/issue54911.go:16:2: LOWER-ETYPE: cannot use generic type Set without instantiation
 testdir:fixedbugs/issue54912.go	interpreted	bashy: --go-package, --go-import-base and --go-import-path require --check or --go-list; interpreted execution of an explicit package set is not supported
-testdir:fixedbugs/issue54912.go	compiled	src/test/a)
+testdir:fixedbugs/issue54912.go	compiled	main.go:4:8: package test/a is not in std (/srv/sprint151/barrier-a/evidence/goroot/src/test/a)
 testdir:fixedbugs/issue55122.go	interpreted	fixedbugs/issue55122.go:34:8: gosource: unsupported expression *ast.ArrayType
 testdir:fixedbugs/issue55122.go	compiled	fixedbugs/issue55122.go:34:8: gosource: unsupported expression *ast.ArrayType
 testdir:fixedbugs/issue55122b.go	interpreted	fixedbugs/issue55122b.go:34:8: gosource: unsupported expression *ast.ArrayType
@@ -750,10 +750,6 @@ testdir:fixedbugs/issue70175.go	compiled	test/fixedbugs/issue70175.go:10:1: goso
 testdir:fixedbugs/issue70189.go	interpreted	BASHPP-ECOLLECTION-KEY: unsupported map key type float64
 testdir:fixedbugs/issue7023.go	interpreted	test/fixedbugs/issue7023.dir/a.go:8:2: gosource: unsupported labeled branch
 testdir:fixedbugs/issue7023.go	compiled	test/fixedbugs/issue7023.dir/a.go:8:2: gosource: unsupported labeled branch
-testdir:fixedbugs/issue71225.go	interpreted	test/fixedbugs/issue71225.go:12:8: could not import C (go list failed using go SDK go1.27.0 at /srv/sprint151/barrier-a/evidence/goroot/bin/go (GOROOT=/srv/sprint151/barrier-a/evidence/goroot, found via GOROOT, meets go1.27.0): exit status 1
-testdir:fixedbugs/issue71225.go	compiled	test/fixedbugs/issue71225.go:12:8: could not import C (go list failed using go SDK go1.27.0 at /srv/sprint151/barrier-a/evidence/goroot/bin/go (GOROOT=/srv/sprint151/barrier-a/evidence/goroot, found via GOROOT, meets go1.27.0): exit status 1
-testdir:fixedbugs/issue71226.go	interpreted	test/fixedbugs/issue71226.go:20:8: could not import C (go list failed using go SDK go1.27.0 at /srv/sprint151/barrier-a/evidence/goroot/bin/go (GOROOT=/srv/sprint151/barrier-a/evidence/goroot, found via GOROOT, meets go1.27.0): exit status 1
-testdir:fixedbugs/issue71226.go	compiled	test/fixedbugs/issue71226.go:20:8: could not import C (go list failed using go SDK go1.27.0 at /srv/sprint151/barrier-a/evidence/goroot/bin/go (GOROOT=/srv/sprint151/barrier-a/evidence/goroot, found via GOROOT, meets go1.27.0): exit status 1
 testdir:fixedbugs/issue71759.go	interpreted	fixedbugs/issue71759.go:11:9: fixedbugs/issue71759.go:11:15: BASHPP-ECOLLECTION-BOUNDS: index 0 out of bounds for length 0
 testdir:fixedbugs/issue71857.go	interpreted	type *__gosource_import_0_0.Uint64 has no method Or
 testdir:fixedbugs/issue72063.go	interpreted	BASHPP-EGENERIC-INFER: cannot infer type arguments for Y
@@ -1274,6 +1270,8 @@ typechecker:cmd/compile/internal/types2/TestCheck/expr3.go	interpreted	check_tes
 typechecker:cmd/compile/internal/types2/TestCheck/expr3.go	compiled	check_test.go:256: ../../../../internal/types/testdata/check/expr3.go:251:2: no error expected: "undefined: assert"
 typechecker:cmd/compile/internal/types2/TestCheck/go1_13.go	interpreted	check_test.go:256: ../../../../internal/types/testdata/check/go1_13.go:16:2: no error expected: "\tother declaration of method m"
 typechecker:cmd/compile/internal/types2/TestCheck/go1_13.go	compiled	check_test.go:256: ../../../../internal/types/testdata/check/go1_13.go:16:2: no error expected: "\tother declaration of method m"
+typechecker:cmd/compile/internal/types2/TestCheck/importC.go	interpreted	check_test.go:256: ../../../../internal/types/testdata/check/importC.go:9:8: no error expected: "could not import C (go list failed using go SDK go1.27.0 at /srv/sprint151/barrier-a/evidence/goroot/bin/go (GOROOT=/srv/sprint151/barrier-a/evidence/goroot, found via GOROOT, meets go1.27.0): exit status 1\nunknown import path \"C\": internal error: module loader did not resolve import\n)"
+typechecker:cmd/compile/internal/types2/TestCheck/importC.go	compiled	check_test.go:256: ../../../../internal/types/testdata/check/importC.go:9:8: no error expected: "could not import C (go list failed using go SDK go1.27.0 at /srv/sprint151/barrier-a/evidence/goroot/bin/go (GOROOT=/srv/sprint151/barrier-a/evidence/goroot, found via GOROOT, meets go1.27.0): exit status 1\nunknown import path \"C\": internal error: module loader did not resolve import\n)"
 typechecker:cmd/compile/internal/types2/TestCheck/importdecl0	interpreted	check_test.go:256: ../../../../internal/types/testdata/check/importdecl0/importdecl0a.go:15:2: no error expected: "\tother declaration of reflect"
 typechecker:cmd/compile/internal/types2/TestCheck/importdecl0	compiled	check_test.go:256: ../../../../internal/types/testdata/check/importdecl0/importdecl0a.go:15:2: no error expected: "\tother declaration of reflect"
 typechecker:cmd/compile/internal/types2/TestCheck/init0.go	interpreted	check_test.go:256: ../../../../internal/types/testdata/check/init0.go:13:2: no error expected: "\tx0 refers to y0"
@@ -1378,6 +1376,8 @@ typechecker:go/types/TestCheck/expr3.go	interpreted	check_test.go:271: ../../int
 typechecker:go/types/TestCheck/expr3.go	compiled	check_test.go:271: ../../internal/types/testdata/check/expr3.go:251:2: no error expected: "undefined: assert"
 typechecker:go/types/TestCheck/go1_13.go	interpreted	check_test.go:271: ../../internal/types/testdata/check/go1_13.go:16:2: no error expected: "\tother declaration of method m"
 typechecker:go/types/TestCheck/go1_13.go	compiled	check_test.go:271: ../../internal/types/testdata/check/go1_13.go:16:2: no error expected: "\tother declaration of method m"
+typechecker:go/types/TestCheck/importC.go	interpreted	check_test.go:271: ../../internal/types/testdata/check/importC.go:9:8: no error expected: "could not import C (go list failed using go SDK go1.27.0 at /srv/sprint151/barrier-a/evidence/goroot/bin/go (GOROOT=/srv/sprint151/barrier-a/evidence/goroot, found via GOROOT, meets go1.27.0): exit status 1\nunknown import path \"C\": internal error: module loader did not resolve import\n)"
+typechecker:go/types/TestCheck/importC.go	compiled	check_test.go:271: ../../internal/types/testdata/check/importC.go:9:8: no error expected: "could not import C (go list failed using go SDK go1.27.0 at /srv/sprint151/barrier-a/evidence/goroot/bin/go (GOROOT=/srv/sprint151/barrier-a/evidence/goroot, found via GOROOT, meets go1.27.0): exit status 1\nunknown import path \"C\": internal error: module loader did not resolve import\n)"
 typechecker:go/types/TestCheck/importdecl0	interpreted	check_test.go:271: ../../internal/types/testdata/check/importdecl0/importdecl0a.go:15:2: no error expected: "\tother declaration of reflect"
 typechecker:go/types/TestCheck/importdecl0	compiled	check_test.go:271: ../../internal/types/testdata/check/importdecl0/importdecl0a.go:15:2: no error expected: "\tother declaration of reflect"
 typechecker:go/types/TestCheck/init0.go	interpreted	check_test.go:271: ../../internal/types/testdata/check/init0.go:13:2: no error expected: "\tx0 refers to y0"

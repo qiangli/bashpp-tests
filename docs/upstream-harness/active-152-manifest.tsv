@@ -153,7 +153,7 @@ testdir:fixedbugs/issue16133.go	compiled	main.go:4:8: "./a2" is relative, but re
 testdir:fixedbugs/issue16317.go	compiled	main.go:4:8: "./a" is relative, but relative import paths are not supported in module mode
 testdir:fixedbugs/issue16616.go	compiled	main.go:4:8: "./a" is relative, but relative import paths are not supported in module mode
 testdir:fixedbugs/issue17270.go	compiled	test/fixedbugs/issue17270.go:9:1: LOWER-ETYPE: "unsafe" imported as __gosource_import_0_0 and not used
-testdir:fixedbugs/issue18149.go	interpreted	src/reflect/value.go:369; want /foo/bar.go:123 (or suffix /foo/bar.go)
+testdir:fixedbugs/issue18149.go	interpreted	panic: got /srv/sprint151/barrier-a/evidence/goroot/src/reflect/value.go:369; want /foo/bar.go:123 (or suffix /foo/bar.go)
 testdir:fixedbugs/issue18149.go	compiled	./fixedbugs/issue18149.go:39:36: invalid column number: 0
 testdir:fixedbugs/issue18895.go	interpreted	p.go:7: missing error "can inline"
 testdir:fixedbugs/issue18895.go	compiled	main.go:4:8: "./p" is relative, but relative import paths are not supported in module mode
@@ -161,7 +161,7 @@ testdir:fixedbugs/issue19261.go	interpreted	p.go:7: missing error "can inline F"
 testdir:fixedbugs/issue19261.go	compiled	main.go:4:8: "./p" is relative, but relative import paths are not supported in module mode
 testdir:fixedbugs/issue20682.go	compiled	main.go:4:8: "./p" is relative, but relative import paths are not supported in module mode
 testdir:fixedbugs/issue22344.go	compiled	test/fixedbugs/issue22344.go:10:1: LOWER-ETYPE: "unsafe" imported as __gosource_import_0_0 and not used
-testdir:fixedbugs/issue22662.go	interpreted	src/reflect/value.go:369; want ??:1 (or suffix /??)
+testdir:fixedbugs/issue22662.go	interpreted	panic: got /srv/sprint151/barrier-a/evidence/goroot/src/reflect/value.go:369; want ??:1 (or suffix /??)
 testdir:fixedbugs/issue22662.go	compiled	./fixedbugs/issue22662.go:38:34: invalid column number: 0
 testdir:fixedbugs/issue22962.go	compiled	main.go:4:8: "./a" is relative, but relative import paths are not supported in module mode
 testdir:fixedbugs/issue23179.go	compiled	main.go:4:8: "./a" is relative, but relative import paths are not supported in module mode
@@ -218,7 +218,10 @@ testdir:fixedbugs/issue52590.go	compiled	main.go:4:8: "./a" is relative, but rel
 testdir:fixedbugs/issue52862.go	compiled	main.go:4:8: "./a" is relative, but relative import paths are not supported in module mode
 testdir:fixedbugs/issue5470.go	compiled	main.go:4:8: "./a" is relative, but relative import paths are not supported in module mode
 testdir:fixedbugs/issue5614.go	compiled	main.go:4:8: "./rethinkgo" is relative, but relative import paths are not supported in module mode
+testdir:fixedbugs/issue56280.go	interpreted	a.go:7: missing error "can inline F"
+testdir:fixedbugs/issue56280.go	compiled	main.go:4:8: package test/a is not in std (/srv/sprint151/barrier-a/evidence/goroot/src/test/a)
 testdir:fixedbugs/issue58339.go	compiled	main.go:4:8: "./a" is relative, but relative import paths are not supported in module mode
+testdir:fixedbugs/issue58563.go	compiled	main.go:7:8: package test/a is not in std (/srv/sprint151/barrier-a/evidence/goroot/src/test/a)
 testdir:fixedbugs/issue5910.go	compiled	main.go:4:8: "./a" is relative, but relative import paths are not supported in module mode
 testdir:fixedbugs/issue60945.go	compiled	main.go:7:8: "./a" is relative, but relative import paths are not supported in module mode
 testdir:fixedbugs/issue6295.go	compiled	main.go:4:8: "./p0" is relative, but relative import paths are not supported in module mode

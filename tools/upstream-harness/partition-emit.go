@@ -414,7 +414,11 @@ func normalizeLine(line string) string {
 			line = line[end+2:]
 		}
 	}
-	if i := strings.Index(line, "/goroot/"); i >= 0 {
+	// Strip the run's GOROOT prefix from a LEADING path only. A goroot path
+	// quoted inside a message ("could not import C (go list failed using
+	// … /goroot/bin/go …)") is not the diagnostic's position, and cutting
+	// there would discard the diagnostic itself.
+	if i := strings.Index(line, "/goroot/"); i >= 0 && !strings.Contains(line[:i], " ") {
 		line = line[i+len("/goroot/"):]
 	}
 	return strings.TrimSpace(line)
@@ -490,6 +494,8 @@ func classify(line, mode string, hasDiagnostic bool) string {
 		// The typechecker lanes carry the go-list stderr JSON-escaped, so
 		// the same message arrives as \"C\".
 		`unknown import path \"C\"`,
+		// The checker's own refusal of import "C" (both modes).
+		"could not import C",
 	} {
 		if contains(pattern) {
 			return "retained"
@@ -506,7 +512,7 @@ func classify(line, mode string, hasDiagnostic bool) string {
 	}
 	for _, pattern := range []string{
 		"require --check or --go-list", "gosource: unsupported", "could not import internal/",
-		"could not import C", "invalid recursive type", "initialization cycle",
+		"invalid recursive type", "initialization cycle",
 		"already declared through", "not an expression", "requires go1.",
 		"imported and not used", "cannot use ", "invalid implicit pointer",
 		"outside a type constraint",

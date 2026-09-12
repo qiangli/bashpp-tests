@@ -129,8 +129,6 @@ testdir:fixedbugs/issue50372.go	compiled	test/fixedbugs/issue50372.go:16:19: exp
 testdir:fixedbugs/issue52193.go	interpreted	issue52193.go:12: missing error "can inline f"
 testdir:fixedbugs/issue54159.go	interpreted	issue54159.go:10: missing error "cannot inline run: marked go:noinline"
 testdir:fixedbugs/issue54159.go	compiled	test/fixedbugs/issue54159.go:19:6: can inline g with cost 0 as: func() {  }
-testdir:fixedbugs/issue56280.go	interpreted	a.go:7: missing error "can inline F"
-testdir:fixedbugs/issue56280.go	compiled	src/test/a)
 testdir:fixedbugs/issue63657.go	interpreted	f: expected 3 argument(s), got 0
 testdir:fixedbugs/issue6899.go	interpreted	output does not match expected in fixedbugs/issue6899.out. Instead saw
 testdir:fixedbugs/issue75278.go	interpreted	issue75278.go:11: missing error "can inline NoIndices with cost 4 as:.*"

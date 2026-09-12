@@ -1,0 +1,23 @@
+root	mode	first_line
+testdir:abi/result_live.go	interpreted	result_live.go:13: missing error "live at call to g: r"
+testdir:abi/result_live.go	compiled	test/abi/result_live.go:20:1: LOWER-EUNSUPPORTED: function declaration without body
+testdir:escape_calls.go	interpreted	escape_calls.go:14: missing error "leaking param: buf to result ~r0 level=0$"
+testdir:escape_calls.go	compiled	test/escape_calls.go:18:1: LOWER-EUNSUPPORTED: function declaration without body
+testdir:fixedbugs/issue13587.go	interpreted	issue13587.go:18: missing error "write barrier"
+testdir:fixedbugs/issue13587.go	compiled	test/fixedbugs/issue13587.go:14:1: LOWER-EUNSUPPORTED: function declaration without body
+testdir:fixedbugs/issue19168.go	interpreted	issue19168.go:19: missing error "write barrier"
+testdir:fixedbugs/issue19168.go	compiled	test/fixedbugs/issue19168.go:16:1: LOWER-EUNSUPPORTED: function declaration without body
+testdir:fixedbugs/issue4099.go	interpreted	issue4099.go:26: missing error "moved to heap: buf2"
+testdir:fixedbugs/issue4099.go	compiled	test/fixedbugs/issue4099.go:18:1: LOWER-EUNSUPPORTED: function declaration without body
+testdir:internal/runtime/sys/inlinegcpc.go	interpreted	inlinegcpc.go:19: missing error "can inline cpc"
+testdir:internal/runtime/sys/inlinegcpc.go	compiled	test/internal/runtime/sys/inlinegcpc.go:12:1: LOWER-EUNSUPPORTED: function declaration without body
+testdir:linkname.go	interpreted	linkname1.go:3: missing error "xs does not escape"
+testdir:linkname.go	compiled	test/linkname.dir/linkname2.go:6:1: LOWER-EUNSUPPORTED: function declaration without body
+testdir:live2.go	interpreted	live2.go:25: missing error "live at call to makemap: &ret$"
+testdir:live2.go	compiled	test/live2.go:14:1: LOWER-EUNSUPPORTED: function declaration without body
+testdir:live_uintptrkeepalive.go	interpreted	live_uintptrkeepalive.go:25: missing error "assuming ~p0 is unsafe uintptr"
+testdir:live_uintptrkeepalive.go	compiled	test/live_uintptrkeepalive.go:25:1: LOWER-EUNSUPPORTED: function declaration without body
+testdir:nilcheck.go	interpreted	nilcheck.go:43: missing error "nil check"
+testdir:nilcheck.go	compiled	test/nilcheck.go:80:1: LOWER-EUNSUPPORTED: function declaration without body
+testdir:nilptr3.go	interpreted	nilptr3.go:45: missing error "generated nil check"
+testdir:nilptr3.go	compiled	test/nilptr3.go:90:1: LOWER-EUNSUPPORTED: function declaration without body

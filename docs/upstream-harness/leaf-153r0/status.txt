@@ -1,0 +1,4 @@
+leaf=r0 harness=c8463e0 bashpp=ba50a56d0d5cc1af sh=e07642490 manifest=/srv/sprint153/roots-153r0.tsv start=2026-09-12T14:58:14Z
+leaf exit=3 start=2026-09-12T14:58:14Z end=2026-09-12T15:22:03Z
+survivors: 0
+DONE leaf-r0
