@@ -1,0 +1,4 @@
+leaf=r1b harness=c222dba bashpp=3bd715b18d1b8c39 sh=074f29aa0 manifest=docs/upstream-harness/leaf-152/roots-r1b.tsv start=2026-09-12T10:22:55Z
+leaf exit=3 start=2026-09-12T10:22:55Z end=2026-09-12T10:26:58Z
+survivors: 0
+DONE leaf-r1b

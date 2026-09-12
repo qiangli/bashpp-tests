@@ -1,0 +1,5 @@
+root	mode	first_line
+testdir:fixedbugs/bug367.go	interpreted	panic: should not satisfy main.I
+testdir:fixedbugs/bug367.go	compiled	panic: should not satisfy main.I
+testdir:reorder.go	interpreted	panic: failed
+testdir:reorder.go	compiled	[1 100 3], want 100,2,3

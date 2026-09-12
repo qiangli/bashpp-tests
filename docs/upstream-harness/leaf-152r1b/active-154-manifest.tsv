@@ -1,0 +1,5 @@
+root	mode	first_line
+testdir:closure3.go	interpreted	main.go:15: missing error "can inline main.func1"
+testdir:closure3.go	compiled	test/closure3.dir/main.go:16:9: can inline main.func1
+testdir:devirtualization.go	interpreted	devirtualization.go:17: missing error "can inline \\(\\*Impl\\).M$"
+testdir:devirtualization.go	compiled	test/devirtualization.go:17:6: can inline (*Impl).M
