@@ -540,15 +540,33 @@ func (t test) backendPlan(step *planStep, action, phase string, pkg *packageIden
 			buildArgs := []string{goTool, "build", "-C", moduleDir, "-gcflags=" + gcflags}
 			buildArgs = append(buildArgs, buildFlags...)
 			buildArgs = append(buildArgs, "-o", artifact, ".")
-			*step.cmd = *shellCommand(step.cmd,
-				append([]string{tool}, transpileArgs...),
-				buildArgs)
-			step.artifacts = []string{generated, artifact}
+			listing := filepath.Join(moduleDir, "asm-listing.txt")
+			transpileCommand := append([]string{tool}, transpileArgs...)
+			quotedTranspile := make([]string, len(transpileCommand))
+			for i, word := range transpileCommand {
+				quotedTranspile[i] = shellQuote(word)
+			}
+			quotedBuild := make([]string, len(buildArgs))
+			for i, word := range buildArgs {
+				quotedBuild[i] = shellQuote(word)
+			}
+			asmScript := strings.Join([]string{
+				"set -e",
+				strings.Join(quotedTranspile, " "),
+				"set +e",
+				strings.Join(quotedBuild, " ") + " > " + shellQuote(listing) + " 2>&1",
+				"rc=$?",
+				"sed -E 's/(\\.go:[0-9]+)\\[[^]]*\\]\\)/\\1)/' " + shellQuote(listing),
+				"exit \"$rc\"",
+			}, "\n")
+			*step.cmd = *directSourceCommand(step.cmd, "/bin/sh", "-c", asmScript)
+			step.artifacts = []string{generated, artifact, listing}
 			step.maps = []string{sourceMap}
 			t.backendEvent(mode, action, phase, "transpile-build-assembly", compileInputs, programArgv, recipeFlags, nativeArgv,
 				step.artifacts, step.maps,
 				append(deviations,
-					"the generated module is built with the upstream -S=2 listing request and the upstream asmcheck flag merge; its //line directives cite the exact upstream input path so upstream asmCheck indexes the listing unchanged",
+					"the generated module is built with the upstream -S=2 listing request and the upstream asmcheck flag merge; its //line directives cite the exact upstream input path",
+					"the -S listing's physical-position suffix (origin:line[generated:line]) is removed before upstream asmCheck indexes it, so the unchanged matcher keys generated code by origin file:line; the raw listing is retained as an artifact",
 					"the upstream-selected GOOS/GOARCH environment is preserved unchanged; the program is never executed"))
 			return
 		}
