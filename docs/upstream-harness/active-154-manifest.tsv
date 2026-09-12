@@ -1,220 +1,385 @@
-root	mode	first_line
-testdir:bloop.go	interpreted	bloop.go:14: missing error "can inline caninline"
-testdir:bombad.go	interpreted	test/bombad.go:14:2: expected statement, found 'ILLEGAL'
-testdir:bombad.go	compiled	test/bombad.go:14:2: expected statement, found 'ILLEGAL'
-testdir:bounds.go	interpreted	bounds.go:64: missing error "index bounds check elided"
-testdir:checkbce.go	interpreted	checkbce.go:17: missing error "Found IsInBounds$"
-testdir:checkbce.go	compiled	checkbce.go:17: missing error "Found IsInBounds$"
-testdir:devirt.go	interpreted	devirt.go:30: missing error "de-virtualizing call$"
-testdir:devirt.go	compiled	devirt.go:30: missing error "de-virtualizing call$"
-testdir:devirtualization_with_type_assertions_interleaved.go	interpreted	devirtualization_with_type_assertions_interleaved.go:20: missing error "can inline \\(\\*hash\\).Sum$"
-testdir:devirtualization_with_type_assertions_interleaved.go	compiled	test/devirtualization_with_type_assertions_interleaved.go:20:6: can inline (*hash).Sum
-testdir:escape4.go	interpreted	escape4.go:16: missing error "can inline alloc"
-testdir:escape6.go	interpreted	escape6.go:16: missing error "leaking param: v"
-testdir:escape_array.go	interpreted	escape_array.go:15: missing error "leaking param: a to result ~r0 level=0$"
-testdir:escape_array.go	compiled	test/escape_array.go:15:10: leaking param: a to result ~r0 level=0
-testdir:escape_bloop.go	interpreted	escape_bloop.go:18: missing error "can inline NewX"
-testdir:escape_field.go	interpreted	escape_field.go:24: missing error "moved to heap: i$"
-testdir:escape_iface.go	interpreted	escape_iface.go:17: missing error "leaking param: m"
-testdir:escape_iface.go	compiled	test/escape_iface.go:64:8: devirtualizing x.M to M0
-testdir:escape_iface_data.go	interpreted	escape_iface_data.go:15: missing error "using global for interface value"
-testdir:escape_iface_data.go	compiled	escape_iface_data.go:15: missing error "using global for interface value"
-testdir:escape_indir.go	interpreted	escape_indir.go:25: missing error "moved to heap: i"
-testdir:escape_level.go	interpreted	escape_level.go:14: missing error "moved to heap: i"
-testdir:escape_make_non_const.go	interpreted	escape_make_non_const.go:17: missing error "make\\(\\[\\]byte, 128\\) does not escape"
-testdir:escape_map.go	interpreted	escape_map.go:14: missing error "make\\(map\\[\\*int\\]\\*int\\) does not escape"
-testdir:escape_mutations.go	interpreted	escape_mutations.go:17: missing error "mutates param: b derefs=0"
-testdir:escape_mutations.go	compiled	test/escape_mutations.go:17:9: b does not escape
-testdir:escape_param.go	interpreted	escape_param.go:19: missing error "leaking param: p to result ~r0"
-testdir:escape_param.go	compiled	test/escape_param.go:19:13: leaking param: p to result ~r0 level=0
-testdir:escape_reflect.go	interpreted	escape_reflect.go:19: missing error "x does not escape"
-testdir:escape_reflect.go	compiled	test/escape_reflect.go:354:73: 0 does not escape
-testdir:escape_selfassign.go	interpreted	escape_selfassign.go:18: missing error "leaking param: p"
-testdir:escape_struct_param1.go	interpreted	escape_struct_param1.go:25: missing error "leaking param: u to result ~r0 level=1$"
-testdir:escape_struct_param2.go	interpreted	escape_struct_param2.go:25: missing error "leaking param: u to result ~r0 level=0$"
-testdir:escape_struct_return.go	interpreted	escape_struct_return.go:18: missing error "leaking param: sp to result ~r0 level=0$"
-testdir:escape_sync_atomic.go	interpreted	escape_sync_atomic.go:17: missing error "leaking param: addr$"
-testdir:escape_unique.go	interpreted	escape_unique.go:15: missing error "s does not escape$"
-testdir:escape_unsafe.go	interpreted	escape_unsafe.go:18: missing error "leaking param: p to result ~r0 level=0$"
-testdir:fixedbugs/bug050.go	interpreted	test/fixedbugs/bug050.go:7:1: expected 'package', found 'func'
-testdir:fixedbugs/bug050.go	compiled	test/fixedbugs/bug050.go:7:1: expected 'package', found 'func'
-testdir:fixedbugs/bug068.go	interpreted	test/fixedbugs/bug068.go:12:13: unknown escape sequence
-testdir:fixedbugs/bug068.go	compiled	test/fixedbugs/bug068.go:12:13: unknown escape sequence
-testdir:fixedbugs/bug121.go	interpreted	test/fixedbugs/bug121.go:12:3: expected ';', found ','
-testdir:fixedbugs/bug121.go	compiled	test/fixedbugs/bug121.go:12:3: expected ';', found ','
-testdir:fixedbugs/bug163.go	interpreted	test/fixedbugs/bug163.go:9:6: expected type, found 'ILLEGAL'
-testdir:fixedbugs/bug163.go	compiled	test/fixedbugs/bug163.go:9:6: expected type, found 'ILLEGAL'
-testdir:fixedbugs/bug200.go	interpreted	test/fixedbugs/bug200.go:17:7: duplicate case func(f int) in type switch
-testdir:fixedbugs/bug200.go	compiled	test/fixedbugs/bug200.go:17:7: duplicate case func(f int) in type switch
-testdir:fixedbugs/bug274.go	interpreted	test/fixedbugs/bug274.go:24:2: expected statement, found 'case'
-testdir:fixedbugs/bug274.go	compiled	test/fixedbugs/bug274.go:24:2: expected statement, found 'case'
-testdir:fixedbugs/bug349.go	interpreted	test/fixedbugs/bug349.go:12:14: expected ';', found 2.01
-testdir:fixedbugs/bug349.go	compiled	test/fixedbugs/bug349.go:12:14: expected ';', found 2.01
-testdir:fixedbugs/bug435.go	interpreted	test/fixedbugs/bug435.go:15:48: expected ')', found 'EOF'
-testdir:fixedbugs/bug435.go	compiled	test/fixedbugs/bug435.go:15:48: expected ')', found 'EOF'
-testdir:fixedbugs/issue11359.go	interpreted	test/fixedbugs/issue11359.go:11:5: expected 'IDENT', found 'ILLEGAL'
-testdir:fixedbugs/issue11359.go	compiled	test/fixedbugs/issue11359.go:11:5: expected 'IDENT', found 'ILLEGAL'
-testdir:fixedbugs/issue11610.go	interpreted	test/fixedbugs/issue11610.go:11:4: expected 'IDENT', found 'ILLEGAL'
-testdir:fixedbugs/issue11610.go	compiled	test/fixedbugs/issue11610.go:11:4: expected 'IDENT', found 'ILLEGAL'
-testdir:fixedbugs/issue12006.go	interpreted	issue12006.go:11: missing error "vals does not escape"
-testdir:fixedbugs/issue12588.go	interpreted	issue12588.go:29: missing error "a does not escape"
-testdir:fixedbugs/issue13248.go	interpreted	test/fixedbugs/issue13248.go:13:1: expected operand, found '}'
-testdir:fixedbugs/issue13248.go	compiled	test/fixedbugs/issue13248.go:13:1: expected operand, found '}'
-testdir:fixedbugs/issue13266.go	interpreted	test/fixedbugs/issue13266.go:10:8: expected 'IDENT', found '%'
-testdir:fixedbugs/issue13266.go	compiled	test/fixedbugs/issue13266.go:10:8: expected 'IDENT', found '%'
-testdir:fixedbugs/issue13273.go	interpreted	test/fixedbugs/issue13273.go:50:11: expected 'chan', found '<-'
-testdir:fixedbugs/issue13273.go	compiled	test/fixedbugs/issue13273.go:50:11: expected 'chan', found '<-'
-testdir:fixedbugs/issue13274.go	interpreted	test/fixedbugs/issue13274.go:11:58: expected ';', found 'EOF'
-testdir:fixedbugs/issue13274.go	compiled	test/fixedbugs/issue13274.go:11:58: expected ';', found 'EOF'
-testdir:fixedbugs/issue13319.go	interpreted	test/fixedbugs/issue13319.go:12:72: missing ',' before newline in argument list
-testdir:fixedbugs/issue13319.go	compiled	test/fixedbugs/issue13319.go:12:72: missing ',' before newline in argument list
-testdir:fixedbugs/issue13799.go	interpreted	issue13799.go:23: missing error "iter escapes to heap$"
-testdir:fixedbugs/issue14520.go	interpreted	test/fixedbugs/issue14520.go:9:49: missing ',' before newline in parameter list
-testdir:fixedbugs/issue14520.go	compiled	test/fixedbugs/issue14520.go:9:49: missing ',' before newline in parameter list
-testdir:fixedbugs/issue15747.go	interpreted	issue15747.go:22: missing error "live at call to (newobject|mallocgcSmallScanNoHeaderSC[0-9]+): xx$"
-testdir:fixedbugs/issue15747.go	compiled	test/fixedbugs/issue15747.go:22:6: live at entry to f1: xx
-testdir:fixedbugs/issue15898.go	interpreted	test/fixedbugs/issue15898.go:11:12: duplicate case nil in type switch
-testdir:fixedbugs/issue15898.go	compiled	test/fixedbugs/issue15898.go:11:12: duplicate case nil in type switch
-testdir:fixedbugs/issue16241.go	interpreted	issue16241.go:11: missing error "x does not escape$"
-testdir:fixedbugs/issue16241_64.go	interpreted	issue16241_64.go:13: missing error "x does not escape$"
-testdir:fixedbugs/issue17318.go	interpreted	issue17318.go:25: missing error "... argument does not escape$"
-testdir:fixedbugs/issue17328.go	interpreted	test/fixedbugs/issue17328.go:11:13: expected '{', found ')'
-testdir:fixedbugs/issue17328.go	compiled	test/fixedbugs/issue17328.go:11:13: expected '{', found ')'
-testdir:fixedbugs/issue18092.go	interpreted	test/fixedbugs/issue18092.go:14:38: expected ':', found newline
-testdir:fixedbugs/issue18092.go	compiled	test/fixedbugs/issue18092.go:14:38: expected ':', found newline
-testdir:fixedbugs/issue18915.go	interpreted	test/fixedbugs/issue18915.go:13:5: expected boolean expression, found assignment (missing parentheses around composite literal?)
-testdir:fixedbugs/issue18915.go	compiled	test/fixedbugs/issue18915.go:13:5: expected boolean expression, found assignment (missing parentheses around composite literal?)
-testdir:fixedbugs/issue19667.go	interpreted	test/fixedbugs/issue19667.go:13:1: expected operand, found '}'
-testdir:fixedbugs/issue19667.go	compiled	test/fixedbugs/issue19667.go:13:1: expected operand, found '}'
-testdir:fixedbugs/issue19743.go	interpreted	issue19743.go:19: missing error "leaking param: b$"
-testdir:fixedbugs/issue20250.go	interpreted	issue20250.go:19: missing error "live at entry to f: a$"
-testdir:fixedbugs/issue20789.go	interpreted	test/fixedbugs/issue20789.go:13:13: expected channel type
-testdir:fixedbugs/issue20789.go	compiled	test/fixedbugs/issue20789.go:13:13: expected channel type
-testdir:fixedbugs/issue21709.go	interpreted	issue21709.go:13: missing error "s does not escape"
-testdir:fixedbugs/issue21709.go	compiled	test/fixedbugs/issue21709.go:13:7: s does not escape
-testdir:fixedbugs/issue22164.go	interpreted	test/fixedbugs/issue22164.go:12:42: missing ',' before newline in argument list
-testdir:fixedbugs/issue22164.go	compiled	test/fixedbugs/issue22164.go:12:42: missing ',' before newline in argument list
-testdir:fixedbugs/issue22581.go	interpreted	test/fixedbugs/issue22581.go:10:13: expected ';', found ')'
-testdir:fixedbugs/issue22581.go	compiled	test/fixedbugs/issue22581.go:10:13: expected ';', found ')'
-testdir:fixedbugs/issue23521.go	interpreted	issue23521.go:16: missing error "can inline f"
-testdir:fixedbugs/issue23587.go	interpreted	test/fixedbugs/issue23587.go:14:8: expected ';', found '~'
-testdir:fixedbugs/issue23587.go	compiled	test/fixedbugs/issue23587.go:14:8: expected ';', found '~'
-testdir:fixedbugs/issue23664.go	interpreted	test/fixedbugs/issue23664.go:12:9: expected ';', found true
-testdir:fixedbugs/issue23664.go	compiled	test/fixedbugs/issue23664.go:12:9: expected ';', found true
-testdir:fixedbugs/issue24159.go	interpreted	test/fixedbugs/issue24159.go:14:7: duplicate case byte(0) (constant 0 of type byte) in expression switch
-testdir:fixedbugs/issue24159.go	compiled	test/fixedbugs/issue24159.go:14:7: duplicate case byte(0) (constant 0 of type byte) in expression switch
-testdir:fixedbugs/issue24651a.go	interpreted	issue24651a.go:12: missing error "cannot inline Foo: marked go:norace with -race compilation$"
-testdir:fixedbugs/issue24651a.go	compiled	test/fixedbugs/issue24651a.go:12:6: can inline Foo with cost 10 as: func(int) int { return x * (x + 1) * (x + 2) }
-testdir:fixedbugs/issue24651b.go	interpreted	issue24651b.go:10: missing error "can inline Foo with cost .* as: func\\(int\\) int { return x \\* \\(x \\+ 1\\) \\* \\(x \\+ 2\\) }$"
-testdir:fixedbugs/issue24651b.go	compiled	test/fixedbugs/issue24651b.go:10:6: can inline Foo with cost 10 as: func(int) int { return x * (x + 1) * (x + 2) }
-testdir:fixedbugs/issue27557.go	interpreted	issue27557.go:13: missing error "t.noescape does not escape"
-testdir:fixedbugs/issue27732a.go	interpreted	issue27732a.go:21: missing error "moved to heap: c$"
-testdir:fixedbugs/issue30898.go	interpreted	issue30898.go:11: missing error "can inline debugf"
-testdir:fixedbugs/issue31573.go	interpreted	issue31573.go:13: missing error "... argument does not escape$"
-testdir:fixedbugs/issue33386.go	interpreted	test/fixedbugs/issue33386.go:16:2: expected operand, found '}'
-testdir:fixedbugs/issue33386.go	compiled	test/fixedbugs/issue33386.go:16:2: expected operand, found '}'
-testdir:fixedbugs/issue34723.go	interpreted	issue34723.go:66: missing error "write barrier"
-testdir:fixedbugs/issue34723.go	compiled	issue34723.go:66: missing error "write barrier"
-testdir:fixedbugs/issue35073b.go	interpreted	issue35073b.go:18: missing error "moved to heap: n"
-testdir:fixedbugs/issue35518.go	interpreted	issue35518.go:22: missing error "."
-testdir:fixedbugs/issue39292.go	interpreted	issue39292.go:15: missing error "t{}.f escapes to heap"
-testdir:fixedbugs/issue39292.go	compiled	test/fixedbugs/issue39292.go:11:7: __bpp0_unnamed0 does not escape
-testdir:fixedbugs/issue41635.go	interpreted	issue41635.go:9: missing error ""
-testdir:fixedbugs/issue4405.go	interpreted	test/fixedbugs/issue4405.go:11:3: expected ';', found 'ILLEGAL'
-testdir:fixedbugs/issue4405.go	compiled	test/fixedbugs/issue4405.go:11:3: expected ';', found 'ILLEGAL'
-testdir:fixedbugs/issue4776.go	interpreted	test/fixedbugs/issue4776.go:9:1: expected 'package', found 'type'
-testdir:fixedbugs/issue4776.go	compiled	test/fixedbugs/issue4776.go:9:1: expected 'package', found 'type'
-testdir:fixedbugs/issue50372.go	interpreted	test/fixedbugs/issue50372.go:16:19: expected at most 2 expressions
-testdir:fixedbugs/issue50372.go	compiled	test/fixedbugs/issue50372.go:16:19: expected at most 2 expressions
-testdir:fixedbugs/issue52193.go	interpreted	issue52193.go:12: missing error "can inline f"
-testdir:fixedbugs/issue54159.go	interpreted	issue54159.go:10: missing error "cannot inline run: marked go:noinline"
-testdir:fixedbugs/issue54159.go	compiled	test/fixedbugs/issue54159.go:19:6: can inline g with cost 0 as: func() {  }
-testdir:fixedbugs/issue63657.go	interpreted	f: expected 3 argument(s), got 0
-testdir:fixedbugs/issue6899.go	interpreted	output does not match expected in fixedbugs/issue6899.out. Instead saw
-testdir:fixedbugs/issue75278.go	interpreted	issue75278.go:11: missing error "can inline NoIndices with cost 4 as:.*"
-testdir:fixedbugs/issue7921.go	interpreted	issue7921.go:22: missing error "\\[\\]byte{...} does not escape$"
-testdir:fixedbugs/notinheap3.go	interpreted	notinheap3.go:47: missing error "write barrier"
-testdir:fixedbugs/notinheap3.go	compiled	notinheap3.go:47: missing error "write barrier"
-testdir:fuse.go	interpreted	fuse.go:16: missing error "Redirect Eq64 based on Eq64$"
-testdir:fuse.go	compiled	fuse.go:16: missing error "Redirect Eq64 based on Eq64$"
-testdir:inline_big.go	interpreted	inline_big.go:12: missing error "can inline small with cost .* as:.*"
-testdir:inline_caller.go	interpreted	panic: skip=0 expected line 36, got line 586
-testdir:inline_caller.go	compiled	panic: skip=4 expected function main.main, got main.__bpp0_sourceMain [recovered, repanicked]
-testdir:inline_endian.go	interpreted	inline_endian.go:19: missing error "can inline endian"
-testdir:inline_math_bits_rotate.go	interpreted	inline_math_bits_rotate.go:23: missing error "can inline f"
-testdir:inline_sync.go	interpreted	inline_sync.go:26: missing error "can inline small5"
-testdir:inline_variadic.go	interpreted	inline_variadic.go:12: missing error "can inline head"
-testdir:interface/assertinline.go	interpreted	assertinline.go:10: missing error "type assertion inlined"
-testdir:interface/assertinline.go	compiled	assertinline.go:10: missing error "type assertion inlined"
-testdir:intrinsic_atomic.go	interpreted	intrinsic_atomic.go:16: missing error "intrinsic substitution for LoadUint32"
-testdir:intrinsic_atomic.go	compiled	intrinsic_atomic.go:16: missing error "intrinsic substitution for LoadUint32"
-testdir:known_bits.go	interpreted	known_bits.go:16: missing error "known value of v[0-9]+ \\(And64\\): 1$"
-testdir:known_bits.go	compiled	known_bits.go:16: missing error "known value of v[0-9]+ \\(And64\\): 1$"
-testdir:loopbce.go	interpreted	loopbce.go:11: missing error "Induction variable: limits \\[0,\\?\\), increment 1$"
-testdir:loopbce.go	compiled	loopbce.go:11: missing error "Induction variable: limits \\[0,\\?\\), increment 1$"
-testdir:nilptr5.go	interpreted	nilptr5.go:15: missing error "removed nil check"
-testdir:nilptr5.go	compiled	nilptr5.go:15: missing error "removed nil check"
-testdir:opt_branchlikely.go	interpreted	opt_branchlikely.go:15: missing error "Branch prediction rule stay in loop"
-testdir:opt_branchlikely.go	compiled	opt_branchlikely.go:15: missing error "Branch prediction rule stay in loop"
-testdir:phiopt.go	interpreted	phiopt.go:19: missing error "converted OpPhi to Copy$"
-testdir:phiopt.go	compiled	phiopt.go:19: missing error "converted OpPhi to Copy$"
-testdir:prove_constant_folding.go	interpreted	prove_constant_folding.go:13: missing error "Proved.+is constant 20$"
-testdir:prove_constant_folding.go	compiled	prove_constant_folding.go:13: missing error "Proved.+is constant 20$"
-testdir:prove_invert_loop_with_unused_iterators.go	interpreted	prove_invert_loop_with_unused_iterators.go:8: missing error "(Inverted loop iteration|Induction variable: limits \\[0,\\?\\), increment 1)"
-testdir:prove_invert_loop_with_unused_iterators.go	compiled	prove_invert_loop_with_unused_iterators.go:8: missing error "(Inverted loop iteration|Induction variable: limits \\[0,\\?\\), increment 1)"
-testdir:recover4.go	interpreted	unexpected fault address 0x749697223000
-testdir:sliceopt.go	interpreted	sliceopt.go:12: missing error "append: len-only update \\(in local slice\\)$"
-testdir:sliceopt.go	compiled	sliceopt.go:12: missing error "append: len-only update \\(in local slice\\)$"
-testdir:switch2.go	interpreted	test/switch2.go:14:8: expected ':', found ';'
-testdir:switch2.go	compiled	test/switch2.go:14:8: expected ':', found ';'
-testdir:switch5.go	interpreted	test/switch5.go:15:7: duplicate case 0 (constant of type int) in expression switch
-testdir:switch5.go	compiled	test/switch5.go:15:7: duplicate case 0 (constant of type int) in expression switch
-testdir:switch7.go	interpreted	test/switch7.go:18:7: duplicate case int in type switch
-testdir:switch7.go	compiled	test/switch7.go:18:7: duplicate case int in type switch
-testdir:syntax/chan.go	interpreted	test/syntax/chan.go:11:1: expected type, found '}'
-testdir:syntax/chan.go	compiled	test/syntax/chan.go:11:1: expected type, found '}'
-testdir:syntax/chan1.go	interpreted	test/syntax/chan1.go:13:5: expected boolean expression, found simple statement (missing parentheses around composite literal?)
-testdir:syntax/chan1.go	compiled	test/syntax/chan1.go:13:5: expected boolean expression, found simple statement (missing parentheses around composite literal?)
-testdir:syntax/composite.go	interpreted	test/syntax/composite.go:10:98: missing ',' before newline in composite literal
-testdir:syntax/composite.go	compiled	test/syntax/composite.go:10:98: missing ',' before newline in composite literal
-testdir:syntax/ddd.go	interpreted	test/syntax/ddd.go:10:6: expected selector or type assertion, found .3
-testdir:syntax/ddd.go	compiled	test/syntax/ddd.go:10:6: expected selector or type assertion, found .3
-testdir:syntax/else.go	interpreted	test/syntax/else.go:11:9: expected if statement or block, found ';'
-testdir:syntax/else.go	compiled	test/syntax/else.go:11:9: expected if statement or block, found ';'
-testdir:syntax/import.go	interpreted	test/syntax/import.go:10:6: expected ';', found ','
-testdir:syntax/import.go	compiled	test/syntax/import.go:10:6: expected ';', found ','
-testdir:syntax/initvar.go	interpreted	test/syntax/initvar.go:10:9: var declaration not allowed in if initializer
-testdir:syntax/initvar.go	compiled	test/syntax/initvar.go:10:9: var declaration not allowed in if initializer
-testdir:syntax/semi1.go	interpreted	test/syntax/semi1.go:10:62: expected '{', found newline
-testdir:syntax/semi1.go	compiled	test/syntax/semi1.go:10:62: expected '{', found newline
-testdir:syntax/semi2.go	interpreted	test/syntax/semi2.go:10:68: expected '{', found newline
-testdir:syntax/semi2.go	compiled	test/syntax/semi2.go:10:68: expected '{', found newline
-testdir:syntax/semi3.go	interpreted	test/syntax/semi3.go:10:66: expected '{', found newline
-testdir:syntax/semi3.go	compiled	test/syntax/semi3.go:10:66: expected '{', found newline
-testdir:syntax/semi4.go	interpreted	test/syntax/semi4.go:11:2: expected operand, found '{'
-testdir:syntax/semi4.go	compiled	test/syntax/semi4.go:11:2: expected operand, found '{'
-testdir:syntax/semi5.go	interpreted	test/syntax/semi5.go:10:1: unexpected semicolon or newline before {
-testdir:syntax/semi5.go	compiled	test/syntax/semi5.go:10:1: unexpected semicolon or newline before {
-testdir:syntax/semi6.go	interpreted	test/syntax/semi6.go:9:47: expected type, found newline
-testdir:syntax/semi6.go	compiled	test/syntax/semi6.go:9:47: expected type, found newline
-testdir:syntax/semi7.go	interpreted	test/syntax/semi7.go:11:2: expected statement, found 'else'
-testdir:syntax/semi7.go	compiled	test/syntax/semi7.go:11:2: expected statement, found 'else'
-testdir:syntax/topexpr.go	interpreted	test/syntax/topexpr.go:9:1: expected declaration, found fmt
-testdir:syntax/topexpr.go	compiled	test/syntax/topexpr.go:9:1: expected declaration, found fmt
-testdir:syntax/vareq.go	interpreted	test/syntax/vareq.go:10:25: expected ';', found '{'
-testdir:syntax/vareq.go	compiled	test/syntax/vareq.go:10:25: expected ';', found '{'
-testdir:syntax/vareq1.go	interpreted	test/syntax/vareq1.go:9:24: expected ';', found '{'
-testdir:syntax/vareq1.go	compiled	test/syntax/vareq1.go:9:24: expected ';', found '{'
-testdir:tailcall.go	interpreted	tailcall.go:19: missing error "tail call emitted for the method \\(\\*Foo\\).Get2Vals wrapper"
-testdir:tailcall.go	compiled	tailcall.go:19: missing error "tail call emitted for the method \\(\\*Foo\\).Get2Vals wrapper"
-testdir:typeparam/issue54497.go	interpreted	issue54497.go:13: missing error "can inline isAligned\\[uint\\]"
-testdir:typeparam/pragma.go	interpreted	pragma.go:17: missing error "can inline main"
-testdir:typeparam/pragma.go	compiled	test/typeparam/pragma.go:13:6: can inline f[go.shape.int]
-testdir:typeparam/typeswitch3.go	interpreted	output does not match expected in typeparam/typeswitch3.out. Instead saw
-testdir:typeparam/typeswitch4.go	interpreted	output does not match expected in typeparam/typeswitch4.out. Instead saw
-testdir:typeswitch2.go	interpreted	test/typeswitch2.go:18:7: duplicate case int in type switch
-testdir:typeswitch2.go	compiled	test/typeswitch2.go:18:7: duplicate case int in type switch
-testdir:uintptrescapes2.go	interpreted	uintptrescapes2.go:16: missing error "escaping uintptr"
-testdir:uintptrescapes2.go	compiled	test/uintptrescapes2.go:19:9: a does not escape
-testdir:writebarrier.go	interpreted	writebarrier.go:17: missing error "write barrier"
-testdir:writebarrier.go	compiled	writebarrier.go:17: missing error "write barrier"
+root	mode	first_line	verdict
+testdir:bombad.go	interpreted	test/bombad.go:14:2: expected statement, found 'ILLEGAL'	missing=0;wording=4;extra=7;class=wording
+testdir:bombad.go	compiled	test/bombad.go:14:2: expected statement, found 'ILLEGAL'	missing=0;wording=4;extra=7;class=wording
+testdir:char_lit1.go	interpreted	test/char_lit1.go:16:8: escape sequence is invalid Unicode code point	missing=0;wording=0;extra=8;class=multiplicity
+testdir:char_lit1.go	compiled	test/char_lit1.go:16:8: escape sequence is invalid Unicode code point	missing=0;wording=0;extra=8;class=multiplicity
+testdir:devirtualization_with_type_assertions_interleaved.go	interpreted	devirtualization_with_type_assertions_interleaved.go:20: missing error "can inline \\(\\*hash\\).Sum$"	missing=89;wording=0;extra=0;class=missing
+testdir:devirtualization_with_type_assertions_interleaved.go	compiled	test/devirtualization_with_type_assertions_interleaved.go:20:6: can inline (*hash).Sum	missing=39;wording=13;extra=0;class=wording
+testdir:escape_array.go	interpreted	escape_array.go:15: missing error "leaking param: a to result ~r0 level=0$"	missing=37;wording=0;extra=0;class=missing
+testdir:escape_array.go	compiled	test/escape_array.go:15:10: leaking param: a to result ~r0 level=0	missing=0;wording=1;extra=0;class=wording
+testdir:escape_iface.go	interpreted	escape_iface.go:17: missing error "leaking param: m"	missing=46;wording=0;extra=0;class=missing
+testdir:escape_iface.go	compiled	test/escape_iface.go:64:8: devirtualizing x.M to M0	missing=0;wording=2;extra=0;class=wording
+testdir:escape_param.go	interpreted	escape_param.go:19: missing error "leaking param: p to result ~r0"	missing=104;wording=0;extra=0;class=missing
+testdir:escape_param.go	compiled	test/escape_param.go:19:13: leaking param: p to result ~r0 level=0	missing=0;wording=10;extra=0;class=wording
+testdir:escape_reflect.go	interpreted	escape_reflect.go:19: missing error "x does not escape"	missing=134;wording=0;extra=0;class=missing
+testdir:escape_reflect.go	compiled	test/escape_reflect.go:354:73: 0 does not escape	missing=4;wording=0;extra=0;class=missing
+testdir:fixedbugs/bug014.go	interpreted	test/fixedbugs/bug014.go:10:21: illegal character U+0027 ''' in escape sequence	missing=0;wording=0;extra=4;class=multiplicity
+testdir:fixedbugs/bug014.go	compiled	test/fixedbugs/bug014.go:10:21: illegal character U+0027 ''' in escape sequence	missing=0;wording=0;extra=4;class=multiplicity
+testdir:fixedbugs/bug050.go	interpreted	test/fixedbugs/bug050.go:7:1: expected 'package', found 'func'	missing=0;wording=0;extra=1;class=multiplicity
+testdir:fixedbugs/bug050.go	compiled	test/fixedbugs/bug050.go:7:1: expected 'package', found 'func'	missing=0;wording=0;extra=1;class=multiplicity
+testdir:fixedbugs/bug068.go	interpreted	test/fixedbugs/bug068.go:12:13: unknown escape sequence	missing=0;wording=0;extra=1;class=multiplicity
+testdir:fixedbugs/bug068.go	compiled	test/fixedbugs/bug068.go:12:13: unknown escape sequence	missing=0;wording=0;extra=1;class=multiplicity
+testdir:fixedbugs/bug121.go	interpreted	test/fixedbugs/bug121.go:12:3: expected ';', found ','	missing=0;wording=2;extra=6;class=wording
+testdir:fixedbugs/bug121.go	compiled	test/fixedbugs/bug121.go:12:3: expected ';', found ','	missing=0;wording=2;extra=6;class=wording
+testdir:fixedbugs/bug132.go	interpreted	test/fixedbugs/bug132.go:10:5: x redeclared	missing=0;wording=0;extra=1;class=multiplicity
+testdir:fixedbugs/bug132.go	compiled	test/fixedbugs/bug132.go:10:5: x redeclared	missing=0;wording=0;extra=1;class=multiplicity
+testdir:fixedbugs/bug136.go	interpreted	test/fixedbugs/bug136.go:13:9: invalid break label L	missing=0;wording=0;extra=2;class=extra
+testdir:fixedbugs/bug136.go	compiled	test/fixedbugs/bug136.go:13:9: invalid break label L	missing=0;wording=0;extra=2;class=extra
+testdir:fixedbugs/bug163.go	interpreted	test/fixedbugs/bug163.go:9:6: expected type, found 'ILLEGAL'	missing=0;wording=1;extra=2;class=wording
+testdir:fixedbugs/bug163.go	compiled	test/fixedbugs/bug163.go:9:6: expected type, found 'ILLEGAL'	missing=0;wording=1;extra=2;class=wording
+testdir:fixedbugs/bug169.go	interpreted	test/fixedbugs/bug169.go:8:9: illegal rune literal	missing=0;wording=0;extra=1;class=multiplicity
+testdir:fixedbugs/bug169.go	compiled	test/fixedbugs/bug169.go:8:9: illegal rune literal	missing=0;wording=0;extra=1;class=multiplicity
+testdir:fixedbugs/bug179.go	interpreted	test/fixedbugs/bug179.go:13:10: invalid break label L2	missing=0;wording=0;extra=1;class=extra
+testdir:fixedbugs/bug179.go	compiled	test/fixedbugs/bug179.go:13:10: invalid break label L2	missing=0;wording=0;extra=1;class=extra
+testdir:fixedbugs/bug200.go	interpreted	test/fixedbugs/bug200.go:17:7: duplicate case func(f int) in type switch	missing=0;wording=0;extra=1;class=extra
+testdir:fixedbugs/bug200.go	compiled	test/fixedbugs/bug200.go:17:7: duplicate case func(f int) in type switch	missing=0;wording=0;extra=1;class=extra
+testdir:fixedbugs/bug228.go	interpreted	test/fixedbugs/bug228.go:11:27: invalid use of ...	missing=0;wording=0;extra=1;class=multiplicity
+testdir:fixedbugs/bug228.go	compiled	test/fixedbugs/bug228.go:11:27: invalid use of ...	missing=0;wording=0;extra=1;class=multiplicity
+testdir:fixedbugs/bug274.go	interpreted	test/fixedbugs/bug274.go:24:2: expected statement, found 'case'	missing=1;wording=1;extra=2;class=position
+testdir:fixedbugs/bug274.go	compiled	test/fixedbugs/bug274.go:24:2: expected statement, found 'case'	missing=1;wording=1;extra=2;class=position
+testdir:fixedbugs/bug300.go	interpreted	test/fixedbugs/bug300.go:23:7: cannot parenthesize type in composite literal	missing=0;wording=0;extra=1;class=multiplicity
+testdir:fixedbugs/bug300.go	compiled	test/fixedbugs/bug300.go:23:7: cannot parenthesize type in composite literal	missing=0;wording=0;extra=1;class=multiplicity
+testdir:fixedbugs/bug349.go	interpreted	test/fixedbugs/bug349.go:12:14: expected ';', found 2.01	missing=0;wording=1;extra=4;class=wording
+testdir:fixedbugs/bug349.go	compiled	test/fixedbugs/bug349.go:12:14: expected ';', found 2.01	missing=0;wording=1;extra=4;class=wording
+testdir:fixedbugs/bug388.go	interpreted	test/fixedbugs/bug388.go:12:10: missing parameter name	missing=0;wording=0;extra=3;class=extra
+testdir:fixedbugs/bug388.go	compiled	test/fixedbugs/bug388.go:12:10: missing parameter name	missing=0;wording=0;extra=3;class=extra
+testdir:fixedbugs/bug412.go	interpreted	test/fixedbugs/bug412.go:11:2: x redeclared	missing=0;wording=0;extra=1;class=extra
+testdir:fixedbugs/bug412.go	compiled	test/fixedbugs/bug412.go:11:2: x redeclared	missing=0;wording=0;extra=1;class=extra
+testdir:fixedbugs/bug416.go	interpreted	test/fixedbugs/bug416.go:13:13: field and method with the same name X	missing=0;wording=0;extra=1;class=extra
+testdir:fixedbugs/bug416.go	compiled	test/fixedbugs/bug416.go:13:13: field and method with the same name X	missing=0;wording=0;extra=1;class=extra
+testdir:fixedbugs/bug435.go	interpreted	test/fixedbugs/bug435.go:15:48: expected ')', found 'EOF'	missing=0;wording=0;extra=4;class=multiplicity
+testdir:fixedbugs/bug435.go	compiled	test/fixedbugs/bug435.go:15:48: expected ')', found 'EOF'	missing=0;wording=0;extra=4;class=multiplicity
+testdir:fixedbugs/issue11359.go	interpreted	test/fixedbugs/issue11359.go:11:5: expected 'IDENT', found 'ILLEGAL'	missing=0;wording=1;extra=2;class=wording
+testdir:fixedbugs/issue11359.go	compiled	test/fixedbugs/issue11359.go:11:5: expected 'IDENT', found 'ILLEGAL'	missing=0;wording=1;extra=2;class=wording
+testdir:fixedbugs/issue11362.go	interpreted	test/fixedbugs/issue11362.go:11:10: could not import unicode//utf8 (package "unicode//utf8" not found in go list output)	missing=0;wording=1;extra=1;class=wording
+testdir:fixedbugs/issue11362.go	compiled	test/fixedbugs/issue11362.go:11:10: could not import unicode//utf8 (package "unicode//utf8" not found in go list output)	missing=0;wording=1;extra=1;class=wording
+testdir:fixedbugs/issue11610.go	interpreted	test/fixedbugs/issue11610.go:11:4: expected 'IDENT', found 'ILLEGAL'	missing=0;wording=1;extra=2;class=wording
+testdir:fixedbugs/issue11610.go	compiled	test/fixedbugs/issue11610.go:11:4: expected 'IDENT', found 'ILLEGAL'	missing=0;wording=1;extra=2;class=wording
+testdir:fixedbugs/issue13248.go	interpreted	test/fixedbugs/issue13248.go:13:1: expected operand, found '}'	missing=0;wording=0;extra=5;class=extra
+testdir:fixedbugs/issue13248.go	compiled	test/fixedbugs/issue13248.go:13:1: expected operand, found '}'	missing=0;wording=0;extra=5;class=extra
+testdir:fixedbugs/issue13266.go	interpreted	test/fixedbugs/issue13266.go:10:8: expected 'IDENT', found '%'	missing=0;wording=1;extra=2;class=wording
+testdir:fixedbugs/issue13266.go	compiled	test/fixedbugs/issue13266.go:10:8: expected 'IDENT', found '%'	missing=0;wording=1;extra=2;class=wording
+testdir:fixedbugs/issue13273.go	interpreted	test/fixedbugs/issue13273.go:50:11: expected 'chan', found '<-'	missing=0;wording=2;extra=9;class=wording
+testdir:fixedbugs/issue13273.go	compiled	test/fixedbugs/issue13273.go:50:11: expected 'chan', found '<-'	missing=0;wording=2;extra=9;class=wording
+testdir:fixedbugs/issue13274.go	interpreted	test/fixedbugs/issue13274.go:11:58: expected ';', found 'EOF'	missing=0;wording=0;extra=1;class=multiplicity
+testdir:fixedbugs/issue13274.go	compiled	test/fixedbugs/issue13274.go:11:58: expected ';', found 'EOF'	missing=0;wording=0;extra=1;class=multiplicity
+testdir:fixedbugs/issue13319.go	interpreted	test/fixedbugs/issue13319.go:12:72: missing ',' before newline in argument list	missing=1;wording=1;extra=12;class=position
+testdir:fixedbugs/issue13319.go	compiled	test/fixedbugs/issue13319.go:12:72: missing ',' before newline in argument list	missing=1;wording=1;extra=12;class=position
+testdir:fixedbugs/issue14006.go	interpreted	test/fixedbugs/issue14006.go:24:4: illegal label declaration	missing=0;wording=7;extra=18;class=wording
+testdir:fixedbugs/issue14006.go	compiled	test/fixedbugs/issue14006.go:24:4: illegal label declaration	missing=0;wording=7;extra=18;class=wording
+testdir:fixedbugs/issue14520.go	interpreted	test/fixedbugs/issue14520.go:9:49: missing ',' before newline in parameter list	missing=0;wording=1;extra=1;class=wording
+testdir:fixedbugs/issue14520.go	compiled	test/fixedbugs/issue14520.go:9:49: missing ',' before newline in parameter list	missing=0;wording=1;extra=1;class=wording
+testdir:fixedbugs/issue15611.go	interpreted	test/fixedbugs/issue15611.go:11: rune literal not terminated	missing=0;wording=3;extra=8;class=wording
+testdir:fixedbugs/issue15611.go	compiled	test/fixedbugs/issue15611.go:11: rune literal not terminated	missing=0;wording=3;extra=8;class=wording
+testdir:fixedbugs/issue15747.go	interpreted	issue15747.go:22: missing error "live at call to (newobject|mallocgcSmallScanNoHeaderSC[0-9]+): xx$"	missing=5;wording=0;extra=0;class=missing
+testdir:fixedbugs/issue15747.go	compiled	test/fixedbugs/issue15747.go:22:6: live at entry to f1: xx	missing=0;wording=1;extra=0;class=wording
+testdir:fixedbugs/issue15898.go	interpreted	test/fixedbugs/issue15898.go:11:12: duplicate case nil in type switch	missing=0;wording=0;extra=2;class=extra
+testdir:fixedbugs/issue15898.go	compiled	test/fixedbugs/issue15898.go:11:12: duplicate case nil in type switch	missing=0;wording=0;extra=2;class=extra
+testdir:fixedbugs/issue17328.go	interpreted	test/fixedbugs/issue17328.go:11:13: expected '{', found ')'	missing=0;wording=0;extra=2;class=multiplicity
+testdir:fixedbugs/issue17328.go	compiled	test/fixedbugs/issue17328.go:11:13: expected '{', found ')'	missing=0;wording=0;extra=2;class=multiplicity
+testdir:fixedbugs/issue18092.go	interpreted	test/fixedbugs/issue18092.go:14:38: expected ':', found newline	missing=0;wording=1;extra=4;class=wording
+testdir:fixedbugs/issue18092.go	compiled	test/fixedbugs/issue18092.go:14:38: expected ':', found newline	missing=0;wording=1;extra=4;class=wording
+testdir:fixedbugs/issue18747.go	interpreted	test/fixedbugs/issue18747.go:10:5: missing condition in if statement	missing=0;wording=1;extra=6;class=wording
+testdir:fixedbugs/issue18747.go	compiled	test/fixedbugs/issue18747.go:10:5: missing condition in if statement	missing=0;wording=1;extra=6;class=wording
+testdir:fixedbugs/issue18915.go	interpreted	test/fixedbugs/issue18915.go:13:5: expected boolean expression, found assignment (missing parentheses around composite literal?)	missing=0;wording=3;extra=3;class=wording
+testdir:fixedbugs/issue18915.go	compiled	test/fixedbugs/issue18915.go:13:5: expected boolean expression, found assignment (missing parentheses around composite literal?)	missing=0;wording=3;extra=3;class=wording
+testdir:fixedbugs/issue19667.go	interpreted	test/fixedbugs/issue19667.go:13:1: expected operand, found '}'	missing=0;wording=0;extra=6;class=multiplicity
+testdir:fixedbugs/issue19667.go	compiled	test/fixedbugs/issue19667.go:13:1: expected operand, found '}'	missing=0;wording=0;extra=6;class=multiplicity
+testdir:fixedbugs/issue20789.go	interpreted	test/fixedbugs/issue20789.go:13:13: expected channel type	missing=0;wording=1;extra=17;class=wording
+testdir:fixedbugs/issue20789.go	compiled	test/fixedbugs/issue20789.go:13:13: expected channel type	missing=0;wording=1;extra=17;class=wording
+testdir:fixedbugs/issue21709.go	interpreted	issue21709.go:13: missing error "s does not escape"	missing=5;wording=0;extra=0;class=missing
+testdir:fixedbugs/issue21709.go	compiled	test/fixedbugs/issue21709.go:13:7: s does not escape	missing=2;wording=0;extra=0;class=missing
+testdir:fixedbugs/issue22164.go	interpreted	test/fixedbugs/issue22164.go:12:42: missing ',' before newline in argument list	missing=2;wording=1;extra=14;class=position
+testdir:fixedbugs/issue22164.go	compiled	test/fixedbugs/issue22164.go:12:42: missing ',' before newline in argument list	missing=2;wording=1;extra=14;class=position
+testdir:fixedbugs/issue22581.go	interpreted	test/fixedbugs/issue22581.go:10:13: expected ';', found ')'	missing=0;wording=6;extra=23;class=wording
+testdir:fixedbugs/issue22581.go	compiled	test/fixedbugs/issue22581.go:10:13: expected ';', found ')'	missing=0;wording=6;extra=23;class=wording
+testdir:fixedbugs/issue23586.go	interpreted	test/fixedbugs/issue23586.go:21:32: expression in defer must be function call	missing=0;wording=0;extra=3;class=extra
+testdir:fixedbugs/issue23586.go	compiled	test/fixedbugs/issue23586.go:21:32: expression in defer must be function call	missing=0;wording=0;extra=3;class=extra
+testdir:fixedbugs/issue23587.go	interpreted	test/fixedbugs/issue23587.go:14:8: expected ';', found '~'	missing=0;wording=1;extra=4;class=wording
+testdir:fixedbugs/issue23587.go	compiled	test/fixedbugs/issue23587.go:14:8: expected ';', found '~'	missing=0;wording=1;extra=4;class=wording
+testdir:fixedbugs/issue23664.go	interpreted	test/fixedbugs/issue23664.go:12:9: expected ';', found true	missing=0;wording=2;extra=5;class=wording
+testdir:fixedbugs/issue23664.go	compiled	test/fixedbugs/issue23664.go:12:9: expected ';', found true	missing=0;wording=2;extra=5;class=wording
+testdir:fixedbugs/issue24159.go	interpreted	test/fixedbugs/issue24159.go:14:7: duplicate case byte(0) (constant 0 of type byte) in expression switch	missing=0;wording=0;extra=3;class=extra
+testdir:fixedbugs/issue24159.go	compiled	test/fixedbugs/issue24159.go:14:7: duplicate case byte(0) (constant 0 of type byte) in expression switch	missing=0;wording=0;extra=3;class=extra
+testdir:fixedbugs/issue24651a.go	interpreted	issue24651a.go:12: missing error "cannot inline Foo: marked go:norace with -race compilation$"	missing=4;wording=0;extra=0;class=missing
+testdir:fixedbugs/issue24651a.go	compiled	test/fixedbugs/issue24651a.go:12:6: can inline Foo with cost 10 as: func(int) int { return x * (x + 1) * (x + 2) }	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue24651b.go	interpreted	issue24651b.go:10: missing error "can inline Foo with cost .* as: func\\(int\\) int { return x \\* \\(x \\+ 1\\) \\* \\(x \\+ 2\\) }$"	missing=5;wording=0;extra=0;class=missing
+testdir:fixedbugs/issue24651b.go	compiled	test/fixedbugs/issue24651b.go:10:6: can inline Foo with cost 10 as: func(int) int { return x * (x + 1) * (x + 2) }	missing=0;wording=1;extra=0;class=wording
+testdir:fixedbugs/issue28085.go	interpreted	test/fixedbugs/issue28085.go:11:2: duplicate key 0 in map literal	missing=0;wording=0;extra=1;class=extra
+testdir:fixedbugs/issue28085.go	compiled	test/fixedbugs/issue28085.go:11:2: duplicate key 0 in map literal	missing=0;wording=0;extra=1;class=extra
+testdir:fixedbugs/issue28268.go	interpreted	test/fixedbugs/issue28268.go:19:10: field and method with the same name b	missing=0;wording=0;extra=2;class=extra
+testdir:fixedbugs/issue28268.go	compiled	test/fixedbugs/issue28268.go:19:10: field and method with the same name b	missing=0;wording=0;extra=2;class=extra
+testdir:fixedbugs/issue30722.go	interpreted	test/fixedbugs/issue30722.go:12:7: '_' must separate successive digits	missing=0;wording=0;extra=5;class=multiplicity
+testdir:fixedbugs/issue30722.go	compiled	test/fixedbugs/issue30722.go:12:7: '_' must separate successive digits	missing=0;wording=0;extra=5;class=multiplicity
+testdir:fixedbugs/issue32133.go	interpreted	test/fixedbugs/issue32133.go:10:8: string literal not terminated	missing=0;wording=4;extra=13;class=wording
+testdir:fixedbugs/issue32133.go	compiled	test/fixedbugs/issue32133.go:10:8: string literal not terminated	missing=0;wording=4;extra=13;class=wording
+testdir:fixedbugs/issue33386.go	interpreted	test/fixedbugs/issue33386.go:16:2: expected operand, found '}'	missing=3;wording=0;extra=10;class=position
+testdir:fixedbugs/issue33386.go	compiled	test/fixedbugs/issue33386.go:16:2: expected operand, found '}'	missing=3;wording=0;extra=10;class=position
+testdir:fixedbugs/issue33460.go	interpreted	test/fixedbugs/issue33460.go:34:2: duplicate key "a" in map literal	missing=0;wording=0;extra=3;class=extra
+testdir:fixedbugs/issue33460.go	compiled	test/fixedbugs/issue33460.go:34:2: duplicate key "a" in map literal	missing=0;wording=0;extra=3;class=extra
+testdir:fixedbugs/issue39292.go	interpreted	issue39292.go:15: missing error "t{}.f escapes to heap"	missing=7;wording=0;extra=0;class=missing
+testdir:fixedbugs/issue39292.go	compiled	test/fixedbugs/issue39292.go:11:7: __bpp0_unnamed0 does not escape	missing=0;wording=1;extra=0;class=wording
+testdir:fixedbugs/issue4405.go	interpreted	test/fixedbugs/issue4405.go:11:3: expected ';', found 'ILLEGAL'	missing=0;wording=0;extra=3;class=multiplicity
+testdir:fixedbugs/issue4405.go	compiled	test/fixedbugs/issue4405.go:11:3: expected ';', found 'ILLEGAL'	missing=0;wording=0;extra=3;class=multiplicity
+testdir:fixedbugs/issue4776.go	interpreted	test/fixedbugs/issue4776.go:9:1: expected 'package', found 'type'	missing=0;wording=1;extra=2;class=wording
+testdir:fixedbugs/issue4776.go	compiled	test/fixedbugs/issue4776.go:9:1: expected 'package', found 'type'	missing=0;wording=1;extra=2;class=wording
+testdir:fixedbugs/issue50372.go	interpreted	test/fixedbugs/issue50372.go:16:19: expected at most 2 expressions	missing=0;wording=4;extra=4;class=wording
+testdir:fixedbugs/issue50372.go	compiled	test/fixedbugs/issue50372.go:16:19: expected at most 2 expressions	missing=0;wording=4;extra=4;class=wording
+testdir:fixedbugs/issue54159.go	interpreted	issue54159.go:10: missing error "cannot inline run: marked go:noinline"	missing=8;wording=0;extra=0;class=missing
+testdir:fixedbugs/issue54159.go	compiled	test/fixedbugs/issue54159.go:19:6: can inline g with cost 0 as: func() {  }	missing=0;wording=2;extra=0;class=wording
+testdir:fixedbugs/issue6977.go	interpreted	test/fixedbugs/issue6977.go:37:26: duplicate method m	missing=0;wording=0;extra=4;class=multiplicity
+testdir:fixedbugs/issue6977.go	compiled	test/fixedbugs/issue6977.go:37:26: duplicate method m	missing=0;wording=0;extra=4;class=multiplicity
+testdir:fixedbugs/issue7538a.go	interpreted	test/fixedbugs/issue7538a.go:14:7: label _ not declared	missing=0;wording=1;extra=1;class=wording
+testdir:fixedbugs/issue7538a.go	compiled	test/fixedbugs/issue7538a.go:14:7: label _ not declared	missing=0;wording=1;extra=1;class=wording
+testdir:goto.go	interpreted	test/goto.go:42:7: goto L jumps over variable declaration at line 43	missing=0;wording=34;extra=34;class=wording
+testdir:goto.go	compiled	test/goto.go:42:7: goto L jumps over variable declaration at line 43	missing=0;wording=34;extra=34;class=wording
+testdir:import6.go	interpreted	test/import6.go:17:8: invalid import path (empty string)	missing=0;wording=1;extra=1;class=wording
+testdir:import6.go	compiled	test/import6.go:17:8: invalid import path (empty string)	missing=0;wording=1;extra=1;class=wording
+testdir:label.go	interpreted	test/label.go:31:1: label L6 already declared	missing=0;wording=8;extra=9;class=wording
+testdir:label.go	compiled	test/label.go:31:1: label L6 already declared	missing=0;wording=8;extra=9;class=wording
+testdir:label1.go	interpreted	test/label1.go:18:3: continue not in for statement	missing=0;wording=4;extra=4;class=wording
+testdir:label1.go	compiled	test/label1.go:18:3: continue not in for statement	missing=0;wording=4;extra=4;class=wording
+testdir:mainsig.go	interpreted	test/mainsig.go:9:6: func main must have no arguments and no return values	missing=0;wording=0;extra=1;class=multiplicity
+testdir:mainsig.go	compiled	test/mainsig.go:9:6: func main must have no arguments and no return values	missing=0;wording=0;extra=1;class=multiplicity
+testdir:switch2.go	interpreted	test/switch2.go:14:8: expected ':', found ';'	missing=0;wording=5;extra=21;class=wording
+testdir:switch2.go	compiled	test/switch2.go:14:8: expected ':', found ';'	missing=0;wording=5;extra=21;class=wording
+testdir:switch5.go	interpreted	test/switch5.go:15:7: duplicate case 0 (constant of type int) in expression switch	missing=0;wording=0;extra=18;class=extra
+testdir:switch5.go	compiled	test/switch5.go:15:7: duplicate case 0 (constant of type int) in expression switch	missing=0;wording=0;extra=18;class=extra
+testdir:switch7.go	interpreted	test/switch7.go:18:7: duplicate case int in type switch	missing=0;wording=0;extra=4;class=extra
+testdir:switch7.go	compiled	test/switch7.go:18:7: duplicate case int in type switch	missing=0;wording=0;extra=4;class=extra
+testdir:syntax/chan.go	interpreted	test/syntax/chan.go:11:1: expected type, found '}'	missing=0;wording=3;extra=3;class=wording
+testdir:syntax/chan.go	compiled	test/syntax/chan.go:11:1: expected type, found '}'	missing=0;wording=3;extra=3;class=wording
+testdir:syntax/chan1.go	interpreted	test/syntax/chan1.go:13:5: expected boolean expression, found simple statement (missing parentheses around composite literal?)	missing=0;wording=2;extra=2;class=wording
+testdir:syntax/chan1.go	compiled	test/syntax/chan1.go:13:5: expected boolean expression, found simple statement (missing parentheses around composite literal?)	missing=0;wording=2;extra=2;class=wording
+testdir:syntax/composite.go	interpreted	test/syntax/composite.go:10:98: missing ',' before newline in composite literal	missing=0;wording=1;extra=1;class=wording
+testdir:syntax/composite.go	compiled	test/syntax/composite.go:10:98: missing ',' before newline in composite literal	missing=0;wording=1;extra=1;class=wording
+testdir:syntax/ddd.go	interpreted	test/syntax/ddd.go:10:6: expected selector or type assertion, found .3	missing=0;wording=1;extra=3;class=wording
+testdir:syntax/ddd.go	compiled	test/syntax/ddd.go:10:6: expected selector or type assertion, found .3	missing=0;wording=1;extra=3;class=wording
+testdir:syntax/else.go	interpreted	test/syntax/else.go:11:9: expected if statement or block, found ';'	missing=0;wording=1;extra=1;class=wording
+testdir:syntax/else.go	compiled	test/syntax/else.go:11:9: expected if statement or block, found ';'	missing=0;wording=1;extra=1;class=wording
+testdir:syntax/import.go	interpreted	test/syntax/import.go:10:6: expected ';', found ','	missing=0;wording=1;extra=3;class=wording
+testdir:syntax/import.go	compiled	test/syntax/import.go:10:6: expected ';', found ','	missing=0;wording=1;extra=3;class=wording
+testdir:syntax/initvar.go	interpreted	test/syntax/initvar.go:10:9: var declaration not allowed in if initializer	missing=0;wording=2;extra=12;class=wording
+testdir:syntax/initvar.go	compiled	test/syntax/initvar.go:10:9: var declaration not allowed in if initializer	missing=0;wording=2;extra=12;class=wording
+testdir:syntax/semi1.go	interpreted	test/syntax/semi1.go:10:62: expected '{', found newline	missing=0;wording=0;extra=8;class=extra
+testdir:syntax/semi1.go	compiled	test/syntax/semi1.go:10:62: expected '{', found newline	missing=0;wording=0;extra=8;class=extra
+testdir:syntax/semi2.go	interpreted	test/syntax/semi2.go:10:68: expected '{', found newline	missing=0;wording=0;extra=5;class=extra
+testdir:syntax/semi2.go	compiled	test/syntax/semi2.go:10:68: expected '{', found newline	missing=0;wording=0;extra=5;class=extra
+testdir:syntax/semi3.go	interpreted	test/syntax/semi3.go:10:66: expected '{', found newline	missing=0;wording=0;extra=8;class=extra
+testdir:syntax/semi3.go	compiled	test/syntax/semi3.go:10:66: expected '{', found newline	missing=0;wording=0;extra=8;class=extra
+testdir:syntax/semi4.go	interpreted	test/syntax/semi4.go:11:2: expected operand, found '{'	missing=0;wording=1;extra=9;class=wording
+testdir:syntax/semi4.go	compiled	test/syntax/semi4.go:11:2: expected operand, found '{'	missing=0;wording=1;extra=9;class=wording
+testdir:syntax/semi5.go	interpreted	test/syntax/semi5.go:10:1: unexpected semicolon or newline before {	missing=0;wording=0;extra=2;class=multiplicity
+testdir:syntax/semi5.go	compiled	test/syntax/semi5.go:10:1: unexpected semicolon or newline before {	missing=0;wording=0;extra=2;class=multiplicity
+testdir:syntax/semi6.go	interpreted	test/syntax/semi6.go:9:47: expected type, found newline	missing=0;wording=2;extra=2;class=wording
+testdir:syntax/semi6.go	compiled	test/syntax/semi6.go:9:47: expected type, found newline	missing=0;wording=2;extra=2;class=wording
+testdir:syntax/semi7.go	interpreted	test/syntax/semi7.go:11:2: expected statement, found 'else'	missing=0;wording=1;extra=4;class=wording
+testdir:syntax/semi7.go	compiled	test/syntax/semi7.go:11:2: expected statement, found 'else'	missing=0;wording=1;extra=4;class=wording
+testdir:syntax/topexpr.go	interpreted	test/syntax/topexpr.go:9:1: expected declaration, found fmt	missing=2;wording=0;extra=0;class=missing
+testdir:syntax/topexpr.go	compiled	test/syntax/topexpr.go:9:1: expected declaration, found fmt	missing=2;wording=0;extra=0;class=missing
+testdir:syntax/typesw.go	interpreted	test/syntax/typesw.go:10:2: invalid syntax tree: incorrect form of type switch guard	missing=0;wording=1;extra=1;class=wording
+testdir:syntax/typesw.go	compiled	test/syntax/typesw.go:10:2: invalid syntax tree: incorrect form of type switch guard	missing=0;wording=1;extra=1;class=wording
+testdir:syntax/vareq.go	interpreted	test/syntax/vareq.go:10:25: expected ';', found '{'	missing=0;wording=1;extra=4;class=wording
+testdir:syntax/vareq.go	compiled	test/syntax/vareq.go:10:25: expected ';', found '{'	missing=0;wording=1;extra=4;class=wording
+testdir:syntax/vareq1.go	interpreted	test/syntax/vareq1.go:9:24: expected ';', found '{'	missing=0;wording=1;extra=1;class=wording
+testdir:syntax/vareq1.go	compiled	test/syntax/vareq1.go:9:24: expected ';', found '{'	missing=0;wording=1;extra=1;class=wording
+testdir:typeparam/issue48711.go	interpreted	test/typeparam/issue48711.go:9:8: instantiation cycle:	missing=0;wording=0;extra=1;class=extra
+testdir:typeparam/issue48711.go	compiled	test/typeparam/issue48711.go:9:8: instantiation cycle:	missing=0;wording=0;extra=1;class=extra
+testdir:typeparam/pragma.go	interpreted	pragma.go:17: missing error "can inline main"	missing=1;wording=0;extra=0;class=missing
+testdir:typeparam/pragma.go	compiled	test/typeparam/pragma.go:13:6: can inline f[go.shape.int]	missing=0;wording=1;extra=0;class=wording
+testdir:typeswitch2.go	interpreted	test/typeswitch2.go:18:7: duplicate case int in type switch	missing=0;wording=0;extra=3;class=extra
+testdir:typeswitch2.go	compiled	test/typeswitch2.go:18:7: duplicate case int in type switch	missing=0;wording=0;extra=3;class=extra
+testdir:uintptrescapes2.go	interpreted	uintptrescapes2.go:16: missing error "escaping uintptr"	missing=30;wording=0;extra=0;class=missing
+testdir:uintptrescapes2.go	compiled	test/uintptrescapes2.go:19:9: a does not escape	missing=15;wording=15;extra=0;class=wording
+typechecker:cmd/compile/internal/types2/TestCheck/builtins0.go	interpreted	check_test.go:256: ../../../../internal/types/testdata/check/builtins0.go:91:2: no error expected: "undefined: assert"	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestCheck/builtins0.go	compiled	check_test.go:256: ../../../../internal/types/testdata/check/builtins0.go:91:2: no error expected: "undefined: assert"	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestCheck/builtins1.go	interpreted	check_test.go:256: ../../../../internal/types/testdata/check/builtins1.go:257:2: no error expected: "undefined: assert"	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestCheck/builtins1.go	compiled	check_test.go:256: ../../../../internal/types/testdata/check/builtins1.go:257:2: no error expected: "undefined: assert"	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestCheck/const0.go	interpreted	check_test.go:256: ../../../../internal/types/testdata/check/const0.go:195:8: no error expected: "undefined: assert"	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestCheck/const0.go	compiled	check_test.go:256: ../../../../internal/types/testdata/check/const0.go:195:8: no error expected: "undefined: assert"	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestCheck/const1.go	interpreted	check_test.go:256: ../../../../internal/types/testdata/check/const1.go:57:6: no error expected: "undefined: assert"	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestCheck/const1.go	compiled	check_test.go:256: ../../../../internal/types/testdata/check/const1.go:57:6: no error expected: "undefined: assert"	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestCheck/constdecl.go	interpreted	check_test.go:256: ../../../../internal/types/testdata/check/constdecl.go:150:2: no error expected: "undefined: assert"	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestCheck/constdecl.go	compiled	check_test.go:256: ../../../../internal/types/testdata/check/constdecl.go:150:2: no error expected: "undefined: assert"	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestCheck/conversions0.go	interpreted	check_test.go:256: ../../../../internal/types/testdata/check/conversions0.go:21:2: no error expected: "undefined: assert"	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestCheck/conversions0.go	compiled	check_test.go:256: ../../../../internal/types/testdata/check/conversions0.go:21:2: no error expected: "undefined: assert"	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestCheck/cycles0.go	interpreted	check_test.go:256: ../../../../internal/types/testdata/check/cycles0.go:14:2: no error expected: "\tT3 refers to T4"	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestCheck/cycles0.go	compiled	check_test.go:256: ../../../../internal/types/testdata/check/cycles0.go:14:2: no error expected: "\tT3 refers to T4"	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestCheck/cycles2.go	interpreted	check_test.go:256: ../../../../internal/types/testdata/check/cycles2.go:73:6: no error expected: "\tT1 refers to x1"	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestCheck/cycles2.go	compiled	check_test.go:256: ../../../../internal/types/testdata/check/cycles2.go:73:6: no error expected: "\tT1 refers to x1"	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestCheck/cycles3.go	interpreted	check_test.go:256: ../../../../internal/types/testdata/check/cycles3.go:51:2: no error expected: "\tU refers to V"	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestCheck/cycles3.go	compiled	check_test.go:256: ../../../../internal/types/testdata/check/cycles3.go:51:2: no error expected: "\tU refers to V"	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestCheck/cycles5.go	interpreted	check_test.go:256: ../../../../internal/types/testdata/check/cycles5.go:106:2: no error expected: "\tT4 refers to T5"	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestCheck/cycles5.go	compiled	check_test.go:256: ../../../../internal/types/testdata/check/cycles5.go:106:2: no error expected: "\tT4 refers to T5"	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestCheck/cycles6.go	interpreted	check_test.go:256: ../../../../internal/types/testdata/check/cycles6.go:51:6: no error expected: "\tT6 refers to T7"	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestCheck/cycles6.go	compiled	check_test.go:256: ../../../../internal/types/testdata/check/cycles6.go:51:6: no error expected: "\tT6 refers to T7"	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestCheck/decls0.go	interpreted	check_test.go:256: ../../../../internal/types/testdata/check/decls0.go:74:2: no error expected: "\tother declaration of a"	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestCheck/decls0.go	compiled	check_test.go:256: ../../../../internal/types/testdata/check/decls0.go:74:2: no error expected: "\tother declaration of a"	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestCheck/decls2	interpreted	check_test.go:256: ../../../../internal/types/testdata/check/decls2/decls2a.go:108:7: no error expected: "\tother declaration of c_double"	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestCheck/decls2	compiled	check_test.go:256: ../../../../internal/types/testdata/check/decls2/decls2a.go:108:7: no error expected: "\tother declaration of c_double"	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestCheck/decls3.go	interpreted	check_test.go:256: ../../../../internal/types/testdata/check/decls3.go:101:50: no error expected: "\tother declaration of Pointer"	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestCheck/decls3.go	compiled	check_test.go:256: ../../../../internal/types/testdata/check/decls3.go:101:50: no error expected: "\tother declaration of Pointer"	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestCheck/decls4.go	interpreted	check_test.go:256: ../../../../internal/types/testdata/check/decls4.go:124:2: no error expected: "\tC3 refers to C4"	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestCheck/decls4.go	compiled	check_test.go:256: ../../../../internal/types/testdata/check/decls4.go:124:2: no error expected: "\tC3 refers to C4"	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestCheck/expr3.go	interpreted	check_test.go:256: ../../../../internal/types/testdata/check/expr3.go:251:2: no error expected: "undefined: assert"	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestCheck/expr3.go	compiled	check_test.go:256: ../../../../internal/types/testdata/check/expr3.go:251:2: no error expected: "undefined: assert"	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestCheck/go1_13.go	interpreted	check_test.go:256: ../../../../internal/types/testdata/check/go1_13.go:16:2: no error expected: "\tother declaration of method m"	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestCheck/go1_13.go	compiled	check_test.go:256: ../../../../internal/types/testdata/check/go1_13.go:16:2: no error expected: "\tother declaration of method m"	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestCheck/importdecl0	interpreted	check_test.go:256: ../../../../internal/types/testdata/check/importdecl0/importdecl0a.go:15:2: no error expected: "\tother declaration of reflect"	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestCheck/importdecl0	compiled	check_test.go:256: ../../../../internal/types/testdata/check/importdecl0/importdecl0a.go:15:2: no error expected: "\tother declaration of reflect"	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestCheck/init0.go	interpreted	check_test.go:256: ../../../../internal/types/testdata/check/init0.go:13:2: no error expected: "\tx0 refers to y0"	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestCheck/init0.go	compiled	check_test.go:256: ../../../../internal/types/testdata/check/init0.go:13:2: no error expected: "\tx0 refers to y0"	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestCheck/init1.go	interpreted	check_test.go:256: ../../../../internal/types/testdata/check/init1.go:17:5: no error expected: "\ty0 refers to m"	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestCheck/init1.go	compiled	check_test.go:256: ../../../../internal/types/testdata/check/init1.go:17:5: no error expected: "\ty0 refers to m"	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestCheck/init2.go	interpreted	check_test.go:256: ../../../../internal/types/testdata/check/init2.go:12:5: no error expected: "\tx1 refers to f1"	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestCheck/init2.go	compiled	check_test.go:256: ../../../../internal/types/testdata/check/init2.go:12:5: no error expected: "\tx1 refers to f1"	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestCheck/labels.go	interpreted	check_test.go:256: ../../../../internal/types/testdata/check/labels.go:27:1: no error expected: "\tother declaration of L6"	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestCheck/labels.go	compiled	check_test.go:256: ../../../../internal/types/testdata/check/labels.go:27:1: no error expected: "\tother declaration of L6"	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestCheck/literals.go	interpreted	check_test.go:256: ../../../../internal/types/testdata/check/literals.go:13:2: no error expected: "undefined: assert"	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestCheck/literals.go	compiled	check_test.go:256: ../../../../internal/types/testdata/check/literals.go:13:2: no error expected: "undefined: assert"	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestCheck/main0.go	interpreted	check_test.go:256: ../../../../internal/types/testdata/check/main0.go:7:6: no error expected: "\tother declaration of main"	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestCheck/main0.go	compiled	check_test.go:256: ../../../../internal/types/testdata/check/main0.go:7:6: no error expected: "\tother declaration of main"	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestCheck/stmt0.go	interpreted	check_test.go:256: ../../../../internal/types/testdata/check/stmt0.go:395:8: no error expected: "\tinner declaration of var a int"	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestCheck/stmt0.go	compiled	check_test.go:256: ../../../../internal/types/testdata/check/stmt0.go:395:8: no error expected: "\tinner declaration of var a int"	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestCheck/typeparams.go	interpreted	check_test.go:256: ../../../../internal/types/testdata/check/typeparams.go:17:8: no error expected: "\tother declaration of T"	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestCheck/typeparams.go	compiled	check_test.go:256: ../../../../internal/types/testdata/check/typeparams.go:17:8: no error expected: "\tother declaration of T"	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestExamples/types.go	interpreted	check_test.go:256: ../../../../internal/types/testdata/examples/types.go:149:38: no error expected: "\tother declaration of int8"	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestExamples/types.go	compiled	check_test.go:256: ../../../../internal/types/testdata/examples/types.go:149:38: no error expected: "\tother declaration of int8"	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestFixedbugs/issue39634.go	interpreted	check_test.go:256: ../../../../internal/types/testdata/fixedbugs/issue39634.go:18:11: no error expected: "\tother declaration of e"	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestFixedbugs/issue39634.go	compiled	check_test.go:256: ../../../../internal/types/testdata/fixedbugs/issue39634.go:18:11: no error expected: "\tother declaration of e"	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestFixedbugs/issue39938.go	interpreted	check_test.go:256: ../../../../internal/types/testdata/fixedbugs/issue39938.go:26:6: no error expected: "\tT2 refers to E2[T2]"	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestFixedbugs/issue39938.go	compiled	check_test.go:256: ../../../../internal/types/testdata/fixedbugs/issue39938.go:26:6: no error expected: "\tT2 refers to E2[T2]"	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestFixedbugs/issue41124.go	interpreted	check_test.go:256: ../../../../internal/types/testdata/fixedbugs/issue41124.go:9:6: no error expected: "\tNat refers to Succ"	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestFixedbugs/issue41124.go	compiled	check_test.go:256: ../../../../internal/types/testdata/fixedbugs/issue41124.go:9:6: no error expected: "\tNat refers to Succ"	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestFixedbugs/issue42758.go	interpreted	check_test.go:256: ../../../../internal/types/testdata/fixedbugs/issue42758.go:14:7: no error expected: "\tprevious case"	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestFixedbugs/issue42758.go	compiled	check_test.go:256: ../../../../internal/types/testdata/fixedbugs/issue42758.go:14:7: no error expected: "\tprevious case"	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestFixedbugs/issue48018.go	interpreted	check_test.go:256: ../../../../internal/types/testdata/fixedbugs/issue48018.go:15:9: no error expected: "\tA instantiated as Box[A]"	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestFixedbugs/issue48018.go	compiled	check_test.go:256: ../../../../internal/types/testdata/fixedbugs/issue48018.go:15:9: no error expected: "\tA instantiated as Box[A]"	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestFixedbugs/issue48234.go	interpreted	check_test.go:256: ../../../../internal/types/testdata/fixedbugs/issue48234.go:8:2: no error expected: "\tother declaration of method m"	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestFixedbugs/issue48234.go	compiled	check_test.go:256: ../../../../internal/types/testdata/fixedbugs/issue48234.go:8:2: no error expected: "\tother declaration of method m"	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestFixedbugs/issue48582.go	interpreted	check_test.go:256: ../../../../internal/types/testdata/fixedbugs/issue48582.go:11:6: no error expected: "\tA refers to B"	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestFixedbugs/issue48582.go	compiled	check_test.go:256: ../../../../internal/types/testdata/fixedbugs/issue48582.go:11:6: no error expected: "\tA refers to B"	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestFixedbugs/issue48656.go	interpreted	check_test.go:256: ../../../../internal/types/testdata/fixedbugs/issue48656.go:12:9: no error expected: "\tP instantiated as *P"	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestFixedbugs/issue48656.go	compiled	check_test.go:256: ../../../../internal/types/testdata/fixedbugs/issue48656.go:12:9: no error expected: "\tP instantiated as *P"	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestFixedbugs/issue48962.go	interpreted	check_test.go:256: ../../../../internal/types/testdata/fixedbugs/issue48962.go:11:6: no error expected: "\tT1 refers to T0[T1]"	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestFixedbugs/issue48962.go	compiled	check_test.go:256: ../../../../internal/types/testdata/fixedbugs/issue48962.go:11:6: no error expected: "\tT1 refers to T0[T1]"	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestFixedbugs/issue48974.go	interpreted	check_test.go:256: ../../../../internal/types/testdata/fixedbugs/issue48974.go:15:41: no error expected: "\tF instantiated as *FooerImpl[F]"	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestFixedbugs/issue48974.go	compiled	check_test.go:256: ../../../../internal/types/testdata/fixedbugs/issue48974.go:15:41: no error expected: "\tF instantiated as *FooerImpl[F]"	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestFixedbugs/issue49043.go	interpreted	check_test.go:256: ../../../../internal/types/testdata/fixedbugs/issue49043.go:9:11: no error expected: "\tM[P] refers to N[P]"	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestFixedbugs/issue49043.go	compiled	check_test.go:256: ../../../../internal/types/testdata/fixedbugs/issue49043.go:9:11: no error expected: "\tM[P] refers to N[P]"	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestFixedbugs/issue49276.go	interpreted	check_test.go:256: ../../../../internal/types/testdata/fixedbugs/issue49276.go:9:6: no error expected: "\tS refers to s"	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestFixedbugs/issue49276.go	compiled	check_test.go:256: ../../../../internal/types/testdata/fixedbugs/issue49276.go:9:6: no error expected: "\tS refers to s"	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestFixedbugs/issue51503.go	interpreted	check_test.go:256: ../../../../internal/types/testdata/fixedbugs/issue51503.go:14:38: no error expected: "\tother declaration of r"	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestFixedbugs/issue51503.go	compiled	check_test.go:256: ../../../../internal/types/testdata/fixedbugs/issue51503.go:14:38: no error expected: "\tother declaration of r"	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestFixedbugs/issue52698.go	interpreted	check_test.go:256: ../../../../internal/types/testdata/fixedbugs/issue52698.go:12:6: no error expected: "\tS refers to T[S]"	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestFixedbugs/issue52698.go	compiled	check_test.go:256: ../../../../internal/types/testdata/fixedbugs/issue52698.go:12:6: no error expected: "\tS refers to T[S]"	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestFixedbugs/issue65711.go	interpreted	check_test.go:256: ../../../../internal/types/testdata/fixedbugs/issue65711.go:11:6: no error expected: "\tC refers to B[C]"	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestFixedbugs/issue65711.go	compiled	check_test.go:256: ../../../../internal/types/testdata/fixedbugs/issue65711.go:11:6: no error expected: "\tC refers to B[C]"	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestFixedbugs/issue66285.go	interpreted	check_test.go:256: ../../../../internal/types/testdata/fixedbugs/issue66285.go:16:2: no error expected: "\tother declaration of method Read"	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestFixedbugs/issue66285.go	compiled	check_test.go:256: ../../../../internal/types/testdata/fixedbugs/issue66285.go:16:2: no error expected: "\tother declaration of method Read"	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestFixedbugs/issue6977.go	interpreted	check_test.go:256: ../../../../internal/types/testdata/fixedbugs/issue6977.go:35:21: no error expected: "\tother declaration of method m"	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestFixedbugs/issue6977.go	compiled	check_test.go:256: ../../../../internal/types/testdata/fixedbugs/issue6977.go:35:21: no error expected: "\tother declaration of method m"	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestFixedbugs/issue75918.go	interpreted	check_test.go:256: ../../../../internal/types/testdata/fixedbugs/issue75918.go:9:6: no error expected: "\tA refers to S"	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestFixedbugs/issue75918.go	compiled	check_test.go:256: ../../../../internal/types/testdata/fixedbugs/issue75918.go:9:6: no error expected: "\tA refers to S"	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestFixedbugs/issue76478.go	interpreted	check_test.go:256: ../../../../internal/types/testdata/fixedbugs/issue76478.go:18:6: no error expected: "\tE refers to F"	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestFixedbugs/issue76478.go	compiled	check_test.go:256: ../../../../internal/types/testdata/fixedbugs/issue76478.go:18:6: no error expected: "\tE refers to F"	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestFixedbugs/issue79265.go	interpreted	check_test.go:256: ../../../../internal/types/testdata/fixedbugs/issue79265.go:10:6: no error expected: "\tA refers to T"	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestFixedbugs/issue79265.go	compiled	check_test.go:256: ../../../../internal/types/testdata/fixedbugs/issue79265.go:10:6: no error expected: "\tA refers to T"	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestFixedbugs/issue80172.go	interpreted	check_test.go:256: ../../../../internal/types/testdata/fixedbugs/issue80172.go:9:30: no error expected: "\tP instantiated as List[P]"	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestFixedbugs/issue80172.go	compiled	check_test.go:256: ../../../../internal/types/testdata/fixedbugs/issue80172.go:9:30: no error expected: "\tP instantiated as List[P]"	missing=0;wording=0;extra=0;class=-
+typechecker:go/types/TestCheck/builtins0.go	interpreted	check_test.go:271: ../../internal/types/testdata/check/builtins0.go:91:2: no error expected: "undefined: assert"	missing=0;wording=0;extra=0;class=-
+typechecker:go/types/TestCheck/builtins0.go	compiled	check_test.go:271: ../../internal/types/testdata/check/builtins0.go:91:2: no error expected: "undefined: assert"	missing=0;wording=0;extra=0;class=-
+typechecker:go/types/TestCheck/builtins1.go	interpreted	check_test.go:271: ../../internal/types/testdata/check/builtins1.go:257:2: no error expected: "undefined: assert"	missing=0;wording=0;extra=0;class=-
+typechecker:go/types/TestCheck/builtins1.go	compiled	check_test.go:271: ../../internal/types/testdata/check/builtins1.go:257:2: no error expected: "undefined: assert"	missing=0;wording=0;extra=0;class=-
+typechecker:go/types/TestCheck/const0.go	interpreted	check_test.go:271: ../../internal/types/testdata/check/const0.go:195:8: no error expected: "undefined: assert"	missing=0;wording=0;extra=0;class=-
+typechecker:go/types/TestCheck/const0.go	compiled	check_test.go:271: ../../internal/types/testdata/check/const0.go:195:8: no error expected: "undefined: assert"	missing=0;wording=0;extra=0;class=-
+typechecker:go/types/TestCheck/const1.go	interpreted	check_test.go:271: ../../internal/types/testdata/check/const1.go:57:6: no error expected: "undefined: assert"	missing=0;wording=0;extra=0;class=-
+typechecker:go/types/TestCheck/const1.go	compiled	check_test.go:271: ../../internal/types/testdata/check/const1.go:57:6: no error expected: "undefined: assert"	missing=0;wording=0;extra=0;class=-
+typechecker:go/types/TestCheck/constdecl.go	interpreted	check_test.go:271: ../../internal/types/testdata/check/constdecl.go:150:2: no error expected: "undefined: assert"	missing=0;wording=0;extra=0;class=-
+typechecker:go/types/TestCheck/constdecl.go	compiled	check_test.go:271: ../../internal/types/testdata/check/constdecl.go:150:2: no error expected: "undefined: assert"	missing=0;wording=0;extra=0;class=-
+typechecker:go/types/TestCheck/conversions0.go	interpreted	check_test.go:271: ../../internal/types/testdata/check/conversions0.go:21:2: no error expected: "undefined: assert"	missing=0;wording=0;extra=0;class=-
+typechecker:go/types/TestCheck/conversions0.go	compiled	check_test.go:271: ../../internal/types/testdata/check/conversions0.go:21:2: no error expected: "undefined: assert"	missing=0;wording=0;extra=0;class=-
+typechecker:go/types/TestCheck/cycles0.go	interpreted	check_test.go:271: ../../internal/types/testdata/check/cycles0.go:14:2: no error expected: "\tT3 refers to T4"	missing=0;wording=0;extra=0;class=-
+typechecker:go/types/TestCheck/cycles0.go	compiled	check_test.go:271: ../../internal/types/testdata/check/cycles0.go:14:2: no error expected: "\tT3 refers to T4"	missing=0;wording=0;extra=0;class=-
+typechecker:go/types/TestCheck/cycles2.go	interpreted	check_test.go:271: ../../internal/types/testdata/check/cycles2.go:73:6: no error expected: "\tT1 refers to x1"	missing=0;wording=0;extra=0;class=-
+typechecker:go/types/TestCheck/cycles2.go	compiled	check_test.go:271: ../../internal/types/testdata/check/cycles2.go:73:6: no error expected: "\tT1 refers to x1"	missing=0;wording=0;extra=0;class=-
+typechecker:go/types/TestCheck/cycles3.go	interpreted	check_test.go:271: ../../internal/types/testdata/check/cycles3.go:51:2: no error expected: "\tU refers to V"	missing=0;wording=0;extra=0;class=-
+typechecker:go/types/TestCheck/cycles3.go	compiled	check_test.go:271: ../../internal/types/testdata/check/cycles3.go:51:2: no error expected: "\tU refers to V"	missing=0;wording=0;extra=0;class=-
+typechecker:go/types/TestCheck/cycles5.go	interpreted	check_test.go:271: ../../internal/types/testdata/check/cycles5.go:106:2: no error expected: "\tT4 refers to T5"	missing=0;wording=0;extra=0;class=-
+typechecker:go/types/TestCheck/cycles5.go	compiled	check_test.go:271: ../../internal/types/testdata/check/cycles5.go:106:2: no error expected: "\tT4 refers to T5"	missing=0;wording=0;extra=0;class=-
+typechecker:go/types/TestCheck/cycles6.go	interpreted	check_test.go:271: ../../internal/types/testdata/check/cycles6.go:51:6: no error expected: "\tT6 refers to T7"	missing=0;wording=0;extra=0;class=-
+typechecker:go/types/TestCheck/cycles6.go	compiled	check_test.go:271: ../../internal/types/testdata/check/cycles6.go:51:6: no error expected: "\tT6 refers to T7"	missing=0;wording=0;extra=0;class=-
+typechecker:go/types/TestCheck/decls0.go	interpreted	check_test.go:271: ../../internal/types/testdata/check/decls0.go:74:2: no error expected: "\tother declaration of a"	missing=0;wording=0;extra=0;class=-
+typechecker:go/types/TestCheck/decls0.go	compiled	check_test.go:271: ../../internal/types/testdata/check/decls0.go:74:2: no error expected: "\tother declaration of a"	missing=0;wording=0;extra=0;class=-
+typechecker:go/types/TestCheck/decls2	interpreted	check_test.go:271: ../../internal/types/testdata/check/decls2/decls2a.go:108:7: no error expected: "\tother declaration of c_double"	missing=0;wording=0;extra=0;class=-
+typechecker:go/types/TestCheck/decls2	compiled	check_test.go:271: ../../internal/types/testdata/check/decls2/decls2a.go:108:7: no error expected: "\tother declaration of c_double"	missing=0;wording=0;extra=0;class=-
+typechecker:go/types/TestCheck/decls3.go	interpreted	check_test.go:271: ../../internal/types/testdata/check/decls3.go:101:50: no error expected: "\tother declaration of Pointer"	missing=0;wording=0;extra=0;class=-
+typechecker:go/types/TestCheck/decls3.go	compiled	check_test.go:271: ../../internal/types/testdata/check/decls3.go:101:50: no error expected: "\tother declaration of Pointer"	missing=0;wording=0;extra=0;class=-
+typechecker:go/types/TestCheck/decls4.go	interpreted	check_test.go:271: ../../internal/types/testdata/check/decls4.go:124:2: no error expected: "\tC3 refers to C4"	missing=0;wording=0;extra=0;class=-
+typechecker:go/types/TestCheck/decls4.go	compiled	check_test.go:271: ../../internal/types/testdata/check/decls4.go:124:2: no error expected: "\tC3 refers to C4"	missing=0;wording=0;extra=0;class=-
+typechecker:go/types/TestCheck/expr3.go	interpreted	check_test.go:271: ../../internal/types/testdata/check/expr3.go:251:2: no error expected: "undefined: assert"	missing=0;wording=0;extra=0;class=-
+typechecker:go/types/TestCheck/expr3.go	compiled	check_test.go:271: ../../internal/types/testdata/check/expr3.go:251:2: no error expected: "undefined: assert"	missing=0;wording=0;extra=0;class=-
+typechecker:go/types/TestCheck/go1_13.go	interpreted	check_test.go:271: ../../internal/types/testdata/check/go1_13.go:16:2: no error expected: "\tother declaration of method m"	missing=0;wording=0;extra=0;class=-
+typechecker:go/types/TestCheck/go1_13.go	compiled	check_test.go:271: ../../internal/types/testdata/check/go1_13.go:16:2: no error expected: "\tother declaration of method m"	missing=0;wording=0;extra=0;class=-
+typechecker:go/types/TestCheck/importdecl0	interpreted	check_test.go:271: ../../internal/types/testdata/check/importdecl0/importdecl0a.go:15:2: no error expected: "\tother declaration of reflect"	missing=0;wording=0;extra=0;class=-
+typechecker:go/types/TestCheck/importdecl0	compiled	check_test.go:271: ../../internal/types/testdata/check/importdecl0/importdecl0a.go:15:2: no error expected: "\tother declaration of reflect"	missing=0;wording=0;extra=0;class=-
+typechecker:go/types/TestCheck/init0.go	interpreted	check_test.go:271: ../../internal/types/testdata/check/init0.go:13:2: no error expected: "\tx0 refers to y0"	missing=0;wording=0;extra=0;class=-
+typechecker:go/types/TestCheck/init0.go	compiled	check_test.go:271: ../../internal/types/testdata/check/init0.go:13:2: no error expected: "\tx0 refers to y0"	missing=0;wording=0;extra=0;class=-
+typechecker:go/types/TestCheck/init1.go	interpreted	check_test.go:271: ../../internal/types/testdata/check/init1.go:17:5: no error expected: "\ty0 refers to m"	missing=0;wording=0;extra=0;class=-
+typechecker:go/types/TestCheck/init1.go	compiled	check_test.go:271: ../../internal/types/testdata/check/init1.go:17:5: no error expected: "\ty0 refers to m"	missing=0;wording=0;extra=0;class=-
+typechecker:go/types/TestCheck/init2.go	interpreted	check_test.go:271: ../../internal/types/testdata/check/init2.go:12:5: no error expected: "\tx1 refers to f1"	missing=0;wording=0;extra=0;class=-
+typechecker:go/types/TestCheck/init2.go	compiled	check_test.go:271: ../../internal/types/testdata/check/init2.go:12:5: no error expected: "\tx1 refers to f1"	missing=0;wording=0;extra=0;class=-
+typechecker:go/types/TestCheck/labels.go	interpreted	check_test.go:271: ../../internal/types/testdata/check/labels.go:27:1: no error expected: "\tother declaration of L6"	missing=0;wording=0;extra=0;class=-
+typechecker:go/types/TestCheck/labels.go	compiled	check_test.go:271: ../../internal/types/testdata/check/labels.go:27:1: no error expected: "\tother declaration of L6"	missing=0;wording=0;extra=0;class=-
+typechecker:go/types/TestCheck/literals.go	interpreted	check_test.go:271: ../../internal/types/testdata/check/literals.go:13:2: no error expected: "undefined: assert"	missing=0;wording=0;extra=0;class=-
+typechecker:go/types/TestCheck/literals.go	compiled	check_test.go:271: ../../internal/types/testdata/check/literals.go:13:2: no error expected: "undefined: assert"	missing=0;wording=0;extra=0;class=-
+typechecker:go/types/TestCheck/main0.go	interpreted	check_test.go:271: ../../internal/types/testdata/check/main0.go:7:6: no error expected: "\tother declaration of main"	missing=0;wording=0;extra=0;class=-
+typechecker:go/types/TestCheck/main0.go	compiled	check_test.go:271: ../../internal/types/testdata/check/main0.go:7:6: no error expected: "\tother declaration of main"	missing=0;wording=0;extra=0;class=-
+typechecker:go/types/TestCheck/stmt0.go	interpreted	check_test.go:271: ../../internal/types/testdata/check/stmt0.go:395:8: no error expected: "\tinner declaration of var a int"	missing=0;wording=0;extra=0;class=-
+typechecker:go/types/TestCheck/stmt0.go	compiled	check_test.go:271: ../../internal/types/testdata/check/stmt0.go:395:8: no error expected: "\tinner declaration of var a int"	missing=0;wording=0;extra=0;class=-
+typechecker:go/types/TestCheck/typeparams.go	interpreted	check_test.go:271: ../../internal/types/testdata/check/typeparams.go:17:8: no error expected: "\tother declaration of T"	missing=0;wording=0;extra=0;class=-
+typechecker:go/types/TestCheck/typeparams.go	compiled	check_test.go:271: ../../internal/types/testdata/check/typeparams.go:17:8: no error expected: "\tother declaration of T"	missing=0;wording=0;extra=0;class=-
+typechecker:go/types/TestExamples/types.go	interpreted	check_test.go:271: ../../internal/types/testdata/examples/types.go:149:38: no error expected: "\tother declaration of int8"	missing=0;wording=0;extra=0;class=-
+typechecker:go/types/TestExamples/types.go	compiled	check_test.go:271: ../../internal/types/testdata/examples/types.go:149:38: no error expected: "\tother declaration of int8"	missing=0;wording=0;extra=0;class=-
+typechecker:go/types/TestFixedbugs/issue39634.go	interpreted	check_test.go:271: ../../internal/types/testdata/fixedbugs/issue39634.go:18:11: no error expected: "\tother declaration of e"	missing=0;wording=0;extra=0;class=-
+typechecker:go/types/TestFixedbugs/issue39634.go	compiled	check_test.go:271: ../../internal/types/testdata/fixedbugs/issue39634.go:18:11: no error expected: "\tother declaration of e"	missing=0;wording=0;extra=0;class=-
+typechecker:go/types/TestFixedbugs/issue39938.go	interpreted	check_test.go:271: ../../internal/types/testdata/fixedbugs/issue39938.go:26:6: no error expected: "\tT2 refers to E2[T2]"	missing=0;wording=0;extra=0;class=-
+typechecker:go/types/TestFixedbugs/issue39938.go	compiled	check_test.go:271: ../../internal/types/testdata/fixedbugs/issue39938.go:26:6: no error expected: "\tT2 refers to E2[T2]"	missing=0;wording=0;extra=0;class=-
+typechecker:go/types/TestFixedbugs/issue41124.go	interpreted	check_test.go:271: ../../internal/types/testdata/fixedbugs/issue41124.go:9:6: no error expected: "\tNat refers to Succ"	missing=0;wording=0;extra=0;class=-
+typechecker:go/types/TestFixedbugs/issue41124.go	compiled	check_test.go:271: ../../internal/types/testdata/fixedbugs/issue41124.go:9:6: no error expected: "\tNat refers to Succ"	missing=0;wording=0;extra=0;class=-
+typechecker:go/types/TestFixedbugs/issue42758.go	interpreted	check_test.go:271: ../../internal/types/testdata/fixedbugs/issue42758.go:14:7: no error expected: "\tprevious case"	missing=0;wording=0;extra=0;class=-
+typechecker:go/types/TestFixedbugs/issue42758.go	compiled	check_test.go:271: ../../internal/types/testdata/fixedbugs/issue42758.go:14:7: no error expected: "\tprevious case"	missing=0;wording=0;extra=0;class=-
+typechecker:go/types/TestFixedbugs/issue48018.go	interpreted	check_test.go:271: ../../internal/types/testdata/fixedbugs/issue48018.go:15:9: no error expected: "\tA instantiated as Box[A]"	missing=0;wording=0;extra=0;class=-
+typechecker:go/types/TestFixedbugs/issue48018.go	compiled	check_test.go:271: ../../internal/types/testdata/fixedbugs/issue48018.go:15:9: no error expected: "\tA instantiated as Box[A]"	missing=0;wording=0;extra=0;class=-
+typechecker:go/types/TestFixedbugs/issue48234.go	interpreted	check_test.go:271: ../../internal/types/testdata/fixedbugs/issue48234.go:8:2: no error expected: "\tother declaration of method m"	missing=0;wording=0;extra=0;class=-
+typechecker:go/types/TestFixedbugs/issue48234.go	compiled	check_test.go:271: ../../internal/types/testdata/fixedbugs/issue48234.go:8:2: no error expected: "\tother declaration of method m"	missing=0;wording=0;extra=0;class=-
+typechecker:go/types/TestFixedbugs/issue48582.go	interpreted	check_test.go:271: ../../internal/types/testdata/fixedbugs/issue48582.go:11:6: no error expected: "\tA refers to B"	missing=0;wording=0;extra=0;class=-
+typechecker:go/types/TestFixedbugs/issue48582.go	compiled	check_test.go:271: ../../internal/types/testdata/fixedbugs/issue48582.go:11:6: no error expected: "\tA refers to B"	missing=0;wording=0;extra=0;class=-
+typechecker:go/types/TestFixedbugs/issue48656.go	interpreted	check_test.go:271: ../../internal/types/testdata/fixedbugs/issue48656.go:12:9: no error expected: "\tP instantiated as *P"	missing=0;wording=0;extra=0;class=-
+typechecker:go/types/TestFixedbugs/issue48656.go	compiled	check_test.go:271: ../../internal/types/testdata/fixedbugs/issue48656.go:12:9: no error expected: "\tP instantiated as *P"	missing=0;wording=0;extra=0;class=-
+typechecker:go/types/TestFixedbugs/issue48962.go	interpreted	check_test.go:271: ../../internal/types/testdata/fixedbugs/issue48962.go:11:6: no error expected: "\tT1 refers to T0[T1]"	missing=0;wording=0;extra=0;class=-
+typechecker:go/types/TestFixedbugs/issue48962.go	compiled	check_test.go:271: ../../internal/types/testdata/fixedbugs/issue48962.go:11:6: no error expected: "\tT1 refers to T0[T1]"	missing=0;wording=0;extra=0;class=-
+typechecker:go/types/TestFixedbugs/issue48974.go	interpreted	check_test.go:271: ../../internal/types/testdata/fixedbugs/issue48974.go:15:41: no error expected: "\tF instantiated as *FooerImpl[F]"	missing=0;wording=0;extra=0;class=-
+typechecker:go/types/TestFixedbugs/issue48974.go	compiled	check_test.go:271: ../../internal/types/testdata/fixedbugs/issue48974.go:15:41: no error expected: "\tF instantiated as *FooerImpl[F]"	missing=0;wording=0;extra=0;class=-
+typechecker:go/types/TestFixedbugs/issue49043.go	interpreted	check_test.go:271: ../../internal/types/testdata/fixedbugs/issue49043.go:9:11: no error expected: "\tM[P] refers to N[P]"	missing=0;wording=0;extra=0;class=-
+typechecker:go/types/TestFixedbugs/issue49043.go	compiled	check_test.go:271: ../../internal/types/testdata/fixedbugs/issue49043.go:9:11: no error expected: "\tM[P] refers to N[P]"	missing=0;wording=0;extra=0;class=-
+typechecker:go/types/TestFixedbugs/issue49276.go	interpreted	check_test.go:271: ../../internal/types/testdata/fixedbugs/issue49276.go:9:6: no error expected: "\tS refers to s"	missing=0;wording=0;extra=0;class=-
+typechecker:go/types/TestFixedbugs/issue49276.go	compiled	check_test.go:271: ../../internal/types/testdata/fixedbugs/issue49276.go:9:6: no error expected: "\tS refers to s"	missing=0;wording=0;extra=0;class=-
+typechecker:go/types/TestFixedbugs/issue51503.go	interpreted	check_test.go:271: ../../internal/types/testdata/fixedbugs/issue51503.go:14:38: no error expected: "\tother declaration of r"	missing=0;wording=0;extra=0;class=-
+typechecker:go/types/TestFixedbugs/issue51503.go	compiled	check_test.go:271: ../../internal/types/testdata/fixedbugs/issue51503.go:14:38: no error expected: "\tother declaration of r"	missing=0;wording=0;extra=0;class=-
+typechecker:go/types/TestFixedbugs/issue52698.go	interpreted	check_test.go:271: ../../internal/types/testdata/fixedbugs/issue52698.go:12:6: no error expected: "\tS refers to T[S]"	missing=0;wording=0;extra=0;class=-
+typechecker:go/types/TestFixedbugs/issue52698.go	compiled	check_test.go:271: ../../internal/types/testdata/fixedbugs/issue52698.go:12:6: no error expected: "\tS refers to T[S]"	missing=0;wording=0;extra=0;class=-
+typechecker:go/types/TestFixedbugs/issue65711.go	interpreted	check_test.go:271: ../../internal/types/testdata/fixedbugs/issue65711.go:11:6: no error expected: "\tC refers to B[C]"	missing=0;wording=0;extra=0;class=-
+typechecker:go/types/TestFixedbugs/issue65711.go	compiled	check_test.go:271: ../../internal/types/testdata/fixedbugs/issue65711.go:11:6: no error expected: "\tC refers to B[C]"	missing=0;wording=0;extra=0;class=-
+typechecker:go/types/TestFixedbugs/issue66285.go	interpreted	check_test.go:271: ../../internal/types/testdata/fixedbugs/issue66285.go:16:2: no error expected: "\tother declaration of method Read"	missing=0;wording=0;extra=0;class=-
+typechecker:go/types/TestFixedbugs/issue66285.go	compiled	check_test.go:271: ../../internal/types/testdata/fixedbugs/issue66285.go:16:2: no error expected: "\tother declaration of method Read"	missing=0;wording=0;extra=0;class=-
+typechecker:go/types/TestFixedbugs/issue6977.go	interpreted	check_test.go:271: ../../internal/types/testdata/fixedbugs/issue6977.go:35:21: no error expected: "\tother declaration of method m"	missing=0;wording=0;extra=0;class=-
+typechecker:go/types/TestFixedbugs/issue6977.go	compiled	check_test.go:271: ../../internal/types/testdata/fixedbugs/issue6977.go:35:21: no error expected: "\tother declaration of method m"	missing=0;wording=0;extra=0;class=-
+typechecker:go/types/TestFixedbugs/issue75918.go	interpreted	check_test.go:271: ../../internal/types/testdata/fixedbugs/issue75918.go:9:6: no error expected: "\tA refers to S"	missing=0;wording=0;extra=0;class=-
+typechecker:go/types/TestFixedbugs/issue75918.go	compiled	check_test.go:271: ../../internal/types/testdata/fixedbugs/issue75918.go:9:6: no error expected: "\tA refers to S"	missing=0;wording=0;extra=0;class=-
+typechecker:go/types/TestFixedbugs/issue76478.go	interpreted	check_test.go:271: ../../internal/types/testdata/fixedbugs/issue76478.go:18:6: no error expected: "\tE refers to F"	missing=0;wording=0;extra=0;class=-
+typechecker:go/types/TestFixedbugs/issue76478.go	compiled	check_test.go:271: ../../internal/types/testdata/fixedbugs/issue76478.go:18:6: no error expected: "\tE refers to F"	missing=0;wording=0;extra=0;class=-
+typechecker:go/types/TestFixedbugs/issue79265.go	interpreted	check_test.go:271: ../../internal/types/testdata/fixedbugs/issue79265.go:10:6: no error expected: "\tA refers to T"	missing=0;wording=0;extra=0;class=-
+typechecker:go/types/TestFixedbugs/issue79265.go	compiled	check_test.go:271: ../../internal/types/testdata/fixedbugs/issue79265.go:10:6: no error expected: "\tA refers to T"	missing=0;wording=0;extra=0;class=-
+typechecker:go/types/TestFixedbugs/issue80172.go	interpreted	check_test.go:271: ../../internal/types/testdata/fixedbugs/issue80172.go:9:30: no error expected: "\tP instantiated as List[P]"	missing=0;wording=0;extra=0;class=-
+typechecker:go/types/TestFixedbugs/issue80172.go	compiled	check_test.go:271: ../../internal/types/testdata/fixedbugs/issue80172.go:9:30: no error expected: "\tP instantiated as List[P]"	missing=0;wording=0;extra=0;class=-
