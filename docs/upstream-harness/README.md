@@ -135,9 +135,11 @@ terminal count must equal the native lane's. `BASHPP_CORPUS_ROOTS=<active
 manifest>` is the leaf form (per-runner `-run` selectors derived from the
 root ids, counts authenticated against the manifest); `BASHPP_CORPUS_SMOKE`
 exercises the plumbing and never yields a verdict. `partition-emit.go` turns
-the per-mode `go test -json` streams into `active-15N-manifest.tsv`
-(151–154 + `unclassified`) by first-line rule and writes `active-summary.tsv`;
-root ids are `testdir:<path>`, `typechecker:<package>/<Test>/<file>`,
+the per-mode `go test -json` streams into owner manifests by first-line rule
+and writes `active-summary.tsv`. The owner values are 151–154, `retained`, and
+`unclassified`; `retained` is a recorded disposition, never a pass and never
+dispatchable. Root ids are `testdir:<path>`,
+`typechecker:<package>/<Test>/<file>`,
 `package:<importpath>`. Under the exact upstream runners the corpus is
 2,726 + 899 + 26 = **3,651** roots (the Sprint 142 inventory selected 743 of
 the 899 typechecker leaves). `backend.md` §Sprint 151 describes the

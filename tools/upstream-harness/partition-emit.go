@@ -68,7 +68,7 @@ var evidenceStreams = []struct {
 }
 
 var modes = []string{"interpreted", "compiled"}
-var owners = []string{"151", "152", "153", "154", "unclassified"}
+var owners = []string{"151", "152", "153", "154", "unclassified", "retained"}
 
 func main() {
 	interpreted := flag.String("evidence-interpreted", "", "interpreted evidence directory")
@@ -313,6 +313,11 @@ func framingLine(line string) bool {
 		strings.HasPrefix(line, "FAIL\t")
 }
 
+func buildPackageHeader(line string) bool {
+	fields := strings.Fields(line)
+	return len(fields) == 2 && fields[0] == "#"
+}
+
 func firstLine(lines []string) (string, bool) {
 	diagnostic := false
 	for _, raw := range lines {
@@ -342,6 +347,11 @@ func firstLine(lines []string) (string, bool) {
 			if line == "" {
 				continue
 			}
+		}
+		// The go command prefixes compiler output with "# <package>". It is
+		// build framing, not the first diagnostic used to partition the root.
+		if buildPackageHeader(line) {
+			continue
 		}
 		// "exit status N" is upstream's summary of the command; the
 		// command's own diagnostic follows it, indented. Prefer that.
@@ -428,6 +438,11 @@ func classify(line, mode string, hasDiagnostic bool) string {
 			return "154"
 		}
 	}
+	if mode == "interpreted" &&
+		((asmcheckTarget(lower) && !contains("opcode not found") && !contains("wrong number of opcodes")) ||
+			contains("assembly is a compiler artifact") || contains("interpreted mode has no asmcheck meaning")) {
+		return "retained"
+	}
 	for _, pattern := range []string{"opcode not found", "linux/amd64/v", "linux/386", "linux/arm64"} {
 		if contains(pattern) {
 			return "152"
@@ -451,6 +466,11 @@ func classify(line, mode string, hasDiagnostic bool) string {
 	} {
 		if contains(pattern) {
 			return "151"
+		}
+	}
+	for _, pattern := range []string{"non-Go inputs", "is not a Go source file", "function declaration without body"} {
+		if contains(pattern) {
+			return "retained"
 		}
 	}
 	for _, pattern := range []string{"LOWER-", "BASHPP-EEXPR", "# bashpp_", "not in std", "relative import paths", "no required module", "non-Go inputs"} {
@@ -484,6 +504,12 @@ func classify(line, mode string, hasDiagnostic bool) string {
 	return "unclassified"
 }
 
+func asmcheckTarget(line string) bool {
+	return strings.HasPrefix(line, "linux/amd64/v") ||
+		line == "linux/386" || strings.HasPrefix(line, "linux/386/v") ||
+		line == "linux/arm64" || strings.HasPrefix(line, "linux/arm64/v")
+}
+
 func rootVerdict(ev *rootEvidence) string {
 	a, b := ev.modes["interpreted"].action, ev.modes["compiled"].action
 	if a == "pass" && b == "pass" {
@@ -496,6 +522,11 @@ func rootVerdict(ev *rootEvidence) string {
 }
 
 func ownerRank(owner string) int {
+	// unclassified remains the fallback even though retained is appended after
+	// it in the stable manifest/summary output order.
+	if owner == "unclassified" {
+		return len(owners)
+	}
 	for i, candidate := range owners {
 		if owner == candidate {
 			return i
