@@ -1,0 +1,6 @@
+root	mode	first_line
+testdir:codegen/append.go	interpreted	linux/amd64/v1
+testdir:codegen/clobberdeadreg.go	interpreted	linux/amd64/v1
+testdir:codegen/condmove.go	interpreted	linux/amd64/v1
+testdir:codegen/issue59297.go	interpreted	linux/amd64/v1
+testdir:codegen/regabi_regalloc.go	interpreted	linux/amd64/v1
