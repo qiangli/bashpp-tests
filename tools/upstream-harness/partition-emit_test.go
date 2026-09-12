@@ -221,6 +221,20 @@ func TestPartitionRuleChanges(t *testing.T) {
 			wantOwner: "153",
 		},
 		{
+			name:      "interpreter recursion exhausting the Go stack is a 153 runtime row",
+			lines:     []string{"runtime: goroutine stack exceeds 1000000000-byte limit"},
+			mode:      "interpreted",
+			wantLine:  "runtime: goroutine stack exceeds 1000000000-byte limit",
+			wantOwner: "153",
+		},
+		{
+			name:      "unknown field is a checker verdict (151)",
+			lines:     []string{"unknown field _ of main.T"},
+			mode:      "interpreted",
+			wantLine:  "unknown field _ of main.T",
+			wantOwner: "151",
+		},
+		{
 			name:      "unknown import C compiled",
 			lines:     []string{`unknown import path "C"`},
 			mode:      "compiled",

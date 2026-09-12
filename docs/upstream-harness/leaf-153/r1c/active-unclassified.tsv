@@ -1,0 +1,4 @@
+root	mode	first_line
+testdir:closure.go	interpreted	runtime: goroutine stack exceeds 1000000000-byte limit
+testdir:fixedbugs/issue19028.go	interpreted	unknown field _ of main.T
+testdir:peano.go	interpreted	runtime: goroutine stack exceeds 1000000000-byte limit

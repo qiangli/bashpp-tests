@@ -506,6 +506,9 @@ func classify(line, mode string, hasDiagnostic bool) string {
 		// Sprint 153 bridge value-transport refusals (writeback and mutation
 		// policy): runtime rows of the dependency bridge, never a checker verdict.
 		"invalid native slice writeback", "dependency mutation of interpreter-owned references",
+		// The interpreter's own recursion bottoming out on the Go stack: a
+		// runtime outcome of the tree walker (S153 PERF.md), never a checker verdict.
+		"goroutine stack exceeds",
 		"output should be empty", "output does not match", "instead saw",
 		"scalar call interrupted", "original callback signature", "retained original function callbacks",
 	} {
@@ -518,7 +521,7 @@ func classify(line, mode string, hasDiagnostic bool) string {
 		"invalid recursive type", "initialization cycle",
 		"already declared through", "not an expression", "requires go1.",
 		"imported and not used", "cannot use ", "invalid implicit pointer",
-		"outside a type constraint",
+		"outside a type constraint", "unknown field ",
 	} {
 		if contains(pattern) {
 			return "151"

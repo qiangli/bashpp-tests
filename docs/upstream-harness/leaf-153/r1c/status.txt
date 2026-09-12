@@ -1,0 +1,4 @@
+leaf=r1c harness=1b235fd3 bashpp=c04a619dc2915f93 sh=61ae717da4 manifest=/srv/sprint153/roots-r1c.tsv start=2026-09-12T18:45:20Z
+leaf exit=3 start=2026-09-12T18:45:20Z end=2026-09-12T19:06:17Z
+survivors: 0
+DONE leaf-r1c
