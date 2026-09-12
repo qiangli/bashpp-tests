@@ -17,6 +17,7 @@ func TestEmitPartitions(t *testing.T) {
 
 	testdir := map[string]map[string]fixtureVerdict{
 		"interpreted": {
+			"kept.go":  {action: "fail", output: "Bash++ backend unsupported execute phase: module package kept.dir has non-Go inputs [a.s]"},
 			"pass.go":  {action: "pass"},
 			"skip.go":  {action: "skip"},
 			"s151.go":  {action: "fail", output: "../../work/goroot/test/s151.go:4: gosource: unsupported LabeledStmt"},
@@ -24,10 +25,11 @@ func TestEmitPartitions(t *testing.T) {
 			"mixed.go": {action: "fail", output: "panic: interpreted failure"},
 		},
 		"compiled": {
+			"kept.go":  {action: "pass"},
 			"pass.go":  {action: "pass"},
 			"skip.go":  {action: "skip"},
 			"s151.go":  {action: "fail", output: "gosource: unsupported RangeStmt"},
-			"s152.go":  {action: "fail", output: "# bashpp_fixture"},
+			"s152.go":  {action: "fail", output: "# bashpp_fixture\nLOWER-ETYPE: compiled failure"},
 			"mixed.go": {action: "fail", output: "BASHPP-EEXPR: compiled failure"},
 		},
 	}
@@ -73,7 +75,7 @@ func TestEmitPartitions(t *testing.T) {
 			"testdir:mixed.go\tinterpreted\tpanic: interpreted failure\n" +
 			"testdir:mixed.go\tcompiled\tBASHPP-EEXPR: compiled failure\n" +
 			"testdir:s152.go\tinterpreted\tLOWER-ETYPE: cannot lower expression\n" +
-			"testdir:s152.go\tcompiled\t# bashpp_fixture\n",
+			"testdir:s152.go\tcompiled\tLOWER-ETYPE: compiled failure\n",
 		"active-153-manifest.tsv": "root\tmode\tfirst_line\n" +
 			"typechecker:go/types/TestCheck/runtime.go\tinterpreted\tpanic: runtime error: boom\n" +
 			"typechecker:go/types/TestCheck/runtime.go\tcompiled\truntime error: boom\n",
@@ -82,12 +84,14 @@ func TestEmitPartitions(t *testing.T) {
 			"typechecker:go/types/TestCheck/escape.go\tcompiled\tescape.go:8: wrong error\n",
 		"active-unclassified.tsv": "root\tmode\tfirst_line\n" +
 			"package:example/unclassified\tinterpreted\tmystery product limitation\n",
+		"active-retained-manifest.tsv": "root\tmode\tfirst_line\n" +
+			"testdir:kept.go\tinterpreted\tBash++ backend unsupported execute phase: module package kept.dir has non-Go inputs [a.s]\n",
 		"active-summary.tsv": "runner\tPASS\tFAIL\tSKIP\ttotal\n" +
-			"testdir\t1\t3\t1\t5\n" +
+			"testdir\t1\t4\t1\t6\n" +
 			"typechecker\t0\t2\t0\t2\n" +
 			"package\t0\t1\t0\t1\n" +
-			"total\t1\t6\t1\t8\n\n" +
-			"owner\tcount\n151\t1\n152\t2\n153\t1\n154\t1\nunclassified\t1\ntotal\t6\n",
+			"total\t1\t7\t1\t9\n\n" +
+			"owner\tcount\n151\t1\n152\t2\n153\t1\n154\t1\nunclassified\t1\nretained\t1\ntotal\t7\n",
 	}
 	for name, want := range wantFiles {
 		got, err := os.ReadFile(filepath.Join(out, name))
@@ -98,8 +102,66 @@ func TestEmitPartitions(t *testing.T) {
 			t.Errorf("%s:\n%s\nwant:\n%s", name, got, want)
 		}
 	}
-	if lines := strings.Split(strings.TrimSpace(stdout.String()), "\n"); len(lines) != 5 {
-		t.Fatalf("stdout has %d digest lines, want 5:\n%s", len(lines), stdout.String())
+	if lines := strings.Split(strings.TrimSpace(stdout.String()), "\n"); len(lines) != 6 {
+		t.Fatalf("stdout has %d digest lines, want 6:\n%s", len(lines), stdout.String())
+	}
+}
+
+func TestPartitionRuleChanges(t *testing.T) {
+	tests := []struct {
+		name      string
+		lines     []string
+		mode      string
+		wantLine  string
+		wantOwner string
+	}{
+		{
+			name:      "build package header",
+			lines:     []string{"# bashpp_s1572", `escape.go:8: missing error "x does not escape"`},
+			mode:      "compiled",
+			wantLine:  `escape.go:8: missing error "x does not escape"`,
+			wantOwner: "154",
+		},
+		{
+			name:      "interpreted bare asmcheck target",
+			lines:     []string{"linux/amd64/v1"},
+			mode:      "interpreted",
+			wantLine:  "linux/amd64/v1",
+			wantOwner: "retained",
+		},
+		{
+			name:      "compiled missing opcode",
+			lines:     []string{"codegen/x.go:15: linux/amd64/v1: opcode not found: `^ADDQ`"},
+			mode:      "compiled",
+			wantLine:  "codegen/x.go:15: linux/amd64/v1: opcode not found: `^ADDQ`",
+			wantOwner: "152",
+		},
+		{
+			name:      "non-Go inputs",
+			lines:     []string{"Bash++ gotest backend: non-Go inputs [a.s]"},
+			mode:      "compiled",
+			wantLine:  "Bash++ gotest backend: non-Go inputs [a.s]",
+			wantOwner: "retained",
+		},
+		{
+			name:      "bodyless assembly declaration",
+			lines:     []string{"LOWER-EUNSUPPORTED: function declaration without body"},
+			mode:      "compiled",
+			wantLine:  "LOWER-EUNSUPPORTED: function declaration without body",
+			wantOwner: "retained",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			line, diagnostic := firstLine(tt.lines)
+			if line != tt.wantLine {
+				t.Fatalf("firstLine = %q, want %q", line, tt.wantLine)
+			}
+			if owner := classify(line, tt.mode, diagnostic); owner != tt.wantOwner {
+				t.Fatalf("classify(%q, %q) = %q, want %q", line, tt.mode, owner, tt.wantOwner)
+			}
+		})
 	}
 }
 
