@@ -474,6 +474,24 @@ func classify(line, mode string, hasDiagnostic bool) string {
 			return "152"
 		}
 	}
+	// cgo roots: the product declares no cgo support. These patterns appear
+	// when a test imports "C" or requires cgo. Placed before the 153 block
+	// (which contains the shorter "requires cgo") so the specific cgo-root
+	// messages are classified as retained; ownerRank ensures a real failure
+	// in the other mode always wins.
+	//
+	// NOTE: three both-mode `bin/go (GOROOT=…): exit status 1` rows
+	// (fixedbugs/issue34968.go, issue36705.go, issue47227.go — `//go:build cgo`
+	// go-run recipes) are NOT covered by this rule until their compiled stderr
+	// is read; do not classify them by name.
+	for _, pattern := range []string{
+		"package requires cgo, which this pure-Go shell does not provide",
+		`unknown import path "C"`,
+	} {
+		if contains(pattern) {
+			return "retained"
+		}
+	}
 	for _, pattern := range []string{
 		"unregistered bridge type", "unregistered nil bridge type", "build dependency bridge",
 		"requires cgo", "output should be empty", "output does not match", "instead saw",
