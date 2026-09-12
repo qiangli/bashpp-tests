@@ -1,14 +1,11 @@
 root	mode	first_line
 testdir:abi/convT64_criteria.go	interpreted	unknown field _ of main.MyStruct
 testdir:abi/method_wrapper.go	interpreted	assignment mismatch: 5 variable(s) but 1 value(s)
-testdir:asmhdr.go	interpreted	test/asmhdr.dir/main.s" is not a Go source file
-testdir:asmhdr.go	compiled	test/asmhdr.dir/main.s" is not a Go source file
 testdir:char_lit1.go	interpreted	test/char_lit1.go:16:8: escape sequence is invalid Unicode code point
 testdir:char_lit1.go	compiled	test/char_lit1.go:16:8: escape sequence is invalid Unicode code point
 testdir:const3.go	interpreted	type info didn't propagate in const: got T2 4 16 256 65536
 testdir:const3.go	compiled	type info didn't propagate in const: got T2 4 16 256 65536
 testdir:defernil.go	interpreted	defernil.go:31:8: nilf: command not found
-testdir:dwarf/linedirectives.go	compiled	main.go:5:35: invalid column number: 0
 testdir:fixedbugs/bug014.go	interpreted	test/fixedbugs/bug014.go:10:21: illegal character U+0027 ''' in escape sequence
 testdir:fixedbugs/bug014.go	compiled	test/fixedbugs/bug014.go:10:21: illegal character U+0027 ''' in escape sequence
 testdir:fixedbugs/bug132.go	interpreted	test/fixedbugs/bug132.go:10:5: x redeclared
@@ -35,13 +32,13 @@ testdir:fixedbugs/issue11362.go	compiled	test/fixedbugs/issue11362.go:11:10: cou
 testdir:fixedbugs/issue14006.go	interpreted	test/fixedbugs/issue14006.go:24:4: illegal label declaration
 testdir:fixedbugs/issue14006.go	compiled	test/fixedbugs/issue14006.go:24:4: illegal label declaration
 testdir:fixedbugs/issue15002.go	interpreted	fixedbugs/issue15002.go:56:31: index out of range [1] with length 1
+testdir:fixedbugs/issue15091.go	compiled	link: reference to undefined builtin "runtime.racefuncenter" from package "main"
 testdir:fixedbugs/issue15611.go	interpreted	test/fixedbugs/issue15611.go:11: rune literal not terminated
 testdir:fixedbugs/issue15611.go	compiled	test/fixedbugs/issue15611.go:11: rune literal not terminated
+testdir:fixedbugs/issue17449.go	compiled	link: reference to undefined builtin "runtime.racefuncenter" from package "main"
 testdir:fixedbugs/issue18661.go	interpreted	fixedbugs/issue18661.go:17:6: fixedbugs/issue18661.go:17:6: Go interface comparison requires represented dynamic values
 testdir:fixedbugs/issue18747.go	interpreted	test/fixedbugs/issue18747.go:10:5: missing condition in if statement
 testdir:fixedbugs/issue18747.go	compiled	test/fixedbugs/issue18747.go:10:5: missing condition in if statement
-testdir:fixedbugs/issue22877.go	interpreted	test/fixedbugs/issue22877.dir/p.s" is not a Go source file
-testdir:fixedbugs/issue22877.go	compiled	test/fixedbugs/issue22877.dir/p.s" is not a Go source file
 testdir:fixedbugs/issue23586.go	interpreted	test/fixedbugs/issue23586.go:21:32: expression in defer must be function call
 testdir:fixedbugs/issue23586.go	compiled	test/fixedbugs/issue23586.go:21:32: expression in defer must be function call
 testdir:fixedbugs/issue24547.go	interpreted	string for fmt.Stringer
@@ -57,10 +54,6 @@ testdir:fixedbugs/issue32133.go	interpreted	test/fixedbugs/issue32133.go:10:8: s
 testdir:fixedbugs/issue32133.go	compiled	test/fixedbugs/issue32133.go:10:8: string literal not terminated
 testdir:fixedbugs/issue33460.go	interpreted	test/fixedbugs/issue33460.go:34:2: duplicate key "a" in map literal
 testdir:fixedbugs/issue33460.go	compiled	test/fixedbugs/issue33460.go:34:2: duplicate key "a" in map literal
-testdir:fixedbugs/issue37513.go	interpreted	test/fixedbugs/issue37513.dir/sigill_amd64.s" is not a Go source file
-testdir:fixedbugs/issue37513.go	compiled	test/fixedbugs/issue37513.dir/sigill_amd64.s" is not a Go source file
-testdir:fixedbugs/issue47317.go	interpreted	test/fixedbugs/issue47317.dir/a.s" is not a Go source file
-testdir:fixedbugs/issue47317.go	compiled	test/fixedbugs/issue47317.dir/a.s" is not a Go source file
 testdir:fixedbugs/issue49665.go	interpreted	string for interface {}
 testdir:fixedbugs/issue5793.go	interpreted	complex requires 2 arguments
 testdir:fixedbugs/issue58563.go	compiled	src/test/a)
@@ -79,15 +72,11 @@ testdir:label.go	interpreted	test/label.go:31:1: label L6 already declared
 testdir:label.go	compiled	test/label.go:31:1: label L6 already declared
 testdir:label1.go	interpreted	test/label1.go:18:3: continue not in for statement
 testdir:label1.go	compiled	test/label1.go:18:3: continue not in for statement
-testdir:linknameasm.go	interpreted	test/linknameasm.dir/a_amd64.s" is not a Go source file
-testdir:linknameasm.go	compiled	test/linknameasm.dir/a_amd64.s" is not a Go source file
 testdir:mainsig.go	interpreted	test/mainsig.go:9:6: func main must have no arguments and no return values
 testdir:mainsig.go	compiled	test/mainsig.go:9:6: func main must have no arguments and no return values
 testdir:mapclear.go	interpreted	var after range with side-effect = 0 want 42
 testdir:mapclear.go	compiled	var after range with side-effect = 0 want 42
 testdir:nilptr.go	interpreted	fatal error: runtime: out of memory
-testdir:retjmp.go	interpreted	test/retjmp.dir/a.s" is not a Go source file
-testdir:retjmp.go	compiled	test/retjmp.dir/a.s" is not a Go source file
 testdir:syntax/typesw.go	interpreted	test/syntax/typesw.go:10:2: invalid syntax tree: incorrect form of type switch guard
 testdir:syntax/typesw.go	compiled	test/syntax/typesw.go:10:2: invalid syntax tree: incorrect form of type switch guard
 testdir:typeparam/issue48711.go	interpreted	test/typeparam/issue48711.go:9:8: instantiation cycle:

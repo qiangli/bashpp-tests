@@ -473,6 +473,14 @@ func classify(line, mode string, hasDiagnostic bool) string {
 			return "retained"
 		}
 	}
+	// Source-map rows (152.4): the emitter's own //line directive is invalid
+	// (column 0 when the input carries user line directives) or a user
+	// //line did not pass through to the reported position.
+	for _, pattern := range []string{"invalid column number", "invalid line number", "(or suffix /"} {
+		if contains(pattern) {
+			return "152"
+		}
+	}
 	for _, pattern := range []string{"LOWER-", "BASHPP-EEXPR", "# bashpp_", "not in std", "relative import paths", "no required module", "non-Go inputs"} {
 		if contains(pattern) {
 			return "152"

@@ -412,7 +412,7 @@ testdir:fixedbugs/issue23017.go	compiled	fixedbugs/issue23017.go:98:2: LOWER-ETY
 testdir:fixedbugs/issue23489.go	interpreted	type P has no method Foo
 testdir:fixedbugs/issue23545.go	interpreted	fixedbugs/issue23545.go:13:17: BASHPP-EEXPR-OPERAND: a is not a scalar
 testdir:fixedbugs/issue23609.go	interpreted	compilation succeeded unexpectedly
-testdir:fixedbugs/issue23609.go	compiled	# bashpp_s1572
+testdir:fixedbugs/issue23609.go	compiled	test/fixedbugs/issue23609.go:23:15: use of promoted field t1.t1f1 in struct literal of type t2 requires go1.27 or later (-lang was set to go1.26; check go.mod)
 testdir:fixedbugs/issue23734.go	interpreted	BASHPP-ECOLLECTION-KEY: unsupported map key type interface
 testdir:fixedbugs/issue23814.go	interpreted	fixedbugs/issue23814.go:23:6: fixedbugs/issue23814.go:23:20: BASHPP-EEXPR-NIL: nil is not a scalar
 testdir:fixedbugs/issue23837.go	interpreted	fixedbugs/issue23837.go:11:9: BASHPP-ENIL-DEREF: dereference of nil pointer
@@ -472,7 +472,7 @@ testdir:fixedbugs/issue31419.go	compiled	fixedbugs/issue31419.go:27:2: LOWER-ETY
 testdir:fixedbugs/issue31636.go	interpreted	bashy: --go-package, --go-import-base and --go-import-path require --check or --go-list; interpreted execution of an explicit package set is not supported
 testdir:fixedbugs/issue31636.go	compiled	main.go:4:8: "./a" is relative, but relative import paths are not supported in module mode
 testdir:fixedbugs/issue31747.go	interpreted	compilation succeeded unexpectedly
-testdir:fixedbugs/issue31747.go	compiled	# bashpp_s1572
+testdir:fixedbugs/issue31747.go	compiled	test/fixedbugs/issue31747.go:30:24: invalid operation: signed shift count s (variable of type int) requires go1.13 or later (-lang was set to go1.12; check go.mod)
 testdir:fixedbugs/issue31959.go	interpreted	bashy: --go-package, --go-import-base and --go-import-path require --check or --go-list; interpreted execution of an explicit package set is not supported
 testdir:fixedbugs/issue31959.go	compiled	main.go:5:8: "./a" is relative, but relative import paths are not supported in module mode
 testdir:fixedbugs/issue32187.go	interpreted	BASHPP-ECOLLECTION-ELEMENT: fixedbugs/issue32187.go:30:23: BASHPP-EEXPR-FORM: unsupported scalar expression *syntax.BashPPFuncLit
@@ -513,7 +513,7 @@ testdir:fixedbugs/issue40917.go	interpreted	fixedbugs/issue40917.go:13:22: BASHP
 testdir:fixedbugs/issue41575.go	interpreted	test/fixedbugs/issue41575.go:18:6: invalid recursive type b
 testdir:fixedbugs/issue41575.go	compiled	test/fixedbugs/issue41575.go:18:6: invalid recursive type b
 testdir:fixedbugs/issue42058a.go	interpreted	compilation succeeded unexpectedly
-testdir:fixedbugs/issue42058a.go	compiled	# bashpp_s1572
+testdir:fixedbugs/issue42058a.go	compiled	test/fixedbugs/issue42058a.go:9:5: channel element type too large (>64kB)
 testdir:fixedbugs/issue42058b.go	interpreted	compilation succeeded unexpectedly
 testdir:fixedbugs/issue42401.go	interpreted	bashy: --go-package, --go-import-base and --go-import-path require --check or --go-list; interpreted execution of an explicit package set is not supported
 testdir:fixedbugs/issue42401.go	compiled	main.go:5:8: "./a" is relative, but relative import paths are not supported in module mode
@@ -572,7 +572,7 @@ testdir:fixedbugs/issue4748.go	compiled	fixedbugs/issue4748.go:13:9: gosource: u
 testdir:fixedbugs/issue48097.go	interpreted	compilation succeeded unexpectedly
 testdir:fixedbugs/issue48097.go	compiled	panic: runtime error: invalid memory address or nil pointer dereference
 testdir:fixedbugs/issue48230.go	interpreted	compilation succeeded unexpectedly
-testdir:fixedbugs/issue48230.go	compiled	# bashpp_s1572
+testdir:fixedbugs/issue48230.go	compiled	./main.go:6:3: go:embed requires import "embed" (or import _ "embed", if package is not used)
 testdir:fixedbugs/issue4847.go	interpreted	test/fixedbugs/issue4847.go:22:5: initialization cycle for matchAny
 testdir:fixedbugs/issue4847.go	compiled	test/fixedbugs/issue4847.go:22:5: initialization cycle for matchAny
 testdir:fixedbugs/issue48473.go	interpreted	BASHPP-ESELECTOR-ROOT: s is not a structured value
@@ -586,7 +586,7 @@ testdir:fixedbugs/issue49100b.go	compiled	fixedbugs/issue49100b.go:10:1: gosourc
 testdir:fixedbugs/issue49145.go	interpreted	fixedbugs/issue49145.go:10:1: gosource: unsupported LabeledStmt
 testdir:fixedbugs/issue49145.go	compiled	fixedbugs/issue49145.go:10:1: gosource: unsupported LabeledStmt
 testdir:fixedbugs/issue49368.go	interpreted	compilation succeeded unexpectedly
-testdir:fixedbugs/issue49368.go	compiled	# bashpp_s1572
+testdir:fixedbugs/issue49368.go	compiled	test/fixedbugs/issue49368.go:9:19: embedding non-interface type int requires go1.18 or later (-lang was set to go1.17; check go.mod)
 testdir:fixedbugs/issue49512.go	interpreted	BASHPP-EBUILTIN-TYPE: BASHPP-ECOLLECTION-ELEMENT: scalar cannot be used as func(int)(int,int)
 testdir:fixedbugs/issue4964.go	interpreted	bashy: --go-package, --go-import-base and --go-import-path require --check or --go-list; interpreted execution of an explicit package set is not supported
 testdir:fixedbugs/issue4964.go	compiled	main.go:7:8: "./a" is relative, but relative import paths are not supported in module mode
@@ -639,7 +639,7 @@ testdir:fixedbugs/issue55122b.go	interpreted	fixedbugs/issue55122b.go:34:8: goso
 testdir:fixedbugs/issue55122b.go	compiled	fixedbugs/issue55122b.go:34:8: gosource: unsupported expression *ast.ArrayType
 testdir:fixedbugs/issue5515.go	interpreted	fixedbugs/issue5515.go:16:21: BASHPP-EEXPR-OPERAND: b is not a scalar
 testdir:fixedbugs/issue56103.go	interpreted	compilation succeeded unexpectedly
-testdir:fixedbugs/issue56103.go	compiled	# bashpp_s1572
+testdir:fixedbugs/issue56103.go	compiled	test/fixedbugs/issue56103.go:10:8: invalid recursive type: anonymous interface refers to itself (see https://go.dev/issue/56103)
 testdir:fixedbugs/issue56778.go	compiled	test/fixedbugs/issue56778.dir/b.go:9:1: LOWER-ETYPE: cannot use __gosource_import_0_0.NewA(int(0)) (value of type *a.A) as a.A value in variable declaration
 testdir:fixedbugs/issue57184.go	interpreted	fixedbugs/issue57184.go:27:13: gosource: unsupported type *ast.BasicLit
 testdir:fixedbugs/issue57184.go	compiled	fixedbugs/issue57184.go:27:13: gosource: unsupported type *ast.BasicLit

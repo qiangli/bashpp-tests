@@ -1,0 +1,39 @@
+root	mode	first_line
+package:cmd/compile/internal/ssa	interpreted	Bash++ gotest backend: non-Go inputs
+package:cmd/compile/internal/ssa	compiled	Bash++ gotest backend: non-Go inputs
+testdir:asmhdr.go	interpreted	test/asmhdr.dir/main.s" is not a Go source file
+testdir:asmhdr.go	compiled	test/asmhdr.dir/main.s" is not a Go source file
+testdir:codegen/constants.go	interpreted	linux/amd64/v1
+testdir:codegen/copy.go	interpreted	linux/amd64/v1
+testdir:codegen/generics.go	interpreted	linux/amd64/v1
+testdir:codegen/issue25378.go	interpreted	linux/amd64/v1
+testdir:codegen/issue31618.go	interpreted	linux/amd64/v1
+testdir:codegen/issue33580.go	interpreted	linux/amd64/v1
+testdir:codegen/issue38554.go	interpreted	linux/amd64/v1
+testdir:codegen/issue61356.go	interpreted	linux/amd64/v1
+testdir:codegen/issue63332.go	interpreted	linux/amd64/v1
+testdir:codegen/issue66585.go	interpreted	linux/amd64/v1
+testdir:codegen/issue68845.go	interpreted	linux/amd64/v1
+testdir:codegen/issue70409.go	interpreted	linux/amd64/v1
+testdir:codegen/issue77375.go	interpreted	linux/amd64/v1
+testdir:codegen/known_bits.go	interpreted	linux/amd64/v1
+testdir:codegen/race.go	interpreted	linux/amd64/v1
+testdir:codegen/select.go	interpreted	linux/amd64/v1
+testdir:codegen/shortcircuit.go	interpreted	linux/amd64/v1
+testdir:codegen/unique.go	interpreted	linux/amd64/v1
+testdir:fixedbugs/issue15609.go	interpreted	Bash++ backend unsupported execute phase: module package issue15609.dir has non-Go inputs [call_amd64.s]
+testdir:fixedbugs/issue15609.go	compiled	Bash++ backend unsupported execute phase: module package issue15609.dir has non-Go inputs [call_amd64.s]
+testdir:fixedbugs/issue22877.go	interpreted	test/fixedbugs/issue22877.dir/p.s" is not a Go source file
+testdir:fixedbugs/issue22877.go	compiled	test/fixedbugs/issue22877.dir/p.s" is not a Go source file
+testdir:fixedbugs/issue37513.go	interpreted	test/fixedbugs/issue37513.dir/sigill_amd64.s" is not a Go source file
+testdir:fixedbugs/issue37513.go	compiled	test/fixedbugs/issue37513.dir/sigill_amd64.s" is not a Go source file
+testdir:fixedbugs/issue47185.go	interpreted	Bash++ backend unsupported execute phase: module package issue47185.dir/bad has non-Go inputs [bad.go]
+testdir:fixedbugs/issue47185.go	compiled	Bash++ backend unsupported execute phase: module package issue47185.dir/bad has non-Go inputs [bad.go]
+testdir:fixedbugs/issue47317.go	interpreted	test/fixedbugs/issue47317.dir/a.s" is not a Go source file
+testdir:fixedbugs/issue47317.go	compiled	test/fixedbugs/issue47317.dir/a.s" is not a Go source file
+testdir:fixedbugs/issue74648.go	interpreted	Bash++ backend unsupported execute phase: module package issue74648.dir has non-Go inputs [a.s]
+testdir:fixedbugs/issue74648.go	compiled	Bash++ backend unsupported execute phase: module package issue74648.dir has non-Go inputs [a.s]
+testdir:linknameasm.go	interpreted	test/linknameasm.dir/a_amd64.s" is not a Go source file
+testdir:linknameasm.go	compiled	test/linknameasm.dir/a_amd64.s" is not a Go source file
+testdir:retjmp.go	interpreted	test/retjmp.dir/a.s" is not a Go source file
+testdir:retjmp.go	compiled	test/retjmp.dir/a.s" is not a Go source file

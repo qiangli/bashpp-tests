@@ -144,6 +144,20 @@ func TestPartitionRuleChanges(t *testing.T) {
 			wantOwner: "retained",
 		},
 		{
+			name:      "emitter line directive with column 0",
+			lines:     []string{"# bashpp_s1572", "./fixedbugs/issue18149.go:39:36: invalid column number: 0"},
+			mode:      "compiled",
+			wantLine:  "./fixedbugs/issue18149.go:39:36: invalid column number: 0",
+			wantOwner: "152",
+		},
+		{
+			name:      "user line directive not passed through",
+			lines:     []string{"src/reflect/value.go:369; want /foo/bar.go:123 (or suffix /foo/bar.go)"},
+			mode:      "interpreted",
+			wantLine:  "src/reflect/value.go:369; want /foo/bar.go:123 (or suffix /foo/bar.go)",
+			wantOwner: "152",
+		},
+		{
 			name:      "bodyless assembly declaration",
 			lines:     []string{"LOWER-EUNSUPPORTED: function declaration without body"},
 			mode:      "compiled",

@@ -7,16 +7,28 @@ testdir:checkbce.go	interpreted	checkbce.go:17: missing error "Found IsInBounds$
 testdir:checkbce.go	compiled	checkbce.go:17: missing error "Found IsInBounds$"
 testdir:devirt.go	interpreted	devirt.go:30: missing error "de-virtualizing call$"
 testdir:devirt.go	compiled	devirt.go:30: missing error "de-virtualizing call$"
+testdir:devirtualization_with_type_assertions_interleaved.go	interpreted	devirtualization_with_type_assertions_interleaved.go:20: missing error "can inline \\(\\*hash\\).Sum$"
+testdir:devirtualization_with_type_assertions_interleaved.go	compiled	test/devirtualization_with_type_assertions_interleaved.go:20:6: can inline (*hash).Sum
 testdir:escape4.go	interpreted	escape4.go:16: missing error "can inline alloc"
 testdir:escape6.go	interpreted	escape6.go:16: missing error "leaking param: v"
+testdir:escape_array.go	interpreted	escape_array.go:15: missing error "leaking param: a to result ~r0 level=0$"
+testdir:escape_array.go	compiled	test/escape_array.go:15:10: leaking param: a to result ~r0 level=0
 testdir:escape_bloop.go	interpreted	escape_bloop.go:18: missing error "can inline NewX"
 testdir:escape_field.go	interpreted	escape_field.go:24: missing error "moved to heap: i$"
+testdir:escape_iface.go	interpreted	escape_iface.go:17: missing error "leaking param: m"
+testdir:escape_iface.go	compiled	test/escape_iface.go:64:8: devirtualizing x.M to M0
 testdir:escape_iface_data.go	interpreted	escape_iface_data.go:15: missing error "using global for interface value"
 testdir:escape_iface_data.go	compiled	escape_iface_data.go:15: missing error "using global for interface value"
 testdir:escape_indir.go	interpreted	escape_indir.go:25: missing error "moved to heap: i"
 testdir:escape_level.go	interpreted	escape_level.go:14: missing error "moved to heap: i"
 testdir:escape_make_non_const.go	interpreted	escape_make_non_const.go:17: missing error "make\\(\\[\\]byte, 128\\) does not escape"
 testdir:escape_map.go	interpreted	escape_map.go:14: missing error "make\\(map\\[\\*int\\]\\*int\\) does not escape"
+testdir:escape_mutations.go	interpreted	escape_mutations.go:17: missing error "mutates param: b derefs=0"
+testdir:escape_mutations.go	compiled	test/escape_mutations.go:17:9: b does not escape
+testdir:escape_param.go	interpreted	escape_param.go:19: missing error "leaking param: p to result ~r0"
+testdir:escape_param.go	compiled	test/escape_param.go:19:13: leaking param: p to result ~r0 level=0
+testdir:escape_reflect.go	interpreted	escape_reflect.go:19: missing error "x does not escape"
+testdir:escape_reflect.go	compiled	test/escape_reflect.go:354:73: 0 does not escape
 testdir:escape_selfassign.go	interpreted	escape_selfassign.go:18: missing error "leaking param: p"
 testdir:escape_struct_param1.go	interpreted	escape_struct_param1.go:25: missing error "leaking param: u to result ~r0 level=1$"
 testdir:escape_struct_param2.go	interpreted	escape_struct_param2.go:25: missing error "leaking param: u to result ~r0 level=0$"
@@ -59,6 +71,8 @@ testdir:fixedbugs/issue13319.go	compiled	test/fixedbugs/issue13319.go:12:72: mis
 testdir:fixedbugs/issue13799.go	interpreted	issue13799.go:23: missing error "iter escapes to heap$"
 testdir:fixedbugs/issue14520.go	interpreted	test/fixedbugs/issue14520.go:9:49: missing ',' before newline in parameter list
 testdir:fixedbugs/issue14520.go	compiled	test/fixedbugs/issue14520.go:9:49: missing ',' before newline in parameter list
+testdir:fixedbugs/issue15747.go	interpreted	issue15747.go:22: missing error "live at call to (newobject|mallocgcSmallScanNoHeaderSC[0-9]+): xx$"
+testdir:fixedbugs/issue15747.go	compiled	test/fixedbugs/issue15747.go:22:6: live at entry to f1: xx
 testdir:fixedbugs/issue15898.go	interpreted	test/fixedbugs/issue15898.go:11:12: duplicate case nil in type switch
 testdir:fixedbugs/issue15898.go	compiled	test/fixedbugs/issue15898.go:11:12: duplicate case nil in type switch
 testdir:fixedbugs/issue16241.go	interpreted	issue16241.go:11: missing error "x does not escape$"
@@ -76,6 +90,8 @@ testdir:fixedbugs/issue19743.go	interpreted	issue19743.go:19: missing error "lea
 testdir:fixedbugs/issue20250.go	interpreted	issue20250.go:19: missing error "live at entry to f: a$"
 testdir:fixedbugs/issue20789.go	interpreted	test/fixedbugs/issue20789.go:13:13: expected channel type
 testdir:fixedbugs/issue20789.go	compiled	test/fixedbugs/issue20789.go:13:13: expected channel type
+testdir:fixedbugs/issue21709.go	interpreted	issue21709.go:13: missing error "s does not escape"
+testdir:fixedbugs/issue21709.go	compiled	test/fixedbugs/issue21709.go:13:7: s does not escape
 testdir:fixedbugs/issue22164.go	interpreted	test/fixedbugs/issue22164.go:12:42: missing ',' before newline in argument list
 testdir:fixedbugs/issue22164.go	compiled	test/fixedbugs/issue22164.go:12:42: missing ',' before newline in argument list
 testdir:fixedbugs/issue22581.go	interpreted	test/fixedbugs/issue22581.go:10:13: expected ';', found ')'
@@ -87,6 +103,10 @@ testdir:fixedbugs/issue23664.go	interpreted	test/fixedbugs/issue23664.go:12:9: e
 testdir:fixedbugs/issue23664.go	compiled	test/fixedbugs/issue23664.go:12:9: expected ';', found true
 testdir:fixedbugs/issue24159.go	interpreted	test/fixedbugs/issue24159.go:14:7: duplicate case byte(0) (constant 0 of type byte) in expression switch
 testdir:fixedbugs/issue24159.go	compiled	test/fixedbugs/issue24159.go:14:7: duplicate case byte(0) (constant 0 of type byte) in expression switch
+testdir:fixedbugs/issue24651a.go	interpreted	issue24651a.go:12: missing error "cannot inline Foo: marked go:norace with -race compilation$"
+testdir:fixedbugs/issue24651a.go	compiled	test/fixedbugs/issue24651a.go:12:6: can inline Foo with cost 10 as: func(int) int { return x * (x + 1) * (x + 2) }
+testdir:fixedbugs/issue24651b.go	interpreted	issue24651b.go:10: missing error "can inline Foo with cost .* as: func\\(int\\) int { return x \\* \\(x \\+ 1\\) \\* \\(x \\+ 2\\) }$"
+testdir:fixedbugs/issue24651b.go	compiled	test/fixedbugs/issue24651b.go:10:6: can inline Foo with cost 10 as: func(int) int { return x * (x + 1) * (x + 2) }
 testdir:fixedbugs/issue27557.go	interpreted	issue27557.go:13: missing error "t.noescape does not escape"
 testdir:fixedbugs/issue27732a.go	interpreted	issue27732a.go:21: missing error "moved to heap: c$"
 testdir:fixedbugs/issue30898.go	interpreted	issue30898.go:11: missing error "can inline debugf"
@@ -97,6 +117,8 @@ testdir:fixedbugs/issue34723.go	interpreted	issue34723.go:66: missing error "wri
 testdir:fixedbugs/issue34723.go	compiled	issue34723.go:66: missing error "write barrier"
 testdir:fixedbugs/issue35073b.go	interpreted	issue35073b.go:18: missing error "moved to heap: n"
 testdir:fixedbugs/issue35518.go	interpreted	issue35518.go:22: missing error "."
+testdir:fixedbugs/issue39292.go	interpreted	issue39292.go:15: missing error "t{}.f escapes to heap"
+testdir:fixedbugs/issue39292.go	compiled	test/fixedbugs/issue39292.go:11:7: __bpp0_unnamed0 does not escape
 testdir:fixedbugs/issue41635.go	interpreted	issue41635.go:9: missing error ""
 testdir:fixedbugs/issue4405.go	interpreted	test/fixedbugs/issue4405.go:11:3: expected ';', found 'ILLEGAL'
 testdir:fixedbugs/issue4405.go	compiled	test/fixedbugs/issue4405.go:11:3: expected ';', found 'ILLEGAL'
@@ -105,6 +127,8 @@ testdir:fixedbugs/issue4776.go	compiled	test/fixedbugs/issue4776.go:9:1: expecte
 testdir:fixedbugs/issue50372.go	interpreted	test/fixedbugs/issue50372.go:16:19: expected at most 2 expressions
 testdir:fixedbugs/issue50372.go	compiled	test/fixedbugs/issue50372.go:16:19: expected at most 2 expressions
 testdir:fixedbugs/issue52193.go	interpreted	issue52193.go:12: missing error "can inline f"
+testdir:fixedbugs/issue54159.go	interpreted	issue54159.go:10: missing error "cannot inline run: marked go:noinline"
+testdir:fixedbugs/issue54159.go	compiled	test/fixedbugs/issue54159.go:19:6: can inline g with cost 0 as: func() {  }
 testdir:fixedbugs/issue56280.go	interpreted	a.go:7: missing error "can inline F"
 testdir:fixedbugs/issue56280.go	compiled	src/test/a)
 testdir:fixedbugs/issue63657.go	interpreted	f: expected 3 argument(s), got 0
@@ -186,9 +210,13 @@ testdir:syntax/vareq1.go	compiled	test/syntax/vareq1.go:9:24: expected ';', foun
 testdir:tailcall.go	interpreted	tailcall.go:19: missing error "tail call emitted for the method \\(\\*Foo\\).Get2Vals wrapper"
 testdir:tailcall.go	compiled	tailcall.go:19: missing error "tail call emitted for the method \\(\\*Foo\\).Get2Vals wrapper"
 testdir:typeparam/issue54497.go	interpreted	issue54497.go:13: missing error "can inline isAligned\\[uint\\]"
+testdir:typeparam/pragma.go	interpreted	pragma.go:17: missing error "can inline main"
+testdir:typeparam/pragma.go	compiled	test/typeparam/pragma.go:13:6: can inline f[go.shape.int]
 testdir:typeparam/typeswitch3.go	interpreted	output does not match expected in typeparam/typeswitch3.out. Instead saw
 testdir:typeparam/typeswitch4.go	interpreted	output does not match expected in typeparam/typeswitch4.out. Instead saw
 testdir:typeswitch2.go	interpreted	test/typeswitch2.go:18:7: duplicate case int in type switch
 testdir:typeswitch2.go	compiled	test/typeswitch2.go:18:7: duplicate case int in type switch
+testdir:uintptrescapes2.go	interpreted	uintptrescapes2.go:16: missing error "escaping uintptr"
+testdir:uintptrescapes2.go	compiled	test/uintptrescapes2.go:19:9: a does not escape
 testdir:writebarrier.go	interpreted	writebarrier.go:17: missing error "write barrier"
 testdir:writebarrier.go	compiled	writebarrier.go:17: missing error "write barrier"
