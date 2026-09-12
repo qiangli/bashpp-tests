@@ -1,0 +1,128 @@
+root	mode	first_line	verdict
+testdir:abi/result_live.go	interpreted	result_live.go:13: missing error "live at call to g: r"	missing=4;wording=0;extra=0;class=missing
+testdir:abi/result_live.go	compiled	test/abi/result_live.go:20:1: LOWER-EUNSUPPORTED: function declaration without body	missing=0;wording=0;extra=0;class=-
+testdir:bloop.go	interpreted	bloop.go:14: missing error "can inline caninline"	missing=40;wording=0;extra=0;class=missing
+testdir:bounds.go	interpreted	bounds.go:64: missing error "index bounds check elided"	missing=40;wording=0;extra=0;class=missing
+testdir:checkbce.go	interpreted	checkbce.go:17: missing error "Found IsInBounds$"	missing=16;wording=0;extra=0;class=missing
+testdir:checkbce.go	compiled	checkbce.go:17: missing error "Found IsInBounds$"	missing=16;wording=0;extra=0;class=missing
+testdir:closure3.go	interpreted	main.go:15: missing error "can inline main.func1"	missing=139;wording=0;extra=0;class=missing
+testdir:closure3.go	compiled	test/closure3.dir/main.go:16:9: can inline main.func1	missing=26;wording=0;extra=0;class=missing
+testdir:defererrcheck.go	interpreted	defererrcheck.go:20: missing error "open-coded defer"	missing=20;wording=0;extra=0;class=missing
+testdir:defererrcheck.go	compiled	defererrcheck.go:20: missing error "open-coded defer"	missing=20;wording=0;extra=0;class=missing
+testdir:devirt.go	interpreted	devirt.go:30: missing error "de-virtualizing call$"	missing=2;wording=0;extra=0;class=missing
+testdir:devirt.go	compiled	devirt.go:30: missing error "de-virtualizing call$"	missing=2;wording=0;extra=0;class=missing
+testdir:devirtualization_with_type_assertions_interleaved.go	interpreted	devirtualization_with_type_assertions_interleaved.go:20: missing error "can inline \\(\\*hash\\).Sum$"	missing=89;wording=0;extra=0;class=missing
+testdir:escape2.go	interpreted	escape2.go:21: missing error "moved to heap: x$"	missing=401;wording=0;extra=0;class=missing
+testdir:escape2.go	compiled	test/escape2.go:937:1: LOWER-EUNSUPPORTED: function declaration without body	missing=0;wording=0;extra=0;class=-
+testdir:escape2n.go	interpreted	escape2n.go:21: missing error "moved to heap: x$"	missing=401;wording=0;extra=0;class=missing
+testdir:escape2n.go	compiled	test/escape2n.go:937:1: LOWER-EUNSUPPORTED: function declaration without body	missing=0;wording=0;extra=0;class=-
+testdir:escape4.go	interpreted	escape4.go:16: missing error "can inline alloc"	missing=21;wording=0;extra=0;class=missing
+testdir:escape5.go	interpreted	escape5.go:17: missing error "p does not escape"	missing=38;wording=0;extra=0;class=missing
+testdir:escape6.go	interpreted	escape6.go:16: missing error "leaking param: v"	missing=11;wording=0;extra=0;class=missing
+testdir:escape_array.go	interpreted	escape_array.go:15: missing error "leaking param: a to result ~r0 level=0$"	missing=37;wording=0;extra=0;class=missing
+testdir:escape_bloop.go	interpreted	escape_bloop.go:18: missing error "can inline NewX"	missing=16;wording=0;extra=0;class=missing
+testdir:escape_calls.go	interpreted	escape_calls.go:14: missing error "leaking param: buf to result ~r0 level=0$"	missing=15;wording=0;extra=0;class=missing
+testdir:escape_calls.go	compiled	test/escape_calls.go:18:1: LOWER-EUNSUPPORTED: function declaration without body	missing=0;wording=0;extra=0;class=-
+testdir:escape_closure.go	interpreted	escape_closure.go:15: missing error "p does not escape"	missing=151;wording=0;extra=0;class=missing
+testdir:escape_field.go	interpreted	escape_field.go:24: missing error "moved to heap: i$"	missing=28;wording=0;extra=0;class=missing
+testdir:escape_goto.go	interpreted	escape_goto.go:21: missing error "escapes to heap"	missing=3;wording=0;extra=0;class=missing
+testdir:escape_iface.go	interpreted	escape_iface.go:17: missing error "leaking param: m"	missing=46;wording=0;extra=0;class=missing
+testdir:escape_iface_data.go	interpreted	escape_iface_data.go:15: missing error "using global for interface value"	missing=42;wording=0;extra=0;class=missing
+testdir:escape_iface_data.go	compiled	escape_iface_data.go:15: missing error "using global for interface value"	missing=42;wording=0;extra=0;class=missing
+testdir:escape_indir.go	interpreted	escape_indir.go:25: missing error "moved to heap: i"	missing=40;wording=0;extra=0;class=missing
+testdir:escape_level.go	interpreted	escape_level.go:14: missing error "moved to heap: i"	missing=22;wording=0;extra=0;class=missing
+testdir:escape_make_non_const.go	interpreted	escape_make_non_const.go:17: missing error "make\\(\\[\\]byte, 128\\) does not escape"	missing=47;wording=0;extra=0;class=missing
+testdir:escape_map.go	interpreted	escape_map.go:14: missing error "make\\(map\\[\\*int\\]\\*int\\) does not escape"	missing=33;wording=0;extra=0;class=missing
+testdir:escape_mutations.go	interpreted	escape_mutations.go:17: missing error "mutates param: b derefs=0"	missing=26;wording=0;extra=0;class=missing
+testdir:escape_mutations.go	compiled	test/escape_mutations.go:17:9: b does not escape	missing=1;wording=9;extra=0;class=wording
+testdir:escape_param.go	interpreted	escape_param.go:19: missing error "leaking param: p to result ~r0"	missing=104;wording=0;extra=0;class=missing
+testdir:escape_selfassign.go	interpreted	escape_selfassign.go:18: missing error "leaking param: p"	missing=3;wording=0;extra=0;class=missing
+testdir:escape_struct_param1.go	interpreted	escape_struct_param1.go:25: missing error "leaking param: u to result ~r0 level=1$"	missing=100;wording=0;extra=0;class=missing
+testdir:escape_struct_param2.go	interpreted	escape_struct_param2.go:25: missing error "leaking param: u to result ~r0 level=0$"	missing=100;wording=0;extra=0;class=missing
+testdir:escape_struct_return.go	interpreted	escape_struct_return.go:18: missing error "leaking param: sp to result ~r0 level=0$"	missing=3;wording=0;extra=0;class=missing
+testdir:escape_sync_atomic.go	interpreted	escape_sync_atomic.go:17: missing error "leaking param: addr$"	missing=5;wording=0;extra=0;class=missing
+testdir:escape_unique.go	interpreted	escape_unique.go:15: missing error "s does not escape$"	missing=14;wording=0;extra=0;class=missing
+testdir:escape_unsafe.go	interpreted	escape_unsafe.go:18: missing error "leaking param: p to result ~r0 level=0$"	missing=12;wording=0;extra=0;class=missing
+testdir:fixedbugs/issue12006.go	interpreted	issue12006.go:11: missing error "vals does not escape"	missing=43;wording=0;extra=0;class=missing
+testdir:fixedbugs/issue12588.go	interpreted	issue12588.go:29: missing error "a does not escape"	missing=6;wording=0;extra=0;class=missing
+testdir:fixedbugs/issue13587.go	interpreted	issue13587.go:18: missing error "write barrier"	missing=1;wording=0;extra=0;class=missing
+testdir:fixedbugs/issue13587.go	compiled	test/fixedbugs/issue13587.go:14:1: LOWER-EUNSUPPORTED: function declaration without body	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue13799.go	interpreted	issue13799.go:23: missing error "iter escapes to heap$"	missing=50;wording=0;extra=0;class=missing
+testdir:fixedbugs/issue15747.go	interpreted	issue15747.go:22: missing error "live at call to (newobject|mallocgcSmallScanNoHeaderSC[0-9]+): xx$"	missing=5;wording=0;extra=0;class=missing
+testdir:fixedbugs/issue16241.go	interpreted	issue16241.go:11: missing error "x does not escape$"	missing=21;wording=0;extra=0;class=missing
+testdir:fixedbugs/issue16241_64.go	interpreted	issue16241_64.go:13: missing error "x does not escape$"	missing=14;wording=0;extra=0;class=missing
+testdir:fixedbugs/issue17318.go	interpreted	issue17318.go:25: missing error "... argument does not escape$"	missing=8;wording=0;extra=0;class=missing
+testdir:fixedbugs/issue19168.go	interpreted	issue19168.go:19: missing error "write barrier"	missing=6;wording=0;extra=0;class=missing
+testdir:fixedbugs/issue19168.go	compiled	test/fixedbugs/issue19168.go:16:1: LOWER-EUNSUPPORTED: function declaration without body	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue19743.go	interpreted	issue19743.go:19: missing error "leaking param: b$"	missing=1;wording=0;extra=0;class=missing
+testdir:fixedbugs/issue20250.go	interpreted	issue20250.go:19: missing error "live at entry to f: a$"	missing=5;wording=0;extra=0;class=missing
+testdir:fixedbugs/issue23521.go	interpreted	issue23521.go:16: missing error "can inline f"	missing=6;wording=0;extra=0;class=missing
+testdir:fixedbugs/issue24651a.go	interpreted	issue24651a.go:12: missing error "cannot inline Foo: marked go:norace with -race compilation$"	missing=4;wording=0;extra=0;class=missing
+testdir:fixedbugs/issue24651b.go	interpreted	issue24651b.go:10: missing error "can inline Foo with cost .* as: func\\(int\\) int { return x \\* \\(x \\+ 1\\) \\* \\(x \\+ 2\\) }$"	missing=5;wording=0;extra=0;class=missing
+testdir:fixedbugs/issue27557.go	interpreted	issue27557.go:13: missing error "t.noescape does not escape"	missing=11;wording=0;extra=0;class=missing
+testdir:fixedbugs/issue27732a.go	interpreted	issue27732a.go:21: missing error "moved to heap: c$"	missing=1;wording=0;extra=0;class=missing
+testdir:fixedbugs/issue30898.go	interpreted	issue30898.go:11: missing error "can inline debugf"	missing=7;wording=0;extra=0;class=missing
+testdir:fixedbugs/issue31573.go	interpreted	issue31573.go:13: missing error "... argument does not escape$"	missing=36;wording=0;extra=0;class=missing
+testdir:fixedbugs/issue34723.go	interpreted	issue34723.go:66: missing error "write barrier"	missing=1;wording=0;extra=0;class=missing
+testdir:fixedbugs/issue34723.go	compiled	issue34723.go:66: missing error "write barrier"	missing=1;wording=0;extra=0;class=missing
+testdir:fixedbugs/issue35073b.go	interpreted	issue35073b.go:18: missing error "moved to heap: n"	missing=5;wording=0;extra=0;class=missing
+testdir:fixedbugs/issue35518.go	interpreted	issue35518.go:22: missing error "."	missing=5;wording=0;extra=0;class=missing
+testdir:fixedbugs/issue39292.go	interpreted	issue39292.go:15: missing error "t{}.f escapes to heap"	missing=7;wording=0;extra=0;class=missing
+testdir:fixedbugs/issue4099.go	interpreted	issue4099.go:26: missing error "moved to heap: buf2"	missing=1;wording=0;extra=0;class=missing
+testdir:fixedbugs/issue4099.go	compiled	test/fixedbugs/issue4099.go:18:1: LOWER-EUNSUPPORTED: function declaration without body	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue41635.go	interpreted	issue41635.go:9: missing error ""	missing=9;wording=0;extra=0;class=missing
+testdir:fixedbugs/issue52193.go	interpreted	issue52193.go:12: missing error "can inline f"	missing=11;wording=0;extra=0;class=missing
+testdir:fixedbugs/issue54159.go	interpreted	issue54159.go:10: missing error "cannot inline run: marked go:noinline"	missing=8;wording=0;extra=0;class=missing
+testdir:fixedbugs/issue75278.go	interpreted	issue75278.go:11: missing error "can inline NoIndices with cost 4 as:.*"	missing=4;wording=0;extra=0;class=missing
+testdir:fixedbugs/issue7921.go	interpreted	issue7921.go:22: missing error "\\[\\]byte{...} does not escape$"	missing=23;wording=0;extra=0;class=missing
+testdir:fixedbugs/notinheap3.go	interpreted	notinheap3.go:47: missing error "write barrier"	missing=6;wording=0;extra=0;class=missing
+testdir:fixedbugs/notinheap3.go	compiled	notinheap3.go:47: missing error "write barrier"	missing=6;wording=0;extra=0;class=missing
+testdir:fuse.go	interpreted	fuse.go:16: missing error "Redirect Eq64 based on Eq64$"	missing=26;wording=0;extra=0;class=missing
+testdir:fuse.go	compiled	fuse.go:16: missing error "Redirect Eq64 based on Eq64$"	missing=26;wording=0;extra=0;class=missing
+testdir:inline.go	interpreted	inline.go:20: missing error "can inline add2"	missing=146;wording=0;extra=0;class=missing
+testdir:inline_big.go	interpreted	inline_big.go:12: missing error "can inline small with cost .* as:.*"	missing=8;wording=0;extra=0;class=missing
+testdir:inline_endian.go	interpreted	inline_endian.go:19: missing error "can inline endian"	missing=20;wording=0;extra=0;class=missing
+testdir:inline_math_bits_rotate.go	interpreted	inline_math_bits_rotate.go:23: missing error "can inline f"	missing=1;wording=0;extra=0;class=missing
+testdir:inline_sync.go	interpreted	inline_sync.go:26: missing error "can inline small5"	missing=13;wording=0;extra=0;class=missing
+testdir:inline_variadic.go	interpreted	inline_variadic.go:12: missing error "can inline head"	missing=5;wording=0;extra=0;class=missing
+testdir:interface/assertinline.go	interpreted	assertinline.go:10: missing error "type assertion inlined"	missing=14;wording=0;extra=0;class=missing
+testdir:interface/assertinline.go	compiled	assertinline.go:10: missing error "type assertion inlined"	missing=14;wording=0;extra=0;class=missing
+testdir:internal/runtime/sys/inlinegcpc.go	interpreted	inlinegcpc.go:19: missing error "can inline cpc"	missing=2;wording=0;extra=0;class=missing
+testdir:internal/runtime/sys/inlinegcpc.go	compiled	test/internal/runtime/sys/inlinegcpc.go:12:1: LOWER-EUNSUPPORTED: function declaration without body	missing=0;wording=0;extra=0;class=-
+testdir:intrinsic_atomic.go	interpreted	intrinsic_atomic.go:16: missing error "intrinsic substitution for LoadUint32"	missing=5;wording=0;extra=0;class=missing
+testdir:intrinsic_atomic.go	compiled	intrinsic_atomic.go:16: missing error "intrinsic substitution for LoadUint32"	missing=5;wording=0;extra=0;class=missing
+testdir:known_bits.go	interpreted	known_bits.go:16: missing error "known value of v[0-9]+ \\(And64\\): 1$"	missing=34;wording=0;extra=0;class=missing
+testdir:known_bits.go	compiled	known_bits.go:16: missing error "known value of v[0-9]+ \\(And64\\): 1$"	missing=34;wording=0;extra=0;class=missing
+testdir:linkname.go	interpreted	linkname1.go:3: missing error "xs does not escape"	missing=2;wording=0;extra=0;class=missing
+testdir:linkname.go	compiled	test/linkname.dir/linkname2.go:6:1: LOWER-EUNSUPPORTED: function declaration without body	missing=0;wording=0;extra=0;class=-
+testdir:live2.go	interpreted	live2.go:25: missing error "live at call to makemap: &ret$"	missing=7;wording=0;extra=0;class=missing
+testdir:live2.go	compiled	test/live2.go:14:1: LOWER-EUNSUPPORTED: function declaration without body	missing=0;wording=0;extra=0;class=-
+testdir:live_uintptrkeepalive.go	interpreted	live_uintptrkeepalive.go:25: missing error "assuming ~p0 is unsafe uintptr"	missing=19;wording=0;extra=0;class=missing
+testdir:live_uintptrkeepalive.go	compiled	test/live_uintptrkeepalive.go:25:1: LOWER-EUNSUPPORTED: function declaration without body	missing=0;wording=0;extra=0;class=-
+testdir:loopbce.go	interpreted	loopbce.go:11: missing error "Induction variable: limits \\[0,\\?\\), increment 1$"	missing=122;wording=0;extra=0;class=missing
+testdir:loopbce.go	compiled	loopbce.go:11: missing error "Induction variable: limits \\[0,\\?\\), increment 1$"	missing=122;wording=0;extra=0;class=missing
+testdir:nilcheck.go	interpreted	nilcheck.go:43: missing error "nil check"	missing=51;wording=0;extra=0;class=missing
+testdir:nilcheck.go	compiled	test/nilcheck.go:80:1: LOWER-EUNSUPPORTED: function declaration without body	missing=0;wording=0;extra=0;class=-
+testdir:nilptr3.go	interpreted	nilptr3.go:45: missing error "generated nil check"	missing=65;wording=0;extra=0;class=missing
+testdir:nilptr3.go	compiled	test/nilptr3.go:90:1: LOWER-EUNSUPPORTED: function declaration without body	missing=0;wording=0;extra=0;class=-
+testdir:nilptr5.go	interpreted	nilptr5.go:15: missing error "removed nil check"	missing=8;wording=0;extra=0;class=missing
+testdir:nilptr5.go	compiled	nilptr5.go:15: missing error "removed nil check"	missing=8;wording=0;extra=0;class=missing
+testdir:opt_branchlikely.go	interpreted	opt_branchlikely.go:15: missing error "Branch prediction rule stay in loop"	missing=17;wording=0;extra=0;class=missing
+testdir:opt_branchlikely.go	compiled	opt_branchlikely.go:15: missing error "Branch prediction rule stay in loop"	missing=17;wording=0;extra=0;class=missing
+testdir:phiopt.go	interpreted	phiopt.go:19: missing error "converted OpPhi to Copy$"	missing=13;wording=0;extra=0;class=missing
+testdir:phiopt.go	compiled	phiopt.go:19: missing error "converted OpPhi to Copy$"	missing=13;wording=0;extra=0;class=missing
+testdir:prove.go	interpreted	prove.go:18: missing error "Proved IsInBounds$"	missing=474;wording=0;extra=0;class=missing
+testdir:prove.go	compiled	prove.go:18: missing error "Proved IsInBounds$"	missing=474;wording=0;extra=0;class=missing
+testdir:prove_constant_folding.go	interpreted	prove_constant_folding.go:13: missing error "Proved.+is constant 20$"	missing=15;wording=0;extra=0;class=missing
+testdir:prove_constant_folding.go	compiled	prove_constant_folding.go:13: missing error "Proved.+is constant 20$"	missing=15;wording=0;extra=0;class=missing
+testdir:prove_invert_loop_with_unused_iterators.go	interpreted	prove_invert_loop_with_unused_iterators.go:8: missing error "(Inverted loop iteration|Induction variable: limits \\[0,\\?\\), increment 1)"	missing=1;wording=0;extra=0;class=missing
+testdir:prove_invert_loop_with_unused_iterators.go	compiled	prove_invert_loop_with_unused_iterators.go:8: missing error "(Inverted loop iteration|Induction variable: limits \\[0,\\?\\), increment 1)"	missing=1;wording=0;extra=0;class=missing
+testdir:sliceopt.go	interpreted	sliceopt.go:12: missing error "append: len-only update \\(in local slice\\)$"	missing=4;wording=0;extra=0;class=missing
+testdir:sliceopt.go	compiled	sliceopt.go:12: missing error "append: len-only update \\(in local slice\\)$"	missing=4;wording=0;extra=0;class=missing
+testdir:tailcall.go	interpreted	tailcall.go:19: missing error "tail call emitted for the method \\(\\*Foo\\).Get2Vals wrapper"	missing=1;wording=0;extra=0;class=missing
+testdir:tailcall.go	compiled	tailcall.go:19: missing error "tail call emitted for the method \\(\\*Foo\\).Get2Vals wrapper"	missing=1;wording=0;extra=0;class=missing
+testdir:typeparam/issue54497.go	interpreted	issue54497.go:13: missing error "can inline isAligned\\[uint\\]"	missing=5;wording=0;extra=0;class=missing
+testdir:typeparam/pragma.go	interpreted	pragma.go:17: missing error "can inline main"	missing=1;wording=0;extra=0;class=missing
+testdir:uintptrescapes2.go	interpreted	uintptrescapes2.go:16: missing error "escaping uintptr"	missing=30;wording=0;extra=0;class=missing
+testdir:writebarrier.go	interpreted	writebarrier.go:17: missing error "write barrier"	missing=42;wording=0;extra=0;class=missing
+testdir:writebarrier.go	compiled	writebarrier.go:17: missing error "write barrier"	missing=42;wording=0;extra=0;class=missing
