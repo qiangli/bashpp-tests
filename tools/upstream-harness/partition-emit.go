@@ -633,8 +633,24 @@ func debugDiagnosticFlags(flags []string) bool {
 	return false
 }
 
+// debugDiagnosticFlag reports a -d= flag that produces diagnostics the
+// expectations depend on (-d=wb, -d=nil, -d=ssa/…/debug=N, -d=escapedebug=1,
+// …). Two -d= flags carry no expectation and never retain a row:
+// -d=ssa/check/on, which upstream testdir_test.go appends to EVERY
+// errorcheck compile, and -d=panic, which only makes gc panic on its first
+// error (the diagnostic itself is the ordinary one).
 func debugDiagnosticFlag(flag string) bool {
-	return strings.HasPrefix(flag, "-d=")
+	if !strings.HasPrefix(flag, "-d=") {
+		return false
+	}
+	for _, option := range strings.Split(strings.TrimPrefix(flag, "-d="), ",") {
+		switch option {
+		case "", "ssa/check/on", "panic":
+			continue
+		}
+		return true
+	}
+	return false
 }
 
 var expectedArgumentsRe = regexp.MustCompile(`expected [0-9]+ argument`)

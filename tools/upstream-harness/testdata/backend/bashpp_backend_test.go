@@ -270,9 +270,27 @@ func artifactUse(action string) string {
 // as interpreted asmcheck.
 func optimizerDiagnosticFlags(flags []string) bool {
 	for _, flag := range flags {
-		if strings.HasPrefix(flag, "-m") || strings.HasPrefix(flag, "-live") || flag == "-race" || strings.HasPrefix(flag, "-d=") {
+		if strings.HasPrefix(flag, "-m") || strings.HasPrefix(flag, "-live") || flag == "-race" || debugDiagnosticFlag(flag) {
 			return true
 		}
+	}
+	return false
+}
+
+// debugDiagnosticFlag mirrors partition-emit.go: a -d= flag whose output the
+// expectations depend on. -d=ssa/check/on (appended by upstream to every
+// errorcheck compile) and -d=panic (gc panics on its first ordinary error)
+// carry no expectation and never make a recipe an optimizer-diagnostic one.
+func debugDiagnosticFlag(flag string) bool {
+	if !strings.HasPrefix(flag, "-d=") {
+		return false
+	}
+	for _, option := range strings.Split(strings.TrimPrefix(flag, "-d="), ",") {
+		switch option {
+		case "", "ssa/check/on", "panic":
+			continue
+		}
+		return true
 	}
 	return false
 }

@@ -368,7 +368,7 @@ func TestClassifyRecipeAndVerdictRules(t *testing.T) {
 			line:         `dbg.go:3: missing error "cannot use"`,
 			mode:         "interpreted",
 			runner:       "testdir",
-			recipe:       errorcheck("errorcheck", "-0", "-d=ssa/check/on"),
+			recipe:       errorcheck("errorcheck", "-0", "-d=wb", "-d=ssa/check/on"),
 			verdictClass: "missing",
 			want:         "retained",
 		},
@@ -377,7 +377,7 @@ func TestClassifyRecipeAndVerdictRules(t *testing.T) {
 			line:         `dbg.go:3: missing error "cannot use"`,
 			mode:         "compiled",
 			runner:       "testdir",
-			recipe:       errorcheck("errorcheck", "-0", "-d=ssa/check/on"),
+			recipe:       errorcheck("errorcheck", "-0", "-d=nil", "-d=ssa/check/on"),
 			verdictClass: "missing",
 			want:         "retained",
 		},
@@ -582,7 +582,7 @@ func TestRecipeFlagRootsAcrossModes(t *testing.T) {
 		writeRecords(t, filepath.Join(lane.dir, "types2.go-test.json"))
 		writeRecords(t, filepath.Join(lane.dir, "package.go-test.json"))
 		writeRecords(t, filepath.Join(lane.dir, "backend.events.jsonl"),
-			partitionEventRecord{Kind: "backend", Test: "dflag.go", Mode: lane.mode, Action: "errorcheck", Phase: "compile", RecipeFlags: []string{"-0", "-d=ssa/check/on"}},
+			partitionEventRecord{Kind: "backend", Test: "dflag.go", Mode: lane.mode, Action: "errorcheck", Phase: "compile", RecipeFlags: []string{"-0", "-d=wb", "-d=ssa/check/on"}},
 			partitionEventRecord{Kind: "backend", Test: "mflag.go", Mode: lane.mode, Action: "errorcheck", Phase: "compile", RecipeFlags: []string{"-0", "-m", "-l"}},
 			partitionEventRecord{Kind: "backend", Test: "mflagreal.go", Mode: lane.mode, Action: "errorcheck", Phase: "compile", RecipeFlags: []string{"-0", "-m"}},
 			partitionEventRecord{Kind: "terminal", Mode: lane.mode})
@@ -800,5 +800,22 @@ func writeRecords(t *testing.T, name string, records ...any) {
 	}
 	if err := f.Close(); err != nil {
 		t.Fatal(err)
+	}
+}
+
+// Sprint: #154; Story: S154.0; Story-ID: 4877afd3a207
+func TestDebugDiagnosticFlagIgnoresUpstreamAndPanic(t *testing.T) {
+	// upstream appends -d=ssa/check/on to every errorcheck compile, and
+	// -d=panic carries no expectation: neither makes a plain errorcheck root
+	// an optimizer-diagnostic recipe.
+	for _, flags := range [][]string{{"-d=ssa/check/on"}, {"-d=panic"}, {"-d=panic", "-d=ssa/check/on"}, {"-e", "-d=panic,ssa/check/on"}} {
+		if optimizerDiagnosticFlags(flags) {
+			t.Errorf("optimizerDiagnosticFlags(%q) = true, want false", flags)
+		}
+	}
+	for _, flags := range [][]string{{"-d=wb"}, {"-d=nil", "-d=ssa/check/on"}, {"-0", "-d=ssa/prove/debug=1"}, {"-d=append,slice"}, {"-d=escapedebug=1"}, {"-0", "-m", "-d=ssa/check/on"}} {
+		if !optimizerDiagnosticFlags(flags) {
+			t.Errorf("optimizerDiagnosticFlags(%q) = false, want true", flags)
+		}
 	}
 }
