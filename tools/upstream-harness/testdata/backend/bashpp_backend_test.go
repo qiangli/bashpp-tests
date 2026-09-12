@@ -15,6 +15,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"sync"
 )
@@ -290,6 +291,18 @@ func (t test) backendPlan(step *planStep, action, phase string, pkg *packageIden
 	nativeArgv := append([]string(nil), step.cmd.Args...)
 	if mode == "" {
 		return
+	}
+	// Upstream bounds a command only when the recipe says `-t N`; every other
+	// phase is unbounded, which is right for the native compiler and wrong
+	// for a product under test that can hang. The backend lane applies the
+	// Sprint 148 60-second per-stage deadline (BASHPP_TESTDIR_DEADLINE
+	// overrides) through upstream's own timer, so a timed-out root is
+	// upstream's errTimeout — a product row, never a seam error.
+	step.deadline = 60
+	if v := os.Getenv("BASHPP_TESTDIR_DEADLINE"); v != "" {
+		if n, err := strconv.Atoi(v); err == nil && n >= 0 {
+			step.deadline = n
+		}
 	}
 	if len(compileInputs) == 0 {
 		// An execute phase with no inputs runs the program an earlier phase

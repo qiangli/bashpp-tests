@@ -1,6 +1,6 @@
 --- a/src/cmd/internal/testdir/bashpp_events_test.go
 +++ b/src/cmd/internal/testdir/bashpp_events_test.go
-@@ -133,11 +133,12 @@
+@@ -133,11 +133,13 @@
  }
  
  type planStep struct {
@@ -11,6 +11,7 @@
 -	maps      []string
 +	test       string
 +	backendErr error
++	deadline   int
 +	phase      int
 +	cmd        *exec.Cmd
 +	artifacts  []string

@@ -301,6 +301,13 @@ func readEventStream(dir string) error {
 	return nil
 }
 
+// framingLine is go test's own narration of a test, never a diagnostic.
+func framingLine(line string) bool {
+	return strings.HasPrefix(line, "=== ") || strings.HasPrefix(line, "--- ") ||
+		line == "PASS" || line == "FAIL" || strings.HasPrefix(line, "ok  ") ||
+		strings.HasPrefix(line, "FAIL\t") || strings.HasPrefix(line, "exit status ")
+}
+
 func firstLine(lines []string) (string, bool) {
 	diagnostic := false
 	for _, raw := range lines {
@@ -310,8 +317,18 @@ func firstLine(lines []string) (string, bool) {
 	afterFail := false
 	for _, raw := range lines {
 		line := normalizeLine(raw)
-		if line == "" {
+		if line == "" || framingLine(line) {
+			if strings.Contains(line, "--- FAIL:") {
+				afterFail = true
+			}
 			continue
+		}
+		// upstream's own attribution prefix ("testdir_test.go:153: ") is not
+		// the diagnostic; the text after it is.
+		if strings.HasPrefix(line, "testdir_test.go:") {
+			if i := strings.Index(line, ": "); i >= 0 {
+				line = strings.TrimSpace(line[i+2:])
+			}
 		}
 		if fallback == "" {
 			fallback = line
@@ -360,7 +377,7 @@ func classify(line, mode string, hasDiagnostic bool) string {
 			return "151"
 		}
 	}
-	for _, pattern := range []string{"LOWER-", "BASHPP-EEXPR", "# bashpp_", "not in std", "relative import paths", "no required module"} {
+	for _, pattern := range []string{"LOWER-", "BASHPP-EEXPR", "# bashpp_", "not in std", "relative import paths", "no required module", "non-Go inputs"} {
 		if contains(pattern) {
 			return "152"
 		}
@@ -370,7 +387,7 @@ func classify(line, mode string, hasDiagnostic bool) string {
 	}
 	for _, pattern := range []string{
 		"native slice retention", "dependency-owned writer", "callbacks are unsupported",
-		"timed out", "timeout", "incorrect output", "got:", "want:",
+		"timed out", "timeout", "exceeded time limit", "incorrect output", "got:", "want:",
 		"runtime error", "panic:",
 	} {
 		if contains(pattern) {

@@ -236,7 +236,43 @@ package_counts() {
 # roots; counts are printed but not authenticated and the exit is always 1,
 # so a smoke run can never be read as a barrier result.
 smoke=${BASHPP_CORPUS_SMOKE:-}
-run_arg=${smoke:+-run=$smoke}
+
+# BASHPP_CORPUS_ROOTS=<active manifest TSV> is the LEAF form: the run is
+# restricted to the manifest's roots (per-runner -run selectors derived from
+# the root ids, and only the packages it names), and each runner's terminal
+# count is authenticated against the manifest instead of the native lane,
+# which still runs first as the equivalence witness. The root-list digest is
+# printed in the pin.tsv shape so a leaf run names exactly what it ran.
+roots=${BASHPP_CORPUS_ROOTS:-}
+leaf_testdir=; leaf_types2=; leaf_types=; leaf_packages=
+want_testdir=; want_types=; want_packages=
+if test -n "$roots"; then
+	test -z "$smoke" || { printf 'FAIL BASHPP_CORPUS_ROOTS and BASHPP_CORPUS_SMOKE are exclusive\n' >&2; exit 1; }
+	test -r "$roots" || { printf 'FAIL leaf manifest unreadable: %s\n' "$roots" >&2; exit 1; }
+	rootlist=$(awk -F '\t' 'NR > 1 && $1 != "" { print $1 }' "$roots" | sort -u)
+	printf 'leaf manifest %s: %s roots, root-list sha256 %s\n' "$roots" "$(printf '%s\n' "$rootlist" | grep -c .)" "$(printf '%s\n' "$rootlist" | sha256_stdin)"
+	# testdir:<dir>/<file> -> ^Test$/^<dir>$/^<file>$ ; testdir:<file> -> ^Test$/^<file>$
+	leaf_testdir=$(printf '%s\n' "$rootlist" | awk -F: '$1 == "testdir" { n = $2; gsub(/\./, "\\.", n); if (index(n, "/")) { d = n; sub(/\/[^\/]*$/, "", d); f = n; sub(/^.*\//, "", f); printf "^Test$/^%s$/^%s$|", d, f } else printf "^Test$/^%s$|", n }' | sed 's/|$//')
+	# typechecker:<package>/<TestFunc>/<file> -> ^<TestFunc>$/^<file>$ per package
+	leaf_types2=$(printf '%s\n' "$rootlist" | awk -F: '$1 == "typechecker" && index($2, "cmd/compile/internal/types2/") == 1 { n = substr($2, length("cmd/compile/internal/types2/") + 1); gsub(/\./, "\\.", n); split(n, a, "/"); printf "^%s$/^%s$|", a[1], a[2] }' | sed 's/|$//')
+	leaf_types=$(printf '%s\n' "$rootlist" | awk -F: '$1 == "typechecker" && index($2, "go/types/") == 1 { n = substr($2, length("go/types/") + 1); gsub(/\./, "\\.", n); split(n, a, "/"); printf "^%s$/^%s$|", a[1], a[2] }' | sed 's/|$//')
+	leaf_packages=$(printf '%s\n' "$rootlist" | awk -F: '$1 == "package" { print $2 }')
+	want_testdir=$(printf '%s\n' "$rootlist" | grep -c '^testdir:' || true)
+	want_types=$(printf '%s\n' "$rootlist" | grep -c '^typechecker:' || true)
+	want_packages=$(printf '%s\n' "$rootlist" | grep -c '^package:' || true)
+fi
+# run selector for one runner: the smoke regexp, the leaf selector, or none.
+# An empty leaf selector for a runner the manifest does not name skips it.
+selector() {
+	if test -n "$smoke"; then printf -- '-run=%s' "$smoke"
+	elif test -n "$roots"; then
+		case "$1" in
+			testdir) test -n "$leaf_testdir" && printf -- '-run=%s' "$leaf_testdir" || printf -- '-run=^$' ;;
+			types2) test -n "$leaf_types2" && printf -- '-run=%s' "$leaf_types2" || printf -- '-run=^$' ;;
+			types) test -n "$leaf_types" && printf -- '-run=%s' "$leaf_types" || printf -- '-run=^$' ;;
+		esac
+	fi
+}
 
 seam_fail=0
 product_fail=0
@@ -264,13 +300,15 @@ for mode in native interpreted compiled; do
 		fi
 		BASHY_OTEL_SPOOL="$tmp/bashy-otel.jsonl" BASHY_HINTS=0 BASHY_NO_COACH=1 \
 		GOROOT="$tmp/goroot" GOTOOLCHAIN=local GOCACHE="$tmp/gocache" \
-			"$go127" test -count=1 -json -timeout=6h -overlay="$tmp/harness-overlay.json" cmd/internal/testdir $run_arg \
+			"$go127" test -count=1 -json -timeout=48h -overlay="$tmp/harness-overlay.json" cmd/internal/testdir $(selector testdir) \
 			>"$dir/testdir.go-test.json" 2>"$dir/testdir.stderr" || true
 	)
 	set -- $(test_leaf_counts "$dir/testdir.go-test.json")
 	printf 'testdir %s: %s terminals, %s non-PASS (inventory 2726)\n' "$mode" "$1" "$2"
 	if test "$mode" = native; then native_testdir=$1
 	elif test -n "$smoke"; then :
+	elif test -n "$roots" && test "$1" != "$want_testdir"; then seam_fail=1
+	elif test -n "$roots"; then test "$2" = 0 || product_fail=1
 	elif test "$1" != "$native_testdir"; then seam_fail=1
 	elif test "$2" != 0; then product_fail=1; fi
 
@@ -283,7 +321,7 @@ for mode in native interpreted compiled; do
 			fi
 			BASHY_OTEL_SPOOL="$tmp/bashy-otel.jsonl" BASHY_HINTS=0 BASHY_NO_COACH=1 \
 			GOROOT="$tmp/goroot" GOTOOLCHAIN=local GOCACHE="$tmp/gocache" \
-				"$go127" test -count=1 -json -timeout=6h -overlay="$tmp/harness-overlay.json" "$1" $run_arg \
+				"$go127" test -count=1 -json -timeout=24h -overlay="$tmp/harness-overlay.json" "$1" $(selector "$2") \
 				>"$dir/$2.go-test.json" 2>"$dir/$2.stderr" || true
 		)
 		set -- $(test_leaf_counts "$dir/$2.go-test.json")
@@ -293,11 +331,14 @@ for mode in native interpreted compiled; do
 	printf 'typechecker %s: %s terminals, %s non-PASS (inventory 743)\n' "$mode" "$1" "$2"
 	if test "$mode" = native; then native_types=$1
 	elif test -n "$smoke"; then :
+	elif test -n "$roots" && test "$1" != "$want_types"; then seam_fail=1
+	elif test -n "$roots"; then test "$2" = 0 || product_fail=1
 	elif test "$1" != "$native_types"; then seam_fail=1
 	elif test "$2" != 0; then product_fail=1; fi
 
 	while IFS="$tab" read -r capability pkg action want companions; do
 		case "$capability" in ''|'#'*) continue ;; esac
+		if test -n "$roots" && ! printf '%s\n' "$leaf_packages" | grep -qx -- "$pkg"; then continue; fi
 		case_id=$(printf '%s' "$pkg" | tr '/.' '__')
 		(
 			cd "$tmp/goroot/src"
@@ -308,22 +349,28 @@ for mode in native interpreted compiled; do
 			fi
 			BASHY_OTEL_SPOOL="$tmp/bashy-otel.jsonl" BASHY_HINTS=0 BASHY_NO_COACH=1 \
 			GOROOT="$tmp/goroot" GOTOOLCHAIN=local GOCACHE="$tmp/gocache" \
-				"$tmp/go-bashpp" test -count=1 -json -timeout=2h "$pkg" $run_arg \
+				"$tmp/go-bashpp" test -count=1 -json -timeout=10m "$pkg" \
 				>"$dir/packages/$case_id.go-test.json" 2>"$dir/packages/$case_id.stderr" || true
 		)
 	done < "$package_matrix"
-	set -- $(package_counts "$dir"/packages/*.go-test.json)
+	if ls "$dir"/packages/*.go-test.json >/dev/null 2>&1; then
+		set -- $(package_counts "$dir"/packages/*.go-test.json)
+	else
+		set -- 0 0
+	fi
 	printf 'packages %s: %s terminals, %s non-PASS (inventory 26)\n' "$mode" "$1" "$2"
 	if test "$mode" = native; then native_packages=$1
 	elif test -n "$smoke"; then :
+	elif test -n "$roots" && test "$1" != "$want_packages"; then seam_fail=1
+	elif test -n "$roots"; then test "$2" = 0 || product_fail=1
 	elif test "$1" != "$native_packages"; then seam_fail=1
 	elif test "$2" != 0; then product_fail=1; fi
 
 	# The partition emitter reads one stream per runner and one events file
 	# per mode (each record already names its package and test).
-	cat "$dir"/packages/*.go-test.json > "$dir/package.go-test.json"
+	cat "$dir"/packages/*.go-test.json > "$dir/package.go-test.json" 2>/dev/null || : > "$dir/package.go-test.json"
 	if test "$mode" != native; then
-		cat "$dir"/*.events.jsonl "$dir"/packages/*.events.jsonl > "$dir/backend.events.jsonl"
+		cat "$dir"/*.events.jsonl "$dir"/packages/*.events.jsonl > "$dir/backend.events.jsonl" 2>/dev/null || true
 	fi
 done
 
@@ -349,7 +396,7 @@ if test "$seam_fail" -ne 0; then
 	exit 1
 fi
 if test "$product_fail" -ne 0; then
-	printf 'NON-GREEN S151.0 corpus gate: all 3,495 roots were accounted for; at least one root was non-PASS\n'
+	printf 'NON-GREEN S151.0 corpus gate%s: every root was accounted for; at least one root was non-PASS\n' "${roots:+ (leaf $roots)}"
 	exit 3
 fi
-printf 'PASS S151.0 corpus gate: all 3,495 roots PASS through both Bash++ modes\n'
+printf 'PASS S151.0 corpus gate%s: every root PASS through both Bash++ modes\n' "${roots:+ (leaf $roots)}"

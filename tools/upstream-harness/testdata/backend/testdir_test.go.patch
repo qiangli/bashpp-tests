@@ -1,13 +1,16 @@
 --- a/src/cmd/internal/testdir/testdir_test.go
 +++ b/src/cmd/internal/testdir/testdir_test.go
-@@ -675,7 +675,9 @@
+@@ -675,7 +675,12 @@
  
  		var err error
  
 -		if tim != 0 {
 +		if step.backendErr != nil {
 +			err = step.backendErr
-+		} else if tim != 0 {
++		} else if tim != 0 || step.deadline != 0 {
++			if tim == 0 {
++				tim = step.deadline
++			}
  			err = cmd.Start()
  			// This command-timeout code adapted from cmd/go/test.go
  			// Note: the Go command uses a more sophisticated timeout
