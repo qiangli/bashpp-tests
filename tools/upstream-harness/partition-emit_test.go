@@ -355,13 +355,24 @@ func TestClassifyRecipeAndVerdictRules(t *testing.T) {
 			want:         "retained",
 		},
 		{
-			name:         "D1 interpreted errorcheckandrundir -race",
+			name:         "D1 interpreted errorcheckandrundir -race -m",
 			line:         `race.go:9: missing error "write barrier"`,
 			mode:         "interpreted",
 			runner:       "testdir",
-			recipe:       errorcheck("errorcheckandrundir", "-race"),
+			recipe:       errorcheck("errorcheckandrundir", "-race", "-m"),
 			verdictClass: "missing",
 			want:         "retained",
+		},
+		{
+			// -race alone asks for no optimizer note (issue15091, issue17449
+			// pass interpreted); only -m under -race does.
+			name:         "D1 interpreted errorcheck -race alone stays 154",
+			line:         `race.go:9: missing error "cannot use"`,
+			mode:         "interpreted",
+			runner:       "testdir",
+			recipe:       errorcheck("errorcheck", "-0", "-race"),
+			verdictClass: "missing",
+			want:         "154",
 		},
 		{
 			name:         "D1 interpreted errorcheck -d= debug flag",
@@ -400,11 +411,11 @@ func TestClassifyRecipeAndVerdictRules(t *testing.T) {
 			want:         "154",
 		},
 		{
-			name:         "D1 compiled -race stays 154",
+			name:         "D1 compiled -race -m stays 154",
 			line:         `race.go:9: missing error "write barrier"`,
 			mode:         "compiled",
 			runner:       "testdir",
-			recipe:       errorcheck("errorcheckandrundir", "-race"),
+			recipe:       errorcheck("errorcheckandrundir", "-race", "-m"),
 			verdictClass: "missing",
 			want:         "154",
 		},

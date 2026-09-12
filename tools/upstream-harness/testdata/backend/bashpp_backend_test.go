@@ -264,13 +264,13 @@ func artifactUse(action string) string {
 }
 
 // optimizerDiagnosticFlags reports whether an errorcheck recipe asks the
-// compiler for optimizer diagnostics: -m (any -m… form), -live, -race, or a
+// compiler for optimizer diagnostics: -m (any -m… form), -live, or a
 // -d= debug flag. The check interface has no inlining, escape analysis or
 // SSA, so interpreted mode declares such a recipe unsupported, the same shape
 // as interpreted asmcheck.
 func optimizerDiagnosticFlags(flags []string) bool {
 	for _, flag := range flags {
-		if strings.HasPrefix(flag, "-m") || strings.HasPrefix(flag, "-live") || flag == "-race" || debugDiagnosticFlag(flag) {
+		if strings.HasPrefix(flag, "-m") || strings.HasPrefix(flag, "-live") || debugDiagnosticFlag(flag) {
 			return true
 		}
 	}

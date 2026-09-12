@@ -613,11 +613,11 @@ func diagnosticLine(line string) bool {
 }
 
 // optimizerDiagnosticFlags reports whether the recipe asks the compiler for
-// optimizer diagnostics: -m (any -m… form), -live, -race, or a -d= debug
+// optimizer diagnostics: -m (any -m… form), -live, or a -d= debug
 // flag — compiler artifacts the check interface cannot produce.
 func optimizerDiagnosticFlags(flags []string) bool {
 	for _, flag := range flags {
-		if strings.HasPrefix(flag, "-m") || strings.HasPrefix(flag, "-live") || flag == "-race" || debugDiagnosticFlag(flag) {
+		if strings.HasPrefix(flag, "-m") || strings.HasPrefix(flag, "-live") || debugDiagnosticFlag(flag) {
 			return true
 		}
 	}
@@ -671,7 +671,7 @@ func classify(line, mode string, hasDiagnostic bool, runner string, recipe recip
 	// has no inliner, escape analysis, or SSA — the same shape as interpreted
 	// asmcheck. A compiled -d= row is retained too (the seam drops -d= as
 	// evidence only, see the backend's compileDeviations); compiled
-	// -m/-live/-race rows stay 154. As with retained generally, a real
+	// -m/-live rows stay 154. As with retained generally, a real
 	// failure in the other mode still wins (ownerRank).
 	if recipe.errorcheckFamily() {
 		if mode == "interpreted" && optimizerDiagnosticFlags(recipe.flags) {
