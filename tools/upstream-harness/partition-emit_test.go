@@ -171,6 +171,34 @@ func TestPartitionRuleChanges(t *testing.T) {
 			wantLine:  "LOWER-EUNSUPPORTED: function declaration without body",
 			wantOwner: "retained",
 		},
+		{
+			name:      "cgo requires interpreted",
+			lines:     []string{"package requires cgo, which this pure-Go shell does not provide"},
+			mode:      "interpreted",
+			wantLine:  "package requires cgo, which this pure-Go shell does not provide",
+			wantOwner: "retained",
+		},
+		{
+			name:      "cgo requires compiled",
+			lines:     []string{"package requires cgo, which this pure-Go shell does not provide"},
+			mode:      "compiled",
+			wantLine:  "package requires cgo, which this pure-Go shell does not provide",
+			wantOwner: "retained",
+		},
+		{
+			name:      "unknown import C interpreted",
+			lines:     []string{`unknown import path "C"`},
+			mode:      "interpreted",
+			wantLine:  `unknown import path "C"`,
+			wantOwner: "retained",
+		},
+		{
+			name:      "unknown import C compiled",
+			lines:     []string{`unknown import path "C"`},
+			mode:      "compiled",
+			wantLine:  `unknown import path "C"`,
+			wantOwner: "retained",
+		},
 	}
 
 	for _, tt := range tests {
@@ -183,6 +211,55 @@ func TestPartitionRuleChanges(t *testing.T) {
 				t.Fatalf("classify(%q, %q) = %q, want %q", line, tt.mode, owner, tt.wantOwner)
 			}
 		})
+	}
+}
+
+// TestCgoRootWithCrossModeRuntimeFailure verifies that a root with a cgo
+// diagnostic (retained) in one mode and a real runtime failure in the other
+// mode is assigned to the runtime owner, not retained. ownerRank ensures
+// retained never absorbs a real failure in the other mode.
+func TestCgoRootWithCrossModeRuntimeFailure(t *testing.T) {
+	interpreted, compiled, out := t.TempDir(), t.TempDir(), t.TempDir()
+
+	testdir := map[string]map[string]fixtureVerdict{
+		"interpreted": {
+			"cgo_cross.go": {action: "fail", output: `unknown import path "C"`},
+		},
+		"compiled": {
+			"cgo_cross.go": {action: "fail", output: "panic: runtime error: nil pointer dereference"},
+		},
+	}
+	for _, lane := range []struct{ mode, dir string }{{"interpreted", interpreted}, {"compiled", compiled}} {
+		writeTestdirFixture(t, filepath.Join(lane.dir, "testdir.go-test.json"), testdir[lane.mode])
+		writeRecords(t, filepath.Join(lane.dir, "types.go-test.json"))
+		writeRecords(t, filepath.Join(lane.dir, "types2.go-test.json"))
+		writeRecords(t, filepath.Join(lane.dir, "package.go-test.json"))
+		writeRecords(t, filepath.Join(lane.dir, "backend.events.jsonl"), partitionEventRecord{Kind: "terminal", Mode: lane.mode})
+	}
+
+	var stdout bytes.Buffer
+	hasFailures, err := emitPartitions(interpreted, compiled, out, &stdout)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !hasFailures {
+		t.Fatal("emitPartitions reported no failures")
+	}
+
+	// The root must land in 153 (runtime), not retained.
+	got, err := os.ReadFile(filepath.Join(out, "active-153-manifest.tsv"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(got), "testdir:cgo_cross.go") {
+		t.Fatalf("cgo_cross.go not in 153 manifest:\n%s", got)
+	}
+	retained, err := os.ReadFile(filepath.Join(out, "active-retained-manifest.tsv"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(string(retained), "testdir:cgo_cross.go") {
+		t.Fatalf("cgo_cross.go should not be in retained manifest:\n%s", retained)
 	}
 }
 
