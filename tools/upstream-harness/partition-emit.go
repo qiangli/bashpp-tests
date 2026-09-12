@@ -301,11 +301,15 @@ func readEventStream(dir string) error {
 	return nil
 }
 
+func exitStatus(line string) bool {
+	return strings.HasPrefix(line, "exit status ") && len(line) < 20
+}
+
 // framingLine is go test's own narration of a test, never a diagnostic.
 func framingLine(line string) bool {
 	return strings.HasPrefix(line, "=== ") || strings.HasPrefix(line, "--- ") ||
 		line == "PASS" || line == "FAIL" || strings.HasPrefix(line, "ok  ") ||
-		strings.HasPrefix(line, "FAIL\t") || strings.HasPrefix(line, "exit status ")
+		strings.HasPrefix(line, "FAIL\t")
 }
 
 func firstLine(lines []string) (string, bool) {
@@ -314,6 +318,7 @@ func firstLine(lines []string) (string, bool) {
 		diagnostic = diagnostic || diagnosticLine(normalizeLine(raw))
 	}
 	fallback := ""
+	firstText := ""
 	afterFail := false
 	for _, raw := range lines {
 		line := normalizeLine(raw)
@@ -330,6 +335,17 @@ func firstLine(lines []string) (string, bool) {
 				line = strings.TrimSpace(line[i+2:])
 			}
 		}
+		// "exit status N" is upstream's summary of the command; the
+		// command's own diagnostic follows it, indented. Prefer that.
+		if exitStatus(line) {
+			if fallback == "" {
+				fallback = line
+			}
+			continue
+		}
+		if firstText == "" {
+			firstText = line
+		}
 		if fallback == "" {
 			fallback = line
 		}
@@ -340,6 +356,9 @@ func firstLine(lines []string) (string, bool) {
 		if strings.Contains(line, "--- FAIL:") {
 			afterFail = true
 		}
+	}
+	if firstText != "" {
+		return firstText, diagnostic
 	}
 	return fallback, diagnostic
 }
@@ -360,12 +379,27 @@ func normalizeLine(line string) string {
 func diagnosticLine(line string) bool {
 	return strings.HasPrefix(line, "bashy:") || strings.HasPrefix(line, "gosource:") ||
 		strings.HasPrefix(line, "LOWER-") || strings.HasPrefix(line, "BASHPP-") ||
-		strings.Contains(line, ": gosource: ")
+		strings.Contains(line, ": gosource: ") || strings.Contains(line, ": BASHPP-") ||
+		strings.Contains(line, ": LOWER-")
 }
 
 func classify(line, mode string, hasDiagnostic bool) string {
 	lower := strings.ToLower(line)
 	contains := func(s string) bool { return strings.Contains(lower, strings.ToLower(s)) }
+	// BASHPP-E* codes are the interpreter's evaluator diagnostics in
+	// interpreted mode (151); in compiled mode the same prefix is the lowering
+	// (152), handled below.
+	if mode == "interpreted" && contains("BASHPP-E") {
+		return "151"
+	}
+	for _, pattern := range []string{"declared by both", "redeclared in this block", "computed call runtime"} {
+		if contains(pattern) {
+			return "151"
+		}
+	}
+	if contains("dependency transport") {
+		return "153"
+	}
 	for _, pattern := range []string{
 		"require --check or --go-list", "gosource: unsupported", "could not import internal/",
 		"could not import C", "invalid recursive type", "initialization cycle",
