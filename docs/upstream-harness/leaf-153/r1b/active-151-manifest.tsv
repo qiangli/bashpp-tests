@@ -1,0 +1,21 @@
+root	mode	first_line
+testdir:abi/idata.go	interpreted	abi/idata.go:55:52: BASHPP-EEXPR-UNDEFINED: undefined callable computed function
+testdir:chan/powser2.go	interpreted	chan/powser2.go:133:2: BASHPP-ENIL-DEREF: dereference of nil pointer
+testdir:chan/sieve2.go	interpreted	invalid select case
+testdir:const7.go	interpreted	BASHPP-ESELECTOR-ASSIGN: target is not a structured value
+testdir:convinline.go	interpreted	convert1: cannot use "-3/2" as float64 value for parameter v
+testdir:fixedbugs/bug517.go	interpreted	fixedbugs/bug517.go:15:1: BASHPP-ECOLLECTION-LENGTH: invalid array length unsafe.Sizeof(byte(0))
+testdir:fixedbugs/issue11771.go	interpreted	BASHPP-ESELECTOR-ASSIGN: target is not a structured value
+testdir:fixedbugs/issue16331.go	interpreted	bash++: task failed: fixedbugs/issue16331.go:26:32: BASHPP-EEXPR-NIL: nil is not a scalar
+testdir:fixedbugs/issue19467.go	interpreted	BASHPP-EBUILTIN-TYPE: BASHPP-ECOLLECTION-ELEMENT: cannot use *interp.bashPPBridgeValue value as runtime.Frame
+testdir:fixedbugs/issue19467.go	compiled	2026/09/12 18:02:45 frame 0: got main.(*__gosource_pkg_0_WaitGroup).Add, want test/mysync.(*WaitGroup).Add
+testdir:fixedbugs/issue19658.go	interpreted	BASHPP-ESELECTOR-ASSIGN: target is not a structured value
+testdir:fixedbugs/issue21879.go	interpreted	fixedbugs/issue21879.go:14:10: BASHPP-ESELECTOR-TYPE: ?.frame has no fields
+testdir:fixedbugs/issue54542.go	interpreted	BASHPP-ESELECTOR-ASSIGN: target is not a structured value
+testdir:fixedbugs/issue57823.go	interpreted	unknown imported symbol or method: unsafe.SliceData
+testdir:reflectmethod2.go	interpreted	BASHPP-EASSERT-FAIL: interface value has dynamic type func(main.M), not func(M)()
+testdir:reflectmethod3.go	interpreted	BASHPP-EASSERT-FAIL: interface value has dynamic type func(main.M), not func(M)()
+testdir:sizeof.go	interpreted	sizeof.go:34:2: sizeof.go:34:12: unknown imported symbol or method: unsafe.Sizeof
+testdir:typeparam/map.go	interpreted	typeparam/map.go:32:10: BASHPP-ECOLLECTION-ELEMENT: cannot use string value as float64
+testdir:typeparam/mapimp.go	interpreted	test/typeparam/mapimp.dir/main.go:21:12: BASHPP-ECOLLECTION-ELEMENT: cannot use string value as float64
+testdir:typeparam/struct.go	interpreted	BASHPP-ESTRUCT-TYPE: cannot use Eint as E[int]

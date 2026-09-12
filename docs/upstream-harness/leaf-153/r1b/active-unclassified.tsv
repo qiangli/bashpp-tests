@@ -1,0 +1,8 @@
+root	mode	first_line
+testdir:fixedbugs/issue19028.go	interpreted	unknown field _ of main.T
+testdir:fixedbugs/issue25897b.go	interpreted	gosource: dependency mutation of interpreter-owned references is unsupported for MethodByName
+testdir:fixedbugs/issue30606.go	interpreted	fixedbugs/issue30606.go:15:1: fixedbugs/issue30606.go:15:38: gosource: invalid native slice writeback: gosource: native callback field belongs to another dependency session
+testdir:fixedbugs/issue49110.go	interpreted	gosource: invalid native slice writeback: gosource: native callback field belongs to another dependency session
+testdir:fixedbugs/issue77779.go	interpreted	fixedbugs/issue77779.go:39:5: gosource: dependency mutation of interpreter-owned references is unsupported for reflect.ValueOf
+testdir:reflectmethod7.go	interpreted	gosource: invalid native slice writeback: gosource: native callback field belongs to another dependency session
+testdir:typeparam/double.go	interpreted	typeparam/double.go:46:6: gosource: dependency mutation of interpreter-owned references is unsupported for reflect.DeepEqual
