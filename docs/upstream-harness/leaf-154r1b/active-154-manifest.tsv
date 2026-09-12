@@ -1,0 +1,42 @@
+root	mode	first_line	verdict
+testdir:fixedbugs/bug132.go	interpreted	test/fixedbugs/bug132.go:10:5: x redeclared	missing=0;wording=0;extra=1;class=multiplicity
+testdir:fixedbugs/bug132.go	compiled	test/fixedbugs/bug132.go:10:5: x redeclared	missing=0;wording=0;extra=1;class=multiplicity
+testdir:fixedbugs/bug200.go	interpreted	test/fixedbugs/bug200.go:17:7: duplicate case func(f int) in type switch	missing=0;wording=0;extra=1;class=extra
+testdir:fixedbugs/bug200.go	compiled	test/fixedbugs/bug200.go:17:7: duplicate case func(f int) in type switch	missing=0;wording=0;extra=1;class=extra
+testdir:fixedbugs/bug412.go	interpreted	test/fixedbugs/bug412.go:11:2: x redeclared	missing=0;wording=0;extra=1;class=extra
+testdir:fixedbugs/bug412.go	compiled	test/fixedbugs/bug412.go:11:2: x redeclared	missing=0;wording=0;extra=1;class=extra
+testdir:fixedbugs/bug416.go	interpreted	test/fixedbugs/bug416.go:13:13: field and method with the same name X	missing=0;wording=0;extra=1;class=extra
+testdir:fixedbugs/bug416.go	compiled	test/fixedbugs/bug416.go:13:13: field and method with the same name X	missing=0;wording=0;extra=1;class=extra
+testdir:fixedbugs/issue11362.go	interpreted	test/fixedbugs/issue11362.go:11:10: could not import unicode//utf8 (package "unicode//utf8" not found in go list output)	missing=0;wording=1;extra=1;class=wording
+testdir:fixedbugs/issue11362.go	compiled	test/fixedbugs/issue11362.go:11:10: could not import unicode//utf8 (package "unicode//utf8" not found in go list output)	missing=0;wording=1;extra=1;class=wording
+testdir:fixedbugs/issue15898.go	interpreted	test/fixedbugs/issue15898.go:11:12: duplicate case nil in type switch	missing=0;wording=0;extra=2;class=extra
+testdir:fixedbugs/issue15898.go	compiled	test/fixedbugs/issue15898.go:11:12: duplicate case nil in type switch	missing=0;wording=0;extra=2;class=extra
+testdir:fixedbugs/issue23586.go	interpreted	test/fixedbugs/issue23586.go:21:32: expression in defer must be function call	missing=0;wording=0;extra=3;class=extra
+testdir:fixedbugs/issue23586.go	compiled	test/fixedbugs/issue23586.go:21:32: expression in defer must be function call	missing=0;wording=0;extra=3;class=extra
+testdir:fixedbugs/issue24159.go	interpreted	test/fixedbugs/issue24159.go:14:7: duplicate case byte(0) (constant 0 of type byte) in expression switch	missing=0;wording=0;extra=3;class=extra
+testdir:fixedbugs/issue24159.go	compiled	test/fixedbugs/issue24159.go:14:7: duplicate case byte(0) (constant 0 of type byte) in expression switch	missing=0;wording=0;extra=3;class=extra
+testdir:fixedbugs/issue28085.go	interpreted	test/fixedbugs/issue28085.go:11:2: duplicate key 0 in map literal	missing=0;wording=0;extra=1;class=extra
+testdir:fixedbugs/issue28085.go	compiled	test/fixedbugs/issue28085.go:11:2: duplicate key 0 in map literal	missing=0;wording=0;extra=1;class=extra
+testdir:fixedbugs/issue28268.go	interpreted	test/fixedbugs/issue28268.go:19:10: field and method with the same name b	missing=0;wording=0;extra=2;class=extra
+testdir:fixedbugs/issue28268.go	compiled	test/fixedbugs/issue28268.go:19:10: field and method with the same name b	missing=0;wording=0;extra=2;class=extra
+testdir:fixedbugs/issue33460.go	interpreted	test/fixedbugs/issue33460.go:34:2: duplicate key "a" in map literal	missing=0;wording=0;extra=3;class=extra
+testdir:fixedbugs/issue33460.go	compiled	test/fixedbugs/issue33460.go:34:2: duplicate key "a" in map literal	missing=0;wording=0;extra=3;class=extra
+testdir:fixedbugs/issue50372.go	interpreted	test/fixedbugs/issue50372.go:16:19: expected at most 2 expressions	missing=0;wording=4;extra=4;class=wording
+testdir:fixedbugs/issue50372.go	compiled	test/fixedbugs/issue50372.go:16:19: expected at most 2 expressions	missing=0;wording=4;extra=4;class=wording
+testdir:fixedbugs/issue6977.go	interpreted	test/fixedbugs/issue6977.go:37:26: duplicate method m	missing=0;wording=0;extra=4;class=multiplicity
+testdir:fixedbugs/issue6977.go	compiled	test/fixedbugs/issue6977.go:37:26: duplicate method m	missing=0;wording=0;extra=4;class=multiplicity
+testdir:import6.go	interpreted	test/import6.go:17:8: invalid import path (empty string)	missing=0;wording=1;extra=1;class=wording
+testdir:import6.go	compiled	test/import6.go:17:8: invalid import path (empty string)	missing=0;wording=1;extra=1;class=wording
+testdir:index1.go	interpreted	// errorcheck	missing=0;wording=0;extra=0;class=-
+testdir:index2.go	interpreted	// errorcheck	missing=0;wording=0;extra=0;class=-
+testdir:mainsig.go	interpreted	test/mainsig.go:9:6: func main must have no arguments and no return values	missing=0;wording=0;extra=1;class=multiplicity
+testdir:mainsig.go	compiled	test/mainsig.go:9:6: func main must have no arguments and no return values	missing=0;wording=0;extra=1;class=multiplicity
+testdir:stringrange.go	interpreted	unexpected offset 4 not 6	missing=0;wording=0;extra=0;class=-
+testdir:switch5.go	interpreted	test/switch5.go:15:7: duplicate case 0 (constant of type int) in expression switch	missing=0;wording=0;extra=18;class=extra
+testdir:switch5.go	compiled	test/switch5.go:15:7: duplicate case 0 (constant of type int) in expression switch	missing=0;wording=0;extra=18;class=extra
+testdir:switch7.go	interpreted	test/switch7.go:18:7: duplicate case int in type switch	missing=0;wording=0;extra=4;class=extra
+testdir:switch7.go	compiled	test/switch7.go:18:7: duplicate case int in type switch	missing=0;wording=0;extra=4;class=extra
+testdir:typeparam/issue48711.go	interpreted	test/typeparam/issue48711.go:9:8: instantiation cycle:	missing=0;wording=0;extra=1;class=extra
+testdir:typeparam/issue48711.go	compiled	test/typeparam/issue48711.go:9:8: instantiation cycle:	missing=0;wording=0;extra=1;class=extra
+testdir:typeswitch2.go	interpreted	test/typeswitch2.go:18:7: duplicate case int in type switch	missing=0;wording=0;extra=3;class=extra
+testdir:typeswitch2.go	compiled	test/typeswitch2.go:18:7: duplicate case int in type switch	missing=0;wording=0;extra=3;class=extra

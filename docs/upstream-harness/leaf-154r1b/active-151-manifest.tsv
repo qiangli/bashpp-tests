@@ -1,0 +1,11 @@
+root	mode	first_line	verdict
+testdir:abi/convT64_criteria.go	interpreted	unknown field _ of main.MyStruct	missing=0;wording=0;extra=0;class=-
+testdir:abi/method_wrapper.go	interpreted	BASHPP-ECOLLECTION-ELEMENT: cannot use string value as float64	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue24547.go	interpreted	unknown imported symbol or method: String	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue31546.go	interpreted	unknown field _ of struct { a int; _ int; c int }	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestCheck/labels.go	interpreted	check_test.go:256: ../../../../internal/types/testdata/check/labels.go:29:1: no error expected: "label L6 already defined at ../../../../internal/types/testdata/check/labels.go:27:1"	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestCheck/labels.go	compiled	check_test.go:256: ../../../../internal/types/testdata/check/labels.go:29:1: no error expected: "label L6 already defined at ../../../../internal/types/testdata/check/labels.go:27:1"	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestCheck/stmt0.go	interpreted	check_test.go:256: ../../../../internal/types/testdata/check/stmt0.go:969:2: no error expected: "label L1 already defined at ../../../../internal/types/testdata/check/stmt0.go:968:2"	missing=0;wording=0;extra=0;class=-
+typechecker:cmd/compile/internal/types2/TestCheck/stmt0.go	compiled	check_test.go:256: ../../../../internal/types/testdata/check/stmt0.go:969:2: no error expected: "label L1 already defined at ../../../../internal/types/testdata/check/stmt0.go:968:2"	missing=0;wording=0;extra=0;class=-
+typechecker:go/types/TestCheck/labels.go	interpreted	check_test.go:271: ../../internal/types/testdata/check/labels.go:29:1: no error expected: "label L6 already defined at ../../internal/types/testdata/check/labels.go:27:1"	missing=0;wording=0;extra=0;class=-
+typechecker:go/types/TestCheck/labels.go	compiled	check_test.go:271: ../../internal/types/testdata/check/labels.go:29:1: no error expected: "label L6 already defined at ../../internal/types/testdata/check/labels.go:27:1"	missing=0;wording=0;extra=0;class=-
