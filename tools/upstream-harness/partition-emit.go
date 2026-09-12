@@ -1,5 +1,6 @@
 // Copyright 2026 The bashpp-tests Authors. All rights reserved.
 // Sprint: #151; Story: #58; Story-ID: fd3a390ec1f2
+// Sprint: #154; Story: S154.0; Story-ID: 4877afd3a207
 //
 // partition-emit turns the two corpus evidence lanes into the active product
 // manifests. The go test streams remain the authority for root identity,
@@ -34,15 +35,32 @@ type partitionGoRecord struct {
 // backend-verify.go. Fields not needed by the partition are deliberately
 // omitted; encoding/json ignores the rest of the event schema.
 type partitionEventRecord struct {
-	Kind        string `json:"kind"`
-	Test        string `json:"test"`
-	Mode        string `json:"mode"`
-	Action      string `json:"action"`
-	Phase       string `json:"phase"`
-	Disposition string `json:"disposition"`
-	Exit        int    `json:"exit"`
-	Failed      bool   `json:"failed"`
-	Skipped     bool   `json:"skipped"`
+	Kind        string   `json:"kind"`
+	Test        string   `json:"test"`
+	Mode        string   `json:"mode"`
+	Action      string   `json:"action"`
+	Phase       string   `json:"phase"`
+	Disposition string   `json:"disposition"`
+	RecipeFlags []string `json:"recipe_flags"`
+	Exit        int      `json:"exit"`
+	Failed      bool     `json:"failed"`
+	Skipped     bool     `json:"skipped"`
+}
+
+// recipeEvidence is what the backend events carry for one root and mode: the
+// upstream recipe action and its recipe flags. Partition rules key on these
+// and on the verdict shape only, never on expected strings.
+type recipeEvidence struct {
+	action string
+	flags  []string
+}
+
+func (r recipeEvidence) errorcheckFamily() bool {
+	switch r.action {
+	case "errorcheck", "errorcheckdir", "errorcheckandrundir", "errorcheckwithauto":
+		return true
+	}
+	return false
 }
 
 type rootEvidence struct {
@@ -56,7 +74,7 @@ type modeEvidence struct {
 }
 
 type manifestRow struct {
-	root, mode, firstLine string
+	root, mode, firstLine, verdict string
 }
 
 var evidenceStreams = []struct {
@@ -93,13 +111,14 @@ func main() {
 
 func emitPartitions(interpreted, compiled, out string, stdout io.Writer) (bool, error) {
 	roots := map[string]*rootEvidence{}
+	recipes := map[string]map[string]recipeEvidence{}
 	for _, lane := range []struct{ mode, dir string }{{"interpreted", interpreted}, {"compiled", compiled}} {
 		for _, stream := range evidenceStreams {
 			if err := readGoStream(filepath.Join(lane.dir, stream.name), stream.runner, lane.mode, roots); err != nil {
 				return false, err
 			}
 		}
-		if err := readEventStream(lane.dir); err != nil {
+		if err := readEventStream(lane.dir, lane.mode, recipes); err != nil {
 			return false, err
 		}
 	}
@@ -138,17 +157,18 @@ func emitPartitions(interpreted, compiled, out string, stdout io.Writer) (bool, 
 				continue
 			}
 			line, diagnostic := firstLine(me.lines)
-			candidate := classify(line, mode, diagnostic)
+			column := errorCheckVerdictOf(me.lines)
+			candidate := classify(line, mode, diagnostic, ev.runner, recipes[root][mode], column.class)
 			if ownerRank(candidate) < ownerRank(owner) {
 				owner = candidate
 			}
-			failing = append(failing, manifestRow{root, mode, line})
+			failing = append(failing, manifestRow{root, mode, line, column.column()})
 		}
 		// PASS/SKIP is still a FAIL verdict by definition. Keep the observed
 		// modes without fabricating a diagnostic so the root remains visible.
 		if len(failing) == 0 {
 			for _, mode := range modes {
-				failing = append(failing, manifestRow{root, mode, ""})
+				failing = append(failing, manifestRow{root, mode, "", errorCheckVerdictOf(ev.modes[mode].lines).column()})
 			}
 		}
 		if owner == "" {
@@ -269,7 +289,11 @@ func splitOutput(output string) []string {
 	return strings.Split(output, "\n")
 }
 
-func readEventStream(dir string) error {
+// readEventStream reads the backend event lane. It collects, per root and
+// mode, the upstream recipe action and recipe flags the backend retained
+// (JSON key recipe_flags, as backend-verify.go already declares); events are
+// evidence only and never manufacture a terminal or diagnostic.
+func readEventStream(dir, mode string, recipes map[string]map[string]recipeEvidence) error {
 	var name string
 	for _, base := range []string{"backend.events.jsonl", "backend-events.jsonl", "events.jsonl"} {
 		candidate := filepath.Join(dir, base)
@@ -298,11 +322,168 @@ func readEventStream(dir string) error {
 		if err := json.Unmarshal(s.Bytes(), &rec); err != nil {
 			return fmt.Errorf("%s:%d: %w", name, lineNo, err)
 		}
+		if rec.Test == "" || rec.Action == "" || (rec.Kind != "phase" && rec.Kind != "backend") {
+			continue
+		}
+		eventMode := rec.Mode
+		if eventMode == "" {
+			eventMode = mode
+		}
+		root := "testdir:" + rec.Test
+		byMode := recipes[root]
+		if byMode == nil {
+			byMode = map[string]recipeEvidence{}
+			recipes[root] = byMode
+		}
+		re := byMode[eventMode]
+		re.action = rec.Action
+		for _, flag := range rec.RecipeFlags {
+			seen := false
+			for _, have := range re.flags {
+				if have == flag {
+					seen = true
+					break
+				}
+			}
+			if !seen {
+				re.flags = append(re.flags, flag)
+			}
+		}
+		byMode[eventMode] = re
 	}
 	if err := s.Err(); err != nil {
 		return fmt.Errorf("%s: %w", name, err)
 	}
 	return nil
+}
+
+// The three verdict shapes upstream errorCheck emits into the go-test Output
+// stream (testdir_test.go:1226): `<file>:<line>: missing error "<regex>"`,
+// "<file>:<line>: no match for `<regex>` in:" followed by tab-indented
+// got-lines, and `Unmatched Errors:` followed by the extra diagnostic lines.
+// A tab-prefixed line continues the previous error (testdir_test.go:1169).
+var (
+	missingVerdictRe = regexp.MustCompile(`^([^\s:]+):[0-9]+: missing error "`)
+	wordingVerdictRe = regexp.MustCompile(`^[^\s:]+:[0-9]+: no match for `)
+	diagnosticPosRe  = regexp.MustCompile(`^([^\s:]+):([0-9]+)(:[0-9]+)?: `)
+)
+
+// errorCheckVerdict is one mode's upstream errorCheck verdict, counted from
+// the go-test Output lines already collected in modeEvidence.lines. It never
+// reads test source or corpus files and never decides a recipe.
+type errorCheckVerdict struct {
+	missing, wording, extra int
+	class                   string
+}
+
+func (v errorCheckVerdict) column() string {
+	return fmt.Sprintf("missing=%d;wording=%d;extra=%d;class=%s", v.missing, v.wording, v.extra, v.class)
+}
+
+// errorCheckVerdictOf classifies one mode's errorCheck verdict shape:
+// position (a missing error whose diagnostic surfaced elsewhere in the same
+// file), wording (the diagnostic is there, spelled differently),
+// multiplicity (only extra diagnostics, every one on a line that also
+// matched — the matched sibling is visible in the verbose "gc output:"
+// block), missing, extra, or "-" when the row carries no errorCheck verdict
+// at all (a runtime or build failure).
+func errorCheckVerdictOf(lines []string) errorCheckVerdict {
+	v := errorCheckVerdict{}
+	missingFiles := map[string]bool{}
+	// gcSeen counts diagnostics per base-name:line in the "gc output:" block
+	// (the raw compiler output carries full paths; the verdict lines carry
+	// upstream's directory-cut short names).
+	gcSeen := map[string]int{}
+	type entry struct{ file, key string }
+	var unmatched []entry
+	inUnmatched, inGcOutput := false, false
+	for _, raw := range lines {
+		content := strings.TrimLeft(raw, " ")
+		if strings.HasPrefix(content, "\t") {
+			// A tab-prefixed line continues the previous error: wording
+			// got-lines and multi-line diagnostics never count as entries.
+			continue
+		}
+		line := strings.TrimSpace(content)
+		if strings.HasPrefix(line, "testdir_test.go:") {
+			// A new log message: upstream's attribution prefix, with the text
+			// after it (or on the following lines).
+			inUnmatched, inGcOutput = false, false
+			if i := strings.Index(line, ": "); i >= 0 {
+				line = strings.TrimSpace(line[i+2:])
+			} else {
+				continue
+			}
+		}
+		if line == "" {
+			continue
+		}
+		if strings.HasSuffix(line, "gc output:") {
+			inUnmatched, inGcOutput = false, true
+			continue
+		}
+		if framingLine(line) {
+			inUnmatched, inGcOutput = false, false
+			continue
+		}
+		if inGcOutput {
+			if m := diagnosticPosRe.FindStringSubmatch(line); m != nil {
+				gcSeen[baseName(m[1])+":"+m[2]]++
+			}
+			continue
+		}
+		switch {
+		case missingVerdictRe.MatchString(line):
+			v.missing++
+			missingFiles[missingVerdictRe.FindStringSubmatch(line)[1]] = true
+			inUnmatched = false
+		case wordingVerdictRe.MatchString(line):
+			v.wording++
+			inUnmatched = false
+		case line == "Unmatched Errors:":
+			inUnmatched = true
+		case inUnmatched:
+			m := diagnosticPosRe.FindStringSubmatch(line)
+			if m == nil {
+				inUnmatched = false
+				continue
+			}
+			v.extra++
+			unmatched = append(unmatched, entry{file: m[1], key: baseName(m[1]) + ":" + m[2]})
+		}
+	}
+
+	positionHit := false
+	allSiblings := len(unmatched) > 0
+	for _, e := range unmatched {
+		if missingFiles[e.file] {
+			positionHit = true
+		}
+		// The unmatched diagnostic is itself part of the gc output, so a line
+		// that also matched shows at least two diagnostics at the position.
+		if gcSeen[e.key] < 2 {
+			allSiblings = false
+		}
+	}
+	switch {
+	case v.missing == 0 && v.wording == 0 && v.extra == 0:
+		v.class = "-"
+	case v.missing > 0 && positionHit:
+		v.class = "position"
+	case v.wording > 0:
+		v.class = "wording"
+	case v.missing > 0 && v.extra == 0:
+		v.class = "missing"
+	case v.missing == 0 && allSiblings:
+		v.class = "multiplicity"
+	default:
+		v.class = "extra"
+	}
+	return v
+}
+
+func baseName(file string) string {
+	return file[strings.LastIndexByte(file, '/')+1:]
 }
 
 func exitStatus(line string) bool {
@@ -431,7 +612,89 @@ func diagnosticLine(line string) bool {
 		strings.Contains(line, ": LOWER-")
 }
 
-func classify(line, mode string, hasDiagnostic bool) string {
+// optimizerDiagnosticFlags reports whether the recipe asks the compiler for
+// optimizer diagnostics: -m (any -m… form), -live, -race, or a -d= debug
+// flag — compiler artifacts the check interface cannot produce.
+func optimizerDiagnosticFlags(flags []string) bool {
+	for _, flag := range flags {
+		if strings.HasPrefix(flag, "-m") || strings.HasPrefix(flag, "-live") || flag == "-race" || debugDiagnosticFlag(flag) {
+			return true
+		}
+	}
+	return false
+}
+
+func debugDiagnosticFlags(flags []string) bool {
+	for _, flag := range flags {
+		if debugDiagnosticFlag(flag) {
+			return true
+		}
+	}
+	return false
+}
+
+func debugDiagnosticFlag(flag string) bool {
+	return strings.HasPrefix(flag, "-d=")
+}
+
+var expectedArgumentsRe = regexp.MustCompile(`expected [0-9]+ argument`)
+
+// runtimeShape recognizes the run-family failure shapes that carry no
+// errorCheck verdict: an output mismatch or a crash of the program itself.
+func runtimeShape(line string) bool {
+	lower := strings.ToLower(line)
+	return strings.Contains(lower, "output does not match") || strings.Contains(lower, "panic:") ||
+		strings.Contains(lower, "unexpected fault") || expectedArgumentsRe.MatchString(lower)
+}
+
+// classify names the owner of one failing manifest row. The S154.0 rules key
+// on the recipe flags and verdict shape only, never on expected strings; the
+// remaining rules are the first-line substring partition (classifyLine).
+func classify(line, mode string, hasDiagnostic bool, runner string, recipe recipeEvidence, verdictClass string) string {
+	// D1: optimizer diagnostics are a compiler artifact; the check interface
+	// has no inliner, escape analysis, or SSA — the same shape as interpreted
+	// asmcheck. A compiled -d= row is retained too (the seam drops -d= as
+	// evidence only, see the backend's compileDeviations); compiled
+	// -m/-live/-race rows stay 154. As with retained generally, a real
+	// failure in the other mode still wins (ownerRank).
+	if recipe.errorcheckFamily() {
+		if mode == "interpreted" && optimizerDiagnosticFlags(recipe.flags) {
+			return "retained"
+		}
+		if mode == "compiled" && debugDiagnosticFlags(recipe.flags) {
+			return "retained"
+		}
+	}
+	// D2: diagnostic multiplicity (a tab-continuation of a multi-part
+	// types.Error, %q-escaped as \t) and the missing assert/trace test
+	// builtins are 154 fidelity rows, before the generic
+	// "no error expected" -> 151 rule in classifyLine. Other
+	// "no error expected" rows stay 151; "could not import C" still falls to
+	// retained.
+	if runner == "typechecker" {
+		for _, pattern := range []string{`no error expected: "\t`, `no error expected: "undefined: assert"`, `no error expected: "undefined: trace"`} {
+			if strings.Contains(line, pattern) {
+				return "154"
+			}
+		}
+	}
+	// A run/errorcheckoutput row with no errorCheck verdict and a runtime
+	// shape is a 153 row; the 154 substring rules in classifyLine
+	// ("expected ", "errorcheck", "wrong error") must not catch program
+	// output.
+	if (recipe.action == "run" || recipe.action == "errorcheckoutput") && verdictClass == "-" && runtimeShape(line) {
+		return "153"
+	}
+	owner := classifyLine(line, mode, hasDiagnostic)
+	// An unclassified row that still carries an errorCheck verdict of any
+	// class is a diagnostic-fidelity row.
+	if owner == "unclassified" && verdictClass != "-" {
+		return "154"
+	}
+	return owner
+}
+
+func classifyLine(line, mode string, hasDiagnostic bool) string {
 	lower := strings.ToLower(line)
 	contains := func(s string) bool { return strings.Contains(lower, strings.ToLower(s)) }
 	// BASHPP-E* codes are the interpreter's evaluator diagnostics in
@@ -613,9 +876,9 @@ func manifestName(owner string) string {
 
 func writeManifest(name string, rows []manifestRow) error {
 	var b strings.Builder
-	b.WriteString("root\tmode\tfirst_line\n")
+	b.WriteString("root\tmode\tfirst_line\tverdict\n")
 	for _, row := range rows {
-		fmt.Fprintf(&b, "%s\t%s\t%s\n", row.root, row.mode, row.firstLine)
+		fmt.Fprintf(&b, "%s\t%s\t%s\t%s\n", row.root, row.mode, row.firstLine, row.verdict)
 	}
 	return os.WriteFile(name, []byte(b.String()), 0o644)
 }
