@@ -1,0 +1,2 @@
+root	mode	first_line
+testdir:fixedbugs/issue4167.go	interpreted	exit status 2

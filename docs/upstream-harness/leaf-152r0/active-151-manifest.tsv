@@ -1,0 +1,2 @@
+root	mode	first_line
+testdir:fixedbugs/issue34577.go	compiled	test/fixedbugs/issue34577.dir/b.go:22:2: LOWER-ETYPE: cannot use __gosource_pkg_0_ACC (constant 101 of type int) as __gosource_pkg_0_AI value in return statement: int does not implement __gosource_pkg_0_AI (missing method bar)

@@ -1,0 +1,46 @@
+root	mode	first_line
+testdir:devirtualization_with_type_assertions_interleaved.go	interpreted	devirtualization_with_type_assertions_interleaved.go:20: missing error "can inline \\(\\*hash\\).Sum$"
+testdir:devirtualization_with_type_assertions_interleaved.go	compiled	test/devirtualization_with_type_assertions_interleaved.go:20:6: can inline (*hash).Sum
+testdir:escape2.go	interpreted	escape2.go:21: missing error "moved to heap: x$"
+testdir:escape2.go	compiled	test/escape2.go:937:1: LOWER-EUNSUPPORTED: function declaration without body
+testdir:escape2n.go	interpreted	escape2n.go:21: missing error "moved to heap: x$"
+testdir:escape2n.go	compiled	test/escape2n.go:937:1: LOWER-EUNSUPPORTED: function declaration without body
+testdir:escape_array.go	interpreted	escape_array.go:15: missing error "leaking param: a to result ~r0 level=0$"
+testdir:escape_array.go	compiled	test/escape_array.go:15:10: leaking param: a to result ~r0 level=0
+testdir:escape_iface.go	interpreted	escape_iface.go:17: missing error "leaking param: m"
+testdir:escape_iface.go	compiled	test/escape_iface.go:64:8: devirtualizing x.M to M0
+testdir:escape_mutations.go	interpreted	escape_mutations.go:17: missing error "mutates param: b derefs=0"
+testdir:escape_mutations.go	compiled	test/escape_mutations.go:17:9: b does not escape
+testdir:escape_param.go	interpreted	escape_param.go:19: missing error "leaking param: p to result ~r0"
+testdir:escape_param.go	compiled	test/escape_param.go:19:13: leaking param: p to result ~r0 level=0
+testdir:escape_reflect.go	interpreted	escape_reflect.go:19: missing error "x does not escape"
+testdir:escape_reflect.go	compiled	test/escape_reflect.go:354:73: 0 does not escape
+testdir:escape_slice.go	interpreted	escape_slice.go:21: missing error "moved to heap: i"
+testdir:escape_slice.go	compiled	test/escape_slice.go:140:12: make(IP, 16) escapes to heap
+testdir:fixedbugs/issue15747.go	interpreted	issue15747.go:22: missing error "live at call to (newobject|mallocgcSmallScanNoHeaderSC[0-9]+): xx$"
+testdir:fixedbugs/issue15747.go	compiled	test/fixedbugs/issue15747.go:22:6: live at entry to f1: xx
+testdir:fixedbugs/issue18895.go	interpreted	p.go:7: missing error "can inline"
+testdir:fixedbugs/issue18895.go	compiled	test/fixedbugs/issue18895.dir/p.go:14:6: can inline __gosource_pkg_0_t.m
+testdir:fixedbugs/issue19261.go	interpreted	p.go:7: missing error "can inline F"
+testdir:fixedbugs/issue19261.go	compiled	test/fixedbugs/issue19261.dir/p.go:7:6: can inline __gosource_pkg_0_F
+testdir:fixedbugs/issue21709.go	interpreted	issue21709.go:13: missing error "s does not escape"
+testdir:fixedbugs/issue21709.go	compiled	test/fixedbugs/issue21709.go:13:7: s does not escape
+testdir:fixedbugs/issue24651a.go	interpreted	issue24651a.go:12: missing error "cannot inline Foo: marked go:norace with -race compilation$"
+testdir:fixedbugs/issue24651a.go	compiled	test/fixedbugs/issue24651a.go:12:6: can inline Foo with cost 10 as: func(int) int { return x * (x + 1) * (x + 2) }
+testdir:fixedbugs/issue24651b.go	interpreted	issue24651b.go:10: missing error "can inline Foo with cost .* as: func\\(int\\) int { return x \\* \\(x \\+ 1\\) \\* \\(x \\+ 2\\) }$"
+testdir:fixedbugs/issue24651b.go	compiled	test/fixedbugs/issue24651b.go:10:6: can inline Foo with cost 10 as: func(int) int { return x * (x + 1) * (x + 2) }
+testdir:fixedbugs/issue37837.go	interpreted	a.go:7: missing error "can inline F"
+testdir:fixedbugs/issue37837.go	compiled	test/fixedbugs/issue37837.dir/a.go:7:6: can inline __gosource_pkg_0_F
+testdir:fixedbugs/issue39292.go	interpreted	issue39292.go:15: missing error "t{}.f escapes to heap"
+testdir:fixedbugs/issue39292.go	compiled	test/fixedbugs/issue39292.go:11:7: __bpp0_unnamed0 does not escape
+testdir:fixedbugs/issue42284.go	interpreted	a.go:10: missing error "can inline T.M"
+testdir:fixedbugs/issue42284.go	compiled	test/fixedbugs/issue42284.dir/a.go:10:6: can inline __gosource_pkg_0_T.M
+testdir:fixedbugs/issue54159.go	interpreted	issue54159.go:10: missing error "cannot inline run: marked go:noinline"
+testdir:fixedbugs/issue54159.go	compiled	test/fixedbugs/issue54159.go:19:6: can inline g with cost 0 as: func() {  }
+testdir:inline.go	interpreted	inline.go:20: missing error "can inline add2"
+testdir:inline.go	compiled	test/inline.go:24:6: can inline add1
+testdir:stringrange.go	interpreted	unexpected offset 4 not 6
+testdir:typeparam/pragma.go	interpreted	pragma.go:17: missing error "can inline main"
+testdir:typeparam/pragma.go	compiled	test/typeparam/pragma.go:13:6: can inline f[go.shape.int]
+testdir:uintptrescapes2.go	interpreted	uintptrescapes2.go:16: missing error "escaping uintptr"
+testdir:uintptrescapes2.go	compiled	test/uintptrescapes2.go:19:9: a does not escape

@@ -1,0 +1,28 @@
+root	mode	first_line
+package:cmd/compile/internal/ssa	interpreted	Bash++ gotest backend: non-Go inputs
+package:cmd/compile/internal/ssa	compiled	Bash++ gotest backend: non-Go inputs
+testdir:codegen/constants.go	interpreted	linux/amd64/v1
+testdir:codegen/copy.go	interpreted	linux/amd64/v1
+testdir:codegen/generics.go	interpreted	linux/amd64/v1
+testdir:codegen/issue25378.go	interpreted	linux/amd64/v1
+testdir:codegen/issue31618.go	interpreted	linux/amd64/v1
+testdir:codegen/issue33580.go	interpreted	linux/amd64/v1
+testdir:codegen/issue38554.go	interpreted	linux/amd64/v1
+testdir:codegen/issue61356.go	interpreted	linux/amd64/v1
+testdir:codegen/issue63332.go	interpreted	linux/amd64/v1
+testdir:codegen/issue66585.go	interpreted	linux/amd64/v1
+testdir:codegen/issue68845.go	interpreted	linux/amd64/v1
+testdir:codegen/issue70409.go	interpreted	linux/amd64/v1
+testdir:codegen/issue77375.go	interpreted	linux/amd64/v1
+testdir:codegen/known_bits.go	interpreted	linux/amd64/v1
+testdir:codegen/race.go	interpreted	linux/amd64/v1
+testdir:codegen/select.go	interpreted	linux/amd64/v1
+testdir:codegen/shape_assert.go	interpreted	linux/amd64/v1
+testdir:codegen/shortcircuit.go	interpreted	linux/amd64/v1
+testdir:codegen/unique.go	interpreted	linux/amd64/v1
+testdir:fixedbugs/issue15609.go	interpreted	Bash++ backend unsupported execute phase: module package issue15609.dir has non-Go inputs [call_amd64.s]
+testdir:fixedbugs/issue15609.go	compiled	Bash++ backend unsupported execute phase: module package issue15609.dir has non-Go inputs [call_amd64.s]
+testdir:fixedbugs/issue47185.go	interpreted	Bash++ backend unsupported execute phase: module package issue47185.dir/bad has non-Go inputs [bad.go]
+testdir:fixedbugs/issue47185.go	compiled	Bash++ backend unsupported execute phase: module package issue47185.dir/bad has non-Go inputs [bad.go]
+testdir:fixedbugs/issue74648.go	interpreted	Bash++ backend unsupported execute phase: module package issue74648.dir has non-Go inputs [a.s]
+testdir:fixedbugs/issue74648.go	compiled	Bash++ backend unsupported execute phase: module package issue74648.dir has non-Go inputs [a.s]

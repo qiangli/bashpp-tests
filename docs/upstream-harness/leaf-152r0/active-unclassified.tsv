@@ -1,0 +1,3 @@
+root	mode	first_line
+testdir:fixedbugs/issue15091.go	compiled	link: reference to undefined builtin "runtime.racefuncenter" from package "main"
+testdir:fixedbugs/issue17449.go	compiled	link: reference to undefined builtin "runtime.racefuncenter" from package "main"

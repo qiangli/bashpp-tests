@@ -1,0 +1,4 @@
+leaf=r0 harness=3887d59 bashpp=c877b61f8f617f57 sh=e484a22be manifest=docs/upstream-harness/leaf-152/roots-r0.tsv start=2026-09-12T08:53:42Z
+leaf exit=3 start=2026-09-12T08:53:42Z end=2026-09-12T09:10:15Z
+survivors: 0
+DONE leaf-r0
