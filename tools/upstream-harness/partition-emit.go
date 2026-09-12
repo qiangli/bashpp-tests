@@ -18,6 +18,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strings"
 )
@@ -129,7 +130,7 @@ func emitPartitions(interpreted, compiled, out string, stdout io.Writer) (bool, 
 			continue
 		}
 
-		owner := "unclassified"
+		owner := "" // no candidate yet; ranks below every owner, retained included
 		var failing []manifestRow
 		for _, mode := range modes {
 			me := ev.modes[mode]
@@ -149,6 +150,9 @@ func emitPartitions(interpreted, compiled, out string, stdout io.Writer) (bool, 
 			for _, mode := range modes {
 				failing = append(failing, manifestRow{root, mode, ""})
 			}
+		}
+		if owner == "" {
+			owner = "unclassified"
 		}
 		rows[owner] = append(rows[owner], failing...)
 		ownerCounts[owner]++
@@ -313,6 +317,23 @@ func framingLine(line string) bool {
 		strings.HasPrefix(line, "FAIL\t")
 }
 
+func asmListingLine(line string) bool {
+	trimmed := strings.TrimSpace(line)
+	if strings.HasPrefix(trimmed, "testdir_test.go:") {
+		if i := strings.Index(trimmed, ": "); i >= 0 {
+			trimmed = strings.TrimSpace(trimmed[i+2:])
+		}
+	}
+	return strings.Contains(line, " STEXT ") || strings.HasPrefix(trimmed, "0x") ||
+		strings.HasPrefix(trimmed, "rel ") || strings.Contains(trimmed, " SRODATA ") ||
+		strings.Contains(trimmed, " SDWARF") || strings.HasPrefix(trimmed, "gclocals·") ||
+		strings.HasPrefix(trimmed, "type:") || asmPositionTail.MatchString(trimmed)
+}
+
+// asmPositionTail is what remains of a listing line once normalizeLine has
+// cut everything up to the corpus path: "test/codegen/x.go:11)".
+var asmPositionTail = regexp.MustCompile(`^[^ ]*\.go:[0-9]+\)`)
+
 func buildPackageHeader(line string) bool {
 	fields := strings.Fields(line)
 	return len(fields) == 2 && fields[0] == "#"
@@ -351,6 +372,11 @@ func firstLine(lines []string) (string, bool) {
 		// The go command prefixes compiler output with "# <package>". It is
 		// build framing, not the first diagnostic used to partition the root.
 		if buildPackageHeader(line) {
+			continue
+		}
+		// Upstream asmCheck logs the whole -S listing before its verdicts;
+		// a listing line is never the diagnostic that partitions the root.
+		if asmListingLine(line) || asmListingLine(raw) {
 			continue
 		}
 		// "exit status N" is upstream's summary of the command; the
@@ -530,9 +556,11 @@ func rootVerdict(ev *rootEvidence) string {
 }
 
 func ownerRank(owner string) int {
-	// unclassified remains the fallback even though retained is appended after
-	// it in the stable manifest/summary output order.
-	if owner == "unclassified" {
+	// retained ranks last: a root is retained only when NO mode has a real
+	// failure. An unclassified failure is still a failure, so it outranks
+	// retained even though retained is appended after it in the stable
+	// manifest/summary output order.
+	if owner == "retained" {
 		return len(owners)
 	}
 	for i, candidate := range owners {
@@ -540,7 +568,7 @@ func ownerRank(owner string) int {
 			return i
 		}
 	}
-	return len(owners)
+	return len(owners) + 1
 }
 
 func manifestName(owner string) string {

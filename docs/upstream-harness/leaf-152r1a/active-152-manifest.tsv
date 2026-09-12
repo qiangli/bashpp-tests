@@ -1,0 +1,29 @@
+root	mode	first_line
+testdir:codegen/append.go	interpreted	linux/amd64/v1
+testdir:codegen/append.go	compiled	codegen/append.go:18: linux/amd64/v1: opcode not found: `^.*moveSliceNoCapNoScan\b`
+testdir:codegen/clobberdead.go	interpreted	linux/amd64/v1
+testdir:codegen/clobberdead.go	compiled	codegen/clobberdead.go:20: linux/amd64/v1: opcode not found: `^MOVL \$3735936685, command-line-arguments\.x`
+testdir:codegen/clobberdeadreg.go	interpreted	linux/amd64/v1
+testdir:codegen/clobberdeadreg.go	compiled	codegen/clobberdeadreg.go:22: linux/amd64/v1: opcode not found: `^MOVQ \$-2401018187971961171, AX`
+testdir:codegen/comparisons.go	interpreted	linux/amd64/v1
+testdir:codegen/comparisons.go	compiled	codegen/comparisons.go:54: linux/amd64/v1: opcode not found: `^CMPW command-line-arguments[.+_a-z0-9]+\(SP\), [A-Z]`
+testdir:codegen/condmove.go	interpreted	linux/amd64/v1
+testdir:codegen/condmove.go	compiled	codegen/condmove.go:120: linux/amd64/v1: opcode not found: `^CMOVQHI`
+testdir:codegen/ifaces.go	interpreted	linux/amd64/v1
+testdir:codegen/ifaces.go	compiled	codegen/ifaces.go:26: linux/amd64/v1: opcode not found: `^CALL runtime.typeAssert`
+testdir:codegen/issue59297.go	interpreted	linux/amd64/v1
+testdir:codegen/issue59297.go	compiled	codegen/issue59297.go:11: linux/amd64/v1: opcode not found: `^MOVQ AX, BX`
+testdir:codegen/issue60324.go	interpreted	linux/amd64/v1
+testdir:codegen/issue60324.go	compiled	codegen/issue60324.go:11: linux/amd64/v1: opcode not found: `^LEAQ command-line-arguments\.h\.func1`
+testdir:codegen/memcombine.go	interpreted	linux/amd64/v1
+testdir:codegen/memcombine.go	compiled	codegen/memcombine.go:389: linux/amd64/v1: opcode not found: `^ADDQ \(`
+testdir:codegen/memops.go	interpreted	linux/amd64/v1
+testdir:codegen/memops.go	compiled	codegen/memops.go:17: linux/amd64/v1: opcode not found: `^CMPB command-line-arguments.x\+1\(SB\), [$]0`
+testdir:codegen/regabi_regalloc.go	interpreted	linux/amd64/v1
+testdir:codegen/regabi_regalloc.go	compiled	codegen/regabi_regalloc.go:12: linux/amd64/v1: opcode not found: `^MOVQ BX, CX`
+testdir:codegen/slices.go	interpreted	linux/amd64/v1
+testdir:codegen/slices.go	compiled	codegen/slices.go:158: linux/amd64/v1: opcode not found: `^.*runtime\.mallocgc`
+testdir:codegen/switch.go	interpreted	linux/amd64/v1
+testdir:codegen/switch.go	compiled	codegen/switch.go:249: linux/amd64/v1: opcode not found: `^CMPL \(.*\), \$1836345390$`
+testdir:codegen/zerosize.go	interpreted	linux/amd64/v1
+testdir:codegen/zerosize.go	compiled	codegen/zerosize.go:16: linux/amd64/v1: opcode not found: `^MOVQ \$0, command-line-arguments\.s\+56\(SP\)`

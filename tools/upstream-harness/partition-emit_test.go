@@ -158,6 +158,13 @@ func TestPartitionRuleChanges(t *testing.T) {
 			wantOwner: "152",
 		},
 		{
+			name:      "asm listing logged before the verdict",
+			lines:     []string{"    testdir_test.go:1857: main.Append1<1> STEXT size=117 align=0x0 args=0x8 locals=0x50 funcid=0x0", "    testdir_test.go:1857: \t0x0000 00000 (codegen/append.go:12)\tTEXT\tmain.Append1(SB), ABIInternal, $80-8", "        codegen/append.go:18: linux/amd64/v1: opcode not found: `^.*moveSliceNoCapNoScan\\b`"},
+			mode:      "compiled",
+			wantLine:  "codegen/append.go:18: linux/amd64/v1: opcode not found: `^.*moveSliceNoCapNoScan\\b`",
+			wantOwner: "152",
+		},
+		{
 			name:      "bodyless assembly declaration",
 			lines:     []string{"LOWER-EUNSUPPORTED: function declaration without body"},
 			mode:      "compiled",
