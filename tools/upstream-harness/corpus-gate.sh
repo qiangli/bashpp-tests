@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # Sprint: #151; Story: S151.0; Story-ID: fd3a390ec1f2
+# Sprint: #155; Story: S155.11; Story-ID: 5004b3c3
 #
 # Barrier A replays the whole Go 1.27 corpus: 2,726 testdir roots, 743
 # typechecker roots, and 26 package roots. The exact upstream Go harnesses own
@@ -345,13 +346,12 @@ for mode in native interpreted compiled; do
 		printf '%s %s: %s terminals, %s non-PASS\n' "$entry" "$mode" "$1" "$2"
 	done
 	set -- $(test_leaf_counts "$dir/types2.go-test.json" "$dir/types.go-test.json")
-	printf 'typechecker %s: %s terminals, %s non-PASS (inventory 743)\n' "$mode" "$1" "$2"
+	printf 'typechecker %s: %s raw terminals, %s raw non-PASS (product denominator comes from types-backend seam evidence)\n' "$mode" "$1" "$2"
 	if test "$mode" = native; then native_types=$1
 	elif test -n "$smoke"; then :
 	elif test -n "$roots" && test "$1" != "$want_types"; then seam_fail=1
-	elif test -n "$roots"; then test "$2" = 0 || product_fail=1
-	elif test "$1" != "$native_types"; then seam_fail=1
-	elif test "$2" != 0; then product_fail=1; fi
+	elif test -n "$roots"; then :
+	elif test "$1" != "$native_types"; then seam_fail=1; fi
 
 	while IFS="$tab" read -r capability pkg action want companions; do
 		case "$capability" in ''|'#'*) continue ;; esac
@@ -395,10 +395,36 @@ if test -f "$harness/partition-emit.go"; then
 	# BARRIER A -> PARTITION EMITTER HANDOFF (keep this invocation explicit).
 	GOROOT="$tmp/goroot" GOTOOLCHAIN=local GOCACHE="$tmp/gocache" \
 		"$go127" build -o "$tmp/partition-emit" "$harness/partition-emit.go"
+	manifest_out=${BASHPP_CORPUS_MANIFESTS:-$root/docs/upstream-harness}
 	emit_status=0
 	"$tmp/partition-emit" -evidence-interpreted "$tmp/evidence-interpreted" -evidence-compiled "$tmp/evidence-compiled" \
-		-out "${BASHPP_CORPUS_MANIFESTS:-$root/docs/upstream-harness}" || emit_status=$?
-	case "$emit_status" in 0|3) ;; *) seam_fail=1 ;; esac
+		-out "$manifest_out" || emit_status=$?
+	case "$emit_status" in 0) ;; 3) product_fail=1 ;; *) seam_fail=1 ;; esac
+
+	# Product credit is determined by actual seam execution, not by the raw Go
+	# test terminal. The emitter excludes typechecker leaves with no
+	# types-backend record in either product lane and requires every remaining
+	# leaf to carry a record in both lanes.
+	summary="$manifest_out/active-summary.tsv"
+	set -- $(awk -F '\t' '$1 == "typechecker" { print $5, $6; exit }' "$summary")
+	product_types=${1:-}; native_only_types=${2:-}
+	set -- $(awk -F '\t' '$1 == "product" { in_product=1; next } in_product && $1 == "total" { print $2, $3, $4, $5; exit }' "$summary")
+	product_roots=${1:-}; native_applicable=${2:-}; product_skips=${3:-}; native_only=${4:-}
+	if test -z "$product_types" || test -z "$native_only_types" || test -z "$product_roots" || test -z "$native_applicable" || test -z "$product_skips" || test -z "$native_only"; then
+		printf 'FAIL product tally missing from %s\n' "$summary" >&2
+		seam_fail=1
+	else
+		printf 'typechecker product tally: %s roots; %s native-only (zero credit; listed in %s/native-only-typechecker.tsv)\n' "$product_types" "$native_only_types" "$manifest_out"
+		printf 'product tally: %s roots / %s native-applicable / %s SKIP; %s native-only (zero credit)\n' "$product_roots" "$native_applicable" "$product_skips" "$native_only"
+		if test -z "$smoke" && test -z "$roots" && { test "$product_types" != 743 || test "$native_only_types" != 156 || test "$product_roots" != 3495 || test "$native_applicable" != 3456 || test "$product_skips" != 39 || test "$native_only" != 156; }; then
+			printf 'FAIL full-corpus product tally: want typechecker 743 and 3495 / 3456 / 39 with 156 native-only\n' >&2
+			seam_fail=1
+		fi
+		if test -n "$roots" && { test "$product_types" != "$want_types" || test "$native_only_types" != 0; }; then
+			printf 'FAIL leaf manifest contains %s product typechecker roots and %s native-only roots; want %s and 0\n' "$product_types" "$native_only_types" "$want_types" >&2
+			seam_fail=1
+		fi
+	fi
 else
 	retain_evidence=1
 	printf 'partition emitter not present; evidence directories: %s/evidence-interpreted %s/evidence-compiled\n' "$tmp" "$tmp"

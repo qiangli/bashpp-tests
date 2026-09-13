@@ -1,6 +1,7 @@
 // Copyright 2026 The bashpp-tests Authors. All rights reserved.
 // Sprint: #151; Story: #58; Story-ID: fd3a390ec1f2
 // Sprint: #154; Story: S154.0; Story-ID: 4877afd3a207
+// Sprint: #155; Story: S155.11; Story-ID: 5004b3c3
 //
 // partition-emit turns the two corpus evidence lanes into the active product
 // manifests. The go test streams remain the authority for root identity,
@@ -46,6 +47,8 @@ type partitionEventRecord struct {
 	Failed      bool     `json:"failed"`
 	Skipped     bool     `json:"skipped"`
 }
+
+type typecheckerSeam map[string]map[string]bool
 
 // recipeEvidence is what the backend events carry for one root and mode: the
 // upstream recipe action and its recipe flags. Partition rules key on these
@@ -112,6 +115,7 @@ func main() {
 func emitPartitions(interpreted, compiled, out string, stdout io.Writer) (bool, error) {
 	roots := map[string]*rootEvidence{}
 	recipes := map[string]map[string]recipeEvidence{}
+	typeSeams := typecheckerSeam{}
 	for _, lane := range []struct{ mode, dir string }{{"interpreted", interpreted}, {"compiled", compiled}} {
 		for _, stream := range evidenceStreams {
 			if err := readGoStream(filepath.Join(lane.dir, stream.name), stream.runner, lane.mode, roots); err != nil {
@@ -119,6 +123,9 @@ func emitPartitions(interpreted, compiled, out string, stdout io.Writer) (bool, 
 			}
 		}
 		if err := readEventStream(lane.dir, lane.mode, recipes); err != nil {
+			return false, err
+		}
+		if err := readTypecheckerSeams(lane.dir, lane.mode, typeSeams); err != nil {
 			return false, err
 		}
 	}
@@ -134,12 +141,46 @@ func emitPartitions(interpreted, compiled, out string, stdout io.Writer) (bool, 
 		rootNames = append(rootNames, root)
 	}
 	sort.Strings(rootNames)
+	nativeOnly := make([]string, 0)
+	for _, root := range rootNames {
+		ev := roots[root]
+		if ev.runner != "typechecker" {
+			continue
+		}
+		seen := typeSeams[root]
+		if !seen["interpreted"] && !seen["compiled"] {
+			// An upstream SKIP performs no product check and remains part of
+			// the authenticated skip set. For every executed leaf, absence of
+			// seam evidence is the native-only decision.
+			if rootVerdict(ev) == "SKIP" {
+				continue
+			}
+			nativeOnly = append(nativeOnly, root)
+			continue
+		}
+		for _, mode := range modes {
+			if !seen[mode] {
+				return false, fmt.Errorf("product typechecker root %s has no types-backend record in %s mode", root, mode)
+			}
+		}
+	}
+	nativeOnlySet := make(map[string]bool, len(nativeOnly))
+	for _, root := range nativeOnly {
+		nativeOnlySet[root] = true
+	}
 
 	rows := make(map[string][]manifestRow, len(owners))
 	runnerCounts := map[string]map[string]int{}
 	ownerCounts := map[string]int{}
 	for _, root := range rootNames {
 		ev := roots[root]
+		// A checker-API unit-test leaf that never reaches the substituted
+		// check call is native-only. It has zero product credit, regardless of
+		// its Go test terminal, and therefore can never become PASS, FAIL, SKIP,
+		// or an owner row. This decision uses only seam records, never names.
+		if nativeOnlySet[root] {
+			continue
+		}
 		verdict := rootVerdict(ev)
 		if runnerCounts[ev.runner] == nil {
 			runnerCounts[ev.runner] = map[string]int{}
@@ -187,8 +228,14 @@ func emitPartitions(interpreted, compiled, out string, stdout io.Writer) (bool, 
 			return false, err
 		}
 	}
-	if err := writeSummary(filepath.Join(out, "active-summary.tsv"), runnerCounts, ownerCounts); err != nil {
+	if err := writeNativeOnly(filepath.Join(out, "native-only-typechecker.tsv"), nativeOnly); err != nil {
 		return false, err
+	}
+	if err := writeSummary(filepath.Join(out, "active-summary.tsv"), runnerCounts, ownerCounts, len(nativeOnly)); err != nil {
+		return false, err
+	}
+	for _, root := range nativeOnly {
+		fmt.Fprintf(stdout, "native_only\t%s\tcredit=0\n", root)
 	}
 	for _, owner := range owners {
 		rootsForOwner := uniqueRoots(rows[owner])
@@ -199,6 +246,53 @@ func emitPartitions(interpreted, compiled, out string, stdout io.Writer) (bool, 
 		fmt.Fprintf(stdout, "active_%s_rootlist\t%s\n", owner, hex.EncodeToString(h.Sum(nil)))
 	}
 	return sumVerdict(runnerCounts, "FAIL") != 0, nil
+}
+
+// readTypecheckerSeams records the leaves which actually reached the one
+// substituted checker call. The package comes from the named event stream;
+// the record itself supplies the upstream-selected leaf. Missing files mean
+// that no check call emitted evidence in that package and lane.
+func readTypecheckerSeams(dir, mode string, seams typecheckerSeam) error {
+	for _, stream := range []struct{ name, pkg string }{
+		{"types.events.jsonl", "go/types"},
+		{"types2.events.jsonl", "cmd/compile/internal/types2"},
+	} {
+		name := filepath.Join(dir, stream.name)
+		f, err := os.Open(name)
+		if errors.Is(err, os.ErrNotExist) {
+			continue
+		}
+		if err != nil {
+			return err
+		}
+		s := bufio.NewScanner(f)
+		s.Buffer(make([]byte, 1<<20), 1<<28)
+		lineNo := 0
+		for s.Scan() {
+			lineNo++
+			var rec partitionEventRecord
+			if err := json.Unmarshal(s.Bytes(), &rec); err != nil {
+				f.Close()
+				return fmt.Errorf("%s:%d: %w", name, lineNo, err)
+			}
+			if rec.Kind != "types-backend" || rec.Test == "" || !strings.Contains(rec.Test, "/") {
+				continue
+			}
+			root := "typechecker:" + stream.pkg + "/" + rec.Test
+			if seams[root] == nil {
+				seams[root] = map[string]bool{}
+			}
+			seams[root][mode] = true
+		}
+		if err := s.Err(); err != nil {
+			f.Close()
+			return fmt.Errorf("%s: %w", name, err)
+		}
+		if err := f.Close(); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func readGoStream(name, runner, mode string, roots map[string]*rootEvidence) error {
@@ -940,15 +1034,31 @@ func sumVerdict(counts map[string]map[string]int, verdict string) int {
 	return total
 }
 
-func writeSummary(name string, runnerCounts map[string]map[string]int, ownerCounts map[string]int) error {
+func writeNativeOnly(name string, roots []string) error {
 	var b strings.Builder
-	b.WriteString("runner\tPASS\tFAIL\tSKIP\ttotal\n")
+	b.WriteString("root\tclass\tcredit\n")
+	for _, root := range roots {
+		fmt.Fprintf(&b, "%s\tnative-only\t0\n", root)
+	}
+	return os.WriteFile(name, []byte(b.String()), 0o644)
+}
+
+func writeSummary(name string, runnerCounts map[string]map[string]int, ownerCounts map[string]int, nativeOnly int) error {
+	var b strings.Builder
+	b.WriteString("runner\tPASS\tFAIL\tSKIP\ttotal\tnative-only\n")
 	for _, runner := range []string{"testdir", "typechecker", "package"} {
 		c := runnerCounts[runner]
-		fmt.Fprintf(&b, "%s\t%d\t%d\t%d\t%d\n", runner, c["PASS"], c["FAIL"], c["SKIP"], c["PASS"]+c["FAIL"]+c["SKIP"])
+		n := 0
+		if runner == "typechecker" {
+			n = nativeOnly
+		}
+		fmt.Fprintf(&b, "%s\t%d\t%d\t%d\t%d\t%d\n", runner, c["PASS"], c["FAIL"], c["SKIP"], c["PASS"]+c["FAIL"]+c["SKIP"], n)
 	}
 	pass, fail, skip := sumVerdict(runnerCounts, "PASS"), sumVerdict(runnerCounts, "FAIL"), sumVerdict(runnerCounts, "SKIP")
-	fmt.Fprintf(&b, "total\t%d\t%d\t%d\t%d\n\n", pass, fail, skip, pass+fail+skip)
+	productRoots := pass + fail + skip
+	fmt.Fprintf(&b, "total\t%d\t%d\t%d\t%d\t%d\n\n", pass, fail, skip, productRoots, nativeOnly)
+	b.WriteString("product\troots\tnative-applicable\tSKIP\tnative-only\n")
+	fmt.Fprintf(&b, "total\t%d\t%d\t%d\t%d\n\n", productRoots, productRoots-skip, skip, nativeOnly)
 	b.WriteString("owner\tcount\n")
 	for _, owner := range owners {
 		fmt.Fprintf(&b, "%s\t%d\n", owner, ownerCounts[owner])
