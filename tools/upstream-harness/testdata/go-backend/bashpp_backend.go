@@ -224,6 +224,9 @@ func bashppLibraryOverlayScript(transcript, overlay string, originals, generated
 	}
 	lines = append(lines, "awk '")
 	lines = append(lines, `function esc(s) { gsub(/\\/, "\\\\", s); gsub(/"/, "\\\"", s); return s }`)
+	// cmd/go's overlay file is {"Replace":{original:generated,…}}; the
+	// pairs below are printed comma-separated and END closes both braces.
+	lines = append(lines, `BEGIN { printf "{\"Replace\":{" }`)
 	lines = append(lines, "/^library[[:space:]]/ { if ($1 != \"library\" || $3 != \"->\" || NF != 4) exit 1; if (n++) printf \",\"; printf \"\\\"%s\\\":\\\"%s\\\"\", esc($2), esc($4) }")
 	lines = append(lines, "END { if (n != "+strconv.Itoa(len(originals))+") exit 1; printf \"}}\\n\" }")
 	lines = append(lines, "' "+bashppQuote(transcript)+" > "+bashppQuote(overlay))
