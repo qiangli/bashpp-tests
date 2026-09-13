@@ -49,22 +49,14 @@ SKIP	testdir:wasmmemsize.go
 SKIP	typechecker:cmd/compile/internal/types2/TestFixedbugs/issue78346.go
 SKIP	typechecker:go/types/TestFixedbugs/issue78346.go
 VIOLATION	native tested-source executions in backend lanes = 312, want 0
-VIOLATION-SHAPES (count	shape; numbers normalised to N)
-    601 VIOLATION	evidence-compiled/testdir.events.jsonl:N: invalid event JSON: json: cannot unmarshal object into Go struct field corpusStreamRecord.package of type string
-    599 VIOLATION	evidence-interpreted/testdir.events.jsonl:N: invalid event JSON: json: cannot unmarshal object into Go struct field corpusStreamRecord.package of type string
-    272 VIOLATION	compiled testdir:X has N backend dispositions for N phases
-    272 VIOLATION	compiled testdir:X has N phase records and N phase results
-    272 VIOLATION	interpreted testdir:X has N backend dispositions for N phases
-    272 VIOLATION	interpreted testdir:X has N phase records and N phase results
+VIOLATION-SHAPES (313 total; count	shape)
     156 VIOLATION	interpreted typechecker:X has a terminal but no types-backend execution
     156 VIOLATION	compiled typechecker:X has a terminal but no types-backend execution
-     12 VIOLATION	interpreted types-backend execution typechecker:X has no Go terminal
-     12 VIOLATION	compiled types-backend execution typechecker:X has no Go terminal
-      4 VIOLATION	duplicate ID typechecker:X in typechecker interpreted events
-      4 VIOLATION	duplicate ID typechecker:X in typechecker compiled events
-      1 VIOLATION	native tested-source executions in backend lanes = N, want N
-      1 VIOLATION	expected SKIP set: open : no such file or directory
-      1 VIOLATION	--expect-skips is required
+      1 VIOLATION	native tested-source executions in backend lanes = 312, want 0
+CORRECTED-MODEL-SHAPES (zero violations)
+package	package is an object in testdir phase records and a string in package-plan records
+phase-accounting	one record per (root, phase, package/input); package identity distinguishes repeated directory compile phases only
+typechecker-top-level	per checker package: TestIndexRepresentability, TestIssue43124 (3 calls), TestIssue47243_TypedRHS, TestIssue59944, TestLongConstants, TestManual
 NATIVE-ONLY-TYPECHECKER-LEAVES (156: no types-backend record in either product lane; upstream unit tests of the checker API, not fixture checks)
 cmd/compile/internal/types2/TestAtomicAlign/386
 cmd/compile/internal/types2/TestAtomicAlign/amd64
@@ -222,4 +214,3 @@ go/types/TestObjectString/6
 go/types/TestObjectString/7
 go/types/TestObjectString/8
 go/types/TestObjectString/9
-
