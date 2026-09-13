@@ -87,6 +87,23 @@ else
 fi
 test -x "$tool" || { printf 'leaf-run: candidate binary missing: %s (rebuild-candidate.sh)\n' "$tool" >&2; exit 1; }
 
+# The gate pins the shell-runtime commit and the Bash++ version string
+# (backend-pin.tsv: shellrt_commit, bashpp_version) to the published candidate.
+# A leaf of a named candidate measures a DIFFERENT commit set by definition, so
+# the fresh harness clone's pin is rewritten to the candidate's identity — in
+# the clone only, recorded in status.txt — and the leaf names exactly what it
+# ran. Every other pin (SDK, upstream, patches, matrices) stays as published.
+if test -n "$cand"; then
+	pinfile=$dir/bashpp-tests/tools/upstream-harness/backend-pin.tsv
+	cand_sh=$(git -C "$shrt" rev-parse HEAD)
+	cand_ver=$("$tool" --version 2>/dev/null | head -1)
+	awk -F '\t' -v OFS='\t' -v sh="$cand_sh" -v ver="$cand_ver" '
+		$1 == "shellrt_commit" { $2 = sh }
+		$1 == "bashpp_version" { $2 = ver }
+		{ print }' "$pinfile" > "$pinfile.cand" && mv "$pinfile.cand" "$pinfile"
+	printf 'pin override (candidate %s): shellrt_commit=%s bashpp_version=%s\n' "$cand" "$cand_sh" "$cand_ver" >> "$dir/logs/status.txt"
+fi
+
 cd "$dir/bashpp-tests" || exit 1
 export GO127_TOOL=$sdk/authenticated-sdk/bin/go
 export GO_CORPUS_ROOT=$sdk/sdk-source/go
