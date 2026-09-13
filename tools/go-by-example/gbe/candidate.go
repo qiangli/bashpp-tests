@@ -20,6 +20,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"regexp"
 	"runtime"
@@ -377,4 +378,31 @@ func rubyStringArray(values []string) string {
 		parts[i] = rubyInspect(v)
 	}
 	return "[" + strings.Join(parts, ", ") + "]"
+}
+// pinnedGoroot resolves the reviewed release the way `go` itself would
+// (`GOTOOLCHAIN=<version> go env GOROOT`) and authenticates its bin/go by the
+// digest in toolchain.tsv. When the go on PATH is a same-version build with
+// another digest (a distribution package), the toolchain module GOTOOLCHAIN
+// would otherwise select -- GOMODCACHE/golang.org/toolchain@v0.0.1-<version>.<os>-<arch>
+// -- is tried next; the digest requirement is never relaxed.
+func pinnedGoroot(toolpin *Toolchain) (string, error) {
+	gorootCmd := exec.Command("go", "env", "GOROOT")
+	gorootCmd.Env = append(envWithout("GOTOOLCHAIN"), "GOTOOLCHAIN="+toolpin.Version)
+	gorootOut, err := gorootCmd.Output()
+	if err != nil {
+		return "", fmt.Errorf("cannot resolve pinned Go toolchain")
+	}
+	goroot := strings.TrimSpace(string(gorootOut))
+	if sum, err := sha256File(goroot + "/bin/go"); err == nil && sum == toolpin.GoSHA256 {
+		return goroot, nil
+	}
+	modcacheCmd := exec.Command("go", "env", "GOMODCACHE")
+	modcacheCmd.Env = append(envWithout("GOTOOLCHAIN"), "GOTOOLCHAIN=local")
+	modcacheOut, _ := modcacheCmd.Output()
+	goos, goarch := hostIdentity()
+	module := strings.TrimSpace(string(modcacheOut)) + "/golang.org/toolchain@v0.0.1-" + toolpin.Version + "." + goos + "-" + goarch
+	if sum, err := sha256File(module + "/bin/go"); err == nil && sum == toolpin.GoSHA256 {
+		return module, nil
+	}
+	return goroot, nil
 }

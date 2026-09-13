@@ -1801,13 +1801,10 @@ func sameInode(path string, inode int64) bool {
 // resolveToolchain: the pinned Go toolchain, authenticated by identity, digest,
 // release source and native header before it builds or runs anything.
 func resolveToolchain(toolpin *Toolchain) *toolchainContext {
-	gorootCmd := exec.Command("go", "env", "GOROOT")
-	gorootCmd.Env = append(envWithout("GOTOOLCHAIN"), "GOTOOLCHAIN="+toolpin.Version)
-	gorootOut, err := gorootCmd.Output()
+	goroot, err := pinnedGoroot(toolpin)
 	if err != nil {
-		fatal("cannot resolve pinned Go toolchain")
+		fatal(err.Error())
 	}
-	goroot := strings.TrimSpace(string(gorootOut))
 	goBinary := goroot + "/bin/go"
 	identityCmd := exec.Command(goBinary, "version")
 	identityCmd.Env = append(envWithout("GOTOOLCHAIN"), "GOTOOLCHAIN=local")

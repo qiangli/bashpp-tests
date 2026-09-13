@@ -115,6 +115,11 @@ func copyTree(src, dst string) error {
 		if path != src && (rel == ".git" || rel == ".cache") {
 			return filepath.SkipDir
 		}
+		// A nested checkout (a candidate clone living beside the corpus) is
+		// not part of this repository and is never copied.
+		if path != src && d.IsDir() && isDir(filepath.Join(path, ".git")) {
+			return filepath.SkipDir
+		}
 		target := filepath.Join(dst, rel)
 		info, err := os.Lstat(path)
 		if err != nil {

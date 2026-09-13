@@ -79,13 +79,10 @@ func validateCandidateMain(args []string) {
 	// The SDK is resolved by the reviewed version and then authenticated by
 	// digest and by its own `go version` line -- the same two facts the gate
 	// binds, derived again here rather than copied from it.
-	gorootCmd := exec.Command("go", "env", "GOROOT")
-	gorootCmd.Env = append(envWithout("GOTOOLCHAIN"), "GOTOOLCHAIN="+toolchain.Version)
-	gorootOut, err := gorootCmd.Output()
+	goroot, err := pinnedGoroot(toolchain)
 	if err != nil {
 		fatal("cannot resolve the reviewed Go toolchain " + toolchain.Version)
 	}
-	goroot := strings.TrimSpace(string(gorootOut))
 	goBinary := goroot + "/bin/go"
 	identityCmd := exec.Command(goBinary, "version")
 	identityCmd.Env = append(envWithout("GOTOOLCHAIN"), "GOTOOLCHAIN=local")

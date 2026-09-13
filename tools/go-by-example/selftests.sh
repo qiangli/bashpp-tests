@@ -14,5 +14,9 @@ arch="$(uname -m)"
 case "${arch}" in x86_64) arch=amd64 ;; aarch64) arch=arm64 ;; esac
 version="$(awk -F '\t' -v os="${os}" -v arch="${arch}" '$1 !~ /^#/ && $1 == os && $2 == arch { print $3; exit }' "${ROOT}/docs/go-by-example/toolchain.tsv")"
 GO="$(GOTOOLCHAIN="${version}" go env GOROOT)/bin/go"
+pinned_sha="$(awk -F '\t' -v os="${os}" -v arch="${arch}" '$1 !~ /^#/ && $1 == os && $2 == arch { print $5; exit }' "${ROOT}/docs/go-by-example/toolchain.tsv")"
+if [ "$(shasum -a 256 "${GO}" | awk '{ print $1 }')" != "${pinned_sha}" ]; then
+  GO="$(GOTOOLCHAIN=local go env GOMODCACHE)/golang.org/toolchain@v0.0.1-${version}.${os}-${arch}/bin/go"
+fi
 cd "${ROOT}/tools/go-by-example/gbe"
 GBE_ROOT="${ROOT}" GOTOOLCHAIN=local GOFLAGS= GOWORK=off exec "${GO}" test "$@" .

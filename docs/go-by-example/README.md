@@ -162,7 +162,7 @@ a native binary, `exit.go` is recorded as exit 3 with empty stderr, and the
 **`--bashpp --compile -o` is gone.** No shipped CLI ever implemented it. The
 compiled mode is a real transpile → build → run pipeline, and each stage is
 recorded separately, so a successful transpile can never be read as an artifact
-that executed; `validate-evidence.rb` refuses a spawned compiled run that has no
+that executed; `gbe.sh validate-evidence` refuses a spawned compiled run that has no
 successful `build` stage carrying an artifact digest.
 
 **Assets keep their original relative paths and every mode gets fresh state.**
@@ -187,7 +187,7 @@ Sprint 118 W1 shipped `--go-file`, repeatable, as the explicit multi-file
 contract; a surplus operand is handed to the *program* as argv. Appending the
 generated driver as an operand would therefore have compared a one-file build
 against the oracle's two-file package with nothing in any stream to show for it.
-Both the gate and `validate-evidence.rb` bind this, and the validator checks the
+Both the gate and `gbe.sh validate-evidence` bind this, and the validator checks the
 recorded argv of every multi-file product stage, not merely the recipe prose.
 
 **Process control is the shared corpus library's, not a second copy of it.**
@@ -213,7 +213,7 @@ pinned toolchain, `GODEBUG=randautoseed=0` still leaves
 `examples/random-numbers` producing different values on consecutive runs. Those
 rows now carry adapter `none` and are compared by the `wallclock` and
 `random_stream` comparators, which is what was actually happening. Both the gate
-and `validate-evidence.rb` reject a schema that registers an adapter no
+and `gbe.sh validate-evidence` reject a schema that registers an adapter no
 production code implements, and the reverse.
 
 `signal_injector` was also made real. It used to fire after a blind 50 ms sleep,
@@ -256,7 +256,7 @@ supplied manifest is accepted only when it equals a reviewed row of
 The build recipe is **bound, not inferred**. The manager supplies the
 authenticated manifest; this repository proves these bytes and these revisions
 and records the asserted recipe, and it does not pretend to have observed the
-build. `tools/go-by-example/validate-candidate.rb` re-derives all of the above
+build. `tools/go-by-example/gbe.sh validate-candidate` re-derives all of the above
 from `candidates.tsv` alone, sharing no state with a gate run.
 
 The lowering runtime follows from the same authentication: the compiled mode's
@@ -292,7 +292,7 @@ attempts are published atomically as failing evidence. Each final record
 declares the 255 denominator, the actually spawned numerator, every anchored
 digest and a root digest.
 
-`validate-evidence.rb` is a standalone verifier. It decodes every raw stream,
+`gbe.sh validate-evidence` is a standalone verifier. It decodes every raw stream,
 independently recomputes normalized bytes and effect digests, rechecks the
 derived per-attempt verdicts and the summary, re-derives the schema
 vocabularies, re-checks every behavior/adapter/normalization coupling, requires
@@ -317,7 +317,7 @@ the authenticated `gosource-v1` diagnostic candidate over all 85 rows in all
 three modes, with every raw stream retained. It is anchored *because* it is a
 `fail`: anchoring makes it independently re-verifiable, and it gives the tamper
 suite a document the product actually produced. It is not coverage, and
-`validate-evidence.rb` still accepts `pass` only at
+`gbe.sh validate-evidence` still accepts `pass` only at
 `denominator = executed = 255`, `missing = 0`, every attempt spawned, complete
 and passing. The measured failures are listed in
 [`prerequisites.md`](prerequisites.md).
@@ -360,3 +360,63 @@ original/driver file records. Normalizer version 4 rejects unexpected concurrenc
 output and out-of-range worker/job identifiers instead of discarding them.
 These harness corrections do not convert retained diagnostic failures into
 passes; evidence must be regenerated and independently anchored for new bytes.
+
+## Sprint 155: the harness is Go and Bash only
+
+Story S155.10 ported the eleven Ruby files that used to implement this gate
+(`gate.rb`, `candidate.rb`, `inputs.rb`, `normalizer.rb`, `runtime-config.rb`,
+`validate-candidate.rb`, `validate-evidence.rb`, `validate-bounded-evidence.rb`,
+`summarize-evidence.rb`, `bounded-evidence-selftests.rb`,
+`tamper-retained-evidence.rb`) to one Go program, `tools/go-by-example/gbe/`,
+and absorbed the `Corpus.*` primitives it required from
+`tools/corpus/executor.rb` (capture with the lineage ledger, `success?`,
+`snapshot`, `file_record`, `digest`, `authenticate_file`,
+`authenticate_candidate`, `native_binary?`, `valid_source_map?`) into
+`gbe/corpus.go`. `executor.rb` itself is unchanged; other subsystems still
+require it. The Ruby text was the specification the port was read against, and
+it was never executed.
+
+Every wrapper keeps its name and CLI and execs the binary:
+
+| wrapper | subcommand |
+|---|---|
+| `gate.sh --candidate MANIFEST --bashy LAUNCHER [--evidence PATH]` | `gbe gate` |
+| `validate.sh` | `gbe validate` (the former awk/bash checks, same FATAL messages, same `GBE_*` overrides) |
+| `refresh.sh [--inventory-only] [GBE_ROOT]` | `gbe refresh` |
+| `tamper-tests.sh` | `gbe tamper-tests` (Phase A and Phase B, inline Ruby included) |
+| `gbe.sh <subcommand>` | `validate-candidate`, `validate-evidence`, `validate-bounded-evidence`, `summarize`, `tamper-retained-evidence`, `bounded-evidence-selftests` |
+| `selftests.sh` | the Go unit tests of the port (comparator fixtures, JSON/float spelling, validator defect classes, capture) |
+
+`build.sh` compiles the program with the pinned toolchain exactly the way the
+gate builds `launch.go`: the release named in `toolchain.tsv` is resolved with
+`GOTOOLCHAIN=<version> go env GOROOT`, its `bin/go` must carry the reviewed
+digest (a same-version distribution build is not the pinned SDK; the toolchain
+module `GOTOOLCHAIN` itself would select is tried next, digest still required),
+and that `bin/go` does the build with `GOTOOLCHAIN=local`.
+
+What the port binds identically: the row adapters layered above
+capture/`launch.go` (FIFO liveness, pid publication, `signal_injector`,
+`loopback_server`, `local_http_origin`), the stream-aware normalizer at VERSION
+7 (Ruby's regular expressions reproduced on RE2, whose leftmost-first
+alternation selects the same matches; the two lookarounds are explicit boundary
+scans with the same acceptance set), the typed comparators, candidate manifest
+authentication, the schema-8 evidence JSONL with the same field names and
+order — `gbe/jsonx.go` is an insertion-ordered JSON model with Ruby
+`JSON.generate` escaping and `Float#to_s` number spelling, so
+`evidence_sha256` and the root digest are computed over the same bytes a Ruby
+reader would produce — the rule that an unspawned attempt is MISSING and never
+executed, `validate.sh`'s rejection list, and every tamper case.
+
+What necessarily changed, by field: the manifest anchors `normalizer_sha256`,
+`corpus_executor_sha256`, `input_binding_sha256` and `runtime_config_sha256`
+now bind `gbe/normalizer.go`, `gbe/corpus.go`, `gbe/inputs.go` and
+`gbe/runtimeconfig.go`, and `process_primitives` names `gbe/corpus.go` (still
+spelling `Corpus.capture`). Evidence produced by the Ruby gate therefore no
+longer validates on those four anchors; its roots stay in `evidence-roots.tsv`
+as history. Three tamper-suite adjustments are also deliberate: the leak
+fixture is the binary's own `leak-descendant` subcommand (the shell fixture
+needed a Ruby interpreter); the Go-1.26 case moves the whole reviewed row to
+`go1.26.0` so it exercises the SDK-identity refusal instead of the recipe pin
+(the stale diagnostic `sprint118-candidate027-full.md` recorded); and Phase B
+takes `GBE_EVIDENCE` and adapts `permissive_comparator` and the invented green
+document to a source chain that is already green.

@@ -25,6 +25,16 @@ version="$(awk -F '\t' -v os="${os}" -v arch="${arch}" '$1 !~ /^#/ && $1 == os &
 [ -n "${version}" ] || die "no authenticated Go toolchain pin for ${os}/${arch}"
 command -v go >/dev/null 2>&1 || die "go is not on PATH; the pinned ${version} toolchain cannot be resolved"
 GOROOT_PINNED="$(GOTOOLCHAIN="${version}" go env GOROOT)" || die "cannot resolve pinned Go toolchain ${version}"
+# The resolved bin/go must carry the reviewed digest; a same-version
+# distribution build on PATH is not the pinned SDK, so the toolchain module
+# GOTOOLCHAIN itself would select is tried next (digest still required).
+pinned_sha="$(awk -F '\t' -v os="${os}" -v arch="${arch}" '$1 !~ /^#/ && $1 == os && $2 == arch { print $5; exit }' "${ROOT}/docs/go-by-example/toolchain.tsv")"
+sha_of() { shasum -a 256 "$1" 2>/dev/null | awk '{ print $1 }'; }
+if [ "$(sha_of "${GOROOT_PINNED}/bin/go")" != "${pinned_sha}" ]; then
+  module="$(GOTOOLCHAIN=local go env GOMODCACHE)/golang.org/toolchain@v0.0.1-${version}.${os}-${arch}"
+  [ "$(sha_of "${module}/bin/go")" = "${pinned_sha}" ] || die "no Go toolchain with the reviewed ${version} digest ${pinned_sha}: ${GOROOT_PINNED}/bin/go"
+  GOROOT_PINNED="${module}"
+fi
 GO="${GOROOT_PINNED}/bin/go"
 [ -x "${GO}" ] || die "pinned Go toolchain has no bin/go: ${GOROOT_PINNED}"
 
