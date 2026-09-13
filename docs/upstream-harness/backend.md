@@ -229,6 +229,16 @@ test, compiler, linker, or Bash++ process.
 
 ## Sprint 150 dynamic and package seams
 
+The package-test backend uses one library emission per tested package. It
+classifies the exact `GoFiles`, `TestGoFiles`, and `XTestGoFiles` selected by
+cmd/go as `--go-file`, `--go-test-file`, and `--go-xtest-file` respectively,
+and invokes `transpile --go-library <dir>` once. The contract's `library`
+lines are captured and checked for exactly one output for every selected
+original, with the expected basename output; the overlay is generated from
+those lines, never from a guessed file walk. The resulting overlay replaces
+all package sources while cmd/go retains package identity, test enumeration,
+flags, environment, and its native handling of `*_test.s` companions.
+
 Stories S150.1–S150.8 extend the same `planExec` seam to every dynamic
 action of the packet inventory and add a second frozen upstream runner for
 package test bodies, on the unchanged identities Bash++ `be20731` and shell

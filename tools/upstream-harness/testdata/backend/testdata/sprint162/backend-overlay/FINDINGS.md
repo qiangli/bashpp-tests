@@ -2,7 +2,7 @@
 
 | root | first cause | mechanism | status |
 | --- | --- | --- | --- |
-| package:cmd/compile/internal/abt | compiled package backend built a flattened temporary module, so cmd/go could not apply original-path internal-import policy | per-file transpilation with an original-path cmd/go overlay | fixed in cafaded |
+| package:cmd/compile/internal/abt | compiled package backend built a flattened temporary module, so cmd/go could not apply original-path internal-import policy | one library transpilation per package, with an original-path cmd/go overlay | fixed in current candidate |
 | package:cmd/compile/internal/ssa | package has `*_test.s` companions | D3(b): cmd/go assembles the companions natively under the overlay | recorded disposition |
 
 ## Requests to other seams
@@ -22,4 +22,6 @@ lane's allowed file list) after taking this commit:
 
 The lower seam's library-emission mode remains the product mechanism that
 supplies the generated files; this backend consumes it without changing
-product source.
+product source. The backend validates the complete `library <orig> -> <gen>`
+transcript before `go test` starts, and fails closed if any selected source is
+missing, duplicated, malformed, or mapped to a different contract output.
