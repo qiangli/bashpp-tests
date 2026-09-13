@@ -2,7 +2,7 @@
 
 | root | first cause | mechanism | status |
 | --- | --- | --- | --- |
-| package:cmd/compile/internal/abt | compiled package backend built a flattened temporary module, so cmd/go could not apply original-path internal-import policy | per-file transpilation with an original-path cmd/go overlay | fixed in pending commit |
+| package:cmd/compile/internal/abt | compiled package backend built a flattened temporary module, so cmd/go could not apply original-path internal-import policy | per-file transpilation with an original-path cmd/go overlay | fixed in cafaded |
 | package:cmd/compile/internal/ssa | package has `*_test.s` companions | D3(b): cmd/go assembles the companions natively under the overlay | recorded disposition |
 
 ## Requests to other seams
