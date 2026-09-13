@@ -1,0 +1,110 @@
+root	mode	first_line	verdict
+testdir:64bit.go	interpreted	command exceeded time limit	missing=0;wording=0;extra=0;class=-
+testdir:abi/fibish.go	interpreted	command exceeded time limit	missing=0;wording=0;extra=0;class=-
+testdir:abi/fibish_closure.go	interpreted	command exceeded time limit	missing=0;wording=0;extra=0;class=-
+testdir:abi/uglyfib.go	interpreted	command exceeded time limit	missing=0;wording=0;extra=0;class=-
+testdir:closure.go	interpreted	runtime: goroutine stack exceeds 1000000000-byte limit	missing=0;wording=0;extra=0;class=-
+testdir:deferfin.go	interpreted	command exceeded time limit	missing=0;wording=0;extra=0;class=-
+testdir:deferprint.go	interpreted	output does not match expected in deferprint.out. Instead saw	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/bug006.go	interpreted	output should be empty when (optional) expected-output file fixedbugs/bug006.out is not present. Instead saw	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/bug148.go	interpreted	f: expected 1 argument(s), got 0	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/bug243.go	interpreted	fixedbugs/bug243.go:25:16: gosource: dependency mutation of interpreter-owned references is unsupported for Addr	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/bug257.go	interpreted	fixedbugs/bug257.go:20059:2: unregistered bridge type "hash.Hash"	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/bug258.go	interpreted	output should be empty when (optional) expected-output file fixedbugs/bug258.out is not present. Instead saw	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/bug260.go	interpreted	exit status 1	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/bug352.go	interpreted	output should be empty when (optional) expected-output file fixedbugs/bug352.out is not present. Instead saw	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/bug364.go	interpreted	output should be empty when (optional) expected-output file fixedbugs/bug364.out is not present. Instead saw	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/bug367.go	compiled	panic: should not satisfy main.I	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/bug434.go	interpreted	panic: 0	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/bug510.go	interpreted	scalar call interrupted	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/gcc65755.go	interpreted	fixedbugs/gcc65755.go:19:9: unregistered bridge type "s"	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue11256.go	interpreted	command exceeded time limit	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue11326b.go	interpreted	output should be empty when (optional) expected-output file fixedbugs/issue11326b.out is not present. Instead saw	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue12577.go	interpreted	output should be empty when (optional) expected-output file fixedbugs/issue12577.out is not present. Instead saw	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue13160.go	interpreted	bash++: task failed: panic: reflect: call of reflect.Value.Set on zero Value	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue14646.go	interpreted	output should be empty when (optional) expected-output file fixedbugs/issue14646.out is not present. Instead saw	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue15039.go	interpreted	panic: big != bad	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue16037_run.go	interpreted	command exceeded time limit	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue16249.go	interpreted	command exceeded time limit	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue18149.go	interpreted	panic: got /srv/sprint155/barrier-b/evidence/goroot/src/reflect/value.go:369; want /foo/bar.go:123 (or suffix /foo/bar.go)	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue19113.go	interpreted	fixedbugs/issue19113.go:76:3: gosource: asynchronous or retained original function callbacks are unsupported for reflect.ValueOf	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue20014.go	interpreted	gosource: build dependency bridge: exit status 1: # command-line-arguments	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue20014.go	compiled	output does not match expected in fixedbugs/issue20014.out. Instead saw	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue20780b.go	interpreted	panic: interface conversion: interface {} is expand.invalidObject, not []interface {}	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue22662.go	interpreted	panic: got /srv/sprint155/barrier-b/evidence/goroot/src/reflect/value.go:369; want ??:1 (or suffix /??)	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue24491a.go	interpreted	fixedbugs/issue24491a.go:20:27: gosource: original callback signature requires value-semantics parameters and supported results	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue24491b.go	interpreted	fixedbugs/issue24491b.go:45:6: scalar call interrupted	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue25897b.go	interpreted	gosource: dependency mutation of interpreter-owned references is unsupported for MethodByName	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue26335.go	interpreted	fixedbugs/issue26335.go:28:18: gosource: original callback signature requires value-semantics parameters and supported results	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue27695.go	interpreted	command exceeded time limit	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue28748.go	interpreted	fixedbugs/issue28748.go:27:3: gosource: original callback signature requires value-semantics parameters and supported results	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue29190.go	interpreted	panic: runtime error: makeslice: len out of range	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue29919.go	interpreted	panic: missing a.go:15	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue29919.go	compiled	panic: missing a.init	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue30476.go	interpreted	fixedbugs/issue30476.go:15:26: gosource: original callback signature requires value-semantics parameters and supported results	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue30606.go	interpreted	fixedbugs/issue30606.go:15:1: fixedbugs/issue30606.go:15:38: gosource: invalid native slice writeback: gosource: native callback field belongs to another dependency session	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue36516.go	interpreted	gosource: asynchronous or retained original function callbacks are unsupported for testing.AllocsPerRun	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue42401.go	interpreted	panic: FAIL	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue42401.go	compiled	panic: FAIL	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue45045.go	interpreted	scalar call interrupted	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue4618.go	interpreted	gosource: asynchronous or retained original function callbacks are unsupported for testing.AllocsPerRun	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue4667.go	interpreted	gosource: asynchronous or retained original function callbacks are unsupported for testing.AllocsPerRun	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue47087.go	compiled	panic: runtime error: comparing uncomparable type struct { _ []int }	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue47928.go	interpreted	panic: FAIL	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue49110.go	interpreted	gosource: invalid native slice writeback: gosource: native callback field belongs to another dependency session	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue50190.go	interpreted	panic: FAIL	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue52856.go	compiled	panic: 0	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue5493.go	interpreted	command exceeded time limit	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue57184.go	interpreted	fixedbugs/issue57184.go:26:66: gosource: original callback signature requires value-semantics parameters and supported results	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue58300.go	interpreted	fixedbugs/issue58300.go:23:35: gosource: asynchronous or retained original function callbacks are unsupported for reflect.ValueOf	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue58300b.go	interpreted	fixedbugs/issue58300b.go:34:44: gosource: original callback signature requires value-semantics parameters and supported results	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue5963.go	interpreted	command exceeded time limit	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue63657.go	interpreted	f: expected 3 argument(s), got 0	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue67255.go	interpreted	command exceeded time limit	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue6899.go	interpreted	output does not match expected in fixedbugs/issue6899.out. Instead saw	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue70156.go	interpreted	panic: 1	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue71857.go	interpreted	unregistered bridge type "*sync/atomic.Uint64"	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue73917.go	interpreted	output should be empty when (optional) expected-output file fixedbugs/issue73917.out is not present. Instead saw	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue73920.go	interpreted	output should be empty when (optional) expected-output file fixedbugs/issue73920.out is not present. Instead saw	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue7419.go	interpreted	exit status 1	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue7550.go	interpreted	panic: runtime error: makeslice: len out of range	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue76008.go	interpreted	output should be empty when (optional) expected-output file fixedbugs/issue76008.out is not present. Instead saw	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue7690.go	interpreted	output should be empty when (optional) expected-output file fixedbugs/issue7690.out is not present. Instead saw	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue77779.go	interpreted	fixedbugs/issue77779.go:39:5: gosource: dependency mutation of interpreter-owned references is unsupported for reflect.ValueOf	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue79186.go	interpreted	command exceeded time limit	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue79762.go	interpreted	panic: runtime error: invalid memory address or nil pointer dereference	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue8047.go	interpreted	panic: defer of nil func didn't panic	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue8047b.go	interpreted	output should be empty when (optional) expected-output file fixedbugs/issue8047b.out is not present. Instead saw	missing=0;wording=0;extra=0;class=-
+testdir:func8.go	interpreted	panic: wrong x,y order	missing=0;wording=0;extra=0;class=-
+testdir:gcstring.go	interpreted	gcstring.go:41:31: gosource: original callback signature requires value-semantics parameters and supported results	missing=0;wording=0;extra=0;class=-
+testdir:index1.go	interpreted	// errorcheck	missing=0;wording=0;extra=0;class=-
+testdir:index2.go	interpreted	// errorcheck	missing=0;wording=0;extra=0;class=-
+testdir:inline_caller.go	interpreted	panic: skip=0 expected line 36, got line 586	missing=0;wording=0;extra=0;class=-
+testdir:inline_callers.go	interpreted	output should be empty when (optional) expected-output file inline_callers.out is not present. Instead saw	missing=0;wording=0;extra=0;class=-
+testdir:inline_literal.go	interpreted	gosource: asynchronous or retained original function callbacks are unsupported for reflect.ValueOf	missing=0;wording=0;extra=0;class=-
+testdir:ken/divconst.go	interpreted	command exceeded time limit	missing=0;wording=0;extra=0;class=-
+testdir:ken/modconst.go	interpreted	command exceeded time limit	missing=0;wording=0;extra=0;class=-
+testdir:mallocfin.go	interpreted	mallocfin.go:60:27: gosource: original callback signature requires value-semantics parameters and supported results	missing=0;wording=0;extra=0;class=-
+testdir:maymorestack.go	interpreted	panic: mayMoreStack not called	missing=0;wording=0;extra=0;class=-
+testdir:peano.go	interpreted	runtime: goroutine stack exceeds 1000000000-byte limit	missing=0;wording=0;extra=0;class=-
+testdir:rangegen.go	interpreted	command exceeded time limit	missing=0;wording=0;extra=0;class=-
+testdir:rangegen.go	compiled	command exceeded time limit	missing=0;wording=0;extra=0;class=-
+testdir:recover1.go	interpreted	panic: 1	missing=0;wording=0;extra=0;class=-
+testdir:recover4.go	interpreted	unexpected fault address 0x7e0de6e09000	missing=0;wording=0;extra=0;class=-
+testdir:reflectmethod4.go	interpreted	gosource: dependency mutation of interpreter-owned references is unsupported for reflect.ValueOf	missing=0;wording=0;extra=0;class=-
+testdir:reflectmethod7.go	interpreted	gosource: invalid native slice writeback: gosource: native callback field belongs to another dependency session	missing=0;wording=0;extra=0;class=-
+testdir:stack.go	interpreted	command exceeded time limit	missing=0;wording=0;extra=0;class=-
+testdir:stackobj.go	interpreted	stackobj.go:45:28: gosource: original callback signature requires value-semantics parameters and supported results	missing=0;wording=0;extra=0;class=-
+testdir:stackobj3.go	interpreted	stackobj3.go:65:28: gosource: original callback signature requires value-semantics parameters and supported results	missing=0;wording=0;extra=0;class=-
+testdir:stringrange.go	interpreted	unexpected offset 4 not 6	missing=0;wording=0;extra=0;class=-
+testdir:tinyfin.go	interpreted	tinyfin.go:28:27: gosource: original callback signature requires value-semantics parameters and supported results	missing=0;wording=0;extra=0;class=-
+testdir:typeparam/double.go	interpreted	typeparam/double.go:46:6: gosource: dependency mutation of interpreter-owned references is unsupported for reflect.DeepEqual	missing=0;wording=0;extra=0;class=-
+testdir:typeparam/issue47272.go	interpreted	unregistered bridge type "Option[int]"	missing=0;wording=0;extra=0;class=-
+testdir:typeparam/issue48225.go	interpreted	panic: string	missing=0;wording=0;extra=0;class=-
+testdir:typeparam/issue48317.go	interpreted	unregistered bridge type "*A[int]"	missing=0;wording=0;extra=0;class=-
+testdir:typeparam/issue48598.go	interpreted	unregistered nil bridge type "IteratorFunc[int]"	missing=0;wording=0;extra=0;class=-
+testdir:typeparam/issue49547.go	interpreted	output should be empty when (optional) expected-output file typeparam/issue49547.out is not present. Instead saw	missing=0;wording=0;extra=0;class=-
+testdir:typeparam/issue50481c.go	interpreted	unregistered bridge type "__gosource_pkg_0_T"	missing=0;wording=0;extra=0;class=-
+testdir:typeparam/nested.go	interpreted	unregistered bridge type "T[int]"	missing=0;wording=0;extra=0;class=-
+testdir:typeparam/settable.go	interpreted	panic: got [0x3235e2ebe420], want [0x3235e2ebe528]	missing=0;wording=0;extra=0;class=-
+testdir:uintptrescapes3.go	interpreted	uintptrescapes3.go:51:29: gosource: original callback signature requires value-semantics parameters and supported results	missing=0;wording=0;extra=0;class=-
