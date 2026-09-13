@@ -53,8 +53,12 @@ for r in bashy sh coreutils readline filebrowser; do
 	if test -n "${bundle[$r]:-}"; then
 		test -r "${bundle[$r]}" || { printf 'rebuild-candidate: bundle unreadable: %s\n' "${bundle[$r]}" >&2; exit 1; }
 		git -C "$cand/$r" bundle verify "${bundle[$r]}" >/dev/null
-		git -C "$cand/$r" fetch -q "${bundle[$r]}" '+refs/heads/*:refs/bundle/*' 2>/dev/null || git -C "$cand/$r" fetch -q "${bundle[$r]}"
-		test -n "$want" || want=FETCH_HEAD
+		# A worker's bundle usually carries only HEAD (`git bundle create x HEAD`):
+		# fetch its tip by sha so the checkout never depends on FETCH_HEAD state.
+		tip=$(git -C "$cand/$r" bundle list-heads "${bundle[$r]}" | awk '$2 == "HEAD" { print $1; exit }')
+		test -n "$tip" || tip=$(git -C "$cand/$r" bundle list-heads "${bundle[$r]}" | awk 'NR == 1 { print $1 }')
+		git -C "$cand/$r" fetch -q "${bundle[$r]}" "$tip"
+		test -n "$want" || want=$tip
 	elif test -n "$want"; then
 		git -C "$cand/$r" fetch -q "$base/base/$r" '+refs/heads/*:refs/base/*' || true
 		git -C "$cand/$r" rev-parse -q --verify "$want^{commit}" >/dev/null 2>&1 || git -C "$cand/$r" fetch -q origin
