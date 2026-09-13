@@ -43,7 +43,28 @@ commands are in it). Venue: the leaf host, 2 vCPU, Ubuntu 24.04, pinned Go
 1.27.0 linux/amd64 (`GOTOOLCHAIN=local`), `GOMAXPROCS=2`; the fixture tree is
 the SHA-256-verified GNU Bash 5.3 tarball bashy fetches into its user cache.
 
-LINUX_RESULTS_PLACEHOLDER
+**Result (native serial gate, the leaf host, 02:41Z–03:0xZ, published
+candidate):** Bash++ OFF **75/86**, Bash++ ON **73/86**. The eleven fixtures
+failing in BOTH modes (`execscript glob-test intl jobs new-exp read redir test
+trap varenv vredir`) are the native venue's known non-hermetic failures (no
+container, no controlling tty, host locale) — identical in OFF and ON, so
+they carry no isolation signal. The ON-only delta is exactly two fixtures:
+
+- **`procsub` — TIMEOUT (60.04 s)**: confirmed on Linux, the same fixture and
+  line as darwin (`3< <(echo x)` at line 74).
+- **`histexpand` — FAIL**: first diff at `histexp.right:201`, `want: "cat <
+  <(echo echo a)"`, `got: "b"` — the fixture's process-substitution
+  redirection, i.e. the SAME mechanism as `procsub` (a `< <(…)` opened by the
+  shell itself), not a second defect. It is new relative to the darwin record
+  because darwin's Go runtime turns the hang into a deadlock fatal that the
+  darwin run happened to survive on this fixture.
+- **`cprint` — PASS on Linux.** The darwin-only `cprint` diff does not
+  reproduce natively on Linux; it is classified **darwin-only** pending the
+  container gate (see the product story).
+
+Logs: `/srv/sprint162/classic-1/logs/{full-off,full-on}.log`, per-fixture
+`.got/.want` under `classic-1/debug-full-on/`; commands in
+`classic-on-sprint162/leaf-classic-native.sh` (committed here).
 
 ## Step 2 — root cause (read-only in `sh`; the product fix is sh #96)
 
@@ -141,7 +162,10 @@ fixture):**
 
 ### `cprint`
 
-CPRINT_PLACEHOLDER
+Does not reproduce on Linux (native serial gate: PASS in both modes). On
+darwin the ON run reported `output differs from cprint.right`; the product
+lane (sh #96) reproduces it on darwin with the cached GNU 5.3 fixture and
+classifies it. Until then: **darwin-only**, not a Linux gate blocker.
 
 ## Requests to other seams
 
