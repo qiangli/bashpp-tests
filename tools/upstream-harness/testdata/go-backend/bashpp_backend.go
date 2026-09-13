@@ -194,7 +194,11 @@ func bashppQuote(value string) string {
 
 func bashppOverlayProof(eventFile, pkg, overlay, trace, goTool string, originals, generated []string) string {
 	lines := []string{
-		"sha256() { if command -v sha256sum >/dev/null 2>&1; then sha256sum \"$1\" | awk '{print $1}'; else shasum -a 256 \"$1\" | awk '{print $1}'; fi; }",
+		// sha256 prints the digest WITHOUT a newline: it is spliced into one
+		// JSON line. The whole event is assembled in a scratch file and appended
+		// to the shared event log in a single write, so packages cmd/go tests in
+		// parallel never interleave their lines.
+		"sha256() { if command -v sha256sum >/dev/null 2>&1; then printf '%s' \"$(sha256sum \"$1\" | awk '{print $1}')\"; else printf '%s' \"$(shasum -a 256 \"$1\" | awk '{print $1}')\"; fi; }",
 		"{",
 		"printf '%s' " + bashppQuote(`{"schema":"`+bashppGoTestSchema+`","kind":"overlay-proof","package":"`+pkg+`","go_tool":"`+goTool+`","overlay":{"path":"`+overlay+`","sha256":"`),
 		"sha256 " + bashppQuote(overlay),
@@ -213,7 +217,8 @@ func bashppOverlayProof(eventFile, pkg, overlay, trace, goTool string, originals
 	}
 	lines = append(lines,
 		"printf '%s\\n' "+bashppQuote(`],"compiler_argv":["`+goTool+`","test","-overlay=`+overlay+`","`+pkg+`"]}`),
-		"} >> "+bashppQuote(eventFile))
+		"} > "+bashppQuote(overlay+".event"),
+		"cat "+bashppQuote(overlay+".event")+" >> "+bashppQuote(eventFile))
 	return strings.Join(lines, "\n")
 }
 
