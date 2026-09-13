@@ -1,6 +1,7 @@
 // Copyright 2026 The bashpp-tests Authors. All rights reserved.
 // Sprint: #151; Story: #58; Story-ID: fd3a390ec1f2
 // Sprint: #154; Story: S154.0; Story-ID: 4877afd3a207
+// Sprint: #155; Story: S155.11; Story-ID: 5004b3c3
 package main
 
 import (
@@ -36,12 +37,18 @@ func TestEmitPartitions(t *testing.T) {
 	}
 	types := map[string]map[string]fixtureVerdict{
 		"interpreted": {
-			"TestCheck/runtime.go": {action: "fail", output: "panic: runtime error: boom"},
-			"TestCheck/escape.go":  {action: "fail", output: "escape.go:8: missing error \"x does not escape\""},
+			"TestCheck/runtime.go":          {action: "fail", output: "panic: runtime error: boom"},
+			"TestCheck/escape.go":           {action: "fail", output: "escape.go:8: missing error \"x does not escape\""},
+			"TestCheck/no-backend.go":       {action: "fail"},
+			"TestUnit/skipped":              {action: "skip"},
+			"TestObjectString/with-backend": {action: "pass"},
 		},
 		"compiled": {
-			"TestCheck/runtime.go": {action: "fail", output: "runtime error: boom"},
-			"TestCheck/escape.go":  {action: "fail", output: "escape.go:8: wrong error"},
+			"TestCheck/runtime.go":          {action: "fail", output: "runtime error: boom"},
+			"TestCheck/escape.go":           {action: "fail", output: "escape.go:8: wrong error"},
+			"TestCheck/no-backend.go":       {action: "fail"},
+			"TestUnit/skipped":              {action: "skip"},
+			"TestObjectString/with-backend": {action: "pass"},
 		},
 	}
 	packages := map[string]map[string]fixtureVerdict{
@@ -56,6 +63,10 @@ func TestEmitPartitions(t *testing.T) {
 		// an empty, valid stream proves it is still mandatory input.
 		writeRecords(t, filepath.Join(lane.dir, "types2.go-test.json"))
 		writePackageFixture(t, filepath.Join(lane.dir, "package.go-test.json"), packages[lane.mode])
+		writeRecords(t, filepath.Join(lane.dir, "types.events.jsonl"),
+			partitionEventRecord{Kind: "types-backend", Test: "TestCheck/runtime.go"},
+			partitionEventRecord{Kind: "types-backend", Test: "TestCheck/escape.go"},
+			partitionEventRecord{Kind: "types-backend", Test: "TestObjectString/with-backend"})
 		writeRecords(t, filepath.Join(lane.dir, "backend.events.jsonl"), partitionEventRecord{Kind: "terminal", Mode: lane.mode})
 	}
 
@@ -88,11 +99,15 @@ func TestEmitPartitions(t *testing.T) {
 			"package:example/unclassified\tinterpreted\tmystery product limitation\t" + noVerdict + "\n",
 		"active-retained-manifest.tsv": "root\tmode\tfirst_line\tverdict\n" +
 			"testdir:kept.go\tinterpreted\tBash++ backend unsupported execute phase: module package kept.dir has non-Go inputs [a.s]\t" + noVerdict + "\n",
-		"active-summary.tsv": "runner\tPASS\tFAIL\tSKIP\ttotal\n" +
-			"testdir\t1\t4\t1\t6\n" +
-			"typechecker\t0\t2\t0\t2\n" +
-			"package\t0\t1\t0\t1\n" +
-			"total\t1\t7\t1\t9\n\n" +
+		"native-only-typechecker.tsv": "root\tclass\tcredit\n" +
+			"typechecker:go/types/TestCheck/no-backend.go\tnative-only\t0\n",
+		"active-summary.tsv": "runner\tPASS\tFAIL\tSKIP\ttotal\tnative-only\n" +
+			"testdir\t1\t4\t1\t6\t0\n" +
+			"typechecker\t1\t2\t1\t4\t1\n" +
+			"package\t0\t1\t0\t1\t0\n" +
+			"total\t2\t7\t2\t11\t1\n\n" +
+			"product\troots\tnative-applicable\tSKIP\tnative-only\n" +
+			"total\t11\t9\t2\t1\n\n" +
 			"owner\tcount\n151\t1\n152\t2\n153\t1\n154\t1\nunclassified\t1\nretained\t1\ntotal\t7\n",
 	}
 	for name, want := range wantFiles {
@@ -104,8 +119,15 @@ func TestEmitPartitions(t *testing.T) {
 			t.Errorf("%s:\n%s\nwant:\n%s", name, got, want)
 		}
 	}
-	if lines := strings.Split(strings.TrimSpace(stdout.String()), "\n"); len(lines) != 6 {
-		t.Fatalf("stdout has %d digest lines, want 6:\n%s", len(lines), stdout.String())
+	lines := strings.Split(strings.TrimSpace(stdout.String()), "\n")
+	if len(lines) != 7 {
+		t.Fatalf("stdout has %d report lines, want 7:\n%s", len(lines), stdout.String())
+	}
+	// Family names deliberately point the wrong way: TestCheck has no seam
+	// record and is native-only, while TestObjectString has seam records and
+	// receives product credit. Classification therefore cannot be name-based.
+	if lines[0] != "native_only\ttypechecker:go/types/TestCheck/no-backend.go\tcredit=0" {
+		t.Fatalf("native-only report = %q", lines[0])
 	}
 }
 
