@@ -3,9 +3,11 @@ id: 5c6251698ece
 kind: task
 title: 'Sprint 162.6: Bash++-ON classic regression — cprint output diff + procsub 60 s timeout: confirm on Linux, root-cause, fix in sh'
 seq: 70
-status: todo
+status: assigned
 priority: p0
 created: 2026-09-13T00:36:06.957358Z
+weave: 140
+assignee: qiangli
 sprint: 162
 ---
 

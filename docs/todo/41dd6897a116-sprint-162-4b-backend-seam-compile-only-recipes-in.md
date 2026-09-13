@@ -3,9 +3,11 @@ id: 41dd6897a116
 kind: task
 title: 'Sprint 162.4b: backend seam — compile-only recipes invoked as upstream invokes them (no implied -complete); generate/execute-phase dispositions'
 seq: 72
-status: todo
+status: assigned
 priority: p0
 created: 2026-09-13T02:07:06.707183Z
+weave: 138
+assignee: qiangli
 sprint: 162
 ---
 
