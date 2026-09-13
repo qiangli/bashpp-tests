@@ -1,0 +1,4 @@
+leaf=162r0-deadline host=leaf harness=9715ce5 bashpp=9f18849d5f0d6c10 sh=e7cd317e candidate=base manifest=<in>/roots-162r0-deadline.tsv roots=19 start=2026-09-13T03:01:44Z
+leaf exit=3 start=2026-09-13T03:01:44Z end=2026-09-13T03:17:06Z
+survivors: 1
+DONE leaf-162r0-deadline

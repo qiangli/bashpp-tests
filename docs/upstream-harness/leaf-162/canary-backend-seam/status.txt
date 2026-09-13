@@ -1,0 +1,4 @@
+leaf=canary-backend-seam host=leaf harness=18791c8 bashpp=9f18849d5f0d6c10 sh=e7cd317e candidate=base manifest=<in>/canary-compiled.tsv roots=111 start=2026-09-13T02:52:37Z
+leaf exit=3 start=2026-09-13T02:52:37Z end=2026-09-13T02:58:38Z
+survivors: 1
+DONE leaf-canary-backend-seam

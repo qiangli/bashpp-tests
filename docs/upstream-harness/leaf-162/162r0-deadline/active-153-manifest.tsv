@@ -1,0 +1,20 @@
+root	mode	first_line	verdict
+testdir:64bit.go	interpreted	command exceeded time limit	missing=0;wording=0;extra=0;class=-
+testdir:abi/fibish.go	interpreted	command exceeded time limit	missing=0;wording=0;extra=0;class=-
+testdir:abi/fibish_closure.go	interpreted	command exceeded time limit	missing=0;wording=0;extra=0;class=-
+testdir:abi/uglyfib.go	interpreted	command exceeded time limit	missing=0;wording=0;extra=0;class=-
+testdir:closure.go	interpreted	runtime: goroutine stack exceeds 1000000000-byte limit	missing=0;wording=0;extra=0;class=-
+testdir:deferfin.go	interpreted	command exceeded time limit	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue11256.go	interpreted	command exceeded time limit	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue16249.go	interpreted	command exceeded time limit	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue27695.go	interpreted	command exceeded time limit	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue5493.go	interpreted	command exceeded time limit	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue5963.go	interpreted	command exceeded time limit	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue67255.go	interpreted	command exceeded time limit	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue79186.go	interpreted	command exceeded time limit	missing=0;wording=0;extra=0;class=-
+testdir:ken/divconst.go	interpreted	command exceeded time limit	missing=0;wording=0;extra=0;class=-
+testdir:ken/modconst.go	interpreted	command exceeded time limit	missing=0;wording=0;extra=0;class=-
+testdir:peano.go	interpreted	runtime: goroutine stack exceeds 1000000000-byte limit	missing=0;wording=0;extra=0;class=-
+testdir:rangegen.go	interpreted	command exceeded time limit	missing=0;wording=0;extra=0;class=-
+testdir:rangegen.go	compiled	command exceeded time limit	missing=0;wording=0;extra=0;class=-
+testdir:stack.go	interpreted	command exceeded time limit	missing=0;wording=0;extra=0;class=-

@@ -1,0 +1,13 @@
+root
+testdir:chan/nonblock.go
+testdir:chan/select4.go
+testdir:fixedbugs/bug225.go
+testdir:fixedbugs/bug312.go
+testdir:fixedbugs/issue43111.go
+testdir:fixedbugs/issue43292.go
+testdir:fixedbugs/issue8347.go
+testdir:ken/chan.go
+testdir:typeparam/mdempsky/18.go
+testdir:chan/select6.go
+testdir:chan/select7.go
+testdir:chan/select8.go

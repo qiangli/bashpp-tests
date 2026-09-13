@@ -1,0 +1,5 @@
+pin override (candidate syntax-select): shellrt_commit=705cec3803b6551f0e06623117c3a8d0bde37fbb bashpp_version=bashy, GNU Bash 5.3 compatible, version 5.3.0(1)-bashy-dev (548c3a4)
+leaf=syntax-select-r3 host=leaf harness=33ac42d bashpp=6731d890ecb74960 sh=705cec380 candidate=syntax-select manifest=<in>/syntax-select-1.tsv roots=12 start=2026-09-13T03:44:02Z
+leaf exit=3 start=2026-09-13T03:44:02Z end=2026-09-13T03:46:15Z
+survivors: 0
+DONE leaf-syntax-select-r3

@@ -1,0 +1,2 @@
+root	mode	first_line	verdict
+testdir:ken/chan.go	interpreted	fatal error: concurrent map writes	missing=0;wording=0;extra=0;class=-
