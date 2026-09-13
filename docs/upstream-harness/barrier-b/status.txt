@@ -1,0 +1,4 @@
+harness=cae86104 bashpp=9f18849d5f0d6c10 sh=e7cd317e7a bashy=548c3a46 coreutils=4cb658d48 go=1db869c560a19357 start=2026-09-12T22:24:36Z
+corpus exit=3 start=2026-09-12T22:24:36Z end=2026-09-12T23:48:58Z commit=cae86104
+survivors: 0
+DONE barrier-b

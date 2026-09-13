@@ -1,0 +1,30 @@
+native lane (backend off): go version go1.27.0 linux/amd64
+testdir native: 2726 terminals, 37 non-PASS (inventory 2726)
+cmd/compile/internal/types2 types2 native: 449 terminals, 1 non-PASS
+go/types types native: 450 terminals, 1 non-PASS
+typechecker native: 899 terminals, 2 non-PASS (inventory 743)
+packages native: 26 terminals, 0 non-PASS (inventory 26)
+Bash++ interpreted mode: bashy, GNU Bash 5.3 compatible, version 5.3.0(1)-bashy-dev (548c3a4)
+testdir interpreted: 2726 terminals, 851 non-PASS (inventory 2726)
+cmd/compile/internal/types2 types2 interpreted: 449 terminals, 6 non-PASS
+go/types types interpreted: 450 terminals, 14 non-PASS
+typechecker interpreted: 899 terminals, 20 non-PASS (inventory 743)
+packages interpreted: 26 terminals, 26 non-PASS (inventory 26)
+Bash++ compiled mode: bashy, GNU Bash 5.3 compatible, version 5.3.0(1)-bashy-dev (548c3a4)
+testdir compiled: 2726 terminals, 196 non-PASS (inventory 2726)
+cmd/compile/internal/types2 types2 compiled: 449 terminals, 6 non-PASS
+go/types types compiled: 450 terminals, 14 non-PASS
+typechecker compiled: 899 terminals, 20 non-PASS (inventory 743)
+packages compiled: 26 terminals, 26 non-PASS (inventory 26)
+active_151_rootlist	7a36e0d6a7fe19310ccc70721894aad803651893d20e6db89a466cfdd87bd305
+active_152_rootlist	2b468634ec437b16ef82bc5a9a94d053e7bafef7298b1dc6ad41d6a50a5a986f
+active_153_rootlist	f0d3c5beb21b2037f85e5c64f76715173355be0c4ecd073bf19ae218a23c2164
+active_154_rootlist	c28f1c9f1f79b3c2c5cdd89ae8494baeb647c470f4c8054a3f78d7037e38c71b
+active_unclassified_rootlist	2a78c3bb8cf3046870d0c6dade4a46f65af91222f18a90adc307009ebca1974d
+active_retained_rootlist	640cfe58ef6722aad558f2d56800040808745cbd2092f59b34119936cb80873f
+NON-GREEN S151.0 corpus gate: every root was accounted for; at least one root was non-PASS
+evidence retained: /srv/sprint155/barrier-b/evidence
+
+9f18849d5f0d6c10520e4cdf0cdedd2168c4577829087f9e722624cc2e7ba319  /srv/sprint155/barrier-b/bashy/bin/bashy.real
+1db869c560a193573a71be466a34e0d4abb7792d78165c6102cdda069276a3a8  /srv/sprint142/authenticated-sdk/bin/go
+70

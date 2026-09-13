@@ -1,0 +1,225 @@
+ROOTS	3651
+RUNNER	testdir	native	PASS=2689	FAIL=0	SKIP=37
+RUNNER	typechecker	native	PASS=897	FAIL=0	SKIP=2
+RUNNER	package	native	PASS=26	FAIL=0	SKIP=0
+RUNNER	testdir	interpreted	PASS=1875	FAIL=814	SKIP=37
+RUNNER	typechecker	interpreted	PASS=879	FAIL=18	SKIP=2
+RUNNER	package	interpreted	PASS=0	FAIL=26	SKIP=0
+RUNNER	testdir	compiled	PASS=2530	FAIL=159	SKIP=37
+RUNNER	typechecker	compiled	PASS=879	FAIL=18	SKIP=2
+RUNNER	package	compiled	PASS=0	FAIL=26	SKIP=0
+SKIPS	39
+SKIP	testdir:cmplxdivide1.go
+SKIP	testdir:codegen/append_freegc.go
+SKIP	testdir:codegen/simd.go
+SKIP	testdir:codegen/simd_arm64.go
+SKIP	testdir:escape_alias.go
+SKIP	testdir:fibo.go
+SKIP	testdir:fixedbugs/bug385_32.go
+SKIP	testdir:fixedbugs/bug515.go
+SKIP	testdir:fixedbugs/issue10607a.go
+SKIP	testdir:fixedbugs/issue10958.go
+SKIP	testdir:fixedbugs/issue19507.go
+SKIP	testdir:fixedbugs/issue24187.go
+SKIP	testdir:fixedbugs/issue33275.go
+SKIP	testdir:fixedbugs/issue38093.go
+SKIP	testdir:fixedbugs/issue4348.go
+SKIP	testdir:fixedbugs/issue64606.go
+SKIP	testdir:fixedbugs/issue73483.go
+SKIP	testdir:fixedbugs/issue9862.go
+SKIP	testdir:index.go
+SKIP	testdir:linkmain.go
+SKIP	testdir:linkx.go
+SKIP	testdir:live.go
+SKIP	testdir:newinline.go
+SKIP	testdir:nilptr5_aix.go
+SKIP	testdir:nilptr5_wasm.go
+SKIP	testdir:nilptr_aix.go
+SKIP	testdir:prove_popcount.go
+SKIP	testdir:rotate.go
+SKIP	testdir:simd.go
+SKIP	testdir:simd/bug1.go
+SKIP	testdir:simd/bug2.go
+SKIP	testdir:simd/bug3.go
+SKIP	testdir:simd_inline.go
+SKIP	testdir:tighten.go
+SKIP	testdir:wasmexport.go
+SKIP	testdir:wasmexport2.go
+SKIP	testdir:wasmmemsize.go
+SKIP	typechecker:cmd/compile/internal/types2/TestFixedbugs/issue78346.go
+SKIP	typechecker:go/types/TestFixedbugs/issue78346.go
+VIOLATION	native tested-source executions in backend lanes = 312, want 0
+VIOLATION-SHAPES (count	shape; numbers normalised to N)
+    601 VIOLATION	evidence-compiled/testdir.events.jsonl:N: invalid event JSON: json: cannot unmarshal object into Go struct field corpusStreamRecord.package of type string
+    599 VIOLATION	evidence-interpreted/testdir.events.jsonl:N: invalid event JSON: json: cannot unmarshal object into Go struct field corpusStreamRecord.package of type string
+    272 VIOLATION	compiled testdir:X has N backend dispositions for N phases
+    272 VIOLATION	compiled testdir:X has N phase records and N phase results
+    272 VIOLATION	interpreted testdir:X has N backend dispositions for N phases
+    272 VIOLATION	interpreted testdir:X has N phase records and N phase results
+    156 VIOLATION	interpreted typechecker:X has a terminal but no types-backend execution
+    156 VIOLATION	compiled typechecker:X has a terminal but no types-backend execution
+     12 VIOLATION	interpreted types-backend execution typechecker:X has no Go terminal
+     12 VIOLATION	compiled types-backend execution typechecker:X has no Go terminal
+      4 VIOLATION	duplicate ID typechecker:X in typechecker interpreted events
+      4 VIOLATION	duplicate ID typechecker:X in typechecker compiled events
+      1 VIOLATION	native tested-source executions in backend lanes = N, want N
+      1 VIOLATION	expected SKIP set: open : no such file or directory
+      1 VIOLATION	--expect-skips is required
+NATIVE-ONLY-TYPECHECKER-LEAVES (156: no types-backend record in either product lane; upstream unit tests of the checker API, not fixture checks)
+cmd/compile/internal/types2/TestAtomicAlign/386
+cmd/compile/internal/types2/TestAtomicAlign/amd64
+cmd/compile/internal/types2/TestGCSizes/issue60431
+cmd/compile/internal/types2/TestGCSizes/issue60734
+cmd/compile/internal/types2/TestInstanceInfo/duplfunc0
+cmd/compile/internal/types2/TestInstanceInfo/duplfunc1
+cmd/compile/internal/types2/TestInstanceInfo/dupltype0
+cmd/compile/internal/types2/TestInstanceInfo/dupltype1
+cmd/compile/internal/types2/TestInstanceInfo/dupltype1#01
+cmd/compile/internal/types2/TestInstanceInfo/i0
+cmd/compile/internal/types2/TestInstanceInfo/issue51803
+cmd/compile/internal/types2/TestInstanceInfo/issue59956
+cmd/compile/internal/types2/TestInstanceInfo/p0
+cmd/compile/internal/types2/TestInstanceInfo/p1
+cmd/compile/internal/types2/TestInstanceInfo/p2
+cmd/compile/internal/types2/TestInstanceInfo/p3
+cmd/compile/internal/types2/TestInstanceInfo/p4
+cmd/compile/internal/types2/TestInstanceInfo/reverse1a
+cmd/compile/internal/types2/TestInstanceInfo/reverse1b
+cmd/compile/internal/types2/TestInstanceInfo/reverse2a
+cmd/compile/internal/types2/TestInstanceInfo/reverse2b
+cmd/compile/internal/types2/TestInstanceInfo/reverse2c
+cmd/compile/internal/types2/TestInstanceInfo/reverse3b
+cmd/compile/internal/types2/TestInstanceInfo/reverse4a
+cmd/compile/internal/types2/TestInstanceInfo/reverse4b
+cmd/compile/internal/types2/TestInstanceInfo/s1
+cmd/compile/internal/types2/TestInstanceInfo/s2
+cmd/compile/internal/types2/TestInstanceInfo/s3
+cmd/compile/internal/types2/TestInstanceInfo/s4
+cmd/compile/internal/types2/TestInstanceInfo/t1
+cmd/compile/internal/types2/TestInstanceInfo/t2
+cmd/compile/internal/types2/TestInstanceInfo/t3
+cmd/compile/internal/types2/TestInstanceInfo/t4
+cmd/compile/internal/types2/TestInstanceInfo/type0
+cmd/compile/internal/types2/TestInstanceInfo/type1
+cmd/compile/internal/types2/TestInstanceInfo/type2
+cmd/compile/internal/types2/TestInstanceInfo/type3
+cmd/compile/internal/types2/TestInstanceInfo/type4
+cmd/compile/internal/types2/TestInstantiateEquality/basicfunc
+cmd/compile/internal/types2/TestInstantiateEquality/basictype
+cmd/compile/internal/types2/TestInstantiateEquality/differentfuncargs
+cmd/compile/internal/types2/TestInstantiateEquality/differenttypeargs
+cmd/compile/internal/types2/TestInstantiateEquality/equivalentinterfaces
+cmd/compile/internal/types2/TestInstantiateEquality/equivalenttypesets
+cmd/compile/internal/types2/TestInstantiateEquality/funcequality
+cmd/compile/internal/types2/TestInstantiateEquality/funcslice
+cmd/compile/internal/types2/TestInstantiateEquality/funcsymmetry
+cmd/compile/internal/types2/TestInstantiateEquality/funcwithparams
+cmd/compile/internal/types2/TestInstantiateEquality/typeslice
+cmd/compile/internal/types2/TestInstantiatedObjects/concreteMethod
+cmd/compile/internal/types2/TestInstantiatedObjects/fParam
+cmd/compile/internal/types2/TestInstantiatedObjects/fResult
+cmd/compile/internal/types2/TestInstantiatedObjects/field
+cmd/compile/internal/types2/TestInstantiatedObjects/field#01
+cmd/compile/internal/types2/TestInstantiatedObjects/ftParam
+cmd/compile/internal/types2/TestInstantiatedObjects/ftResult
+cmd/compile/internal/types2/TestInstantiatedObjects/interfaceMethod
+cmd/compile/internal/types2/TestInstantiatedObjects/mParam
+cmd/compile/internal/types2/TestInstantiatedObjects/mResult
+cmd/compile/internal/types2/TestInstantiatedObjects/recv
+cmd/compile/internal/types2/TestObjectString/0
+cmd/compile/internal/types2/TestObjectString/1
+cmd/compile/internal/types2/TestObjectString/10
+cmd/compile/internal/types2/TestObjectString/11
+cmd/compile/internal/types2/TestObjectString/12
+cmd/compile/internal/types2/TestObjectString/13
+cmd/compile/internal/types2/TestObjectString/14
+cmd/compile/internal/types2/TestObjectString/15
+cmd/compile/internal/types2/TestObjectString/16
+cmd/compile/internal/types2/TestObjectString/2
+cmd/compile/internal/types2/TestObjectString/3
+cmd/compile/internal/types2/TestObjectString/4
+cmd/compile/internal/types2/TestObjectString/5
+cmd/compile/internal/types2/TestObjectString/6
+cmd/compile/internal/types2/TestObjectString/7
+cmd/compile/internal/types2/TestObjectString/8
+cmd/compile/internal/types2/TestObjectString/9
+go/types/TestAtomicAlign/386
+go/types/TestAtomicAlign/amd64
+go/types/TestGCSizes/issue60431
+go/types/TestGCSizes/issue60734
+go/types/TestHasher/Hasher
+go/types/TestHasher/HasherIgnoreTags
+go/types/TestInstanceInfo/duplfunc0
+go/types/TestInstanceInfo/duplfunc1
+go/types/TestInstanceInfo/dupltype0
+go/types/TestInstanceInfo/dupltype1
+go/types/TestInstanceInfo/dupltype1#01
+go/types/TestInstanceInfo/i0
+go/types/TestInstanceInfo/issue51803
+go/types/TestInstanceInfo/issue59956
+go/types/TestInstanceInfo/p0
+go/types/TestInstanceInfo/p1
+go/types/TestInstanceInfo/p2
+go/types/TestInstanceInfo/p3
+go/types/TestInstanceInfo/p4
+go/types/TestInstanceInfo/reverse1a
+go/types/TestInstanceInfo/reverse1b
+go/types/TestInstanceInfo/reverse2a
+go/types/TestInstanceInfo/reverse2b
+go/types/TestInstanceInfo/reverse2c
+go/types/TestInstanceInfo/reverse3b
+go/types/TestInstanceInfo/reverse4a
+go/types/TestInstanceInfo/reverse4b
+go/types/TestInstanceInfo/s1
+go/types/TestInstanceInfo/s2
+go/types/TestInstanceInfo/s3
+go/types/TestInstanceInfo/s4
+go/types/TestInstanceInfo/t1
+go/types/TestInstanceInfo/t2
+go/types/TestInstanceInfo/t3
+go/types/TestInstanceInfo/t4
+go/types/TestInstanceInfo/type0
+go/types/TestInstanceInfo/type1
+go/types/TestInstanceInfo/type2
+go/types/TestInstanceInfo/type3
+go/types/TestInstanceInfo/type4
+go/types/TestInstantiateEquality/basicfunc
+go/types/TestInstantiateEquality/basictype
+go/types/TestInstantiateEquality/differentfuncargs
+go/types/TestInstantiateEquality/differenttypeargs
+go/types/TestInstantiateEquality/equivalentinterfaces
+go/types/TestInstantiateEquality/equivalenttypesets
+go/types/TestInstantiateEquality/funcequality
+go/types/TestInstantiateEquality/funcslice
+go/types/TestInstantiateEquality/funcsymmetry
+go/types/TestInstantiateEquality/funcwithparams
+go/types/TestInstantiateEquality/typeslice
+go/types/TestInstantiatedObjects/concreteMethod
+go/types/TestInstantiatedObjects/fParam
+go/types/TestInstantiatedObjects/fResult
+go/types/TestInstantiatedObjects/field
+go/types/TestInstantiatedObjects/field#01
+go/types/TestInstantiatedObjects/ftParam
+go/types/TestInstantiatedObjects/ftResult
+go/types/TestInstantiatedObjects/interfaceMethod
+go/types/TestInstantiatedObjects/mParam
+go/types/TestInstantiatedObjects/mResult
+go/types/TestInstantiatedObjects/recv
+go/types/TestObjectString/0
+go/types/TestObjectString/1
+go/types/TestObjectString/10
+go/types/TestObjectString/11
+go/types/TestObjectString/12
+go/types/TestObjectString/13
+go/types/TestObjectString/14
+go/types/TestObjectString/15
+go/types/TestObjectString/16
+go/types/TestObjectString/2
+go/types/TestObjectString/3
+go/types/TestObjectString/4
+go/types/TestObjectString/5
+go/types/TestObjectString/6
+go/types/TestObjectString/7
+go/types/TestObjectString/8
+go/types/TestObjectString/9
+
