@@ -117,6 +117,55 @@ func bashppPackageFiles(p *load.Package) []bashppPackageFile {
 	return files
 }
 
+// bashppTestVariantFiles classifies the files of one of cmd/go's test
+// variants of the tested package for the library transpile. The recompiled
+// in-package variant lists its test files in GoFiles AND TestGoFiles, and the
+// external-test variant (<path>_test) lists the xtest files as its GoFiles, so
+// the plain GoFiles/TestGoFiles/XTestGoFiles walk double-counts and misfiles
+// them. Each path is classified once: xtest package → --go-xtest-file; a file
+// named in TestGoFiles → --go-test-file; everything else → --go-file.
+func bashppTestVariantFiles(imp *load.Package, tested string) []bashppPackageFile {
+	if imp.ImportPath == tested+"_test" {
+		files := make([]bashppPackageFile, 0, len(imp.GoFiles)+len(imp.XTestGoFiles))
+		seen := map[string]bool{}
+		for _, name := range append(append([]string(nil), imp.GoFiles...), imp.XTestGoFiles...) {
+			path := filepath.Join(imp.Dir, name)
+			if !seen[path] {
+				seen[path] = true
+				files = append(files, bashppPackageFile{path, "--go-xtest-file"})
+			}
+		}
+		return files
+	}
+	isTest := make(map[string]bool, len(imp.TestGoFiles))
+	for _, name := range imp.TestGoFiles {
+		isTest[name] = true
+	}
+	files := make([]bashppPackageFile, 0, len(imp.GoFiles)+len(imp.TestGoFiles)+len(imp.XTestGoFiles))
+	seen := map[string]bool{}
+	add := func(name, flag string) {
+		path := filepath.Join(imp.Dir, name)
+		if !seen[path] {
+			seen[path] = true
+			files = append(files, bashppPackageFile{path, flag})
+		}
+	}
+	for _, name := range imp.GoFiles {
+		if isTest[name] {
+			add(name, "--go-test-file")
+		} else {
+			add(name, "--go-file")
+		}
+	}
+	for _, name := range imp.TestGoFiles {
+		add(name, "--go-test-file")
+	}
+	for _, name := range imp.XTestGoFiles {
+		add(name, "--go-xtest-file")
+	}
+	return files
+}
+
 func bashppLibraryArgs(files []bashppPackageFile) []string {
 	args := make([]string, 0, len(files)*2)
 	for _, file := range files {
@@ -278,8 +327,13 @@ func bashppTestPlan(p *load.Package, buildAction *work.Action, args []string) []
 		var classified []bashppPackageFile
 		for _, imp := range pmain.Internal.Imports {
 			if imp.ImportPath == p.ImportPath || imp.ImportPath == p.ImportPath+"_test" {
-				classified = append(classified, bashppPackageFiles(imp)...)
+				classified = append(classified, bashppTestVariantFiles(imp, p.ImportPath)...)
 			}
+		}
+		// The overlay replaces exactly the classified originals, each once.
+		overlayOriginals = overlayOriginals[:0]
+		for _, file := range classified {
+			overlayOriginals = append(overlayOriginals, file.path)
 		}
 		generated, err := bashppLibraryOutputNames(libraryDir, classified)
 		if err != nil {
