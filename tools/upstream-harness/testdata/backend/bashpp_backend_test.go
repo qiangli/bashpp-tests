@@ -73,12 +73,20 @@ func (t test) backendEventMap(mode, action, phase, disposition string, compileIn
 	t.backendEventProgram(mode, action, phase, disposition, compileInputs, programArgv, recipeFlags, nativeArgv, artifacts, maps, deviations, packageMap, nil)
 }
 
+func (t test) backendEventCompiler(mode, action, phase, disposition string, compileInputs, programArgv, recipeFlags, nativeArgv, artifacts, maps, deviations []string, packageMap map[string]any, compilerArgv []string) {
+	t.backendEventProgram(mode, action, phase, disposition, compileInputs, programArgv, recipeFlags, nativeArgv, artifacts, maps, deviations, packageMap, map[string]any{"compiler_argv": compilerArgv})
+}
+
 // backendEventProgram is backendEventMap plus the program record a later
 // phase of the same upstream test acted on (S150.5): the files and package
 // map earlier phases were handed and, in compiled mode, the artifact they
 // built. A verifier can then check that link/execute acted on exactly what
 // upstream compiled, without the seam ever looking for anything on disk.
 func (t test) backendEventProgram(mode, action, phase, disposition string, compileInputs, programArgv, recipeFlags, nativeArgv, artifacts, maps, deviations []string, packageMap map[string]any, program map[string]any) {
+	var compilerArgv []string
+	if program != nil {
+		compilerArgv, _ = program["compiler_argv"].([]string)
+	}
 	events.emit(t.eventName(), "backend", map[string]any{
 		"program":        program,
 		"package_map":    packageMap,
@@ -89,6 +97,7 @@ func (t test) backendEventProgram(mode, action, phase, disposition string, compi
 		"program_argv":   nonNil(programArgv),
 		"recipe_flags":   nonNil(recipeFlags),
 		"native_argv":    nonNil(nativeArgv),
+		"compiler_argv":  nonNil(compilerArgv),
 		"artifacts":      nonNil(artifacts),
 		"maps":           nonNil(maps),
 		"tool": map[string]any{
@@ -120,16 +129,58 @@ var backendPackages sync.Map
 // compile phase and, in compiled mode, the artifact that phase built. A
 // later `link` or input-less `execute` phase of the same test acts on it.
 type backendProgram struct {
-	files    []string
-	mapArgs  []string
-	artifact string
+	files        []string
+	mapArgs      []string
+	artifact     string
+	compilerArgv []string
 }
 
 // backendPrograms is keyed by the upstream test identity, like backendPackages.
 var backendPrograms sync.Map
 
 func (p backendProgram) record() map[string]any {
-	return map[string]any{"files": nonNil(p.files), "map_args": nonNil(p.mapArgs), "artifact": p.artifact}
+	return map[string]any{"files": nonNil(p.files), "map_args": nonNil(p.mapArgs), "artifact": p.artifact, "compiler_argv": nonNil(p.compilerArgv)}
+}
+
+// directCompileCommand is the upstream compiler invocation with the original
+// Go inputs replaced by the one generated Go file.  In particular it retains
+// upstream's -p and -importcfg resolution rather than asking cmd/go to invent
+// a package build (and its implicit -complete).
+func directCompileCommand(nativeArgv, compileInputs []string, generated string) ([]string, error) {
+	if len(nativeArgv) < 4 || nativeArgv[1] != "tool" || nativeArgv[2] != "compile" {
+		return nil, fmt.Errorf("upstream compile argv is not a go tool compile invocation: %v", nativeArgv)
+	}
+	inputs := make(map[string]bool, len(compileInputs))
+	for _, input := range compileInputs {
+		inputs[input] = true
+	}
+	args := make([]string, 0, len(nativeArgv)-len(compileInputs)+1)
+	args = append(args, nativeArgv[0])
+	for _, arg := range nativeArgv[1:] {
+		if !inputs[arg] {
+			args = append(args, arg)
+		}
+	}
+	return append(args, generated), nil
+}
+
+func compilerOutput(argv []string, generated, dir string) string {
+	for i, arg := range argv {
+		if arg == "-o" && i+1 < len(argv) {
+			if filepath.IsAbs(argv[i+1]) {
+				return argv[i+1]
+			}
+			return filepath.Join(dir, argv[i+1])
+		}
+		if strings.HasPrefix(arg, "-o=") {
+			name := strings.TrimPrefix(arg, "-o=")
+			if filepath.IsAbs(name) {
+				return name
+			}
+			return filepath.Join(dir, name)
+		}
+	}
+	return strings.TrimSuffix(generated, ".go") + ".o"
 }
 
 // backendModule writes the temporary Go module that hosts transpiled source.
@@ -175,9 +226,18 @@ func (t test) backendLink(step *planStep, mode, action string, compileInputs, pr
 			t.backendEvent(mode, action, "link", "unsupported", compileInputs, programArgv, recipeFlags, nativeArgv, nil, nil, deviations)
 			return
 		}
-		*step.cmd = *directSourceCommand(step.cmd, "/bin/sh", "-c", "test -x "+shellQuote(program.artifact))
-		t.backendEventProgram(mode, action, "link", "link-adopt-artifact", compileInputs, programArgv, recipeFlags, nativeArgv, []string{program.artifact}, nil,
-			append(deviations, "the pinned Go build of the last package's generated module already linked the program; the link phase only proves that artifact exists"), nil, program.record())
+		linkArgv := append([]string(nil), nativeArgv...)
+		for i, arg := range linkArgv {
+			if strings.HasSuffix(arg, ".o") {
+				linkArgv[i] = program.artifact
+			}
+		}
+		linked := compilerOutput(linkArgv, "", step.cmd.Dir)
+		program.artifact = linked
+		backendPrograms.Store(t.eventName(), program)
+		*step.cmd = *directSourceCommand(step.cmd, linkArgv[0], linkArgv[1:]...)
+		t.backendEventProgram(mode, action, "link", "link-adopt-artifact", compileInputs, programArgv, recipeFlags, nativeArgv, []string{linked}, nil,
+			append(deviations, "the pinned Go linker receives the object produced by the generated source; upstream link flags and importcfg are retained exactly"), nil, program.record())
 	default:
 		step.backendErr = fmt.Errorf("unsupported Bash++ backend mode %q", mode)
 		t.backendEvent(mode, action, "link", "configuration-error", compileInputs, programArgv, recipeFlags, nativeArgv, nil, nil, deviations)
@@ -611,58 +671,39 @@ func (t test) backendPlan(step *planStep, action, phase string, pkg *packageIden
 			return
 		}
 		if compileOnly || diagnostics || directory {
-			// Upstream hands -p=<importpath> straight to `go tool compile`;
-			// the pinned `go build` of the generated module owns -p itself,
-			// so forwarding it through -gcflags relinks main into that
-			// package. Retain it as evidence only. Errorcheck's -e/-d/-C
-			// are compile-tool diagnostics flags with the same problem.
-			var gcflags []string
-			raceBuild := false
-			for _, flag := range recipeFlags {
-				if !strings.HasPrefix(flag, "-p=") && !(diagnostics && (flag == "-e" || flag == "-C" || strings.HasPrefix(flag, "-d="))) {
-					gcflags = append(gcflags, flag)
-					if diagnostics && flag == "-race" {
-						raceBuild = true
-					}
-				}
-			}
 			transpileArgs = append(transpileArgs, "--map", sourceMap)
-			buildArgs := []string{goTool, "build", "-C", moduleDir}
-			if raceBuild {
-				buildArgs = append(buildArgs, "-race")
+			compilerArgv, err := directCompileCommand(nativeArgv, compileInputs, generated)
+			if err != nil {
+				step.backendErr = err
+				t.backendEvent(mode, action, phase, "configuration-error", compileInputs, programArgv, recipeFlags, nativeArgv, nil, nil, deviations)
+				return
 			}
-			if len(gcflags) != 0 {
-				buildArgs = append(buildArgs, "-gcflags="+strings.Join(gcflags, " "))
-			}
-			buildArgs = append(buildArgs, "-o", artifact, ".")
+			artifact = compilerOutput(compilerArgv, generated, step.cmd.Dir)
 			*step.cmd = *shellCommand(step.cmd,
 				append([]string{tool}, transpileArgs...),
-				buildArgs)
+				compilerArgv)
 			step.artifacts = []string{generated, artifact}
 			step.maps = []string{sourceMap}
-			compileDeviations := append(deviations, "non-empty compiler flags use one unpatterned -gcflags=<space-joined exact flags>; generated program is never executed")
-			if len(gcflags) != len(recipeFlags) {
-				compileDeviations = append(compileDeviations, "upstream compile-tool flags (-p=<importpath>, and for errorcheck -e/-C/-d=) are retained as evidence only; the pinned go build owns them for the generated module")
-			}
-			disposition := "transpile-build-only"
+			compileDeviations := append(deviations,
+				"the pinned compiler is invoked directly on the generated Go file with upstream's exact compile flags, -p resolution, and importcfg; cmd/go is not involved and cannot add -complete",
+				"the backend event records compiler_argv, the exact executed compiler command with only the source input replaced by the generated file")
+			disposition := "transpile-compile-only"
 			switch {
 			case diagnostics:
-				disposition = "transpile-build-diagnostics"
-				compileDeviations = append(compileDeviations, "transpile and build diagnostics are emitted on the exact upstream input path via //line directives; upstream errorCheck applies its own expectations unchanged")
-				if raceBuild {
-					compileDeviations = append(compileDeviations, "a -race compiler recipe is built with go build -race so the generated program's link pairs with its instrumented compile; upstream compiles only")
-				}
+				disposition = "transpile-compile-diagnostics"
+				compileDeviations = append(compileDeviations, "transpile and compiler diagnostics are emitted on the exact upstream input path via //line directives; upstream errorCheck applies its own expectations unchanged")
 			case directory:
-				disposition = "transpile-build-package-map"
-				compileDeviations = append(compileDeviations, "the generated module receives no dependency packages; a lowered relative import that does not build is a retained lowering product failure")
+				disposition = "transpile-compile-package-map"
+				compileDeviations = append(compileDeviations, "the direct compiler reuses upstream's directory importcfg, including the object paths produced by earlier generated package phases")
 				if value, ok := backendPrograms.Load(t.eventName()); ok {
 					program := value.(backendProgram)
 					program.artifact = artifact
+					program.compilerArgv = append([]string(nil), compilerArgv...)
 					backendPrograms.Store(t.eventName(), program)
 				}
 			}
-			t.backendEventMap(mode, action, phase, disposition, compileInputs, programArgv, recipeFlags, nativeArgv,
-				step.artifacts, step.maps, compileDeviations, packageMap)
+			t.backendEventCompiler(mode, action, phase, disposition, compileInputs, programArgv, recipeFlags, nativeArgv,
+				step.artifacts, step.maps, compileDeviations, packageMap, compilerArgv)
 			return
 		}
 		// An ordinary run root with recipe flags reaches this path through

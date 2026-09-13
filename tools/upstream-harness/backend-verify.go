@@ -46,6 +46,7 @@ type eventRecord struct {
 	ProgramArgv   []string     `json:"program_argv"`
 	RecipeFlags   []string     `json:"recipe_flags"`
 	NativeArgv    []string     `json:"native_argv"`
+	CompilerArgv  []string     `json:"compiler_argv"`
 	Argv          []string     `json:"argv"`
 	Artifacts     []string     `json:"artifacts"`
 	Maps          []string     `json:"maps"`
@@ -115,6 +116,24 @@ type evidence struct {
 	Results     []eventRecord
 	Terminal    *eventRecord
 	Bypasses    int
+}
+
+func contains(values []string, want string) bool {
+	for _, value := range values {
+		if value == want {
+			return true
+		}
+	}
+	return false
+}
+
+func hasPrefix(values []string, prefix string) bool {
+	for _, value := range values {
+		if strings.HasPrefix(value, prefix) {
+			return true
+		}
+	}
+	return false
 }
 
 func main() {
@@ -410,7 +429,7 @@ func verifyDiagnosticsRow(row matrixRow, ev evidence, mode, goAction string) (st
 		}
 		return "DIAG-PRODUCT-FAIL", nil
 	}
-	want := map[string]string{"interpreted": "check-diagnostics", "compiled": "transpile-build-diagnostics"}[mode]
+	want := map[string]string{"interpreted": "check-diagnostics", "compiled": "transpile-compile-diagnostics"}[mode]
 	if want == "" {
 		return "", fmt.Errorf("unknown backend mode %q", mode)
 	}
@@ -447,7 +466,7 @@ func verifyDirectoryRow(row matrixRow, ev evidence, mode, goAction string) (stri
 	if len(ev.Backends) == 0 {
 		return "", fmt.Errorf("no directory phase executed")
 	}
-	want := map[string]string{"interpreted": "check-package-map", "compiled": "transpile-build-package-map"}[mode]
+	want := map[string]string{"interpreted": "check-package-map", "compiled": "transpile-compile-package-map"}[mode]
 	if want == "" {
 		return "", fmt.Errorf("unknown backend mode %q", mode)
 	}
@@ -558,8 +577,11 @@ func verifyCompileRow(row matrixRow, ev evidence, mode, goAction string) (string
 			return "", fmt.Errorf("interpreted compile phase was not check-only")
 		}
 	case "compiled":
-		if backend.Disposition != "transpile-build-only" || len(backend.Artifacts) != 2 || len(backend.Maps) != 1 {
-			return "", fmt.Errorf("compiled compile phase must transpile with a map and build only")
+		if backend.Disposition != "transpile-compile-only" || len(backend.Artifacts) != 2 || len(backend.Maps) != 1 {
+			return "", fmt.Errorf("compiled compile phase must transpile with a map and compile only")
+		}
+		if len(backend.CompilerArgv) < 4 || backend.CompilerArgv[1] != "tool" || backend.CompilerArgv[2] != "compile" || !hasPrefix(backend.CompilerArgv, "-importcfg=") || contains(backend.CompilerArgv, "-complete") || backend.CompilerArgv[len(backend.CompilerArgv)-1] != backend.Artifacts[0] {
+			return "", fmt.Errorf("compiled compile phase lacks the direct upstream-shaped compiler argv: %v", backend.CompilerArgv)
 		}
 	default:
 		return "", fmt.Errorf("unknown backend mode %q", mode)
@@ -741,7 +763,7 @@ func verifyRunDirRow(row matrixRow, ev evidence, mode, goAction string) (string,
 	if len(ev.Backends) == 0 || len(ev.Results) != len(ev.Backends) {
 		return "", fmt.Errorf("wanted at least one phase with one result each, got %d backends / %d results", len(ev.Backends), len(ev.Results))
 	}
-	wantCompile := map[string]string{"interpreted": "check-package-map", "compiled": "transpile-build-package-map"}[mode]
+	wantCompile := map[string]string{"interpreted": "check-package-map", "compiled": "transpile-compile-package-map"}[mode]
 	wantLink := map[string]string{"interpreted": "link-adopt-check", "compiled": "link-adopt-artifact"}[mode]
 	wantRun := map[string]string{"interpreted": "run-remembered-program", "compiled": "run-artifact"}[mode]
 	if wantCompile == "" {

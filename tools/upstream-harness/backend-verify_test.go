@@ -187,13 +187,27 @@ func compileEvidence(mode string) (eventRecord, eventRecord, eventRecord) {
 	backend := eventRecord{Kind: "backend", Test: phase.Test, BackendSchema: backendSchema, Mode: mode, Tool: toolIdentity{Path: "/bin/bashy", Version: "test"}, Action: phase.Action, Phase: phase.PhaseKind, CompileInputs: phase.CompileInputs, ProgramArgv: phase.ProgramArgv, RecipeFlags: phase.RecipeFlags, NativeArgv: native, Disposition: "check-only", Deviations: []string{"structured evidence"}}
 	result := eventRecord{Kind: "phase_result", Test: phase.Test, Exit: 0}
 	if mode == "compiled" {
-		backend.Disposition = "transpile-build-only"
+		backend.Disposition = "transpile-compile-only"
 		backend.Artifacts = []string{"/tmp/main.go", "/tmp/program"}
 		backend.Maps = []string{"/tmp/main.go.map"}
+		backend.CompilerArgv = []string{"go", "tool", "compile", "-importcfg=/tmp/importcfg", "-N", "/tmp/main.go"}
 		result.ArtifactProof = []fileProof{{Path: "/tmp/main.go", Exists: true, Bytes: 10, SHA256: strings.Repeat("a", 64)}, {Path: "/tmp/program", Exists: true, Bytes: 20, SHA256: strings.Repeat("b", 64)}}
 		result.MapProof = []fileProof{{Path: "/tmp/main.go.map", Exists: true, Bytes: 5, SHA256: strings.Repeat("c", 64)}}
 	}
 	return phase, backend, result
+}
+
+// Sprint: #162; Story: S162.4b; Story-ID: 41dd6897a116
+func TestVerifierRequiresDirectCompilerEvidence(t *testing.T) {
+	phase, backend, result := compileEvidence("compiled")
+	status, err := verifyCompileEvidence(t, "compiled", phase, backend, result)
+	if err != nil || status != "COMPILE-ONLY-PASS" {
+		t.Fatalf("verifyRow = %q, %v", status, err)
+	}
+	backend.CompilerArgv = []string{"go", "build", "-gcflags=-complete", "/tmp/main.go"}
+	if _, err := verifyCompileEvidence(t, "compiled", phase, backend, result); err == nil || !strings.Contains(err.Error(), "direct upstream-shaped compiler argv") {
+		t.Fatalf("verifyRow error = %v, want direct compiler argv rejection", err)
+	}
 }
 
 func verifyCompileEvidence(t *testing.T, mode string, records ...eventRecord) (string, error) {

@@ -74,7 +74,8 @@ native equivalence stays 9/9.
 - **Diagnostics** (`errorcheck`, `errorcheckwithauto`, `errorcheckoutput`;
   phase `compile`): interpreted mode runs the Bash++ check interface on the
   exact upstream input (`check-diagnostics`); compiled mode transpiles with a
-  map and builds the generated module (`transpile-build-diagnostics`). Both
+  map and invokes the generated file through the pinned compiler directly
+  (`transpile-compile-diagnostics`). Both
   emit `file:line:col: message` on the upstream input path — the generated Go
   carries `//line` directives — so the unchanged upstream `errorCheck` applies
   its own expectations. The compile-tool flags `-e`, `-C`, `-d=` and
@@ -87,7 +88,7 @@ native equivalence stays 9/9.
   path=files`, every earlier group of the same upstream test, in upstream
   order — the in-memory equivalent of the importcfg upstream accumulates.
   Relative imports are never resolved on disk. Interpreted mode is
-  `check-package-map`; compiled mode is `transpile-build-package-map`, and a
+  `check-package-map`; compiled mode is `transpile-compile-package-map`, and a
   lowered relative import that does not build is a retained lowering product
   failure. A non-Go companion (`.s`) has no Go-source meaning and is a
   retained product limitation, never a seam failure.
@@ -169,12 +170,18 @@ phases or unchanged upstream skip/bypass decisions.
 
 The backend deliberately does not translate native Go flags for S157 execute
 phases because the direct Go-source interface has no representation for them.
-For the compile-only exception, exact upstream recipe flags are transported as
-structured values and, when non-empty, become one unpatterned
-`-gcflags=<space-joined flags>` argument to the pinned Go build. The native argv
-is retained only as evidence. The backend also disables the upstream `go run`
-fast path while backend mode is selected so that the existing source-execution
-plan reaches the seam.
+For compile-only recipes (`compile`, the errorcheck family, and directory
+compile phases), compiled mode transpiles with a map and then invokes the
+pinned `go tool compile` directly.  Its `compiler_argv` event field is the
+upstream command with only the original Go inputs replaced by the generated
+file: recipe flags, `-p`, and `-importcfg` therefore retain the authority's
+meaning, and cmd/go cannot add `-complete`.  The unchanged upstream
+`errorCheck` still judges diagnostics.  A subsequent directory link uses the
+object from that compiler invocation; an executing body-less declaration thus
+still fails at link/run as upstream would. The native argv is retained as
+evidence. The backend also disables the upstream `go run` fast path while
+backend mode is selected so that the existing source-execution plan reaches
+the seam.
 
 ## Verification
 
@@ -183,7 +190,7 @@ gate, authenticates every source and patch, and then exercises all nine matrix
 rows in each backend mode. `tools/upstream-harness/compile-gate.sh` (S149.4) replays the 28 packet-149.4
 `compile` roots the same way, and the generic `verifyCompileRow` asserts one
 compile-only phase, one Go input, empty argv, and check-only /
-transpile-build-only dispositions for every compile row (the S157 `bug020`
+transpile-compile-only dispositions for every compile row (the S157 `bug020`
 canary included). `tools/upstream-harness/build-gate.sh` (S149.6)
 authenticates the packet-149.6 manifest root list
 (`docs/upstream-harness/build-matrix.tsv`, four `build` roots) and replays those
