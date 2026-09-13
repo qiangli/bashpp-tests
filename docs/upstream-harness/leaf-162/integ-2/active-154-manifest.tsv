@@ -1,0 +1,7 @@
+root	mode	first_line	verdict
+testdir:fixedbugs/issue4468.go	interpreted	test/fixedbugs/issue4468.go:24:5: expression in go must not be parenthesized	missing=2;wording=0;extra=0;class=missing
+testdir:fixedbugs/issue4468.go	compiled	test/fixedbugs/issue4468.go:24:5: expression in go must not be parenthesized	missing=2;wording=0;extra=0;class=missing
+testdir:fixedbugs/issue50372.go	interpreted	test/fixedbugs/issue50372.go:16:19: expected at most 2 expressions	missing=0;wording=4;extra=4;class=wording
+testdir:fixedbugs/issue50372.go	compiled	test/fixedbugs/issue50372.go:16:19: expected at most 2 expressions	missing=0;wording=4;extra=4;class=wording
+testdir:nul1.go	interpreted	/srv/sprint162/leaf-integ-2/tmp/Testnul1.go1504982134/001/tmp__.go:4:20: invalid NUL character	missing=3;wording=2;extra=3;class=position
+testdir:nul1.go	compiled	/srv/sprint162/leaf-integ-2/tmp/Testnul1.go1666005881/001/tmp__.go:4:20: invalid NUL character	missing=0;wording=0;extra=1;class=multiplicity

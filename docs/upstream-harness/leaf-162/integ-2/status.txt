@@ -1,0 +1,5 @@
+pin override (candidate integ-2): shellrt_commit=0cdb72c1098eb3d85fa24e63d8dd82ca942b47b3 bashpp_version=bashy, GNU Bash 5.3 compatible, version 5.3.0(1)-bashy-dev (ec4a41c)
+leaf=integ-2 host=leaf harness=fb6127b bashpp=93acf76cc986cd29 sh=0cdb72c1 candidate=integ-2 manifest=<in>/roots-162r0.tsv roots=875 start=2026-09-13T06:46:17Z
+leaf exit=3 start=2026-09-13T06:46:17Z end=2026-09-13T07:25:52Z
+survivors: 0
+DONE leaf-integ-2

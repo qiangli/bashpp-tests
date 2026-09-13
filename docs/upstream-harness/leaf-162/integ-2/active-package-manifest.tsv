@@ -1,0 +1,53 @@
+root	mode	first_line	verdict
+package:cmd/compile	interpreted	gosource: duplicate file "/srv/sprint162/leaf-integ-2/evidence/goroot/src/cmd/compile/script_test.go" in package "cmd/compile"	missing=0;wording=0;extra=0;class=-
+package:cmd/compile	compiled	exit status 1	missing=0;wording=0;extra=0;class=-
+package:cmd/compile/internal/abt	interpreted	gosource: duplicate file "/srv/sprint162/leaf-integ-2/evidence/goroot/src/cmd/compile/internal/abt/avlint32_test.go" in package "cmd/compile/internal/abt"	missing=0;wording=0;extra=0;class=-
+package:cmd/compile/internal/abt	compiled	exit status 1	missing=0;wording=0;extra=0;class=-
+package:cmd/compile/internal/amd64	interpreted	src/cmd/compile/internal/amd64/galign.go:8:2: could not import cmd/compile/internal/ssagen (use of internal package cmd/compile/internal/ssagen not allowed)	missing=0;wording=0;extra=0;class=-
+package:cmd/compile/internal/amd64	compiled	exit status 1	missing=0;wording=0;extra=0;class=-
+package:cmd/compile/internal/base	interpreted	gosource: duplicate file "/srv/sprint162/leaf-integ-2/evidence/goroot/src/cmd/compile/internal/base/hashdebug_test.go" in package "cmd/compile/internal/base"	missing=0;wording=0;extra=0;class=-
+package:cmd/compile/internal/base	compiled	exit status 1	missing=0;wording=0;extra=0;class=-
+package:cmd/compile/internal/compare	interpreted	gosource: duplicate file "/srv/sprint162/leaf-integ-2/evidence/goroot/src/cmd/compile/internal/compare/compare_test.go" in package "cmd/compile/internal/compare"	missing=0;wording=0;extra=0;class=-
+package:cmd/compile/internal/compare	compiled	exit status 1	missing=0;wording=0;extra=0;class=-
+package:cmd/compile/internal/devirtualize	interpreted	gosource: duplicate file "/srv/sprint162/leaf-integ-2/evidence/goroot/src/cmd/compile/internal/devirtualize/pgo_test.go" in package "cmd/compile/internal/devirtualize"	missing=0;wording=0;extra=0;class=-
+package:cmd/compile/internal/devirtualize	compiled	exit status 1	missing=0;wording=0;extra=0;class=-
+package:cmd/compile/internal/dwarfgen	interpreted	gosource: duplicate file "/srv/sprint162/leaf-integ-2/evidence/goroot/src/cmd/compile/internal/dwarfgen/linenum_test.go" in package "cmd/compile/internal/dwarfgen"	missing=0;wording=0;extra=0;class=-
+package:cmd/compile/internal/dwarfgen	compiled	exit status 1	missing=0;wording=0;extra=0;class=-
+package:cmd/compile/internal/importer	interpreted	gosource: duplicate file "/srv/sprint162/leaf-integ-2/evidence/goroot/src/cmd/compile/internal/importer/gcimporter_test.go" in package "cmd/compile/internal/importer"	missing=0;wording=0;extra=0;class=-
+package:cmd/compile/internal/importer	compiled	exit status 1	missing=0;wording=0;extra=0;class=-
+package:cmd/compile/internal/inline/inlheur	interpreted	gosource: duplicate file "/srv/sprint162/leaf-integ-2/evidence/goroot/src/cmd/compile/internal/inline/inlheur/debugflags_test.go" in package "cmd/compile/internal/inline/inlheur"	missing=0;wording=0;extra=0;class=-
+package:cmd/compile/internal/inline/inlheur	compiled	exit status 1	missing=0;wording=0;extra=0;class=-
+package:cmd/compile/internal/ir	interpreted	gosource: duplicate file "/srv/sprint162/leaf-integ-2/evidence/goroot/src/cmd/compile/internal/ir/dump_test.go" in package "cmd/compile/internal/ir"	missing=0;wording=0;extra=0;class=-
+package:cmd/compile/internal/ir	compiled	exit status 1	missing=0;wording=0;extra=0;class=-
+package:cmd/compile/internal/liveness	interpreted	gosource: duplicate file "/srv/sprint162/leaf-integ-2/evidence/goroot/src/cmd/compile/internal/liveness/intervals_test.go" in package "cmd/compile/internal/liveness"	missing=0;wording=0;extra=0;class=-
+package:cmd/compile/internal/liveness	compiled	exit status 1	missing=0;wording=0;extra=0;class=-
+package:cmd/compile/internal/logopt	interpreted	gosource: duplicate file "/srv/sprint162/leaf-integ-2/evidence/goroot/src/cmd/compile/internal/logopt/logopt_test.go" in package "cmd/compile/internal/logopt"	missing=0;wording=0;extra=0;class=-
+package:cmd/compile/internal/logopt	compiled	exit status 1	missing=0;wording=0;extra=0;class=-
+package:cmd/compile/internal/loopvar	interpreted	src/cmd/compile/internal/loopvar/loopvar.go:10:2: could not import cmd/compile/internal/base (use of internal package cmd/compile/internal/base not allowed)	missing=0;wording=0;extra=0;class=-
+package:cmd/compile/internal/loopvar	compiled	exit status 1	missing=0;wording=0;extra=0;class=-
+package:cmd/compile/internal/noder	interpreted	gosource: duplicate file "/srv/sprint162/leaf-integ-2/evidence/goroot/src/cmd/compile/internal/noder/lex_test.go" in package "cmd/compile/internal/noder"	missing=0;wording=0;extra=0;class=-
+package:cmd/compile/internal/noder	compiled	exit status 1	missing=0;wording=0;extra=0;class=-
+package:cmd/compile/internal/rangefunc	interpreted	src/cmd/compile/internal/rangefunc/rewrite.go:529:1: package rangefunc; expected package rangefunc_test	missing=0;wording=0;extra=0;class=-
+package:cmd/compile/internal/rangefunc	compiled	exit status 1	missing=0;wording=0;extra=0;class=-
+package:cmd/compile/internal/reflectdata	interpreted	src/cmd/compile/internal/reflectdata/alg.go:13:2: could not import cmd/compile/internal/base (use of internal package cmd/compile/internal/base not allowed)	missing=0;wording=0;extra=0;class=-
+package:cmd/compile/internal/reflectdata	compiled	exit status 1	missing=0;wording=0;extra=0;class=-
+package:cmd/compile/internal/ssa	interpreted	Bash++ gotest backend: non-Go inputs	missing=0;wording=0;extra=0;class=-
+package:cmd/compile/internal/ssa	compiled	exit status 1	missing=0;wording=0;extra=0;class=-
+package:cmd/compile/internal/ssagen	interpreted	gosource: duplicate file "/srv/sprint162/leaf-integ-2/evidence/goroot/src/cmd/compile/internal/ssagen/intrinsics_test.go" in package "cmd/compile/internal/ssagen"	missing=0;wording=0;extra=0;class=-
+package:cmd/compile/internal/ssagen	compiled	exit status 1	missing=0;wording=0;extra=0;class=-
+package:cmd/compile/internal/syntax	interpreted	gosource: duplicate file "/srv/sprint162/leaf-integ-2/evidence/goroot/src/cmd/compile/internal/syntax/dumper_test.go" in package "cmd/compile/internal/syntax"	missing=0;wording=0;extra=0;class=-
+package:cmd/compile/internal/syntax	compiled	exit status 1	missing=0;wording=0;extra=0;class=-
+package:cmd/compile/internal/test	interpreted	gosource: duplicate file "/srv/sprint162/leaf-integ-2/evidence/goroot/src/cmd/compile/internal/test/abiutils_test.go" in package "cmd/compile/internal/test"	missing=0;wording=0;extra=0;class=-
+package:cmd/compile/internal/test	compiled	exit status 1	missing=0;wording=0;extra=0;class=-
+package:cmd/compile/internal/typecheck	interpreted	gosource: duplicate file "/srv/sprint162/leaf-integ-2/evidence/goroot/src/cmd/compile/internal/typecheck/builtin_test.go" in package "cmd/compile/internal/typecheck"	missing=0;wording=0;extra=0;class=-
+package:cmd/compile/internal/typecheck	compiled	exit status 1	missing=0;wording=0;extra=0;class=-
+package:cmd/compile/internal/types	interpreted	gosource: duplicate file "/srv/sprint162/leaf-integ-2/evidence/goroot/src/cmd/compile/internal/types/sizeof_test.go" in package "cmd/compile/internal/types"	missing=0;wording=0;extra=0;class=-
+package:cmd/compile/internal/types	compiled	exit status 1	missing=0;wording=0;extra=0;class=-
+package:cmd/compile/internal/types2	interpreted	gosource: duplicate file "/srv/sprint162/leaf-integ-2/evidence/goroot/src/cmd/compile/internal/types2/context_test.go" in package "cmd/compile/internal/types2"	missing=0;wording=0;extra=0;class=-
+package:cmd/compile/internal/types2	compiled	exit status 1	missing=0;wording=0;extra=0;class=-
+package:cmd/internal/testdir	interpreted	src/cmd/internal/testdir/testdir_test.go:17:2: could not import internal/testenv (use of internal package internal/testenv not allowed)	missing=0;wording=0;extra=0;class=-
+package:cmd/internal/testdir	compiled	src/cmd/internal/testdir/testdir_test.go:17:2: could not import internal/testenv (use of internal package internal/testenv not allowed)	missing=0;wording=0;extra=0;class=-
+package:go/types	interpreted	gosource: duplicate file "/srv/sprint162/leaf-integ-2/evidence/goroot/src/go/types/context_test.go" in package "go/types"	missing=0;wording=0;extra=0;class=-
+package:go/types	compiled	exit status 1	missing=0;wording=0;extra=0;class=-
+package:internal/types/errors	interpreted	src/internal/types/errors/codes_test.go:5:1: package errors_test; expected package errors	missing=0;wording=0;extra=0;class=-
+package:internal/types/errors	compiled	exit status 1	missing=0;wording=0;extra=0;class=-

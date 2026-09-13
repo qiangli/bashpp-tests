@@ -1,0 +1,56 @@
+root	mode	first_line	verdict
+testdir:asmhdr.go	interpreted	Bash++ backend unsupported generate phase: compile input "/srv/sprint162/leaf-integ-2/evidence/goroot/test/asmhdr.dir/main.s" is not a Go source file	missing=0;wording=0;extra=0;class=-
+testdir:asmhdr.go	compiled	Bash++ backend unsupported generate phase: compile input "/srv/sprint162/leaf-integ-2/evidence/goroot/test/asmhdr.dir/main.s" is not a Go source file	missing=0;wording=0;extra=0;class=-
+testdir:closure3.go	interpreted	main.go:15: missing error "can inline main.func1"	missing=139;wording=0;extra=0;class=missing
+testdir:closure3.go	compiled	test/closure3.dir/main.go:16:9: can inline main.func1	missing=22;wording=0;extra=22;class=position
+testdir:codegen/switch.go	interpreted	linux/amd64/v1	missing=0;wording=0;extra=0;class=-
+testdir:codegen/switch.go	compiled	codegen/switch.go:249: linux/amd64/v1: opcode not found: `^CMPL \(.*\), \$1836345390$`	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue15609.go	interpreted	Bash++ backend unsupported execute phase: module package issue15609.dir has non-Go inputs [call_amd64.s]	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue15609.go	compiled	Bash++ backend unsupported execute phase: module package issue15609.dir has non-Go inputs [call_amd64.s]	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue16616.go	compiled	test/fixedbugs/issue16616.dir/b.go:11:1: LOWER-ETYPE: __gosource_pkg_1_V (package-level variable) is not a type	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue18895.go	interpreted	p.go:7: missing error "can inline"	missing=3;wording=0;extra=0;class=missing
+testdir:fixedbugs/issue18895.go	compiled	test/fixedbugs/issue18895.dir/p.go:14:6: can inline __gosource_pkg_0_t.m	missing=0;wording=1;extra=1;class=wording
+testdir:fixedbugs/issue19261.go	interpreted	p.go:7: missing error "can inline F"	missing=2;wording=0;extra=0;class=missing
+testdir:fixedbugs/issue19261.go	compiled	test/fixedbugs/issue19261.dir/p.go:7:6: can inline __gosource_pkg_0_F	missing=0;wording=1;extra=1;class=wording
+testdir:fixedbugs/issue22344.go	compiled	test/fixedbugs/issue22344.go:31:3: LOWER-ETYPE: declared and not used: x	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue22877.go	interpreted	Bash++ backend unsupported generate phase: compile input "/srv/sprint162/leaf-integ-2/evidence/goroot/test/fixedbugs/issue22877.dir/p.s" is not a Go source file	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue22877.go	compiled	Bash++ backend unsupported generate phase: compile input "/srv/sprint162/leaf-integ-2/evidence/goroot/test/fixedbugs/issue22877.dir/p.s" is not a Go source file	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue34968.go	interpreted	fixedbugs/issue34968.go:12:8: could not import C (go list failed using go SDK go1.27.0 at /srv/sprint162/leaf-integ-2/evidence/goroot/bin/go (GOROOT=/srv/sprint162/leaf-integ-2/evidence/goroot, found via GOROOT, meets go1.27.0): exit status 1	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue34968.go	compiled	fixedbugs/issue34968.go:12:8: could not import C (go list failed using go SDK go1.27.0 at /srv/sprint162/leaf-integ-2/evidence/goroot/bin/go (GOROOT=/srv/sprint162/leaf-integ-2/evidence/goroot, found via GOROOT, meets go1.27.0): exit status 1	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue36705.go	interpreted	fixedbugs/issue36705.go:13:8: could not import C (go list failed using go SDK go1.27.0 at /srv/sprint162/leaf-integ-2/evidence/goroot/bin/go (GOROOT=/srv/sprint162/leaf-integ-2/evidence/goroot, found via GOROOT, meets go1.27.0): exit status 1	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue36705.go	compiled	fixedbugs/issue36705.go:13:8: could not import C (go list failed using go SDK go1.27.0 at /srv/sprint162/leaf-integ-2/evidence/goroot/bin/go (GOROOT=/srv/sprint162/leaf-integ-2/evidence/goroot, found via GOROOT, meets go1.27.0): exit status 1	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue37513.go	interpreted	Bash++ backend unsupported generate phase: compile input "/srv/sprint162/leaf-integ-2/evidence/goroot/test/fixedbugs/issue37513.dir/sigill_amd64.s" is not a Go source file	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue37513.go	compiled	Bash++ backend unsupported generate phase: compile input "/srv/sprint162/leaf-integ-2/evidence/goroot/test/fixedbugs/issue37513.dir/sigill_amd64.s" is not a Go source file	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue37837.go	interpreted	a.go:7: missing error "can inline F"	missing=9;wording=0;extra=0;class=missing
+testdir:fixedbugs/issue37837.go	compiled	test/fixedbugs/issue37837.dir/a.go:7:6: can inline __gosource_pkg_0_F	missing=0;wording=10;extra=10;class=wording
+testdir:fixedbugs/issue42284.go	interpreted	a.go:10: missing error "can inline T.M"	missing=13;wording=0;extra=0;class=missing
+testdir:fixedbugs/issue42284.go	compiled	test/fixedbugs/issue42284.dir/a.go:12:6: can inline __gosource_pkg_0_E	missing=0;wording=7;extra=7;class=wording
+testdir:fixedbugs/issue47185.go	interpreted	Bash++ backend unsupported execute phase: module package issue47185.dir/bad has non-Go inputs [bad.go]	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue47185.go	compiled	Bash++ backend unsupported execute phase: module package issue47185.dir/bad has non-Go inputs [bad.go]	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue47227.go	interpreted	fixedbugs/issue47227.go:12:8: could not import C (go list failed using go SDK go1.27.0 at /srv/sprint162/leaf-integ-2/evidence/goroot/bin/go (GOROOT=/srv/sprint162/leaf-integ-2/evidence/goroot, found via GOROOT, meets go1.27.0): exit status 1	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue47227.go	compiled	fixedbugs/issue47227.go:12:8: could not import C (go list failed using go SDK go1.27.0 at /srv/sprint162/leaf-integ-2/evidence/goroot/bin/go (GOROOT=/srv/sprint162/leaf-integ-2/evidence/goroot, found via GOROOT, meets go1.27.0): exit status 1	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue47317.go	interpreted	Bash++ backend unsupported generate phase: compile input "/srv/sprint162/leaf-integ-2/evidence/goroot/test/fixedbugs/issue47317.dir/a.s" is not a Go source file	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue47317.go	compiled	Bash++ backend unsupported generate phase: compile input "/srv/sprint162/leaf-integ-2/evidence/goroot/test/fixedbugs/issue47317.dir/a.s" is not a Go source file	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue56280.go	interpreted	a.go:7: missing error "can inline F"	missing=5;wording=0;extra=0;class=missing
+testdir:fixedbugs/issue56280.go	compiled	test/fixedbugs/issue56280.dir/a.go:11:6: can inline __gosource_pkg_0_g[go.shape.int]	missing=0;wording=2;extra=2;class=wording
+testdir:fixedbugs/issue71225.go	interpreted	test/fixedbugs/issue71225.go:12:8: could not import C (go list failed using go SDK go1.27.0 at /srv/sprint162/leaf-integ-2/evidence/goroot/bin/go (GOROOT=/srv/sprint162/leaf-integ-2/evidence/goroot, found via GOROOT, meets go1.27.0): exit status 1	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue71225.go	compiled	test/fixedbugs/issue71225.go:12:8: could not import C (go list failed using go SDK go1.27.0 at /srv/sprint162/leaf-integ-2/evidence/goroot/bin/go (GOROOT=/srv/sprint162/leaf-integ-2/evidence/goroot, found via GOROOT, meets go1.27.0): exit status 1	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue71226.go	interpreted	test/fixedbugs/issue71226.go:20:8: could not import C (go list failed using go SDK go1.27.0 at /srv/sprint162/leaf-integ-2/evidence/goroot/bin/go (GOROOT=/srv/sprint162/leaf-integ-2/evidence/goroot, found via GOROOT, meets go1.27.0): exit status 1	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue71226.go	compiled	test/fixedbugs/issue71226.go:20:8: could not import C (go list failed using go SDK go1.27.0 at /srv/sprint162/leaf-integ-2/evidence/goroot/bin/go (GOROOT=/srv/sprint162/leaf-integ-2/evidence/goroot, found via GOROOT, meets go1.27.0): exit status 1	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue74648.go	interpreted	Bash++ backend unsupported execute phase: module package issue74648.dir has non-Go inputs [a.s]	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue74648.go	compiled	Bash++ backend unsupported execute phase: module package issue74648.dir has non-Go inputs [a.s]	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue7794.go	compiled	test/fixedbugs/issue7794.go:10:2: LOWER-ETYPE: declared and not used: a	missing=0;wording=0;extra=0;class=-
+testdir:intrinsic.go	interpreted	test/intrinsic.dir/main.go:9:4: could not import internal/runtime/sys (use of internal package internal/runtime/sys not allowed)	missing=0;wording=0;extra=0;class=-
+testdir:intrinsic.go	compiled	test/intrinsic.dir/main.go:9:4: could not import internal/runtime/sys (use of internal package internal/runtime/sys not allowed)	missing=0;wording=0;extra=0;class=-
+testdir:linkname.go	interpreted	linkname1.go:3: missing error "xs does not escape"	missing=2;wording=0;extra=0;class=missing
+testdir:linkname.go	compiled	test/linkname.dir/linkname2.go:8:6: can inline __gosource_pkg_1_ContainsSlash	missing=0;wording=1;extra=1;class=wording
+testdir:linknameasm.go	interpreted	Bash++ backend unsupported generate phase: compile input "/srv/sprint162/leaf-integ-2/evidence/goroot/test/linknameasm.dir/a_amd64.s" is not a Go source file	missing=0;wording=0;extra=0;class=-
+testdir:linknameasm.go	compiled	Bash++ backend unsupported generate phase: compile input "/srv/sprint162/leaf-integ-2/evidence/goroot/test/linknameasm.dir/a_amd64.s" is not a Go source file	missing=0;wording=0;extra=0;class=-
+testdir:live_regabi.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:live_regabi.go	compiled	test/live_regabi.go:642:8: gosource: unsupported compound simple statement	missing=0;wording=0;extra=0;class=-
+testdir:nilptr3.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:nilptr3.go	compiled	test/nilptr3.go:253: generated nil check	missing=1;wording=0;extra=0;class=missing
+testdir:prove.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:prove.go	compiled	test/prove.go:2867: Proved Leq64U	missing=11;wording=0;extra=2;class=position
+testdir:retjmp.go	interpreted	Bash++ backend unsupported generate phase: compile input "/srv/sprint162/leaf-integ-2/evidence/goroot/test/retjmp.dir/a.s" is not a Go source file	missing=0;wording=0;extra=0;class=-
+testdir:retjmp.go	compiled	Bash++ backend unsupported generate phase: compile input "/srv/sprint162/leaf-integ-2/evidence/goroot/test/retjmp.dir/a.s" is not a Go source file	missing=0;wording=0;extra=0;class=-
