@@ -90,7 +90,7 @@ var evidenceStreams = []struct {
 }
 
 var modes = []string{"interpreted", "compiled"}
-var owners = []string{"151", "152", "153", "154", "unclassified", "retained"}
+var owners = []string{"151", "152", "153", "154", "package", "unclassified", "retained"}
 
 func main() {
 	interpreted := flag.String("evidence-interpreted", "", "interpreted evidence directory")
@@ -707,11 +707,35 @@ func diagnosticLine(line string) bool {
 }
 
 // optimizerDiagnosticFlags reports whether the recipe asks the compiler for
-// optimizer diagnostics: -m (any -m… form), -live, or a -d= debug
-// flag — compiler artifacts the check interface cannot produce.
+// optimizer diagnostics: -m (any -m… form), -live, or a -d= debug flag,
+// including options nested in upstream's -gcflags value.
 func optimizerDiagnosticFlags(flags []string) bool {
-	for _, flag := range flags {
-		if strings.HasPrefix(flag, "-m") || strings.HasPrefix(flag, "-live") || debugDiagnosticFlag(flag) {
+	for i, flag := range flags {
+		if optimizerDiagnosticFlag(flag) || debugDiagnosticFlag(flag) {
+			return true
+		}
+		// errorcheckandrundir carries compiler options in the upstream
+		// -gcflags value rather than as top-level recipe flags.
+		if (flag == "-gcflags" || flag == "--gcflags") && i+1 < len(flags) && optimizerDiagnosticValue(flags[i+1]) {
+			return true
+		}
+	}
+	return false
+}
+
+func optimizerDiagnosticFlag(flag string) bool {
+	if strings.HasPrefix(flag, "-gcflags=") {
+		return optimizerDiagnosticValue(strings.TrimPrefix(flag, "-gcflags="))
+	}
+	if strings.HasPrefix(flag, "--gcflags=") {
+		return optimizerDiagnosticValue(strings.TrimPrefix(flag, "--gcflags="))
+	}
+	return strings.HasPrefix(flag, "-m") || strings.HasPrefix(flag, "-live")
+}
+
+func optimizerDiagnosticValue(value string) bool {
+	for _, word := range strings.Fields(value) {
+		if strings.HasPrefix(word, "-m") || strings.HasPrefix(word, "-live") || debugDiagnosticFlag(word) {
 			return true
 		}
 	}
@@ -719,8 +743,22 @@ func optimizerDiagnosticFlags(flags []string) bool {
 }
 
 func debugDiagnosticFlags(flags []string) bool {
-	for _, flag := range flags {
-		if debugDiagnosticFlag(flag) {
+	for i, flag := range flags {
+		if debugDiagnosticFlag(flag) ||
+			(strings.HasPrefix(flag, "-gcflags=") && debugDiagnosticFlagValue(strings.TrimPrefix(flag, "-gcflags="))) ||
+			(strings.HasPrefix(flag, "--gcflags=") && debugDiagnosticFlagValue(strings.TrimPrefix(flag, "--gcflags="))) {
+			return true
+		}
+		if (flag == "-gcflags" || flag == "--gcflags") && i+1 < len(flags) && debugDiagnosticFlagValue(flags[i+1]) {
+			return true
+		}
+	}
+	return false
+}
+
+func debugDiagnosticFlagValue(value string) bool {
+	for _, word := range strings.Fields(value) {
+		if debugDiagnosticFlag(word) {
 			return true
 		}
 	}
@@ -761,11 +799,16 @@ func runtimeShape(line string) bool {
 // on the recipe flags and verdict shape only, never on expected strings; the
 // remaining rules are the first-line substring partition (classifyLine).
 func classify(line, mode string, hasDiagnostic bool, runner string, recipe recipeEvidence, verdictClass string) string {
+	// Package roots are a distinct upstream runner kind. Their failures are
+	// owned by the package seam regardless of the first diagnostic line or
+	// mode; this also keeps internal-import diagnostics out of retained.
+	if runner == "package" {
+		return "package"
+	}
 	// D1: optimizer diagnostics are a compiler artifact; the check interface
 	// has no inliner, escape analysis, or SSA — the same shape as interpreted
-	// asmcheck. A compiled -d= row is retained too (the seam drops -d= as
-	// evidence only, see the backend's compileDeviations); a compiled
-	// -m/-live row with a verdict is a lowering row (152, below). As with
+	// asmcheck. Interpreted artifact rows are retained; compiled artifact rows
+	// are lowering failures (152). As with
 	// retained generally, a real failure in the other mode still wins
 	// (ownerRank).
 	if recipe.errorcheckFamily() {
@@ -773,7 +816,7 @@ func classify(line, mode string, hasDiagnostic bool, runner string, recipe recip
 			return "retained"
 		}
 		if mode == "compiled" && debugDiagnosticFlags(recipe.flags) {
-			return "retained"
+			return "152"
 		}
 		// A compiled -m/-live row that carries an errorCheck verdict is the
 		// generated module's optimizer notes compared against the original's.
@@ -793,8 +836,8 @@ func classify(line, mode string, hasDiagnostic bool, runner string, recipe recip
 	// types.Error, %q-escaped as \t) and the missing assert/trace test
 	// builtins are 154 fidelity rows, before the generic
 	// "no error expected" -> 151 rule in classifyLine. Other
-	// "no error expected" rows stay 151; "could not import C" still falls to
-	// retained.
+	// "no error expected" rows stay 151; interpreted cgo still falls to
+	// retained while compiled cgo is a product lowering failure (152).
 	if runner == "typechecker" {
 		for _, pattern := range []string{`no error expected: "\t`, `no error expected: "undefined: assert"`, `no error expected: "undefined: trace"`} {
 			if strings.Contains(line, pattern) {
@@ -875,7 +918,7 @@ func classifyLine(line, mode string, hasDiagnostic bool) string {
 	// cgo roots: the product declares no cgo support. These patterns appear
 	// when a test imports "C" or requires cgo. Placed before the 153 block
 	// (which contains the shorter "requires cgo") so the specific cgo-root
-	// messages are classified as retained; ownerRank ensures a real failure
+	// messages are classified by mode; ownerRank ensures a real failure
 	// in the other mode always wins.
 	//
 	// NOTE: three both-mode `bin/go (GOROOT=…): exit status 1` rows
@@ -892,6 +935,9 @@ func classifyLine(line, mode string, hasDiagnostic bool) string {
 		"could not import C",
 	} {
 		if contains(pattern) {
+			if mode == "compiled" {
+				return "152"
+			}
 			return "retained"
 		}
 	}
@@ -923,6 +969,9 @@ func classifyLine(line, mode string, hasDiagnostic bool) string {
 	}
 	for _, pattern := range []string{"non-Go inputs", "is not a Go source file", "function declaration without body"} {
 		if contains(pattern) {
+			if mode == "compiled" {
+				return "152"
+			}
 			return "retained"
 		}
 	}

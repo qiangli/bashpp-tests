@@ -136,7 +136,7 @@ manifest>` is the leaf form (per-runner `-run` selectors derived from the
 root ids, counts authenticated against the manifest); `BASHPP_CORPUS_SMOKE`
 exercises the plumbing and never yields a verdict. `partition-emit.go` turns
 the per-mode `go test -json` streams into owner manifests by first-line rule
-and writes `active-summary.tsv`. The owner values are 151–154, `retained`, and
+and writes `active-summary.tsv`. The owner values are 151–154, `package`, `retained`, and
 `unclassified`; `retained` is a recorded disposition, never a pass and never
 dispatchable. Root ids are `testdir:<path>`,
 `typechecker:<package>/<Test>/<file>`,
@@ -144,3 +144,21 @@ dispatchable. Root ids are `testdir:<path>`,
 2,726 + 899 + 26 = **3,651** roots (the Sprint 142 inventory selected 743 of
 the 899 typechecker leaves). `backend.md` §Sprint 151 describes the
 backend-lane deadline.
+
+## Sprint 162 partition v10.5
+
+v10.5 adds the package owner to the D0 rule ledger. Every package: root is
+owned by package in both modes, independent of its diagnostic; the 26 roots
+move from 151 (9), retained (16), and unclassified (1). A compiled row is
+never retained: body-less declarations, phase-seam/non-Go inputs, cgo and
+compiler-artifact (-m, -live, -d=) failures move to 152, while interpreted
+compiler-artifact rows remain retained. The two interpreted
+errorcheckandrundir optimizer rows whose flags are nested in -gcflags
+(closure3.go and linkname.go) remain retained with their missing verdicts.
+
+Barrier B owner movement is therefore: 151 511 -> 502 (9 package roots),
+retained compiled 93 rows -> 0 (16 package rows and 77 compiled product rows
+move out), package 0 -> 26, and 152 gains the non-package compiled product
+rows from the retained lane in addition to its existing 19 roots. The copied
+backend-event evidence needed to regenerate the full v10.5 manifests was not
+present in this checkout; run 0 is the authoritative regeneration venue.

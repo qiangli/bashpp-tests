@@ -95,8 +95,9 @@ func TestEmitPartitions(t *testing.T) {
 		"active-154-manifest.tsv": "root\tmode\tfirst_line\tverdict\n" +
 			"typechecker:go/types/TestCheck/escape.go\tinterpreted\tescape.go:8: missing error \"x does not escape\"\tmissing=1;wording=0;extra=0;class=missing\n" +
 			"typechecker:go/types/TestCheck/escape.go\tcompiled\tescape.go:8: wrong error\t" + noVerdict + "\n",
-		"active-unclassified.tsv": "root\tmode\tfirst_line\tverdict\n" +
+		"active-package-manifest.tsv": "root\tmode\tfirst_line\tverdict\n" +
 			"package:example/unclassified\tinterpreted\tmystery product limitation\t" + noVerdict + "\n",
+		"active-unclassified.tsv": "root\tmode\tfirst_line\tverdict\n",
 		"active-retained-manifest.tsv": "root\tmode\tfirst_line\tverdict\n" +
 			"testdir:kept.go\tinterpreted\tBash++ backend unsupported execute phase: module package kept.dir has non-Go inputs [a.s]\t" + noVerdict + "\n",
 		"native-only-typechecker.tsv": "root\tclass\tcredit\n" +
@@ -108,7 +109,7 @@ func TestEmitPartitions(t *testing.T) {
 			"total\t2\t7\t2\t11\t1\n\n" +
 			"product\troots\tnative-applicable\tSKIP\tnative-only\n" +
 			"total\t11\t9\t2\t1\n\n" +
-			"owner\tcount\n151\t1\n152\t2\n153\t1\n154\t1\nunclassified\t1\nretained\t1\ntotal\t7\n",
+			"owner\tcount\n151\t1\n152\t2\n153\t1\n154\t1\npackage\t1\nunclassified\t0\nretained\t1\ntotal\t7\n",
 	}
 	for name, want := range wantFiles {
 		got, err := os.ReadFile(filepath.Join(out, name))
@@ -120,8 +121,8 @@ func TestEmitPartitions(t *testing.T) {
 		}
 	}
 	lines := strings.Split(strings.TrimSpace(stdout.String()), "\n")
-	if len(lines) != 7 {
-		t.Fatalf("stdout has %d report lines, want 7:\n%s", len(lines), stdout.String())
+	if len(lines) != 8 {
+		t.Fatalf("stdout has %d report lines, want 8:\n%s", len(lines), stdout.String())
 	}
 	// Family names deliberately point the wrong way: TestCheck has no seam
 	// record and is native-only, while TestObjectString has seam records and
@@ -136,6 +137,7 @@ func TestPartitionRuleChanges(t *testing.T) {
 		name      string
 		lines     []string
 		mode      string
+		runner    string
 		wantLine  string
 		wantOwner string
 	}{
@@ -165,7 +167,7 @@ func TestPartitionRuleChanges(t *testing.T) {
 			lines:     []string{"Bash++ gotest backend: non-Go inputs [a.s]"},
 			mode:      "compiled",
 			wantLine:  "Bash++ gotest backend: non-Go inputs [a.s]",
-			wantOwner: "retained",
+			wantOwner: "152",
 		},
 		{
 			name:      "emitter line directive with column 0",
@@ -193,7 +195,14 @@ func TestPartitionRuleChanges(t *testing.T) {
 			lines:     []string{"LOWER-EUNSUPPORTED: function declaration without body"},
 			mode:      "compiled",
 			wantLine:  "LOWER-EUNSUPPORTED: function declaration without body",
-			wantOwner: "retained",
+			wantOwner: "152",
+		},
+		{
+			name:      "compiled source phase non-Go input",
+			lines:     []string{"Bash++ backend unsupported generate phase: compile input a.s is not a Go source file"},
+			mode:      "compiled",
+			wantLine:  "Bash++ backend unsupported generate phase: compile input a.s is not a Go source file",
+			wantOwner: "152",
 		},
 		{
 			name:      "cgo requires interpreted",
@@ -207,7 +216,7 @@ func TestPartitionRuleChanges(t *testing.T) {
 			lines:     []string{"package requires cgo, which this pure-Go shell does not provide"},
 			mode:      "compiled",
 			wantLine:  "package requires cgo, which this pure-Go shell does not provide",
-			wantOwner: "retained",
+			wantOwner: "152",
 		},
 		{
 			name:      "unknown import C interpreted",
@@ -221,14 +230,14 @@ func TestPartitionRuleChanges(t *testing.T) {
 			lines:     []string{`bin/go (GOROOT=/x, found via GOROOT, meets go1.27.0): exit status 1\nunknown import path \"C\": internal error: module loader did not resolve import\n)"`},
 			mode:      "compiled",
 			wantLine:  `bin/go (GOROOT=/x, found via GOROOT, meets go1.27.0): exit status 1\nunknown import path \"C\": internal error: module loader did not resolve import\n)"`,
-			wantOwner: "retained",
+			wantOwner: "152",
 		},
 		{
 			name:      "could not import C keeps the diagnostic past a quoted goroot path",
 			lines:     []string{"testdir_test.go:153: exit status 2", "/srv/x/goroot/test/fixedbugs/issue34968.go:12:8: could not import C (go list failed using go SDK go1.27.0 at /srv/x/goroot/bin/go (GOROOT=/srv/x/goroot, found via GOROOT, meets go1.27.0): exit status 1"},
 			mode:      "compiled",
 			wantLine:  "test/fixedbugs/issue34968.go:12:8: could not import C (go list failed using go SDK go1.27.0 at /srv/x/goroot/bin/go (GOROOT=/srv/x/goroot, found via GOROOT, meets go1.27.0): exit status 1",
-			wantOwner: "retained",
+			wantOwner: "152",
 		},
 		{
 			name:      "bridge writeback refusal is a 153 runtime row",
@@ -263,7 +272,15 @@ func TestPartitionRuleChanges(t *testing.T) {
 			lines:     []string{`unknown import path "C"`},
 			mode:      "compiled",
 			wantLine:  `unknown import path "C"`,
-			wantOwner: "retained",
+			wantOwner: "152",
+		},
+		{
+			name:      "package root uses package owner",
+			lines:     []string{"src/cmd/compile/main.go:8:2: could not import internal package"},
+			mode:      "compiled",
+			runner:    "package",
+			wantLine:  "src/cmd/compile/main.go:8:2: could not import internal package",
+			wantOwner: "package",
 		},
 	}
 
@@ -273,7 +290,11 @@ func TestPartitionRuleChanges(t *testing.T) {
 			if line != tt.wantLine {
 				t.Fatalf("firstLine = %q, want %q", line, tt.wantLine)
 			}
-			owner := classify(line, tt.mode, diagnostic, "testdir", recipeEvidence{}, errorCheckVerdictOf(tt.lines).class)
+			runner := tt.runner
+			if runner == "" {
+				runner = "testdir"
+			}
+			owner := classify(line, tt.mode, diagnostic, runner, recipeEvidence{}, errorCheckVerdictOf(tt.lines).class)
 			if owner != tt.wantOwner {
 				t.Fatalf("classify(%q, %q) = %q, want %q", line, tt.mode, owner, tt.wantOwner)
 			}
@@ -368,6 +389,15 @@ func TestClassifyRecipeAndVerdictRules(t *testing.T) {
 			want:         "retained",
 		},
 		{
+			name:         "D1 interpreted errorcheckandrundir nested gcflags -m",
+			line:         `linkname1.go:3: missing error "xs does not escape"`,
+			mode:         "interpreted",
+			runner:       "testdir",
+			recipe:       errorcheck("errorcheckandrundir", "-gcflags", "-m -l"),
+			verdictClass: "missing",
+			want:         "retained",
+		},
+		{
 			name:         "D1 interpreted errorcheckdir -live",
 			line:         `live.go:15: missing error "live at entry"`,
 			mode:         "interpreted",
@@ -412,7 +442,7 @@ func TestClassifyRecipeAndVerdictRules(t *testing.T) {
 			runner:       "testdir",
 			recipe:       errorcheck("errorcheck", "-0", "-d=nil", "-d=ssa/check/on"),
 			verdictClass: "missing",
-			want:         "retained",
+			want:         "152",
 		},
 		{
 			name:         "D1 compiled -m is a lowering row (152)",
@@ -448,7 +478,7 @@ func TestClassifyRecipeAndVerdictRules(t *testing.T) {
 			runner:       "testdir",
 			recipe:       errorcheck("errorcheck", "-0", "-m", "-l"),
 			verdictClass: "-",
-			want:         "retained",
+			want:         "152",
 		},
 		{
 			name:         "run root program output with a wording substring is not a diagnostic row",
@@ -647,7 +677,7 @@ func TestRecipeFlagRootsAcrossModes(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, root := range []string{"testdir:dflag.go", "testdir:mflag.go"} {
+	for _, root := range []string{"testdir:mflag.go"} {
 		if !strings.Contains(string(retained), root) {
 			t.Errorf("%s not in retained manifest:\n%s", root, retained)
 		}
@@ -664,6 +694,9 @@ func TestRecipeFlagRootsAcrossModes(t *testing.T) {
 	}
 	if !strings.Contains(string(lowering), "testdir:mflagreal.go") {
 		t.Errorf("mixed root mflagreal.go must stay with the real compiled failure in 152:\n%s", lowering)
+	}
+	if !strings.Contains(string(lowering), "testdir:dflag.go") {
+		t.Errorf("compiled -d= failure must be a 152 lowering row:\n%s", lowering)
 	}
 	fidelity, err := os.ReadFile(filepath.Join(out, "active-154-manifest.tsv"))
 	if err != nil {
