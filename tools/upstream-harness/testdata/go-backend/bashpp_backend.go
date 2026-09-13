@@ -101,6 +101,44 @@ func bashppQuote(value string) string {
 	return "'" + strings.ReplaceAll(value, "'", "'\"'\"'") + "'"
 }
 
+// bashppOverlay writes cmd/go's overlay before the replacement command starts.
+// Its keys are the source files cmd/go selected; cmd/go consequently retains
+// ownership of package identity and internal-import policy.
+func bashppOverlay(name string, replace map[string]string) error {
+	data, err := json.Marshal(struct {
+		Replace map[string]string `json:"Replace"`
+	}{Replace: replace})
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(name, append(data, '\n'), 0o600)
+}
+
+func bashppOverlayProof(eventFile, pkg, overlay, trace, goTool string, originals, generated []string) string {
+	lines := []string{
+		"sha256() { if command -v sha256sum >/dev/null 2>&1; then sha256sum \"$1\" | awk '{print $1}'; else shasum -a 256 \"$1\" | awk '{print $1}'; fi; }",
+		"{",
+		"printf '%s' " + bashppQuote(`{"schema":"`+bashppGoTestSchema+`","kind":"overlay-proof","package":"`+pkg+`","go_tool":"`+goTool+`","overlay":{"path":"`+overlay+`","sha256":"`),
+		"sha256 " + bashppQuote(overlay),
+		"printf '%s' " + bashppQuote(`"},"compile_trace":{"path":"`+trace+`","sha256":"`),
+		"sha256 " + bashppQuote(trace),
+		"printf '%s' " + bashppQuote(`"},"files":[`),
+	}
+	for i := range originals {
+		if i != 0 {
+			lines = append(lines, "printf ','")
+		}
+		lines = append(lines,
+			"printf '%s' "+bashppQuote(`{"original":"`+originals[i]+`","generated":"`+generated[i]+`","sha256":"`),
+			"sha256 "+bashppQuote(generated[i]),
+			"printf '%s' "+bashppQuote(`"}`))
+	}
+	lines = append(lines,
+		"printf '%s\\n' "+bashppQuote(`],"compiler_argv":["`+goTool+`","test","-overlay=`+overlay+`","`+pkg+`"]}`),
+		"} >> "+bashppQuote(eventFile))
+	return strings.Join(lines, "\n")
+}
+
 // bashppTestPlan returns the argv that replaces the native test binary, or
 // nil when the backend is not selected. args[0] is the built test binary
 // (or an exec wrapper); args[1:] are the exact test flags cmd/go chose.
@@ -135,17 +173,25 @@ func bashppTestPlan(p *load.Package, buildAction *work.Action, args []string) []
 	// order, then _testmain.go as the main package.
 	var mapArgs []string
 	var packages []map[string]any
+	var overlayOriginals []string
+	var overlayImports []string
+	var assemblyCompanions []string
 	for _, imp := range pmain.Internal.Imports {
 		if imp.ImportPath != p.ImportPath && imp.ImportPath != p.ImportPath+"_test" {
 			continue
 		}
-		if len(imp.SFiles) != 0 || len(imp.CgoFiles) != 0 {
+		if len(imp.CgoFiles) != 0 || (mode != "compiled" && len(imp.SFiles) != 0) {
 			record["disposition"] = "unsupported"
 			record["deviations"] = []string{fmt.Sprintf("package %s has non-Go inputs %v; no direct Go-source meaning", imp.ImportPath, append(append([]string(nil), imp.SFiles...), imp.CgoFiles...))}
 			bashppEmit(record)
 			return []string{"/bin/sh", "-c", "echo 'Bash++ gotest backend: non-Go inputs' >&2; exit 1"}
 		}
+		assemblyCompanions = append(assemblyCompanions, imp.SFiles...)
 		files := bashppFiles(imp)
+		overlayOriginals = append(overlayOriginals, files...)
+		for range files {
+			overlayImports = append(overlayImports, imp.ImportPath)
+		}
 		mapArgs = append(mapArgs, "--go-package", imp.ImportPath+"="+strings.Join(files, ","))
 		packages = append(packages, map[string]any{"path": imp.ImportPath, "files": files})
 	}
@@ -167,30 +213,58 @@ func bashppTestPlan(p *load.Package, buildAction *work.Action, args []string) []
 		}
 		record["disposition"] = "run-package-map"
 	case "compiled":
-		goTool, shellrt := os.Getenv("BASHPP_GOTEST_GO"), os.Getenv("BASHPP_SHELLRT_ROOT")
-		moduleDir := filepath.Join(pmain.Dir, "bashpp")
-		os.MkdirAll(moduleDir, 0o700)
-		os.WriteFile(filepath.Join(moduleDir, "go.mod"), []byte(fmt.Sprintf("module bashpp_s1508\n\ngo 1.27\n\nrequire mvdan.cc/sh/v3 v3.13.1\nreplace mvdan.cc/sh/v3 => %s\n", shellrt)), 0o600)
-		generated, artifact := filepath.Join(moduleDir, "main.go"), filepath.Join(moduleDir, "program")
-		transpile := append([]string{tool, "transpile", "--bashpp", "--source=go", "--go-import-path", pmain.ImportPath}, mapArgs...)
-		transpile = append(transpile, "--go-file", testmain, "-o", generated, "--map", generated+".map")
-		build := []string{goTool, "build", "-C", moduleDir, "-o", artifact, "."}
-		run := append([]string{artifact}, testArgs...)
+		goTool := os.Getenv("BASHPP_GOTEST_GO")
+		overlayDir := filepath.Join(pmain.Dir, "bashpp-overlay")
+		if err := os.MkdirAll(overlayDir, 0o700); err != nil {
+			record["disposition"] = "configuration-error"
+			record["deviations"] = append(deviations, "could not create overlay directory: "+err.Error())
+			bashppEmit(record)
+			return []string{"/bin/sh", "-c", "exit 1"}
+		}
+		overlay := filepath.Join(overlayDir, "overlay.json")
+		trace := filepath.Join(overlayDir, "go-test-n.trace")
+		replace := make(map[string]string, len(overlayOriginals))
+		generated := make([]string, len(overlayOriginals))
 		var lines []string
-		for i, command := range [][]string{transpile, build, run} {
-			words := make([]string, len(command))
-			for j, w := range command {
+		for i, original := range overlayOriginals {
+			generated[i] = filepath.Join(overlayDir, fmt.Sprintf("%03d.go", i))
+			replace[original] = generated[i]
+			transpile := []string{tool, "transpile", "--bashpp", "--source=go", "--go-import-path", overlayImports[i], "--go-file", original, "-o", generated[i], "--map", generated[i] + ".map"}
+			words := make([]string, len(transpile))
+			for j, w := range transpile {
 				words[j] = bashppQuote(w)
-			}
-			if i == 2 {
-				words = append([]string{"exec"}, words...)
 			}
 			lines = append(lines, strings.Join(words, " "))
 		}
+		if err := bashppOverlay(overlay, replace); err != nil {
+			record["disposition"] = "configuration-error"
+			record["deviations"] = append(deviations, "could not write cmd/go overlay: "+err.Error())
+			bashppEmit(record)
+			return []string{"/bin/sh", "-c", "exit 1"}
+		}
+		goTest := append([]string{"env", "-u", "BASHPP_GOTEST_BACKEND", goTool, "test", "-overlay=" + overlay, p.ImportPath}, testArgs...)
+		words := make([]string, len(goTest))
+		for j, word := range goTest {
+			words[j] = bashppQuote(word)
+		}
+		dryRun := append([]string{"env", "-u", "BASHPP_GOTEST_BACKEND", goTool, "test", "-n", "-overlay=" + overlay, p.ImportPath}, testArgs...)
+		dryWords := make([]string, len(dryRun))
+		for j, word := range dryRun {
+			dryWords[j] = bashppQuote(word)
+		}
+		lines = append(lines, strings.Join(dryWords, " ")+" > "+bashppQuote(trace))
+		lines = append(lines, bashppOverlayProof(os.Getenv("BASHPP_GOTEST_EVENTS"), p.ImportPath, overlay, trace, goTool, overlayOriginals, generated))
+		lines = append(lines, "exec "+strings.Join(words, " "))
 		plan = []string{"/bin/sh", "-c", "set -e\n" + strings.Join(lines, "\n")}
-		record["artifacts"] = []string{generated, artifact}
-		record["disposition"] = "transpile-build-run-package-map"
-		deviations = append(deviations, "generated source is built in a temporary module with a caller-supplied mvdan.cc/sh/v3 replacement")
+		record["artifacts"] = generated
+		record["overlay"] = overlay
+		record["disposition"] = "transpile-overlay-go-test"
+		deviations = append(deviations,
+			"every GoFiles, TestGoFiles and XTestGoFiles source is transpiled as a library at its original import path and mapped by cmd/go -overlay",
+			"cmd/go's original _testmain.go enumerates and runs the tests; cmd/go retains internal-import policy and assembles any .s companion natively")
+		if len(assemblyCompanions) != 0 {
+			deviations = append(deviations, "D3(b): cmd/go assembles the package's .s test companions natively under the overlay; they are an authority compiler-artifact step, never Bash++ tested-source execution")
+		}
 	default:
 		record["disposition"] = "configuration-error"
 		bashppEmit(record)

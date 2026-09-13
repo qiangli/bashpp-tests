@@ -14,6 +14,7 @@ package main
 
 import (
 	"bufio"
+	"crypto/sha256"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -33,6 +34,8 @@ type planRecord struct {
 	Argv        []string `json:"argv"`
 	Testmain    string   `json:"testmain"`
 	Disposition string   `json:"disposition"`
+	Overlay     string   `json:"overlay"`
+	Artifacts   []string `json:"artifacts"`
 	Deviations  []string `json:"deviations"`
 	ProgramArgv []string `json:"program_argv"`
 	Enumeration struct {
@@ -48,6 +51,26 @@ type planRecord struct {
 		}
 	} `json:"program"`
 	Tool struct{ Path, Version string } `json:"tool"`
+}
+
+type overlayProof struct {
+	Schema  string    `json:"schema"`
+	Kind    string    `json:"kind"`
+	Package string    `json:"package"`
+	GoTool  string    `json:"go_tool"`
+	Overlay fileProof `json:"overlay"`
+	Trace   fileProof `json:"compile_trace"`
+	Files   []struct {
+		Original  string `json:"original"`
+		Generated string `json:"generated"`
+		SHA256    string `json:"sha256"`
+	} `json:"files"`
+	CompilerArgv []string `json:"compiler_argv"`
+}
+
+type fileProof struct {
+	Path   string `json:"path"`
+	SHA256 string `json:"sha256"`
 }
 
 type goEvent struct {
@@ -113,7 +136,7 @@ func verify(pkg, dir, mode, version, tool string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	plans, err := readPlans(base + ".events.jsonl")
+	plans, proofs, err := readPlans(base + ".events.jsonl")
 	if err != nil {
 		return "", err
 	}
@@ -145,7 +168,7 @@ func verify(pkg, dir, mode, version, tool string) (string, error) {
 		}
 		return "PACKAGE-PRODUCT-FAIL", nil
 	}
-	want := map[string]string{"interpreted": "run-package-map", "compiled": "transpile-build-run-package-map"}[mode]
+	want := map[string]string{"interpreted": "run-package-map", "compiled": "transpile-overlay-go-test"}[mode]
 	if want == "" {
 		return "", fmt.Errorf("unknown backend mode %q", mode)
 	}
@@ -189,6 +212,9 @@ func verify(pkg, dir, mode, version, tool string) (string, error) {
 	case "compiled":
 		if p.Argv[0] != "/bin/sh" || !strings.Contains(strings.Join(p.Argv, " "), "transpile") {
 			return "", fmt.Errorf("compiled argv does not transpile the program")
+		}
+		if err := verifyOverlay(p, proofs, pkg); err != nil {
+			return "", err
 		}
 	}
 	if action == "pass" {
@@ -239,21 +265,100 @@ func goTest(name, pkg string) (action string, terminals int, err error) {
 	return action, terminals, s.Err()
 }
 
-func readPlans(name string) ([]planRecord, error) {
+func readPlans(name string) ([]planRecord, []overlayProof, error) {
 	f, err := os.Open(name)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	defer f.Close()
 	var plans []planRecord
+	var proofs []overlayProof
 	s := bufio.NewScanner(f)
 	s.Buffer(make([]byte, 1<<20), 1<<28)
 	for s.Scan() {
 		var p planRecord
 		if err := json.Unmarshal(s.Bytes(), &p); err != nil {
-			return nil, err
+			return nil, nil, err
 		}
-		plans = append(plans, p)
+		switch p.Kind {
+		case "plan":
+			plans = append(plans, p)
+		case "overlay-proof":
+			var proof overlayProof
+			if err := json.Unmarshal(s.Bytes(), &proof); err != nil {
+				return nil, nil, err
+			}
+			proofs = append(proofs, proof)
+		}
 	}
-	return plans, s.Err()
+	return plans, proofs, s.Err()
+}
+
+func verifyOverlay(p planRecord, proofs []overlayProof, pkg string) error {
+	if len(proofs) != 1 {
+		return fmt.Errorf("wanted exactly one overlay proof, got %d", len(proofs))
+	}
+	proof := proofs[0]
+	if proof.Schema != schema || proof.Kind != "overlay-proof" || proof.Package != pkg || proof.GoTool == "" || proof.Overlay.Path != p.Overlay {
+		return fmt.Errorf("overlay proof identity is incomplete")
+	}
+	if len(proof.CompilerArgv) != 4 || proof.CompilerArgv[0] != proof.GoTool || proof.CompilerArgv[1] != "test" || proof.CompilerArgv[2] != "-overlay="+p.Overlay || proof.CompilerArgv[3] != pkg {
+		return fmt.Errorf("overlay proof does not record the pinned go test argv")
+	}
+	data, err := os.ReadFile(proof.Overlay.Path)
+	if err != nil {
+		return fmt.Errorf("read overlay JSON: %w", err)
+	}
+	if digest(data) != proof.Overlay.SHA256 {
+		return fmt.Errorf("overlay JSON digest does not match recorded proof")
+	}
+	trace, err := os.ReadFile(proof.Trace.Path)
+	if err != nil || digest(trace) != proof.Trace.SHA256 {
+		return fmt.Errorf("go test -n compile trace does not match recorded proof")
+	}
+	var overlay struct {
+		Replace map[string]string `json:"Replace"`
+	}
+	if err := json.Unmarshal(data, &overlay); err != nil || len(overlay.Replace) == 0 {
+		return fmt.Errorf("invalid overlay JSON")
+	}
+	if len(proof.Files) != len(p.Artifacts) || len(proof.Files) != len(overlay.Replace) {
+		return fmt.Errorf("overlay proof does not cover every generated file")
+	}
+	seenOriginal, seenGenerated := map[string]bool{}, map[string]bool{}
+	for _, file := range proof.Files {
+		if file.Original == "" || file.Generated == "" || len(file.SHA256) != 64 || overlay.Replace[file.Original] != file.Generated || seenOriginal[file.Original] || seenGenerated[file.Generated] || !contains(p.Artifacts, file.Generated) {
+			return fmt.Errorf("overlay proof is not a one-to-one original/generated mapping")
+		}
+		data, err := os.ReadFile(file.Generated)
+		if err != nil || digest(data) != file.SHA256 {
+			return fmt.Errorf("generated file digest does not match recorded proof")
+		}
+		seenOriginal[file.Original], seenGenerated[file.Generated] = true, true
+		if traceArg(trace, file.Original) || !traceArg(trace, file.Generated) {
+			return fmt.Errorf("compile trace does not prove generated file replaces %s", file.Original)
+		}
+	}
+	for _, entry := range p.Program.Packages {
+		for _, original := range entry.Files {
+			if !seenOriginal[original] {
+				return fmt.Errorf("package source %s was not mapped by overlay", original)
+			}
+		}
+	}
+	return nil
+}
+
+func traceArg(trace []byte, want string) bool {
+	for _, field := range strings.Fields(string(trace)) {
+		if strings.Trim(field, "'\"") == want {
+			return true
+		}
+	}
+	return false
+}
+
+func digest(data []byte) string {
+	// sha256 is intentionally kept here rather than trusting a shell's report.
+	return fmt.Sprintf("%x", sha256.Sum256(data))
 }

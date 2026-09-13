@@ -305,6 +305,25 @@ earlier in the same test; it never looks for anything on disk.**
   lowering or the map importer), and `cmd/internal/testdir` is additionally
   the runner itself.
 
+### Sprint 162 package overlay
+
+The compiled disposition is `transpile-overlay-go-test`.  For every Go file
+cmd/go selected for the tested package — `GoFiles`, `TestGoFiles`, and
+`XTestGoFiles` — the backend invokes Bash++ as a library at that package's
+original import path and writes a `cmd/go -overlay` replacement at the
+original SDK source path.  It then invokes the pinned `go test` with that
+overlay and the original package/test flags.  Thus cmd/go creates and runs its
+own `_testmain.go`, applies its own internal-import rule, and (for
+`cmd/compile/internal/ssa`) assembles the two `*_test.s` companions natively.
+That assembly is recorded as the explicit D3(b) deviation, not hidden as a
+Bash++ execution.
+
+The overlay proof event records the pinned Go binary, the overlay JSON and
+digest, and each original/generated pair with the generated-file digest.  The
+package verifier reads the overlay itself and rejects a result unless every
+selected package Go file has a one-to-one generated replacement; a two-file
+fixture covers the unmapped-sibling failure mode.
+
 Every packet has its matrix (`docs/upstream-harness/<action>-matrix.tsv`;
 `package-matrix.tsv` rows are Go packages pinned by a digest over their
 `*.go` files) and gate (`tools/upstream-harness/<action>-gate.sh`), exit
