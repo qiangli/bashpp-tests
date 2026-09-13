@@ -57,7 +57,24 @@ case "$go_version" in
 	'go version go1.27.0 '*) ;;
 	*) printf 'FAIL Go pin: %s\n' "$go_version" >&2; exit 1 ;;
 esac
+
+# Sprint 157 freezes the linux/amd64 Go 1.27.0 executable, not merely the
+# version string. Darwin developers may explicitly skip this one check because
+# that Linux binary cannot run on Darwin; every other platform stays closed.
+go_binary=$go_tool
+case "$go_binary" in
+	*/*) ;;
+	*) go_binary=$(command -v "$go_binary" || true) ;;
+esac
+if test "$(uname -s)" = Darwin && test "${BASHPP_SKIP_GO_BINARY_PIN:-}" = 1; then
+	printf 'SKIP pin go_binary_sha256: BASHPP_SKIP_GO_BINARY_PIN=1 (pinned binary is linux/amd64)\n'
+else
+	check_pin go_binary_sha256 "$go_binary"
+fi
 real_goroot=$($go_tool env GOROOT)
+# The SDK runner is source identity, so unlike the Linux executable pin it is
+# mandatory on every host and has no development escape hatch.
+check_pin testdir_upstream_sha256 "$real_goroot/src/cmd/internal/testdir/testdir_test.go"
 
 # These two runners and cmd/go must come from the same pinned SDK whose go
 # command drives the replay. Digest paths directly: a cd in command
