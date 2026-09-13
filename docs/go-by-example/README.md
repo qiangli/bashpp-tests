@@ -333,7 +333,9 @@ The stand-in executable is gone with the same change. Phase B of
 gate against a fixture, because no honest document existed; it now mutates the
 committed real chain, and Phase A drives the same real candidate.
 
-The suite checks **48 genuine mutations** across two phases — the 32 it always
+The suite checks **51 genuine mutations** across two phases (measured by the
+Sprint 155 Go port on novidesign.local; the count below is the Sprint 118
+description) — the 32 it always
 checked, plus the candidate-binding negatives the manifest contract made
 possible: missing rows, unimplemented adapters, permissive normalization, no
 default candidate, an unreviewed manifest, a mutated launcher, zeroed and

@@ -379,6 +379,7 @@ func rubyStringArray(values []string) string {
 	}
 	return "[" + strings.Join(parts, ", ") + "]"
 }
+
 // pinnedGoroot resolves the reviewed release the way `go` itself would
 // (`GOTOOLCHAIN=<version> go env GOROOT`) and authenticates its bin/go by the
 // digest in toolchain.tsv. When the go on PATH is a same-version build with

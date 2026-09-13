@@ -192,16 +192,23 @@ func recandidate(repo string, edit func(fields []string)) {
 }
 
 // rewriteManifest writes a modified copy of the candidate manifest and
-// re-points every reviewed row at it (JSON.pretty_generate + "\n").
+// re-points the reviewed row it was selected by (the row whose manifest digest
+// is the source's) at the copy (JSON.pretty_generate + "\n"). Only that row
+// moves: rewriting every row would give the table duplicate identities and
+// exercise the duplicate-row refusal instead of the case under test.
 func rewriteManifest(repo, source, dest string, editManifest func(m *Object), editRow func(fields []string)) {
 	manifest, err := ParseObject([]byte(mustRead(source)))
 	if err != nil {
 		fatal("candidate manifest is not valid JSON")
 	}
+	original := sha(source)
 	editManifest(manifest)
 	mustWrite(dest, Pretty(manifest)+"\n")
 	sum := sha(dest)
 	recandidate(repo, func(fields []string) {
+		if fields[2] != original {
+			return
+		}
 		fields[2] = sum
 		editRow(fields)
 	})
@@ -570,29 +577,39 @@ func (t *tamperSuite) phaseB() {
 	}
 
 	// A fully self-consistent GREEN document with every hash recomputed still
-	// has no reviewed production root behind it.
+	// has no reviewed production root behind it. A failing source chain is
+	// painted green the historical way (every product attempt takes the
+	// oracle's observation); a source chain that is already green is left with
+	// its real observations -- every raw stream still matches its retained
+	// capture -- and records an `invented` detail nobody derived, so that
+	// self-consistency is the only thing vouching for the recomputed root.
 	{
 		rows := load()
 		manifest, attempts, summary := rows[0], rows[1:len(rows)-1], rows[len(rows)-1]
-		for start := 0; start+3 <= len(attempts); start += 3 {
-			oracle := attempts[start]
-			for _, a := range attempts[start+1 : start+3] {
-				for _, k := range []string{"raw_stdout_b64", "raw_stderr_b64", "normalized_stdout_b64", "normalized_stderr_b64", "exit", "effects_sha256", "effects_delta"} {
-					a.Set(k, oracle.Get(k))
-				}
-				a.Set("spawned", true)
-				a.Set("state", "complete")
-				a.Set("verdict", "pass")
-				stages := stageList(a)
-				last := stages[len(stages)-1]
-				last.Set("spawned", true)
-				last.Set("state", "complete")
-				last.Set("exit", oracle.Get("exit"))
+		green := true
+		for _, a := range attempts {
+			if a.Str("verdict") != "pass" {
+				green = false
 			}
 		}
-		// A source document that is already green would reproduce its own
-		// anchored root; the invented chain records an observation nobody made
-		// so that its self-consistency is the only thing vouching for it.
+		if !green {
+			for start := 0; start+3 <= len(attempts); start += 3 {
+				oracle := attempts[start]
+				for _, a := range attempts[start+1 : start+3] {
+					for _, k := range []string{"raw_stdout_b64", "raw_stderr_b64", "normalized_stdout_b64", "normalized_stderr_b64", "exit", "effects_sha256", "effects_delta"} {
+						a.Set(k, oracle.Get(k))
+					}
+					a.Set("spawned", true)
+					a.Set("state", "complete")
+					a.Set("verdict", "pass")
+					stages := stageList(a)
+					last := stages[len(stages)-1]
+					last.Set("spawned", true)
+					last.Set("state", "complete")
+					last.Set("exit", oracle.Get("exit"))
+				}
+			}
+		}
 		for _, a := range attempts {
 			a.Set("detail", "invented")
 		}
@@ -657,11 +674,14 @@ func (t *tamperSuite) phaseB() {
 		}
 		return r
 	}
+	// Raw bytes changed, stale normalized bytes retained (and the reverse). The
+	// retained capture is the first independent witness against the former:
+	// the substituted raw stream no longer matches the file the run wrote.
 	d = mutate("arrays-stale-normalized", func(rows []*Object) {
 		arraysOracle(rows).Set("raw_stdout_b64", b64([]byte("attacker-controlled arrays output\n")))
 		rebind(rows)
 	})
-	t.expectFail("arrays_raw_stale_normalized", "stored normalized output differs from independently recomputed bytes: examples/arrays/arrays.go:oracle", nil, nil, run(PROD, d)...)
+	t.expectFail("arrays_raw_stale_normalized", "run raw bytes differ from retained capture", nil, nil, run(PROD, d)...)
 	d = mutate("arrays-stale-raw", func(rows []*Object) {
 		arraysOracle(rows).Set("normalized_stdout_b64", b64([]byte("attacker-preferred comparator input\n")))
 		rebind(rows)
