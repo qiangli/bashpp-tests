@@ -19,6 +19,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"testing"
 )
 
 const backendSchema = "bashpp-tests/upstream-testdir-backend/v1"
@@ -180,7 +181,22 @@ func compilerOutput(argv []string, generated, dir string) string {
 			return filepath.Join(dir, name)
 		}
 	}
-	return strings.TrimSuffix(generated, ".go") + ".o"
+	// Without -o, cmd/compile writes the basename-derived object into its
+	// working directory, rather than next to an absolute source argument.
+	// The linker phase uses that same working directory for its source.o
+	// rewrite, so retain the generated basename but resolve it in dir.
+	return filepath.Join(dir, strings.TrimSuffix(filepath.Base(generated), ".go")+".o")
+}
+
+func TestCompilerOutputUsesPhaseDirectoryForImplicitObject(t *testing.T) {
+	phaseDir := t.TempDir()
+	generated := filepath.Join(t.TempDir(), "main.go")
+	if got, want := compilerOutput([]string{"go", "tool", "compile", generated}, generated, phaseDir), filepath.Join(phaseDir, "main.o"); got != want {
+		t.Fatalf("implicit compiler output = %q, want %q", got, want)
+	}
+	if got, want := compilerOutput([]string{"go", "tool", "compile", "-o", "test/a.a", generated}, generated, phaseDir), filepath.Join(phaseDir, "test", "a.a"); got != want {
+		t.Fatalf("explicit compiler output = %q, want %q", got, want)
+	}
 }
 
 // backendModule writes the temporary Go module that hosts transpiled source.
