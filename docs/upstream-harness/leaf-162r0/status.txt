@@ -1,0 +1,4 @@
+leaf=162r0 host=sprint162-leaf harness=ccce2ff bashpp=9f18849d5f0d6c10 sh=e7cd317e candidate=base manifest=/srv/sprint162/in/roots-162r0.tsv roots=875 start=2026-09-13T02:03:29Z
+leaf exit=3 start=2026-09-13T02:03:29Z end=2026-09-13T02:41:54Z
+survivors: 2
+DONE leaf-162r0

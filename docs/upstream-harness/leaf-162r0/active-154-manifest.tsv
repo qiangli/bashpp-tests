@@ -1,0 +1,14 @@
+root	mode	first_line	verdict
+testdir:fixedbugs/issue11362.go	interpreted	test/fixedbugs/issue11362.go:11:10: could not import unicode//utf8 (package "unicode//utf8" not found in go list output)	missing=0;wording=1;extra=1;class=wording
+testdir:fixedbugs/issue11362.go	compiled	test/fixedbugs/issue11362.go:11:10: could not import unicode//utf8 (package "unicode//utf8" not found in go list output)	missing=0;wording=1;extra=1;class=wording
+testdir:fixedbugs/issue23586.go	interpreted	test/fixedbugs/issue23586.go:21:32: expression in defer must be function call	missing=0;wording=0;extra=3;class=extra
+testdir:fixedbugs/issue23586.go	compiled	test/fixedbugs/issue23586.go:21:32: expression in defer must be function call	missing=0;wording=0;extra=3;class=extra
+testdir:fixedbugs/issue4468.go	interpreted	test/fixedbugs/issue4468.go:24:5: expression in go must not be parenthesized	missing=2;wording=0;extra=0;class=missing
+testdir:fixedbugs/issue4468.go	compiled	test/fixedbugs/issue4468.go:24:5: expression in go must not be parenthesized	missing=2;wording=0;extra=0;class=missing
+testdir:fixedbugs/issue50372.go	interpreted	test/fixedbugs/issue50372.go:16:19: expected at most 2 expressions	missing=0;wording=4;extra=4;class=wording
+testdir:fixedbugs/issue50372.go	compiled	test/fixedbugs/issue50372.go:16:19: expected at most 2 expressions	missing=0;wording=4;extra=4;class=wording
+testdir:import6.go	interpreted	test/import6.go:17:8: invalid import path (empty string)	missing=0;wording=1;extra=1;class=wording
+testdir:import6.go	compiled	test/import6.go:17:8: invalid import path (empty string)	missing=0;wording=1;extra=1;class=wording
+testdir:nul1.go	interpreted	/srv/sprint162/leaf-162r0/tmp/Testnul1.go858542475/001/tmp__.go:4:20: invalid NUL character	missing=3;wording=2;extra=2;class=position
+testdir:slice3err.go	interpreted	test/slice3err.go:20:13: middle index required in 3-index slice	missing=33;wording=6;extra=0;class=wording
+testdir:slice3err.go	compiled	test/slice3err.go:20:13: middle index required in 3-index slice	missing=33;wording=6;extra=0;class=wording

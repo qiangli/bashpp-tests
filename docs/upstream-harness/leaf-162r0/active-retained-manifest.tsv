@@ -1,0 +1,134 @@
+root	mode	first_line	verdict
+testdir:bloop.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:bounds.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:codegen/addrcalc.go	interpreted	linux/amd64/v1	missing=0;wording=0;extra=0;class=-
+testdir:codegen/append.go	interpreted	linux/amd64/v1	missing=0;wording=0;extra=0;class=-
+testdir:codegen/arithmetic.go	interpreted	linux/amd64/v1	missing=0;wording=0;extra=0;class=-
+testdir:codegen/atomics.go	interpreted	linux/amd64/v1	missing=0;wording=0;extra=0;class=-
+testdir:codegen/bits.go	interpreted	linux/amd64/v1	missing=0;wording=0;extra=0;class=-
+testdir:codegen/bmi.go	interpreted	linux/amd64/v3	missing=0;wording=0;extra=0;class=-
+testdir:codegen/bool.go	interpreted	linux/amd64/v1	missing=0;wording=0;extra=0;class=-
+testdir:codegen/clobberdeadreg.go	interpreted	linux/amd64/v1	missing=0;wording=0;extra=0;class=-
+testdir:codegen/condmove.go	interpreted	linux/amd64/v1	missing=0;wording=0;extra=0;class=-
+testdir:codegen/constants.go	interpreted	linux/amd64/v1	missing=0;wording=0;extra=0;class=-
+testdir:codegen/copy.go	interpreted	linux/amd64/v1	missing=0;wording=0;extra=0;class=-
+testdir:codegen/deadstore.go	interpreted	linux/amd64/v1	missing=0;wording=0;extra=0;class=-
+testdir:codegen/floats.go	interpreted	linux/amd64/v1	missing=0;wording=0;extra=0;class=-
+testdir:codegen/fuse.go	interpreted	linux/amd64/v1	missing=0;wording=0;extra=0;class=-
+testdir:codegen/generics.go	interpreted	linux/amd64/v1	missing=0;wording=0;extra=0;class=-
+testdir:codegen/ifaces.go	interpreted	linux/amd64/v1	missing=0;wording=0;extra=0;class=-
+testdir:codegen/issue22703.go	interpreted	linux/amd64/v1	missing=0;wording=0;extra=0;class=-
+testdir:codegen/issue25378.go	interpreted	linux/amd64/v1	missing=0;wording=0;extra=0;class=-
+testdir:codegen/issue31618.go	interpreted	linux/amd64/v1	missing=0;wording=0;extra=0;class=-
+testdir:codegen/issue33580.go	interpreted	linux/amd64/v1	missing=0;wording=0;extra=0;class=-
+testdir:codegen/issue38554.go	interpreted	linux/amd64/v1	missing=0;wording=0;extra=0;class=-
+testdir:codegen/issue48054.go	interpreted	linux/amd64/v1	missing=0;wording=0;extra=0;class=-
+testdir:codegen/issue52635.go	interpreted	linux/amd64/v1	missing=0;wording=0;extra=0;class=-
+testdir:codegen/issue54467.go	interpreted	linux/amd64/v1	missing=0;wording=0;extra=0;class=-
+testdir:codegen/issue56440.go	interpreted	linux/amd64/v1	missing=0;wording=0;extra=0;class=-
+testdir:codegen/issue58166.go	interpreted	linux/amd64/v1	missing=0;wording=0;extra=0;class=-
+testdir:codegen/issue59297.go	interpreted	linux/amd64/v1	missing=0;wording=0;extra=0;class=-
+testdir:codegen/issue61356.go	interpreted	linux/amd64/v1	missing=0;wording=0;extra=0;class=-
+testdir:codegen/issue63332.go	interpreted	linux/amd64/v1	missing=0;wording=0;extra=0;class=-
+testdir:codegen/issue66585.go	interpreted	linux/amd64/v1	missing=0;wording=0;extra=0;class=-
+testdir:codegen/issue68845.go	interpreted	linux/amd64/v1	missing=0;wording=0;extra=0;class=-
+testdir:codegen/issue69635.go	interpreted	linux/amd64/v1	missing=0;wording=0;extra=0;class=-
+testdir:codegen/issue70409.go	interpreted	linux/amd64/v1	missing=0;wording=0;extra=0;class=-
+testdir:codegen/issue72832.go	interpreted	linux/amd64/v1	missing=0;wording=0;extra=0;class=-
+testdir:codegen/issue74485.go	interpreted	linux/amd64/v1	missing=0;wording=0;extra=0;class=-
+testdir:codegen/issue74788.go	interpreted	linux/amd64/v1	missing=0;wording=0;extra=0;class=-
+testdir:codegen/issue75203.go	interpreted	linux/amd64/v1	missing=0;wording=0;extra=0;class=-
+testdir:codegen/issue77375.go	interpreted	linux/amd64/v1	missing=0;wording=0;extra=0;class=-
+testdir:codegen/known_bits.go	interpreted	linux/amd64/v1	missing=0;wording=0;extra=0;class=-
+testdir:codegen/load_type_from_itab.go	interpreted	linux/amd64/v1	missing=0;wording=0;extra=0;class=-
+testdir:codegen/logic.go	interpreted	linux/amd64/v1	missing=0;wording=0;extra=0;class=-
+testdir:codegen/mapaccess.go	interpreted	linux/amd64/v1	missing=0;wording=0;extra=0;class=-
+testdir:codegen/maps.go	interpreted	linux/amd64/v1	missing=0;wording=0;extra=0;class=-
+testdir:codegen/math.go	interpreted	linux/amd64/v1	missing=0;wording=0;extra=0;class=-
+testdir:codegen/mathbits.go	interpreted	linux/amd64/v1	missing=0;wording=0;extra=0;class=-
+testdir:codegen/memcombine.go	interpreted	linux/amd64/v1	missing=0;wording=0;extra=0;class=-
+testdir:codegen/moveload.go	interpreted	linux/amd64/v1	missing=0;wording=0;extra=0;class=-
+testdir:codegen/multiply.go	interpreted	linux/amd64/v1	missing=0;wording=0;extra=0;class=-
+testdir:codegen/race.go	interpreted	linux/amd64/v1	missing=0;wording=0;extra=0;class=-
+testdir:codegen/reflect_type.go	interpreted	linux/amd64/v1	missing=0;wording=0;extra=0;class=-
+testdir:codegen/regabi_regalloc.go	interpreted	linux/amd64/v1	missing=0;wording=0;extra=0;class=-
+testdir:codegen/retpoline.go	interpreted	linux/amd64/v1	missing=0;wording=0;extra=0;class=-
+testdir:codegen/rotate.go	interpreted	linux/amd64/v1	missing=0;wording=0;extra=0;class=-
+testdir:codegen/schedule.go	interpreted	linux/amd64/v1	missing=0;wording=0;extra=0;class=-
+testdir:codegen/select.go	interpreted	linux/amd64/v1	missing=0;wording=0;extra=0;class=-
+testdir:codegen/shape_assert.go	interpreted	linux/amd64/v1	missing=0;wording=0;extra=0;class=-
+testdir:codegen/shift.go	interpreted	linux/amd64/v1	missing=0;wording=0;extra=0;class=-
+testdir:codegen/shortcircuit.go	interpreted	linux/amd64/v1	missing=0;wording=0;extra=0;class=-
+testdir:codegen/slices.go	interpreted	linux/amd64/v1	missing=0;wording=0;extra=0;class=-
+testdir:codegen/smallintiface.go	interpreted	linux/amd64/v1	missing=0;wording=0;extra=0;class=-
+testdir:codegen/spectre.go	interpreted	linux/amd64/v1	missing=0;wording=0;extra=0;class=-
+testdir:codegen/stack.go	interpreted	linux/amd64/v1	missing=0;wording=0;extra=0;class=-
+testdir:codegen/strings.go	interpreted	linux/amd64/v1	missing=0;wording=0;extra=0;class=-
+testdir:codegen/structs.go	interpreted	linux/amd64/v1	missing=0;wording=0;extra=0;class=-
+testdir:codegen/typeswitch.go	interpreted	linux/amd64/v1	missing=0;wording=0;extra=0;class=-
+testdir:codegen/unique.go	interpreted	linux/amd64/v1	missing=0;wording=0;extra=0;class=-
+testdir:codegen/unsafe.go	interpreted	linux/amd64/v1	missing=0;wording=0;extra=0;class=-
+testdir:codegen/writebarrier.go	interpreted	linux/amd64/v1	missing=0;wording=0;extra=0;class=-
+testdir:devirtualization_with_type_assertions_interleaved.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:escape4.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:escape5.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:escape6.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:escape_array.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:escape_bloop.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:escape_closure.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:escape_field.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:escape_goto.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:escape_hash_maphash.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:escape_iface.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:escape_indir.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:escape_level.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:escape_make_non_const.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:escape_map.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:escape_param.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:escape_selfassign.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:escape_struct_param1.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:escape_struct_param2.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:escape_struct_return.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:escape_sync_atomic.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:escape_unique.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:escape_unsafe.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/bug514.go	interpreted	bash++ import "runtime/cgo": package requires cgo, which this pure-Go shell does not provide	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue12006.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue12588.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue13799.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue15747.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue16241.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue16241_64.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue17318.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue19743.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue20250.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue23521.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue24651a.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue24651b.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue27557.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue27732a.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue30898.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue31573.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue35073b.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue35518.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue39292.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue40954.go	interpreted	bash++ import "runtime/cgo": package requires cgo, which this pure-Go shell does not provide	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue41635.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue42032.go	interpreted	bash++ import "runtime/cgo": package requires cgo, which this pure-Go shell does not provide	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue42076.go	interpreted	bash++ import "runtime/cgo": package requires cgo, which this pure-Go shell does not provide	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue46903.go	interpreted	bash++ import "runtime/cgo": package requires cgo, which this pure-Go shell does not provide	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue51733.go	interpreted	bash++ import "runtime/cgo": package requires cgo, which this pure-Go shell does not provide	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue52193.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue54159.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue67329.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue75278.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue7921.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:inline.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:inline_big.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:inline_endian.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:inline_math_bits_rotate.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:inline_sync.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:inline_variadic.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:typeparam/issue54497.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:typeparam/pragma.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:uintptrescapes2.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-

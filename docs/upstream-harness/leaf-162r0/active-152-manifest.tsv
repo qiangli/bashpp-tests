@@ -1,0 +1,164 @@
+root	mode	first_line	verdict
+testdir:abi/result_live.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:abi/result_live.go	compiled	test/abi/result_live.go:20:1: LOWER-EUNSUPPORTED: function declaration without body	missing=0;wording=0;extra=0;class=-
+testdir:asmhdr.go	interpreted	Bash++ backend unsupported generate phase: compile input "/srv/sprint162/leaf-162r0/evidence/goroot/test/asmhdr.dir/main.s" is not a Go source file	missing=0;wording=0;extra=0;class=-
+testdir:asmhdr.go	compiled	Bash++ backend unsupported generate phase: compile input "/srv/sprint162/leaf-162r0/evidence/goroot/test/asmhdr.dir/main.s" is not a Go source file	missing=0;wording=0;extra=0;class=-
+testdir:checkbce.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:checkbce.go	compiled	checkbce.go:17: missing error "Found IsInBounds$"	missing=16;wording=0;extra=0;class=missing
+testdir:closure3.go	interpreted	main.go:15: missing error "can inline main.func1"	missing=139;wording=0;extra=0;class=missing
+testdir:closure3.go	compiled	test/closure3.dir/main.go:16:9: can inline main.func1	missing=26;wording=0;extra=0;class=missing
+testdir:codegen/clobberdead.go	interpreted	linux/amd64/v1	missing=0;wording=0;extra=0;class=-
+testdir:codegen/clobberdead.go	compiled	codegen/clobberdead.go:20: linux/amd64/v1: opcode not found: `^MOVL \$3735936685, command-line-arguments\.x`	missing=0;wording=0;extra=0;class=-
+testdir:codegen/comparisons.go	interpreted	linux/amd64/v1	missing=0;wording=0;extra=0;class=-
+testdir:codegen/comparisons.go	compiled	codegen/comparisons.go:54: linux/amd64/v1: opcode not found: `^CMPW command-line-arguments[.+_a-z0-9]+\(SP\), [A-Z]`	missing=0;wording=0;extra=0;class=-
+testdir:codegen/issue60324.go	interpreted	linux/amd64/v1	missing=0;wording=0;extra=0;class=-
+testdir:codegen/issue60324.go	compiled	codegen/issue60324.go:11: linux/amd64/v1: opcode not found: `^LEAQ command-line-arguments\.h\.func1`	missing=0;wording=0;extra=0;class=-
+testdir:codegen/memops.go	interpreted	linux/amd64/v1	missing=0;wording=0;extra=0;class=-
+testdir:codegen/memops.go	compiled	codegen/memops.go:17: linux/amd64/v1: opcode not found: `^CMPB command-line-arguments.x\+1\(SB\), [$]0`	missing=0;wording=0;extra=0;class=-
+testdir:codegen/switch.go	interpreted	linux/amd64/v1	missing=0;wording=0;extra=0;class=-
+testdir:codegen/switch.go	compiled	codegen/switch.go:249: linux/amd64/v1: opcode not found: `^CMPL \(.*\), \$1836345390$`	missing=0;wording=0;extra=0;class=-
+testdir:codegen/zerosize.go	interpreted	linux/amd64/v1	missing=0;wording=0;extra=0;class=-
+testdir:codegen/zerosize.go	compiled	codegen/zerosize.go:16: linux/amd64/v1: opcode not found: `^MOVQ \$0, command-line-arguments\.s\+56\(SP\)`	missing=0;wording=0;extra=0;class=-
+testdir:defererrcheck.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:defererrcheck.go	compiled	defererrcheck.go:20: missing error "open-coded defer"	missing=20;wording=0;extra=0;class=missing
+testdir:devirt.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:devirt.go	compiled	devirt.go:30: missing error "de-virtualizing call$"	missing=2;wording=0;extra=0;class=missing
+testdir:devirtualization.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:devirtualization.go	compiled	test/devirtualization.go:17:6: can inline (*Impl).M	missing=2;wording=0;extra=0;class=missing
+testdir:escape2.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:escape2.go	compiled	test/escape2.go:937:1: LOWER-EUNSUPPORTED: function declaration without body	missing=0;wording=0;extra=0;class=-
+testdir:escape2n.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:escape2n.go	compiled	test/escape2n.go:937:1: LOWER-EUNSUPPORTED: function declaration without body	missing=0;wording=0;extra=0;class=-
+testdir:escape_calls.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:escape_calls.go	compiled	test/escape_calls.go:18:1: LOWER-EUNSUPPORTED: function declaration without body	missing=0;wording=0;extra=0;class=-
+testdir:escape_iface_data.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:escape_iface_data.go	compiled	escape_iface_data.go:15: missing error "using global for interface value"	missing=42;wording=0;extra=0;class=missing
+testdir:escape_mutations.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:escape_mutations.go	compiled	test/escape_mutations.go:17:9: b does not escape	missing=1;wording=9;extra=0;class=wording
+testdir:escape_reflect.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:escape_reflect.go	compiled	test/escape_reflect.go:354:32: 0 does not escape	missing=4;wording=0;extra=0;class=missing
+testdir:escape_slice.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:escape_slice.go	compiled	test/escape_slice.go:140:12: make(IP, 16) escapes to heap	missing=3;wording=0;extra=0;class=missing
+testdir:fixedbugs/bug089.go	compiled	test/fixedbugs/bug089.go:12:1: LOWER-EUNSUPPORTED: function declaration without body	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/bug150.go	compiled	test/fixedbugs/bug150.go:10:1: LOWER-EUNSUPPORTED: function declaration without body	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/bug245.go	compiled	test/fixedbugs/bug245.go:10:1: LOWER-EUNSUPPORTED: function declaration without body	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/bug392.go	compiled	test/fixedbugs/bug392.dir/pkg2.go:25:1: LOWER-EUNSUPPORTED: function declaration without body	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/bug443.go	compiled	test/fixedbugs/bug443.go:16:1: LOWER-EUNSUPPORTED: function declaration without body	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue11699.go	compiled	test/fixedbugs/issue11699.go:11:1: LOWER-EUNSUPPORTED: function declaration without body	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue13587.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue13587.go	compiled	test/fixedbugs/issue13587.go:14:1: LOWER-EUNSUPPORTED: function declaration without body	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue15609.go	interpreted	Bash++ backend unsupported execute phase: module package issue15609.dir has non-Go inputs [call_amd64.s]	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue15609.go	compiled	Bash++ backend unsupported execute phase: module package issue15609.dir has non-Go inputs [call_amd64.s]	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue16616.go	compiled	test/fixedbugs/issue16616.dir/b.go:11:1: LOWER-ETYPE: __gosource_pkg_1_V (package-level variable) is not a type	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue17596.go	compiled	test/fixedbugs/issue17596.go:13:1: LOWER-EUNSUPPORTED: function declaration without body	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue18895.go	interpreted	p.go:7: missing error "can inline"	missing=3;wording=0;extra=0;class=missing
+testdir:fixedbugs/issue18895.go	compiled	test/fixedbugs/issue18895.dir/p.go:14:6: can inline __gosource_pkg_0_t.m	missing=0;wording=1;extra=0;class=wording
+testdir:fixedbugs/issue19168.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue19168.go	compiled	test/fixedbugs/issue19168.go:16:1: LOWER-EUNSUPPORTED: function declaration without body	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue19261.go	interpreted	p.go:7: missing error "can inline F"	missing=2;wording=0;extra=0;class=missing
+testdir:fixedbugs/issue19261.go	compiled	test/fixedbugs/issue19261.dir/p.go:7:6: can inline __gosource_pkg_0_F	missing=0;wording=1;extra=0;class=wording
+testdir:fixedbugs/issue21709.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue21709.go	compiled	test/fixedbugs/issue21709.go:13:7: s does not escape	missing=2;wording=0;extra=0;class=missing
+testdir:fixedbugs/issue22344.go	compiled	test/fixedbugs/issue22344.go:31:3: LOWER-ETYPE: declared and not used: x	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue22877.go	interpreted	Bash++ backend unsupported generate phase: compile input "/srv/sprint162/leaf-162r0/evidence/goroot/test/fixedbugs/issue22877.dir/p.s" is not a Go source file	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue22877.go	compiled	Bash++ backend unsupported generate phase: compile input "/srv/sprint162/leaf-162r0/evidence/goroot/test/fixedbugs/issue22877.dir/p.s" is not a Go source file	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue23311.go	compiled	test/fixedbugs/issue23311.dir/main.go:10:1: LOWER-EUNSUPPORTED: function declaration without body	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue24801.go	compiled	test/fixedbugs/issue24801.dir/a.go:7:1: LOWER-ETYPE: cannot declare main - must be func	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue28430.go	compiled	test/fixedbugs/issue28430.go:12:1: LOWER-EUNSUPPORTED: function declaration without body	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue30061.go	compiled	test/fixedbugs/issue30061.go:14:1: LOWER-EUNSUPPORTED: function declaration without body	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue31010.go	compiled	test/fixedbugs/issue31010.go:14:1: LOWER-EUNSUPPORTED: function declaration without body	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue31915.go	compiled	test/fixedbugs/issue31915.go:9:1: LOWER-EUNSUPPORTED: function declaration without body	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue34723.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue34723.go	compiled	issue34723.go:66: missing error "write barrier"	missing=1;wording=0;extra=0;class=missing
+testdir:fixedbugs/issue34968.go	interpreted	fixedbugs/issue34968.go:12:8: could not import C (go list failed using go SDK go1.27.0 at /srv/sprint162/leaf-162r0/evidence/goroot/bin/go (GOROOT=/srv/sprint162/leaf-162r0/evidence/goroot, found via GOROOT, meets go1.27.0): exit status 1	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue34968.go	compiled	fixedbugs/issue34968.go:12:8: could not import C (go list failed using go SDK go1.27.0 at /srv/sprint162/leaf-162r0/evidence/goroot/bin/go (GOROOT=/srv/sprint162/leaf-162r0/evidence/goroot, found via GOROOT, meets go1.27.0): exit status 1	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue36705.go	interpreted	fixedbugs/issue36705.go:13:8: could not import C (go list failed using go SDK go1.27.0 at /srv/sprint162/leaf-162r0/evidence/goroot/bin/go (GOROOT=/srv/sprint162/leaf-162r0/evidence/goroot, found via GOROOT, meets go1.27.0): exit status 1	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue36705.go	compiled	fixedbugs/issue36705.go:13:8: could not import C (go list failed using go SDK go1.27.0 at /srv/sprint162/leaf-162r0/evidence/goroot/bin/go (GOROOT=/srv/sprint162/leaf-162r0/evidence/goroot, found via GOROOT, meets go1.27.0): exit status 1	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue37513.go	interpreted	Bash++ backend unsupported generate phase: compile input "/srv/sprint162/leaf-162r0/evidence/goroot/test/fixedbugs/issue37513.dir/sigill_amd64.s" is not a Go source file	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue37513.go	compiled	Bash++ backend unsupported generate phase: compile input "/srv/sprint162/leaf-162r0/evidence/goroot/test/fixedbugs/issue37513.dir/sigill_amd64.s" is not a Go source file	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue37837.go	interpreted	a.go:7: missing error "can inline F"	missing=9;wording=0;extra=0;class=missing
+testdir:fixedbugs/issue37837.go	compiled	test/fixedbugs/issue37837.dir/a.go:7:6: can inline __gosource_pkg_0_F	missing=0;wording=10;extra=0;class=wording
+testdir:fixedbugs/issue4099.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue4099.go	compiled	test/fixedbugs/issue4099.go:18:1: LOWER-EUNSUPPORTED: function declaration without body	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue42284.go	interpreted	a.go:10: missing error "can inline T.M"	missing=13;wording=0;extra=0;class=missing
+testdir:fixedbugs/issue42284.go	compiled	test/fixedbugs/issue42284.dir/a.go:12:6: can inline __gosource_pkg_0_E	missing=0;wording=7;extra=0;class=wording
+testdir:fixedbugs/issue42944.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue42944.go	compiled	test/fixedbugs/issue42944.go:23:1: LOWER-EUNSUPPORTED: function declaration without body	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue43479.go	compiled	test/fixedbugs/issue43479.dir/a.go:11:1: LOWER-EUNSUPPORTED: function declaration without body	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue43677.go	compiled	test/fixedbugs/issue43677.go:12:1: LOWER-EUNSUPPORTED: function declaration without body	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue45323.go	compiled	test/fixedbugs/issue45323.go:9:1: LOWER-EUNSUPPORTED: function declaration without body	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue45344.go	compiled	test/fixedbugs/issue45344.go:20:1: LOWER-EUNSUPPORTED: function declaration without body	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue47185.go	interpreted	Bash++ backend unsupported execute phase: module package issue47185.dir/bad has non-Go inputs [bad.go]	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue47185.go	compiled	Bash++ backend unsupported execute phase: module package issue47185.dir/bad has non-Go inputs [bad.go]	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue47227.go	interpreted	fixedbugs/issue47227.go:12:8: could not import C (go list failed using go SDK go1.27.0 at /srv/sprint162/leaf-162r0/evidence/goroot/bin/go (GOROOT=/srv/sprint162/leaf-162r0/evidence/goroot, found via GOROOT, meets go1.27.0): exit status 1	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue47227.go	compiled	fixedbugs/issue47227.go:12:8: could not import C (go list failed using go SDK go1.27.0 at /srv/sprint162/leaf-162r0/evidence/goroot/bin/go (GOROOT=/srv/sprint162/leaf-162r0/evidence/goroot, found via GOROOT, meets go1.27.0): exit status 1	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue47317.go	interpreted	Bash++ backend unsupported generate phase: compile input "/srv/sprint162/leaf-162r0/evidence/goroot/test/fixedbugs/issue47317.dir/a.s" is not a Go source file	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue47317.go	compiled	Bash++ backend unsupported generate phase: compile input "/srv/sprint162/leaf-162r0/evidence/goroot/test/fixedbugs/issue47317.dir/a.s" is not a Go source file	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue53454.go	compiled	test/fixedbugs/issue53454.go:89:1: LOWER-EUNSUPPORTED: function declaration without body	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue56280.go	interpreted	a.go:7: missing error "can inline F"	missing=5;wording=0;extra=0;class=missing
+testdir:fixedbugs/issue56280.go	compiled	test/fixedbugs/issue56280.dir/a.go:11:6: can inline __gosource_pkg_0_g[go.shape.int]	missing=0;wording=2;extra=0;class=wording
+testdir:fixedbugs/issue58826.go	compiled	test/fixedbugs/issue58826.go:23:1: LOWER-EUNSUPPORTED: function declaration without body	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue71225.go	interpreted	test/fixedbugs/issue71225.go:12:8: could not import C (go list failed using go SDK go1.27.0 at /srv/sprint162/leaf-162r0/evidence/goroot/bin/go (GOROOT=/srv/sprint162/leaf-162r0/evidence/goroot, found via GOROOT, meets go1.27.0): exit status 1	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue71225.go	compiled	test/fixedbugs/issue71225.go:12:8: could not import C (go list failed using go SDK go1.27.0 at /srv/sprint162/leaf-162r0/evidence/goroot/bin/go (GOROOT=/srv/sprint162/leaf-162r0/evidence/goroot, found via GOROOT, meets go1.27.0): exit status 1	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue71226.go	interpreted	test/fixedbugs/issue71226.go:20:8: could not import C (go list failed using go SDK go1.27.0 at /srv/sprint162/leaf-162r0/evidence/goroot/bin/go (GOROOT=/srv/sprint162/leaf-162r0/evidence/goroot, found via GOROOT, meets go1.27.0): exit status 1	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue71226.go	compiled	test/fixedbugs/issue71226.go:20:8: could not import C (go list failed using go SDK go1.27.0 at /srv/sprint162/leaf-162r0/evidence/goroot/bin/go (GOROOT=/srv/sprint162/leaf-162r0/evidence/goroot, found via GOROOT, meets go1.27.0): exit status 1	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue74648.go	interpreted	Bash++ backend unsupported execute phase: module package issue74648.dir has non-Go inputs [a.s]	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue74648.go	compiled	Bash++ backend unsupported execute phase: module package issue74648.dir has non-Go inputs [a.s]	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue74836.go	compiled	test/fixedbugs/issue74836.go:17:1: LOWER-EUNSUPPORTED: function declaration without body	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue7794.go	compiled	test/fixedbugs/issue7794.go:10:2: LOWER-ETYPE: declared and not used: a	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue9608.go	compiled	test/fixedbugs/issue9608.dir/issue9608.go:7:1: LOWER-EUNSUPPORTED: function declaration without body	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/notinheap3.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/notinheap3.go	compiled	notinheap3.go:47: missing error "write barrier"	missing=6;wording=0;extra=0;class=missing
+testdir:func2.go	compiled	test/func2.go:16:1: LOWER-EUNSUPPORTED: function declaration without body	missing=0;wording=0;extra=0;class=-
+testdir:fuse.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:fuse.go	compiled	fuse.go:16: missing error "Redirect Eq64 based on Eq64$"	missing=26;wording=0;extra=0;class=missing
+testdir:import.go	compiled	test/import.go:16:1: LOWER-EUNSUPPORTED: function declaration without body	missing=0;wording=0;extra=0;class=-
+testdir:import2.go	compiled	test/import2.dir/import2.go:41:1: LOWER-EUNSUPPORTED: function declaration without body	missing=0;wording=0;extra=0;class=-
+testdir:interface/assertinline.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:interface/assertinline.go	compiled	assertinline.go:10: missing error "type assertion inlined"	missing=14;wording=0;extra=0;class=missing
+testdir:internal/runtime/sys/inlinegcpc.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:internal/runtime/sys/inlinegcpc.go	compiled	test/internal/runtime/sys/inlinegcpc.go:12:1: LOWER-EUNSUPPORTED: function declaration without body	missing=0;wording=0;extra=0;class=-
+testdir:intrinsic.go	interpreted	test/intrinsic.dir/main.go:9:4: could not import internal/runtime/sys (use of internal package internal/runtime/sys not allowed)	missing=0;wording=0;extra=0;class=-
+testdir:intrinsic.go	compiled	test/intrinsic.dir/main.go:9:4: could not import internal/runtime/sys (use of internal package internal/runtime/sys not allowed)	missing=0;wording=0;extra=0;class=-
+testdir:intrinsic_atomic.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:intrinsic_atomic.go	compiled	intrinsic_atomic.go:16: missing error "intrinsic substitution for LoadUint32"	missing=5;wording=0;extra=0;class=missing
+testdir:known_bits.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:known_bits.go	compiled	known_bits.go:16: missing error "known value of v[0-9]+ \\(And64\\): 1$"	missing=34;wording=0;extra=0;class=missing
+testdir:linkname.go	interpreted	linkname1.go:3: missing error "xs does not escape"	missing=2;wording=0;extra=0;class=missing
+testdir:linkname.go	compiled	test/linkname.dir/linkname2.go:6:1: LOWER-EUNSUPPORTED: function declaration without body	missing=0;wording=0;extra=0;class=-
+testdir:linknameasm.go	interpreted	Bash++ backend unsupported generate phase: compile input "/srv/sprint162/leaf-162r0/evidence/goroot/test/linknameasm.dir/a_amd64.s" is not a Go source file	missing=0;wording=0;extra=0;class=-
+testdir:linknameasm.go	compiled	Bash++ backend unsupported generate phase: compile input "/srv/sprint162/leaf-162r0/evidence/goroot/test/linknameasm.dir/a_amd64.s" is not a Go source file	missing=0;wording=0;extra=0;class=-
+testdir:live1.go	compiled	test/live1.go:30:1: LOWER-EUNSUPPORTED: function declaration without body	missing=0;wording=0;extra=0;class=-
+testdir:live2.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:live2.go	compiled	test/live2.go:14:1: LOWER-EUNSUPPORTED: function declaration without body	missing=0;wording=0;extra=0;class=-
+testdir:live_regabi.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:live_regabi.go	compiled	test/live_regabi.go:642:8: gosource: unsupported compound simple statement	missing=0;wording=0;extra=0;class=-
+testdir:live_uintptrkeepalive.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:live_uintptrkeepalive.go	compiled	test/live_uintptrkeepalive.go:25:1: LOWER-EUNSUPPORTED: function declaration without body	missing=0;wording=0;extra=0;class=-
+testdir:loopbce.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:loopbce.go	compiled	loopbce.go:11: missing error "Induction variable: limits \\[0,\\?\\), increment 1$"	missing=122;wording=0;extra=0;class=missing
+testdir:nilcheck.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:nilcheck.go	compiled	test/nilcheck.go:80:1: LOWER-EUNSUPPORTED: function declaration without body	missing=0;wording=0;extra=0;class=-
+testdir:nilptr3.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:nilptr3.go	compiled	test/nilptr3.go:90:1: LOWER-EUNSUPPORTED: function declaration without body	missing=0;wording=0;extra=0;class=-
+testdir:nilptr5.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:nilptr5.go	compiled	nilptr5.go:15: missing error "removed nil check"	missing=8;wording=0;extra=0;class=missing
+testdir:opt_branchlikely.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:opt_branchlikely.go	compiled	opt_branchlikely.go:15: missing error "Branch prediction rule stay in loop"	missing=17;wording=0;extra=0;class=missing
+testdir:parentype.go	compiled	test/parentype.go:11:1: LOWER-EUNSUPPORTED: function declaration without body	missing=0;wording=0;extra=0;class=-
+testdir:phiopt.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:phiopt.go	compiled	phiopt.go:19: missing error "converted OpPhi to Copy$"	missing=13;wording=0;extra=0;class=missing
+testdir:prove.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:prove.go	compiled	prove.go:18: missing error "Proved IsInBounds$"	missing=474;wording=0;extra=0;class=missing
+testdir:prove_constant_folding.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:prove_constant_folding.go	compiled	prove_constant_folding.go:13: missing error "Proved.+is constant 20$"	missing=15;wording=0;extra=0;class=missing
+testdir:prove_invert_loop_with_unused_iterators.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:prove_invert_loop_with_unused_iterators.go	compiled	prove_invert_loop_with_unused_iterators.go:8: missing error "(Inverted loop iteration|Induction variable: limits \\[0,\\?\\), increment 1)"	missing=1;wording=0;extra=0;class=missing
+testdir:retjmp.go	interpreted	Bash++ backend unsupported generate phase: compile input "/srv/sprint162/leaf-162r0/evidence/goroot/test/retjmp.dir/a.s" is not a Go source file	missing=0;wording=0;extra=0;class=-
+testdir:retjmp.go	compiled	Bash++ backend unsupported generate phase: compile input "/srv/sprint162/leaf-162r0/evidence/goroot/test/retjmp.dir/a.s" is not a Go source file	missing=0;wording=0;extra=0;class=-
+testdir:sliceopt.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:sliceopt.go	compiled	sliceopt.go:12: missing error "append: len-only update \\(in local slice\\)$"	missing=4;wording=0;extra=0;class=missing
+testdir:tailcall.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:tailcall.go	compiled	tailcall.go:19: missing error "tail call emitted for the method \\(\\*Foo\\).Get2Vals wrapper"	missing=1;wording=0;extra=0;class=missing
+testdir:writebarrier.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:writebarrier.go	compiled	writebarrier.go:17: missing error "write barrier"	missing=42;wording=0;extra=0;class=missing
