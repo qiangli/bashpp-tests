@@ -101,16 +101,14 @@ manifests here are the input of the successor repair round.
 
 ## corpus-verify.go against real events
 
-First run against real streams (`corpus-verify.summary.txt`): the native
-lane, the 3,651 unique IDs and the 39-skip set verify; the 312 native
-executions are the real finding above. The other violation shapes are
-the verifier's record model, not the run: 1,200 `invalid event JSON`
-(a field typed as string where the stream carries an object), the
-per-phase accounting (multi-package `compiledir`/`rundir` roots emit one
-backend record per package compile plus link/execute; the verifier expects
-one per phase name), 12 `types-backend execution … has no Go terminal`
-and 4 `duplicate ID` in the typechecker streams — to be fixed or explained
-by the verifier owner against these streams (S155.7 follow-up).
+The corrected verifier run against the real streams
+(`corpus-verify.summary.txt`) reports 3,651 unique IDs, the frozen 39-skip
+set and exactly 312 native tested-source executions: the 156 checker-API
+unit-test leaves with no types-backend record, once in each product mode.
+It emits those 312 per-root violations plus their one aggregate violation
+and nothing else. The former JSON, multi-package phase-accounting and
+top-level typechecker-record reports were verifier model errors; fixtures
+now retain each real-stream shape.
 
 Evidence: `/srv/sprint155/barrier-b/{evidence,manifests,logs,verify.out,
 verify-manifest.sha256}` on the authorized host (build caches removed;

@@ -41,6 +41,45 @@ func TestCorpusVerifyAcceptsCompleteEvidence(t *testing.T) {
 	}
 }
 
+// These records retain the shapes emitted by the Barrier B testdir stream for
+// a multi-package directory root: package is an object (not a package-plan
+// string), and compile is repeated once per upstream package before the later
+// link and execute phases.
+func TestCorpusVerifyAcceptsMultiPackageTestdirRecords(t *testing.T) {
+	f := newCorpusFixture(t)
+	for _, mode := range corpusModes[1:] {
+		f.writeMultiPackageTestdir(mode)
+	}
+	code, _, stderr := f.verify(3)
+	if code != 0 {
+		t.Fatalf("verify = %d, stderr:\n%s", code, stderr)
+	}
+}
+
+// This retains the Barrier B TestIssue43124 excerpt shape: the top-level
+// checker-API test has one Go terminal and makes three checker calls. It is not
+// one of the 899 fixture-leaf corpus roots, so those calls are neither duplicate
+// leaf IDs nor executions without a Go terminal.
+func TestCorpusVerifyAcceptsNonLeafTypecheckerRecords(t *testing.T) {
+	f := newCorpusFixture(t)
+	for _, mode := range corpusModes {
+		f.writeGo(mode, "types2.go-test.json",
+			corpusGoEvent{Action: "pass", Package: "cmd/compile/internal/types2", Test: "TestIssue43124"},
+			corpusGoEvent{Action: "pass", Package: "cmd/compile/internal/types2", Test: "TestCheck/x.go"})
+		if mode != "native" {
+			f.writeRecords(filepath.Join("evidence-"+mode, "types2.events.jsonl"),
+				map[string]any{"kind": "types-backend", "test": "TestIssue43124", "argv": []string{"bashy", "--check", "first.go"}},
+				map[string]any{"kind": "types-backend", "test": "TestIssue43124", "argv": []string{"bashy", "--check", "second.go"}},
+				map[string]any{"kind": "types-backend", "test": "TestIssue43124", "argv": []string{"bashy", "--check", "third.go"}},
+				map[string]any{"kind": "types-backend", "test": "TestCheck/x.go", "argv": []string{"bashy", "--check", "x.go"}})
+		}
+	}
+	code, _, stderr := f.verify(3)
+	if code != 0 {
+		t.Fatalf("verify = %d, stderr:\n%s", code, stderr)
+	}
+}
+
 func TestCorpusVerifyDefectFixtures(t *testing.T) {
 	tests := []struct {
 		name string
@@ -113,6 +152,15 @@ func TestCorpusVerifyDefectFixtures(t *testing.T) {
 				f.writePackage("interpreted", 0)
 			},
 			want: "package:example/p has zero enumerated test bodies",
+		},
+		{
+			name: "orphan typechecker execution",
+			edit: func(f *corpusFixture) {
+				f.writeRecords(filepath.Join("evidence-interpreted", "types2.events.jsonl"),
+					map[string]any{"kind": "types-backend", "test": "TestCheck/x.go", "argv": []string{"bashy", "--check"}},
+					map[string]any{"kind": "types-backend", "test": "TestMissing", "argv": []string{"bashy", "--check"}})
+			},
+			want: "types-backend execution typechecker:cmd/compile/internal/types2/TestMissing has no Go terminal",
 		},
 	}
 
@@ -188,12 +236,44 @@ func (f *corpusFixture) writeTestdir(mode, action string) {
 	}
 	records = append(records, map[string]any{
 		"schema": corpusTestdirEventSchema, "kind": "backend", "test": "a.go", "mode": mode,
+		"phase":          "execute",
 		"backend_schema": corpusTestdirBackendSchema, "native_argv": []string{"go", "run", "a.go"},
 		"disposition": "check-then-run",
 	})
 	records = append(records,
 		map[string]any{"schema": corpusTestdirEventSchema, "kind": "phase_result", "test": "a.go"},
 		terminal)
+	f.writeRecords(filepath.Join("evidence-"+mode, "testdir.events.jsonl"), records...)
+}
+
+func (f *corpusFixture) writeMultiPackageTestdir(mode string) {
+	f.t.Helper()
+	var records []any
+	add := func(phase string, pkg map[string]string, inputs []string) {
+		phaseRecord := map[string]any{
+			"schema": corpusTestdirEventSchema, "kind": "phase", "test": "a.go",
+			"phase_kind": phase, "compile_inputs": inputs, "argv": []string{"go", phase},
+		}
+		backendRecord := map[string]any{
+			"schema": corpusTestdirEventSchema, "kind": "backend", "test": "a.go",
+			"mode": mode, "backend_schema": corpusTestdirBackendSchema, "phase": phase,
+			"compile_inputs": inputs, "native_argv": []string{"go", phase},
+			"disposition": "backend-" + phase,
+		}
+		if pkg != nil {
+			phaseRecord["package"] = pkg
+			backendRecord["package_map"] = pkg
+		}
+		records = append(records, phaseRecord, backendRecord,
+			map[string]any{"schema": corpusTestdirEventSchema, "kind": "phase_result", "test": "a.go"})
+	}
+	add("compile", map[string]string{"base": ".", "path": "example/lib"}, []string{"lib.go"})
+	add("compile", map[string]string{"base": ".", "path": "main"}, []string{"main.go"})
+	add("link", nil, []string{"main.go"})
+	add("execute", nil, []string{"main.go"})
+	records = append(records, map[string]any{
+		"schema": corpusTestdirEventSchema, "kind": "terminal", "test": "a.go",
+	})
 	f.writeRecords(filepath.Join("evidence-"+mode, "testdir.events.jsonl"), records...)
 }
 

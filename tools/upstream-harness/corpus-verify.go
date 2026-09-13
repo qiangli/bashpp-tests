@@ -11,11 +11,24 @@
 // have used the backend only when it has a corresponding kind=backend record,
 // whose native_argv is evidence of the displaced command, not an execution.
 // Package plans distinguish the displaced native_argv from the executed argv.
-// Types records are the one substituted checker call. The observer never reads
-// test source, directives, corpus matrices or partition manifests, and never
-// makes a recipe or applicability decision. The read manifest includes the
-// expected-SKIP input as @expect-skips; its own output is necessarily excluded
-// to avoid a self-referential digest.
+// Types records name both fixture leaves and top-level checker-API tests. Only
+// fixture leaves are corpus roots; calls belonging to a top-level terminal are
+// therefore evidence, but not an extra or duplicate root. In Barrier B the six
+// top-level IDs in each checker package are TestIndexRepresentability,
+// TestIssue43124, TestIssue47243_TypedRHS, TestIssue59944, TestLongConstants and
+// TestManual. TestIssue43124 makes three checker calls; all are covered by its
+// one Go terminal and none is a duplicate corpus-root ID.
+//
+// The expected Barrier B violation is deliberately not waived here: 156
+// checker-API unit-test leaves have a Go terminal but no types-backend record in
+// either product lane. Each absent record means the tested source was executed
+// natively, so the observer reports all 312 executions and the aggregate
+// native-tested-source count until S155.11 reclassifies those roots.
+//
+// The observer never reads test source, directives, corpus matrices or
+// partition manifests, and never makes a recipe or applicability decision. The
+// read manifest includes the expected-SKIP input as @expect-skips; its own
+// output is necessarily excluded to avoid a self-referential digest.
 package main
 
 import (
@@ -63,18 +76,29 @@ type corpusStreamRecord struct {
 	Mode          string   `json:"mode"`
 	BackendSchema string   `json:"backend_schema"`
 	PhaseKind     string   `json:"phase_kind"`
+	Phase         string   `json:"phase"`
+	CompileInputs []string `json:"compile_inputs"`
 	NativeArgv    []string `json:"native_argv"`
 	Argv          []string `json:"argv"`
 	Disposition   string   `json:"disposition"`
 	Skipped       bool     `json:"skipped"`
 	Failed        bool     `json:"failed"`
-	Package       string   `json:"package"`
-	Enumeration   struct {
+	// Package is a string in package-plan streams and an object containing
+	// base/path in testdir phase streams. Keep the union raw and decode it in
+	// the reader that owns the stream.
+	Package     json.RawMessage   `json:"package"`
+	PackageMap  *corpusPackageMap `json:"package_map"`
+	Enumeration struct {
 		Tests       int `json:"Tests"`
 		Benchmarks  int `json:"Benchmarks"`
 		Examples    int `json:"Examples"`
 		FuzzTargets int `json:"fuzz_targets"`
 	} `json:"enumeration"`
+}
+
+type corpusPackageMap struct {
+	Base string `json:"base"`
+	Path string `json:"path"`
 }
 
 type corpusManifestEntry struct {
@@ -89,6 +113,9 @@ type corpusObserver struct {
 	violations []string
 	manifest   []corpusManifestEntry
 	nativeExec int
+	// allTerminals includes top-level checker-API terminals. states contains
+	// only fixture leaves, which are the corpus roots reported by this observer.
+	allTerminals map[string]map[string]bool
 }
 
 func main() {
@@ -105,7 +132,10 @@ func main() {
 }
 
 func verifyCorpus(cfg corpusConfig, stdout, stderr io.Writer) int {
-	o := &corpusObserver{cfg: cfg, states: make(map[string]map[string]string)}
+	o := &corpusObserver{
+		cfg: cfg, states: make(map[string]map[string]string),
+		allTerminals: make(map[string]map[string]bool),
+	}
 	if cfg.evidence == "" {
 		o.violate("--evidence is required")
 	} else if resolved, err := filepath.EvalSymlinks(cfg.evidence); err != nil {
@@ -203,7 +233,7 @@ func (o *corpusObserver) readTerminalStream(mode, runner, name, typePackage stri
 			}
 			id = "testdir:" + strings.TrimPrefix(ev.Test, "Test/")
 		case "typechecker":
-			if ev.Test == "" || !strings.Contains(ev.Test, "/") {
+			if ev.Test == "" {
 				continue
 			}
 			if ev.Package != typePackage {
@@ -211,6 +241,12 @@ func (o *corpusObserver) readTerminalStream(mode, runner, name, typePackage stri
 				continue
 			}
 			id = "typechecker:" + typePackage + "/" + ev.Test
+			// Top-level tests are not corpus roots, but their terminals explain
+			// checker calls made outside a fixture leaf.
+			o.noteTerminal(id, mode)
+			if !strings.Contains(ev.Test, "/") {
+				continue
+			}
 		case "package":
 			if ev.Test != "" || ev.Package == "" {
 				continue
@@ -226,6 +262,7 @@ func (o *corpusObserver) readTerminalStream(mode, runner, name, typePackage stri
 	// Testdir and typechecker streams contain grouping terminals. A leaf is a
 	// terminal whose test name is not the slash-prefix of another terminal.
 	for id, actions := range terminals {
+		o.noteTerminal(id, mode)
 		if runner != "package" {
 			prefix := id + "/"
 			parent := false
@@ -252,7 +289,11 @@ func (o *corpusObserver) readTestdirRecords(mode, name string) {
 	if !ok {
 		return
 	}
-	byTest := make(map[string]struct{ phases, backends, results int })
+	type accounting struct {
+		phases, backends, results map[string]int
+		pending                   []string
+	}
+	byTest := make(map[string]*accounting)
 	terminals := make(map[string]string)
 	o.scanRecords(name, data, func(rec corpusStreamRecord, line int) {
 		if rec.Schema != corpusTestdirEventSchema {
@@ -260,11 +301,21 @@ func (o *corpusObserver) readTestdirRecords(mode, name string) {
 		}
 		id := "testdir:" + rec.Test
 		counts := byTest[rec.Test]
+		if counts == nil {
+			counts = &accounting{
+				phases: make(map[string]int), backends: make(map[string]int),
+				results: make(map[string]int),
+			}
+			byTest[rec.Test] = counts
+		}
 		switch rec.Kind {
 		case "phase":
-			counts.phases++
+			key := o.testdirAccountingKey(name, line, rec, false)
+			counts.phases[key]++
+			counts.pending = append(counts.pending, key)
 		case "backend":
-			counts.backends++
+			key := o.testdirAccountingKey(name, line, rec, true)
+			counts.backends[key]++
 			if rec.BackendSchema != corpusTestdirBackendSchema || rec.Mode != mode || rec.Disposition == "" || len(rec.NativeArgv) == 0 {
 				o.violate("%s:%d: incomplete %s backend record for %s", o.rel(name), line, mode, id)
 			}
@@ -273,7 +324,13 @@ func (o *corpusObserver) readTestdirRecords(mode, name string) {
 				o.violate("%s %s backend record executed native argv[0] %q", mode, id, rec.Argv[0])
 			}
 		case "phase_result":
-			counts.results++
+			if len(counts.pending) == 0 {
+				o.violate("%s:%d: %s has a phase result without a preceding phase", o.rel(name), line, id)
+				break
+			}
+			key := counts.pending[0]
+			counts.pending = counts.pending[1:]
+			counts.results[key]++
 		case "terminal":
 			state := "PASS"
 			if rec.Skipped && rec.Failed {
@@ -288,19 +345,23 @@ func (o *corpusObserver) readTestdirRecords(mode, name string) {
 			}
 			terminals[id] = state
 		}
-		byTest[rec.Test] = counts
 	})
 	for test, counts := range byTest {
 		id := "testdir:" + test
-		if counts.phases != counts.results {
-			o.violate("%s %s has %d phase records and %d phase results", mode, id, counts.phases, counts.results)
-		}
-		if counts.phases > counts.backends {
-			n := counts.phases - counts.backends
-			o.nativeExec += n
-			o.violate("%s %s has %d executed phase(s) without a backend disposition", mode, id, n)
-		} else if counts.backends > counts.phases {
-			o.violate("%s %s has %d backend dispositions for %d phases", mode, id, counts.backends, counts.phases)
+		keys := accountingKeys(counts.phases, counts.backends, counts.results)
+		for _, key := range keys {
+			phases, backends, results := counts.phases[key], counts.backends[key], counts.results[key]
+			shape := displayAccountingKey(key)
+			if phases != results {
+				o.violate("%s %s %s has %d phase records and %d phase results", mode, id, shape, phases, results)
+			}
+			if phases > backends {
+				n := phases - backends
+				o.nativeExec += n
+				o.violate("%s %s %s has %d executed phase(s) without a backend disposition", mode, id, shape, n)
+			} else if backends > phases {
+				o.violate("%s %s %s has %d backend dispositions for %d phases", mode, id, shape, backends, phases)
+			}
 		}
 	}
 	for id, want := range o.states {
@@ -327,35 +388,38 @@ func (o *corpusObserver) readTypesRecords(mode, name, pkg string) {
 	if !ok {
 		return
 	}
-	seen := make(map[string]bool)
+	seen := make(map[string]int)
 	o.scanRecords(name, data, func(rec corpusStreamRecord, line int) {
 		id := "typechecker:" + pkg + "/" + rec.Test
 		if rec.Kind != "types-backend" || rec.Test == "" || len(rec.Argv) == 0 {
 			o.violate("%s:%d: incomplete types-backend record", o.rel(name), line)
 			return
 		}
-		if seen[id] {
-			o.violate("duplicate ID %s in typechecker %s events", id, mode)
-		}
-		seen[id] = true
+		seen[id]++
 	})
 	for id, modes := range o.states {
 		if !strings.HasPrefix(id, "typechecker:"+pkg+"/") || modes[mode] == "" {
 			continue
 		}
 		if modes[mode] == "SKIP" {
-			if seen[id] {
+			if seen[id] != 0 {
 				o.violate("%s skipped root %s has a types-backend execution", mode, id)
 			}
 			continue
 		}
-		if !seen[id] {
+		if seen[id] == 0 {
 			o.nativeExec++
 			o.violate("%s %s has a terminal but no types-backend execution", mode, id)
+		} else if seen[id] > 1 {
+			o.violate("duplicate ID %s in typechecker %s events", id, mode)
 		}
 	}
 	for id := range seen {
-		if o.states[id] == nil || o.states[id][mode] == "" {
+		// Go's JSON stream has terminals for top-level checker API tests as well
+		// as fixture leaves. A top-level test may call the checker zero, one or
+		// several times, but is not a corpus root and must not be folded into
+		// leaf accounting.
+		if !o.allTerminals[id][mode] {
 			o.violate("%s types-backend execution %s has no Go terminal", mode, id)
 		}
 	}
@@ -367,8 +431,9 @@ func (o *corpusObserver) readPackageRecords(mode, name string) {
 		return
 	}
 	o.scanRecords(name, data, func(rec corpusStreamRecord, line int) {
-		id := "package:" + rec.Package
-		if rec.Schema != corpusPackageSchema || rec.Kind != "plan" || rec.Package == "" || rec.Mode != mode || rec.Disposition == "" {
+		pkg, err := decodeString(rec.Package)
+		id := "package:" + pkg
+		if err != nil || rec.Schema != corpusPackageSchema || rec.Kind != "plan" || pkg == "" || rec.Mode != mode || rec.Disposition == "" {
 			o.violate("%s:%d: incomplete %s package plan", o.rel(name), line, mode)
 			return
 		}
@@ -394,6 +459,72 @@ func (o *corpusObserver) readPackageRecords(mode, name string) {
 		}
 		modes[key] = o.rel(name)
 	})
+}
+
+// testdirAccountingKey identifies one concrete command planned by an upstream
+// root. Directory recipes reuse phase names (for example, "compile") for each
+// package, so a phase-name counter aliases distinct executions. Phase records
+// carry package; backend records carry the same identity in package_map. Both
+// also carry the exact compile inputs. A phase_result has no identity fields,
+// and is assigned to the preceding still-pending phase of the same root, which
+// is the ordering contract of planStep.done in the instrumented runner.
+func (o *corpusObserver) testdirAccountingKey(name string, line int, rec corpusStreamRecord, backend bool) string {
+	phase := rec.PhaseKind
+	pkg := ""
+	if backend {
+		phase = rec.Phase
+		// A runindir execute backend carries go-list package resolution in
+		// package_map even though the upstream execute phase has no package
+		// identity. Package identity distinguishes only the repeated compile
+		// phases of directory recipes.
+		if phase == "compile" && rec.PackageMap != nil {
+			pkg = rec.PackageMap.Base + "\x1f" + rec.PackageMap.Path
+		}
+	} else if phase == "compile" && len(rec.Package) != 0 && string(rec.Package) != "null" {
+		var identity corpusPackageMap
+		if err := json.Unmarshal(rec.Package, &identity); err != nil {
+			o.violate("%s:%d: testdir phase package is not an object: %v", o.rel(name), line, err)
+		} else {
+			pkg = identity.Base + "\x1f" + identity.Path
+		}
+	}
+	return phase + "\x00" + pkg + "\x00" + strings.Join(rec.CompileInputs, "\x1f")
+}
+
+func accountingKeys(groups ...map[string]int) []string {
+	set := make(map[string]bool)
+	for _, group := range groups {
+		for key := range group {
+			set[key] = true
+		}
+	}
+	keys := make([]string, 0, len(set))
+	for key := range set {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	return keys
+}
+
+func displayAccountingKey(key string) string {
+	parts := strings.SplitN(key, "\x00", 3)
+	if len(parts) != 3 {
+		return fmt.Sprintf("record=%q", key)
+	}
+	pkg := strings.ReplaceAll(parts[1], "\x1f", "/")
+	inputs := strings.ReplaceAll(parts[2], "\x1f", ",")
+	return fmt.Sprintf("phase=%q package=%q inputs=[%s]", parts[0], pkg, inputs)
+}
+
+func decodeString(raw json.RawMessage) (string, error) {
+	if len(raw) == 0 {
+		return "", nil
+	}
+	var value string
+	if err := json.Unmarshal(raw, &value); err != nil {
+		return "", err
+	}
+	return value, nil
 }
 
 func (o *corpusObserver) scanRecords(name string, data []byte, visit func(corpusStreamRecord, int)) {
@@ -584,6 +715,13 @@ func (o *corpusObserver) addState(id, mode, state string) {
 		return
 	}
 	o.states[id][mode] = state
+}
+
+func (o *corpusObserver) noteTerminal(id, mode string) {
+	if o.allTerminals[id] == nil {
+		o.allTerminals[id] = make(map[string]bool)
+	}
+	o.allTerminals[id][mode] = true
 }
 
 func (o *corpusObserver) rootIDs() []string {
