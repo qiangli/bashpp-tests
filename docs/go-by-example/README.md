@@ -397,7 +397,7 @@ and that `bin/go` does the build with `GOTOOLCHAIN=local`.
 What the port binds identically: the row adapters layered above
 capture/`launch.go` (FIFO liveness, pid publication, `signal_injector`,
 `loopback_server`, `local_http_origin`), the stream-aware normalizer at VERSION
-7 (Ruby's regular expressions reproduced on RE2, whose leftmost-first
+8 -- VERSION 7 plus one correction, see below (Ruby's regular expressions reproduced on RE2, whose leftmost-first
 alternation selects the same matches; the two lookarounds are explicit boundary
 scans with the same acceptance set), the typed comparators, candidate manifest
 authentication, the schema-8 evidence JSONL with the same field names and
@@ -420,3 +420,16 @@ needed a Ruby interpreter); the Go-1.26 case moves the whole reviewed row to
 (the stale diagnostic `sprint118-candidate027-full.md` recorded); and Phase B
 takes `GBE_EVIDENCE` and adapts `permissive_comparator` and the invented green
 document to a source chain that is already green.
+
+The port's first full replay also exposed a latent defect of the Ruby
+comparator: `switch.go` prints `It's the weekend` on Saturdays and Sundays, but
+the VERSION 7 `wallclock` day-class rule only matched `It's a weekend`, a
+string the program never prints, so every replay run on a weekend failed that
+row as `fail_normalization` in all three modes (measured on 2026-09-12, a
+Saturday: 254/255 pass, `examples/switch/switch.go` failing identically in
+oracle, interpreted and compiled, retained as
+`~/sprint155/evidence/67bdd9fa/gbe-full-001.jsonl.fail` on novidesign.local).
+Every earlier replay in this directory ran on a weekday. VERSION 8 accepts the
+program's actual rendering (`It's (?:the weekend|a weekday)`); the day class and
+the noon class are still the only two lines cancelled, one token each, and
+nothing else about the comparison changed.

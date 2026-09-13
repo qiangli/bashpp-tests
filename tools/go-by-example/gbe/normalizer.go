@@ -1,7 +1,7 @@
 // Sprint: #155; Story: S155.10; Story-ID: 67bdd9fae2b3
 //
 // Repository-versioned normalization semantics shared by evidence production
-// and verification, ported from tools/go-by-example/normalizer.rb (VERSION 7).
+// and verification, ported from tools/go-by-example/normalizer.rb (VERSION 7), now at VERSION 8.
 // Bump NormalizerVersion whenever these transformations change.
 //
 // VERSION 2 (Sprint 118) dropped `goexit_status`. It existed only because the
@@ -31,6 +31,14 @@
 // VERSION 7 (Sprint 118, Story #18) adds the reviewed json.go stream:
 // exactly two map-derived JSON objects may vary in key order; the remaining
 // thirteen lines and the object membership remain observable.
+// VERSION 8 (Sprint 155, S155.10) corrects the wallclock day-class rule to the
+// pinned switch.go bytes: the program prints `It's the weekend` on Saturdays and
+// Sundays and `It's a weekday` otherwise, while VERSION 7 only matched
+// `It's a weekend`, a string the program never prints, so every weekend replay
+// failed the row as fail_normalization in all three modes (measured on
+// 2026-09-12, a Saturday, by the first replay of this port). The day class and
+// the noon class are still the only two lines cancelled; both remain a single
+// token per line, and the other four lines stay byte-for-byte.
 //
 // The Ruby regular expressions are reproduced with Go's RE2 engine, whose
 // leftmost-first alternation and greedy-quantifier match selection coincide
@@ -51,7 +59,7 @@ import (
 	"unicode/utf8"
 )
 
-const NormalizerVersion = 7
+const NormalizerVersion = 8
 
 var NormalizerNames = []string{"none", "argv0_path", "env_listing", "file_metadata", "tmp_path", "ephemeral_port", "wallclock", "duration", "panic_trace", "random_stream", "map_order", "interleave_order", "closing_channel_order", "throughput_count", "pointer_address"}
 var stdoutNames = []string{"argv0_path", "env_listing", "file_metadata", "tmp_path", "ephemeral_port", "duration", "random_stream", "map_order", "interleave_order", "closing_channel_order", "throughput_count", "pointer_address"}
@@ -79,7 +87,7 @@ var (
 	reTmpPath      = regexp.MustCompile(`(?:/[^\s]+/)?sample(?:dir)?\d+`)
 	rePointer      = regexp.MustCompile(`0x[0-9a-fA-F]+`)
 	reWallclock    = regexp.MustCompile(`\bm=[+-][\d.]+|\b\d{4}[-/]\d\d[-/]\d\d(?:T| )[0-9:.+\-Z ]+|\b(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun)\s+\w+\s+\d+\s+\d\d:\d\d:\d\d\s+(?:UTC\s+)?\d{4}\b|\b\d{1,2}:\d\d(?:AM|PM)\b`)
-	reDayClass     = regexp.MustCompile(`It's a (?:weekend|weekday)`)
+	reDayClass     = regexp.MustCompile(`It's (?:the weekend|a weekday)`)
 	reNoonClass    = regexp.MustCompile(`It's (?:before|after) noon`)
 	reNoonPresent  = regexp.MustCompile(`It's before noon|It's after noon`)
 	reAllDigits    = regexp.MustCompile(`\A\d+\z`)

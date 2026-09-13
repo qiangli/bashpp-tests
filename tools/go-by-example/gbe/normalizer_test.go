@@ -162,7 +162,12 @@ func TestWallclockScan(t *testing.T) {
 	if _, err := Normalize([]byte("no clock here\n"), []string{"wallclock"}, "stdout"); err == nil || err.Error() != "wallclock shape" {
 		t.Fatalf("clockless output accepted: %v", err)
 	}
-	if got := mustNormalize(t, "It's a weekday\nIt's before noon\n", []string{"wallclock"}, "stdout"); got != "<volatile:day-class>\n<volatile:noon-class>\n" {
+	for _, day := range []string{"It's a weekday", "It's the weekend"} {
+		if got := mustNormalize(t, day+"\nIt's before noon\n", []string{"wallclock"}, "stdout"); got != "<volatile:day-class>\n<volatile:noon-class>\n" {
+			t.Fatalf("switch example normalized to %q", got)
+		}
+	}
+	if got := mustNormalize(t, "Write 2 as two\nIt's the weekend\nIt's after noon\nI'm a bool\n", []string{"wallclock"}, "stdout"); got != "Write 2 as two\n<volatile:day-class>\n<volatile:noon-class>\nI'm a bool\n" {
 		t.Fatalf("switch example normalized to %q", got)
 	}
 	// Epoch runs keep the lookaround semantics: a run glued to a word or a dot
