@@ -1,0 +1,3 @@
+root	mode	first_line	verdict
+testdir:chan/select.go	interpreted	BASHPP-EARG-CHAN: Send requires chan uint for parameter b	missing=0;wording=0;extra=0;class=-
+testdir:recover.go	interpreted	BASHPP-ERETURN-CALL: return requires a declared callable	missing=0;wording=0;extra=0;class=-

@@ -1,0 +1,14 @@
+root
+testdir:chan/select3.go
+testdir:fixedbugs/issue26094.go
+testdir:fixedbugs/issue43942.go
+testdir:fixedbugs/issue48898.go
+testdir:fixedbugs/issue73916.go
+testdir:fixedbugs/issue73916b.go
+testdir:fixedbugs/issue74379.go
+testdir:fixedbugs/issue74379b.go
+testdir:fixedbugs/issue74379c.go
+testdir:interface/noeq.go
+testdir:chan/select.go
+testdir:fixedbugs/issue4365.go
+testdir:recover.go

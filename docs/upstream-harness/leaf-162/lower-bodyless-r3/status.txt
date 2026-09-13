@@ -1,0 +1,5 @@
+pin override (candidate lower-bodyless): shellrt_commit=4deba4ca4747ab4f84f4ed5a6e9b9e144a4216ce bashpp_version=bashy, GNU Bash 5.3 compatible, version 5.3.0(1)-bashy-dev (548c3a4)
+leaf=lower-bodyless-r3 host=leaf harness=33ac42d bashpp=fa28b2d2068a66fa sh=4deba4ca4 candidate=lower-bodyless manifest=<in>/lower-bodyless-2.tsv roots=57 start=2026-09-13T03:46:15Z
+leaf exit=3 start=2026-09-13T03:46:15Z end=2026-09-13T03:47:59Z
+survivors: 0
+DONE leaf-lower-bodyless-r3

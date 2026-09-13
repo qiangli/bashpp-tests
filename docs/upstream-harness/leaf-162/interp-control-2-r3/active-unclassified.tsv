@@ -1,0 +1,3 @@
+root	mode	first_line	verdict
+testdir:chan/select3.go	interpreted	invalid select receive declaration	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue43942.go	interpreted	2026/09/13 03:51:19 want 5, have 2	missing=0;wording=0;extra=0;class=-

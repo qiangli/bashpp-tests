@@ -1,0 +1,11 @@
+root
+testdir:fixedbugs/issue11362.go
+testdir:fixedbugs/issue23586.go
+testdir:fixedbugs/issue4468.go
+testdir:fixedbugs/issue50372.go
+testdir:import6.go
+testdir:nul1.go
+testdir:slice3err.go
+testdir:fixedbugs/bug014.go
+testdir:fixedbugs/issue38093.go
+testdir:fixedbugs/bug020.go

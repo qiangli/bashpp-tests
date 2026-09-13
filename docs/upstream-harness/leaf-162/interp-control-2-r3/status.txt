@@ -1,0 +1,5 @@
+pin override (candidate interp-control-2): shellrt_commit=e2e989e9b9e412243ca47000650035cedf789ce3 bashpp_version=bashy, GNU Bash 5.3 compatible, version 5.3.0(1)-bashy-dev (548c3a4)
+leaf=interp-control-2-r3 host=leaf harness=33ac42d bashpp=3928600b779748eb sh=e2e989e9b candidate=interp-control-2 manifest=<in>/interp-control-2-r1.tsv roots=13 start=2026-09-13T03:49:41Z
+leaf exit=3 start=2026-09-13T03:49:41Z end=2026-09-13T03:51:31Z
+survivors: 0
+DONE leaf-interp-control-2-r3

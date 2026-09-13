@@ -1,0 +1,4 @@
+leaf=package-overlay-r1 host=leaf harness=80333c7 bashpp=9f18849d5f0d6c10 sh=e7cd317e candidate=base manifest=<in>/package-26.tsv roots=26 start=2026-09-13T03:55:25Z
+leaf exit=3 start=2026-09-13T03:55:25Z end=2026-09-13T04:12:47Z
+survivors: 0
+DONE leaf-package-overlay-r1

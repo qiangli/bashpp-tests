@@ -1,0 +1,15 @@
+root	mode	first_line	verdict
+testdir:abi/result_live.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:escape_array.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:escape_calls.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:escape_closure.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:escape_map.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:escape_mutations.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:escape_reflect.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:escape_slice.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue13587.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue19168.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue21709.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue42944.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:live2.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-
+testdir:nilcheck.go	interpreted	Bash++ backend unsupported: optimizer diagnostics are a compiler artifact; the check interface has no inlining, escape-analysis or SSA meaning	missing=0;wording=0;extra=0;class=-

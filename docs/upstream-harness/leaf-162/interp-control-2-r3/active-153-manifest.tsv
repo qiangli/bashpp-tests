@@ -1,0 +1,4 @@
+root	mode	first_line	verdict
+testdir:fixedbugs/issue26094.go	interpreted	panic:	missing=0;wording=0;extra=0;class=-
+testdir:fixedbugs/issue48898.go	interpreted	output does not match expected in fixedbugs/issue48898.out. Instead saw	missing=0;wording=0;extra=0;class=-
+testdir:interface/noeq.go	interpreted	panic: function should panic	missing=0;wording=0;extra=0;class=-

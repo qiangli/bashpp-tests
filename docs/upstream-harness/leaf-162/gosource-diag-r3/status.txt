@@ -1,0 +1,5 @@
+pin override (candidate gosource-diag): shellrt_commit=7e2f6356dab021e17ed23495d1a067d66eff2236 bashpp_version=bashy, GNU Bash 5.3 compatible, version 5.3.0(1)-bashy-dev (548c3a4)
+leaf=gosource-diag-r3 host=leaf harness=33ac42d bashpp=2c8570b0159149a0 sh=7e2f6356d candidate=gosource-diag manifest=<in>/gosource-diag-1.tsv roots=10 start=2026-09-13T03:51:31Z
+leaf exit=3 start=2026-09-13T03:51:31Z end=2026-09-13T03:53:03Z
+survivors: 0
+DONE leaf-gosource-diag-r3
